@@ -896,3 +896,22 @@ def test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new
                     raise AssertionError("the new group was left running")
         assert len(procs) == 1 and procs[0].returncode is not None
         assert _gone(procs[0].pid)
+
+
+def test_a_second_interrupt_on_entry_to_the_campaign_cleanup_still_ends_the_group():
+    """The second Ctrl-C arrives on `reap_all`'s first line, before its retry loop and hold exist: it is held, not
+    raised, and every registered group is still ended and reaped."""
+    import signal
+    sent = []
+
+    def second_interrupt(frame, event, arg):
+        if not sent and event == "line" and frame.f_code is bnc_run.reap_all.__code__:
+            sent.append(1)
+            os.kill(os.getpid(), signal.SIGINT)
+        return second_interrupt
+    sys.settrace(second_interrupt)
+    try:
+        test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new_group()
+    finally:
+        sys.settrace(None)
+    assert sent, "the second interrupt was never delivered"

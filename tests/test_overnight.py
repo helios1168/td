@@ -289,7 +289,7 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
 
 def test_a_second_interrupt_before_the_cleanup_hold_is_installed_still_ends_the_stage_group():
     """`child`'s cleanup after the first Ctrl-C: a second one arriving before `_end`'s hold has its handler in place
-    raises out of the hold's entry, and the cleanup retries instead of dropping the stage from LIVE unended."""
+    is held by `first_sigint`, so the cleanup is not cut short and the stage is not dropped from LIVE unended."""
     import _thread
     import signal
     sleeper = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); time.sleep(120)"
@@ -332,7 +332,7 @@ def test_a_second_interrupt_before_the_cleanup_hold_is_installed_still_ends_the_
                 except (ProcessLookupError, PermissionError):
                     pass
             p.wait()
-    assert len(procs) == 1 and seen[0] >= 3, "the cleanup was not delivered the second interrupt and retried"
+    assert len(procs) == 1 and seen[0] >= 2, "the cleanup was not delivered the second interrupt"
     assert not left and not overnight.LIVE, f"the stage group {left} was left running"
     assert not overnight._group_alive(procs[0].pid)
 
@@ -428,6 +428,25 @@ def test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new
         time.sleep(0.1)
     else:
         raise AssertionError("a member of the stage group is still running")
+
+
+def test_a_second_interrupt_on_entry_to_the_stage_cleanup_still_ends_the_group():
+    """The second Ctrl-C arrives on `_end`'s first line, before its retry loop and hold exist: it is held, not raised,
+    and the group is still ended and reaped (the first interrupt is the one `child` raises)."""
+    import signal
+    sent = []
+
+    def second_interrupt(frame, event, arg):
+        if not sent and event == "line" and frame.f_code is overnight._end.__code__:
+            sent.append(1)
+            os.kill(os.getpid(), signal.SIGINT)
+        return second_interrupt
+    sys.settrace(second_interrupt)
+    try:
+        test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new_stage()
+    finally:
+        sys.settrace(None)
+    assert sent, "the second interrupt was never delivered"
 
 
 def test_a_scheduler_interrupt_ends_the_live_stages_before_joining_and_starts_no_more():

@@ -293,6 +293,37 @@ class hold_sigint:
         if self.old is not None:
             signal.signal(signal.SIGINT, self.old)
         if self.hit and self.raise_after and exc[0] is None:
+            if callable(self.old):      # an enclosing `first_sigint` switches to holding later signals
+                self.old(signal.SIGINT, None)
+            raise KeyboardInterrupt
+        return False
+
+
+class first_sigint:
+    """Over the block, the first SIGINT (Ctrl-C) raises KeyboardInterrupt as usual and later ones are only noted, so
+    the cleanup that exception enters is not interrupted again before it holds SIGINT (`hold_sigint`) itself; a
+    noted one is raised once the block ends without an exception.  A `hold_sigint` inside the block hands its
+    deferred signal to this handler.  Only the main thread gets signals; elsewhere the block is not guarded."""
+
+    def __init__(self):
+        self.hit, self.old = False, None
+
+    def __enter__(self):
+        if threading.current_thread() is threading.main_thread():
+            self.old = signal.signal(signal.SIGINT, self._first)
+        return self
+
+    def _first(self, signum, frame):
+        signal.signal(signal.SIGINT, self._note)
+        raise KeyboardInterrupt
+
+    def _note(self, signum, frame):
+        self.hit = True
+
+    def __exit__(self, *exc):
+        if self.old is not None:
+            signal.signal(signal.SIGINT, self.old)
+        if self.hit and exc[0] is None:
             raise KeyboardInterrupt
         return False
 
@@ -344,11 +375,12 @@ def all_runs(a) -> int:
     report = capture.sibling("bnc_report", "report.py")
     failed = []
     jobs, running, todo = max(1, a.jobs), [], [(i, r) for i in a.insts for r in a.arms]
-    try:
-        _drive(a, jobs, running, todo, failed)
-    except BaseException:       # every child has its own session: an interrupt reaches none of them
-        reap_all(running)
-        raise
+    with first_sigint():        # a second Ctrl-C during the cleanup below is held until every group is ended
+        try:
+            _drive(a, jobs, running, todo, failed)
+        except BaseException:   # every child has its own session: an interrupt reaches none of them
+            reap_all(running)
+            raise
     report.write(a.out, a.instances)
     for i, r, rc in failed:
         print(f"FAILED {i} {r}: rc {rc} or no result.json (stderr in {os.path.join(a.out, i, r, 'stderr')})", flush=True)

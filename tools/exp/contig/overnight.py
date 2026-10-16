@@ -582,6 +582,37 @@ class hold_sigint:
         if self.old is not None:
             signal.signal(signal.SIGINT, self.old)
         if self.hit and self.raise_after and exc[0] is None:
+            if callable(self.old):      # an enclosing `first_sigint` switches to holding later signals
+                self.old(signal.SIGINT, None)
+            raise KeyboardInterrupt
+        return False
+
+
+class first_sigint:
+    """Over the block, the first SIGINT (Ctrl-C) raises KeyboardInterrupt as usual and later ones are only noted, so
+    the cleanup that exception enters is not interrupted again before it holds SIGINT (`hold_sigint`) itself; a
+    noted one is raised once the block ends without an exception.  A `hold_sigint` inside the block hands its
+    deferred signal to this handler.  Only the main thread gets signals; elsewhere the block is not guarded."""
+
+    def __init__(self):
+        self.hit, self.old = False, None
+
+    def __enter__(self):
+        if threading.current_thread() is threading.main_thread():
+            self.old = signal.signal(signal.SIGINT, self._first)
+        return self
+
+    def _first(self, signum, frame):
+        signal.signal(signal.SIGINT, self._note)
+        raise KeyboardInterrupt
+
+    def _note(self, signum, frame):
+        self.hit = True
+
+    def __exit__(self, *exc):
+        if self.old is not None:
+            signal.signal(signal.SIGINT, self.old)
+        if self.hit and exc[0] is None:
             raise KeyboardInterrupt
         return False
 
@@ -635,26 +666,27 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
     timeout, stop, t0 = min(cap, left), None, time.time()
     with open(log_path, "w") as lg:
         p = None
-        try:
-            with hold_sigint():     # an interrupt after the Popen returns waits until the stage is in LIVE
-                p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                                     env={**os.environ, **(env or {})}, start_new_session=True)
-                with LIVE_LOCK:
-                    LIVE.add(p)
-            if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
-                raise Halted("the scheduler is unwinding")
-            rc = p.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            stop = "deadline" if left <= cap else "cap"
-            rc = _end(p)
-        except BaseException:       # an interrupt: the stage has its own session, so nothing else ends or reaps it
-            if p is not None:
-                _end(p)
-            raise
-        finally:
-            if p is not None:
-                with LIVE_LOCK:
-                    LIVE.discard(p)
+        with first_sigint():    # a second Ctrl-C during the cleanup below is held until the stage is ended
+            try:
+                with hold_sigint():     # an interrupt after the Popen returns waits until the stage is in LIVE
+                    p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                         env={**os.environ, **(env or {})}, start_new_session=True)
+                    with LIVE_LOCK:
+                        LIVE.add(p)
+                if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
+                    raise Halted("the scheduler is unwinding")
+                rc = p.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                stop = "deadline" if left <= cap else "cap"
+                rc = _end(p)
+            except BaseException:       # an interrupt: the stage has its own session, so nothing else ends or reaps it
+                if p is not None:
+                    _end(p)
+                raise
+            finally:
+                if p is not None:
+                    with LIVE_LOCK:
+                        LIVE.discard(p)
     return {"rc": rc, "seconds": round(time.time() - t0, 1), "stop": stop}
 
 
