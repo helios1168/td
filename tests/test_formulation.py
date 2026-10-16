@@ -53,8 +53,10 @@ def _solve(model, assignment=None):
     raise AssertionError("F142 integer-separation iteration limit")
 
 
-def _production(call, centres, assignment=None):
-    """Use draw's own build/solve/cut path; fixing actual x columns changes no input.
+def _production(call, centres, assignment=None, run=None):
+    """Use draw's own build/solve/cut path; fixing actual x columns changes no input.  `run`, a function
+    of no arguments, replaces the call of `draw._solve_group(**call)` by a caller of it (the repair's
+    `solve_window`, say) that reaches the same solve.
 
     Do not restrict allowed lists to fix a point: that changes normalized objective
     coefficients. Disable constructed starts for fixed-point feasibility checks.
@@ -81,12 +83,13 @@ def _production(call, centres, assignment=None):
     def center_input(inst, c, v, support, p):
         return {j: centres[v, j] for j in support}
 
+    run = run or (lambda: draw._solve_group(**call))
     with patch.object(draw, "highspy", shim), patch.object(draw.tdrealize, "centres", center_input):
         if assignment is None:
-            result = draw._solve_group(**call)
+            result = run()
         else:
             with patch.object(draw, "construct", lambda *a, **kw: (None, "fixed-point test")):
-                result = draw._solve_group(**call)
+                result = run()
     assert result.status in ("optimal", "infeasible"), result.report()
     if seen:
         result.x_columns = set(seen[0])
@@ -151,7 +154,7 @@ def _bad_point(call, good):
                 continue
             candidate = {**full, z: j}
             if any(nx.number_connected_components(G.subgraph([w for w in G if candidate[w] == k])) > 1
-                   for k in ("A", "B")):
+                   for k in sorted(set(full.values()))):
                 return {**good, z: j}
     raise AssertionError("fixture must have an allowed disconnected assignment")
 
