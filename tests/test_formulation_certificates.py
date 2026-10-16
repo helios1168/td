@@ -188,12 +188,15 @@ def test_formulation_assembly_gate_and_full_extract_30():
         check = audit.check_m1(audit.Run(cells, {'WH': audit.Channel(2)}, polygon=polygon, fine=('wh',)))
     verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, {zs[0]}, counts=check.counts)
     assert check.status == 'fail' and verdict['passes']
-    why = sealed.score.eligibility({'coverage': 'pass'}, check, {'WH': 48}, {}, m1=check, gate=[])
-    assert any(w.startswith('M1: fail') for w in why)
+    why = sealed.score.eligibility({'coverage': 'pass', audit.M1_CHECK: 'fail'}, check,
+                                   {'WH': 48}, {}, m1=check, gate=[])
+    duplicate = 'audit: M1 polygon contiguity fails'
+    assert duplicate in why and any(w.startswith('M1: fail') for w in why)
     other = 'main K 47 outside 48-52'
     m1 = {'status': check.status, 'summary': check.summary}
     for reasons, flag in ((why, False), (why + [other], False), ([other], False), ([], False),
-                          (['M1: not checked'], False), ([], True)):
+                          ([duplicate], False), (why + ['audit: coverage fails'], False),
+                          (why + ['M1: not checked'], False), (['M1: not checked'], False), ([], True)):
         for warm in (False, True):
             for rc, v in ((1, verdict), (1, None), (0, verdict)):
                 actual = sealed.label_point(m1 if rc else {'status': 'pass', 'summary': 'ok'}, normalized, [], False,
@@ -329,6 +332,45 @@ def test_formulation_scorer_ifa_window_waiver_and_eligibility_30():
     rows = score.dollar_gate(ledger, [{'channel': 'IFA', 'district': j} for j in ('A', 'B')],
                              score.IFA_RATES, score.IFA_WINDOW)
     _truth(spec.scorer_ifa_model(cells=cells, districts=['A', 'B'], average=1.25e9), all(r['ok'] for r in rows))
+
+
+def test_formulation_scorer_district_table_precondition_30():
+    from unittest.mock import patch
+
+    score = sealed.score
+    zs = _polygon()['vertices']
+    cells = [(z, 'NY', 'A' if i < 15 else 'B', 900.0 if i in (0, 15) else 0.0)
+             for i, z in enumerate(zs)]
+    ledger = [dict(zip_code=z, state=s, district=j, m_rel=m, current_channel='ifa', model_channel='IFA')
+              for z, s, j, m in cells]
+    for listed in (['A', 'B'], ['A'], ['A', 'B', 'C']):
+        districts = [dict(channel='IFA', district=j) for j in listed]
+        try:
+            score.check_districts(ledger, districts)
+            rows = score.dollar_gate(ledger, districts, score.IFA_RATES, score.IFA_WINDOW)
+            why = score.eligibility({'coverage': 'pass'}, audit.Check(score.BAND_CHECK, 'fail', ''),
+                {'IFA': 2}, {'IFA': 1.25e9}, audit.Check(audit.M1_CHECK, 'pass', ''), rows)
+            accepted = not why
+        except ValueError as exc:
+            assert 'different districts' in str(exc)
+            accepted = False
+        assert accepted == (listed == ['A', 'B'])
+        _truth(spec.scorer_ifa_model(cells=cells, districts=listed, average=1.25e9), accepted)
+        if not accepted:
+            # Exercise the public scorer as well: mismatch must stop it before geometry or eligibility.
+            with tempfile.TemporaryDirectory() as tmp:
+                for name, rows in (('ledger.csv', ledger), ('districts.csv', districts)):
+                    with open(os.path.join(tmp, name), 'w', newline='') as fh:
+                        writer = csv.DictWriter(fh, list(rows[0]))
+                        writer.writeheader()
+                        writer.writerows(rows)
+                with patch.object(score, 'channel_looks', side_effect=AssertionError('table guard bypassed')):
+                    try:
+                        score.score(tmp, g=object())
+                    except ValueError as exc:
+                        assert 'different districts' in str(exc)
+                    else:
+                        raise AssertionError('mismatched district table reached scoring')
 
 
 def test_formulation_overnight_completed_gate_and_district_table_30():

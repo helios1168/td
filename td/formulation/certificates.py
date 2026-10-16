@@ -81,10 +81,12 @@ def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=
     exit 1 the item-side Manhattan adjudication `manhattan_pass`), every window, eligibility, shape.
     `windows` are exact (unrounded dollars, edges in). `eligible` is the scorer's flag and `reasons` its
     reasons (None: the flag stands alone). The adjudicated M1 replaces the scorer's raw-M1 reasons (`M1: ...`,
-    not `M1: not checked`) and only those: any other reason, or a flag with no reason, still vetoes."""
+    not `M1: not checked`) and the exact duplicate `audit: M1 polygon contiguity fails` only:
+    any other reason, or a flag with no reason, still vetoes."""
     waived = reasons is not None and gate_rc == 1 and bool(manhattan_pass)
     if waived:
-        rest = [r for r in reasons if not r.startswith('M1: ') or r.startswith('M1: not checked')]
+        rest = [r for r in reasons if r != 'audit: M1 polygon contiguity fails'
+                and (not r.startswith('M1: ') or r.startswith('M1: not checked'))]
         eligible = bool(eligible) or (bool(reasons) and not rest)
     return build_model('F11.W' if warm else 'F11.R', dict(gate_completed=gate_rc in (0, 1),
         m1=(gate_rc == 0 and bool(m1_pass)) or (gate_rc == 1 and bool(manhattan_pass)),
@@ -128,14 +130,16 @@ def scorer_ifa_model(*, cells, districts, average, audit_ok=True, m1_pass=True,
 
     `audit_ok` excludes the informational band row; raw M1 and the whole-extract
     average remain separate eligibility predicates. This is not an M1 solver.
-    `districts` is the scorer's supplied district table (not inferred coverage).
+    `districts` is the scorer's supplied district table; it must equal the owned ledger district set.
+    This equality is a scoring precondition, not a proof of ZIP/cell coverage.
     """
     states = {j: {s for z, s, d, mass in cells if d == j} for j in districts}
     owners = {s: {d for z, st, d, mass in cells if st == s and d}
               for z, s, d, mass in cells}
     dollars = {j: sum(mass * rate for z, s, d, mass in cells if d == j) for j in districts}
     whole = {j: bool(states[j]) and all(owners[s] == {j} for s in states[j]) for j in districts}
-    q = dict(audit=bool(audit_ok), m1=bool(m1_pass), average=1_125_000_000 <= round(average) <= 1_375_000_000)
+    q = dict(districts_match={d for z, s, d, mass in cells if d} == set(districts),
+             audit=bool(audit_ok), m1=bool(m1_pass), average=1_125_000_000 <= round(average) <= 1_375_000_000)
     for j in districts:
         upper_exempt = whole[j] and states[j] == {'MD', 'DE', 'WV'}
         q[f'window_{j}'] = dollars[j] >= 1e9 and (dollars[j] <= 1.4375e9 or upper_exempt)

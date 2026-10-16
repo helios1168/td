@@ -1618,36 +1618,45 @@ $$
 Zero-opportunity ownership contributes to $S_j,O_s$: one extra state or one shared state
 ends the waiver. It never waives the lower bound. The waiver is the existing owner row
 `PROBLEM.md:224` `- IFA has one waiver district, MD+DE+WV whole (about $1,924M, 54% over target), recorded on every map that uses it; no other district is exempt (F1 widened, owner 2026-10-08): [#130](https://github.com/helios1168/td/issues/130).`
-Entry: `tools/looks/score.py:325`
+Entry: `tools/looks/score.py:335`
 `def dollar_gate(ledger: list, districts: list, rates: dict, windows: dict = WINDOWS) -> list:`.
 The IFA-only caller supplies its own window and rate, not the extract's rates:
-`tools/looks/score.py:522`
+`tools/looks/score.py:533`
 `        gate = dollar_gate(ledger, districts, IFA_RATES, IFA_WINDOW)     # #105, owner, 2026-10-15`.
 
 Use §9.1's $P,q,a$ variables, conjunction constraints and test objective $\max a$, with
-$P$ comprising every $q_j$, non-band audit success, raw M1 success, and the retained
-whole-extract-average test
+$P$ comprising district-table equality $q_{\rm table}=[J_{\rm ledger}=J]$, every $q_j$,
+non-band audit success, raw M1 success, and the retained whole-extract-average test
 $1.125\,10^9\le\operatorname{round}(\bar D)\le1.375\,10^9$,
 where production reports $\bar D=62.14\,10^9/K$ for IFA-only runs. A supplied district
 gate replaces the symmetric $\tau\pm15\%$ eligibility check, not this average check.
-The actual band audit row is informational. Entry: `tools/looks/score.py:463`
+The actual band audit row is informational. Entry: `tools/looks/score.py:473`
 `def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict,`.
+Before scoring, the public scorer requires equality of the ledger's and table's sets of
+(planning channel, district), including zero-opportunity ownership. A missing or extra
+district raises instead of returning an eligibility verdict; in the specification this
+is nonacceptance ($a=0$). Entry: `tools/looks/score.py:325`
+`def check_districts(ledger: list, districts: list) -> None:`; caller:
+`tools/looks/score.py:525` `    check_districts(ledger, districts)`.
 Diagnostic-run rejection remains an external veto in `score`; this fixed-evidence model
-certifies only the dollar-gate/eligibility function, not coverage or the full scoring path.
+certifies that table precondition and dollar-gate/eligibility logic, not ZIP/cell coverage
+or the full scoring path.
 The scorer still requires raw M1 success: the Manhattan adjudication is applied by the
 assembly/index paths, not by `eligibility` itself.
 
 **Distinct domains:** F9.I's index windows have no MD+DE+WV waiver and no average test;
 F9.S describes scorer behavior, not a replacement for that stricter index window.
 Main-map dollar rows also now compare unrounded dollars, with their existing conditional
-WIFI cap. The exact comparison is `tools/looks/score.py:347`
+WIFI cap. The exact comparison is `tools/looks/score.py:357`
 `        inside = lo is not None and lo <= x <= hi`.
 
-Spec entry: `td/formulation/certificates.py:125`
+Spec entry: `td/formulation/certificates.py:127`
 `def scorer_ifa_model(*, cells, districts, average, audit_ok=True, m1_pass=True,`.
 The 30-vertex conformance cases independently derive dollars, state ownership and waiver
 from cells, test endpoints and sub-dollar breaches, an extra/shared/missing waiver state,
 native IFA units, the informational band, and the separate audit, M1 and average vetoes.
+Matching, missing and extra district-table rows are compared with the production guard;
+the mismatches also execute the public scorer and must fail before geometry evaluation.
 Each compares the acceptance optimum at zero gap and both fixed acceptance-point verdicts.
 
 ## 10. Where each council item lands
@@ -1788,16 +1797,21 @@ ZCTA, and an unresolved neck, any other item, an unverified status, a diagnostic
 missing, unreadable or mismatched evidence, or unmeasured necks, still vetoes. These are $P$ in §9.1's
 conjunction. Missing gate completion (no exit code, or a code other than 0 or 1) is failure,
 not success; a saved passing `m1.json` cannot override a nonzero exit. Entry:
-`tools/exp/contig/sealed.py:961`
+`tools/exp/contig/sealed.py:963`
 `def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),`.
 
 **Eligibility after the adjudication.** The looks scorer adds its own raw-M1 reason
-(`M1: fail, ...`) to `score.txt`'s eligibility. The adjudication replaces that one veto and
-no other: after a gate that exited 1 and passed the adjudication, `scorer_eligibility` drops
-the scorer's `M1:` reasons (not `M1: not checked`); any remaining reason, a reason-less
-`eligible: no`, or a gate that did not exit 1 keeps the point `ineligible`. So the labels
-and F9.I use the same Manhattan-item predicate; their other eligibility/window predicates
-remain distinct.
+(`M1: fail, ...`) and may duplicate it from the scorecard (`audit: M1 polygon contiguity fails`).
+After a gate that exited 1 and passed the adjudication, `scorer_eligibility` drops both
+representations of that veto, not other audit reasons or `M1: not checked`. If $R$ is the
+scorer's reason set, $V$ its `M1:` reasons excluding `M1: not checked`, and $b$ the exact
+duplicate audit string above, the residual set changes from $R\setminus V$ to
+$R\setminus(V\cup\{b\})$. A false eligibility flag is cleared only when $R\ne\varnothing$
+and that residual is empty. Any remaining reason or a reason-less `eligible: no` still
+vetoes; without the completed, passing adjudication the original flag stands.
+The labels and F9.I use the same Manhattan-item predicate; their other eligibility/window
+predicates remain distinct. Entry for the filter: `tools/exp/contig/sealed.py:959`
+`    keep = [w for w in why if w != dup and (not w.startswith("M1: ") or w.startswith("M1: not checked"))]`.
 Entry: `tools/exp/contig/sealed.py:950`
 `def scorer_eligibility(eligible: bool, why, verdict: dict | None, gate_rc: int | None) -> tuple:`;
 the spec `td/formulation/certificates.py:78`
@@ -1825,9 +1839,9 @@ Entry for the scoring command:
 The original overnight Runner now uses this same F11.R certificate, with label
 `eligible` in place of `passes`. Its final-folder gate stage records the evidence above;
 a capped stage stops the point, and it computes windows from the full extract instead of
-trusting rounded or stale `dollars.csv`. Entry: `tools/exp/contig/overnight.py:763`
+trusting rounded or stale `dollars.csv`. Entry: `tools/exp/contig/overnight.py:772`
 `    def _label_final(self, pt: dict, pdir: str, final: str) -> tuple:`.
-The label adapter is `tools/exp/contig/overnight.py:451`
+The label adapter is `tools/exp/contig/overnight.py:456`
 `def label_of(m1: dict, rows: list, eligible: bool, why: list, gate_rc: int | None, verdict: dict | None = None,`.
 
 Derived cut, merged and dollar extracts strip sales fields, without changing these dollar
@@ -1837,16 +1851,16 @@ predicates: `tools/exp/contig/sealed.py:460`
 `tools/exp/contig/dollarize.py:123` `    usd = _strip_sales(usd)`.
 The cell-level F11.R/W specification independently computes $D_j$ from the full-extract
 cell masses and supplied rates, with the effective bounds (including any applicable
-whole-state cap) as fixed evidence. Entry: `td/formulation/certificates.py:99`
+whole-state cap) as fixed evidence. Entry: `td/formulation/certificates.py:101`
 `def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(), listed_districts=None, **gate):`.
 It does not infer routing or the whole-state classification. The 30-vertex conformance test
 compares its acceptance optimum and both fixed acceptance points against `exact_rows`
 and `label_point`, rather than supplying the production window verdict to the spec.
 It covers both window endpoints and sub-dollar breaches on either side, and verifies that
 stale ledger amounts do not override the full extract. Separate cases cover missing/nonzero
-gate exits, a Manhattan-only failed gate that stays eligible and one that keeps another
-eligibility reason, and the full-extract argument in the production command chain. The
-30-vertex overnight Runner test executes its final-label path with a controlled stage
+gate exits, a Manhattan-only failed gate that stays eligible even with both raw-M1 reasons,
+one that keeps another audit/eligibility reason or `M1: not checked`, and the full-extract
+argument in the production command chain. The 30-vertex overnight Runner test executes its final-label path with a controlled stage
 result, including absent/crashed gates, Manhattan evidence with measured/unmeasured
 necks, stale ledger dollars, sub-dollar window breaches and a missing district-table row.
 These tests certify acceptance logic, not operating-system process cleanup.
