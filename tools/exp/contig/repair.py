@@ -453,20 +453,30 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
         left = t_end - time.time()
         if left <= 1.0:
             return None
-        with scip_engine().installed(draw) if engine == "scip" else contextlib.nullcontext():
+        with scip_engine().installed(draw) if engine == "scip" else contextlib.nullcontext([]) as runs:
             g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
                                   hold, plan, planned, support, inst, lo, hi, "arm1", False,
                                   min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
                                   start=seed, count=count, layers=True, flow=flow, border=border,
                                   necks=cutter, neck_seed={z: owner[z] for z in zs})
+        if runs and runs[-1]["status"] == "crash":
+            # the engine's stop reason (trap 15): the solve ended in a native fault, in both settings.
+            # A drawing draw.py's construct heuristic holds was never improved or proved: unknown,
+            # not infeasible, no growth, no drawing taken
+            g.status, g.owner = "unknown", {}
+            g.note = f"SCIP crashed ({runs[-1]['signal']}) in both settings; " + g.note
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
             f"{'' if cap else ' (no cap)'}{' [scip]' if engine == 'scip' else ''}: "
             f"{len(g.districts)} districts, {g.columns} columns"
             f" -> {g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
             f"{(' (' + g.note + ')') if g.note else ''}")
+        calls.append(runs)
         return g
-    tried = []
+    tried, calls = [], []
     g = draw._attempt(solve, None, tried)
+    for t, runs in zip(tried, calls):       # a SCIP crash and its retry are in the record (scip_engine.py)
+        if runs:
+            t["engine_runs"] = runs
     if g is None:
         g = draw.Group(js, sorted({unit_of[z] for z in zs}), len(zs), 0, 0,
                        note="not tried: no time left")

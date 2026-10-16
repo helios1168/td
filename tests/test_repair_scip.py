@@ -453,3 +453,111 @@ def test_a_window_scip_proves_infeasible_grows_and_the_grown_window_is_solved_by
     assert grown["districts"] == sorted((a, b, c)) and grown["pieces_before"] == 1 and grown["pieces_after"] == 0
     assert repair.detached(done, adj, m) == []
     assert done == {"p": b, "b": b, "a1": a, "a2": a, "c1": a, "c2": c, "c3": c, "c4": c}, done
+
+
+# ------------------------------------------------------------------------------ a native crash
+# A solver the child runs in place of `arms.scip_solve`: it kills itself with SIGSEGV as SCIP did on
+# nw49-48, in the default setting (`TD_TEST_CRASH_ALWAYS`: in both), and otherwise solves for real.
+CRASHY = '''
+import os, signal
+import arms
+
+def solve(inst, time_limit, log=print, start=None, heuristics=True):
+    if heuristics or os.environ.get("TD_TEST_CRASH_ALWAYS"):
+        log("  c: about to fault")
+        os.kill(os.getpid(), signal.SIGSEGV)
+    return arms.scip_solve(inst, time_limit, log, start=start, heuristics=heuristics)
+'''
+
+
+@contextlib.contextmanager
+def _crashing(always=False):
+    import tempfile
+    engine = _repair().scip_engine()
+    old, old_env = engine.CHILD_SOLVER, os.environ.get("TD_TEST_CRASH_ALWAYS")
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "crashy.py")
+        with open(path, "w") as fh:
+            fh.write(CRASHY)
+        engine.CHILD_SOLVER = f"{path}:solve"
+        if always:
+            os.environ["TD_TEST_CRASH_ALWAYS"] = "1"
+        try:
+            yield engine
+        finally:
+            engine.CHILD_SOLVER = old
+            if old_env is None:
+                os.environ.pop("TD_TEST_CRASH_ALWAYS", None)
+            else:
+                os.environ["TD_TEST_CRASH_ALWAYS"] = old_env
+
+
+def _crash_group(always):
+    repair, draw = _repair(), tcr._draw()
+    name, kw = synth.cases()[0]
+    inst = synth.grid(name, **kw)
+    lines = []
+    args, skw = capture.rebuild_args(inst.doc["draw"])
+    skw.update(dag=False, flow=False, layers=True, log=lines.append)
+    with _crashing(always), repair.scip_engine().installed(draw) as runs, \
+            capture.centres_patch(draw, inst.doc["draw"]):
+        g = draw._solve_group(*args[:19], 120.0, **skw)
+    return g, runs, lines
+
+
+def test_a_crash_is_retried_once_with_heuristics_off_and_the_window_is_solved():
+    g, runs, lines = _crash_group(always=False)
+    assert g.status == "optimal", (g.status, g.note, lines)
+    first = runs[0]
+    assert (first["heuristics"], first["status"], first["signal"]) == (True, "crash", "SIGSEGV"), runs
+    assert (runs[1]["heuristics"], runs[1]["status"]) == (False, "optimal"), runs
+    assert sum(1 for r in runs if r["status"] == "crash") == 1, runs
+    assert any("SCIP crashed" in x and "SIGSEGV" in x and "retrying once with primal heuristics off" in x
+               for x in lines), lines
+    assert any("primal heuristics off" in x for x in lines)
+
+
+def test_a_crash_on_the_retry_leaves_the_window_unknown_not_infeasible():
+    """At the group level the crash is `kSolveError`, no incumbent; `solve_window` then files the
+    window `unknown` and takes no drawing, even one draw.py's construct heuristic holds."""
+    g, runs, lines = _crash_group(always=True)
+    assert g.status != "infeasible" and "SCIP crash" in g.note and "SIGSEGV" in g.note, (g.status, g.note)
+    assert [(r["heuristics"], r["status"], r["signal"]) for r in runs] == \
+        [(True, "crash", "SIGSEGV"), (False, "crash", "SIGSEGV")], runs
+    repair = _repair()
+    inst, xy, plan, owner, _ = _grow_toy()
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    with _crashing(always=True):
+        w = repair.solve_window(inst, plan, owner, {"p", "b"}, p, 60.0, True, quiet, engine="scip")
+    assert w.status == "unknown" and w.owner == {}, (w.status, w.owner)
+    assert w.note.startswith("SCIP crashed (SIGSEGV) in both settings"), w.note
+    assert [r["status"] for t in w.tried for r in t["engine_runs"]] == ["crash", "crash"] * len(w.tried)
+
+
+def test_the_driver_survives_a_crashing_engine_and_does_not_grow_the_window():
+    """`repair_channel` on the growth toy, whose ball window SCIP proves infeasible when it runs:
+    with the solver faulting in both settings every window ends `unknown`, nothing grows, and the
+    call returns the map unchanged with the crash recorded under each attempt."""
+    repair = _repair()
+    inst, xy, plan, owner, _ = _grow_toy()
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    lines, old = [], os.environ.get(repair.ENGINE_ENV)
+    try:
+        os.environ[repair.ENGINE_ENV] = "scip"
+        with _crashing(always=True):
+            done, attempts = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,
+                                                   max_zctas=100, time_limit=60.0, log=lines.append,
+                                                   grow_max=3)
+    finally:
+        if old is None:
+            os.environ.pop(repair.ENGINE_ENV, None)
+        else:
+            os.environ[repair.ENGINE_ENV] = old
+    assert attempts and {x["status"] for x in attempts} == {"unknown"}, [(x["shape"], x["status"]) for x in attempts]
+    assert not any(x["shape"].startswith("grow") for x in attempts), [x["shape"] for x in attempts]
+    assert not any("growing by" in x for x in lines), lines
+    assert done == owner
+    for x in attempts:
+        runs = [r for t in x["tried"] for r in t.get("engine_runs", ())]
+        assert runs and all(r["status"] == "crash" and r["signal"] == "SIGSEGV" for r in runs), x["tried"]
+        assert {r["heuristics"] for r in runs} == {True, False}, runs

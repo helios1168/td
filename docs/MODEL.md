@@ -1051,8 +1051,11 @@ cap, DAG, optional flow and dynamically added neck rows, unlike the stripped pha
 export. The start is an incumbent hint, not a constraint. Relative gap is zero; SCIP's
 absolute objective gap is $10^{-6}$ throughout. The HiGHS path retains its loose first
 phase followed by the final $10^{-6}$ solve. An engine's unknown is not a proof; the
-DAG-only infeasibility cannot authorize growth. Entry: `tools/exp/bnc/scip_engine.py:120`
-`def installed(draw):`; matrix transfer: `tools/exp/bnc/scip_engine.py:51`
+DAG-only infeasibility cannot authorize growth. A SCIP solve runs in a child process; a
+native fault (SIGSEGV on a 1,396-ZCTA window) is the engine's stop reason `crash`, repeated
+once with SCIP's primal heuristics off, and a second crash leaves the window `unknown`
+(never `infeasible`, so no growth). Entry: `tools/exp/bnc/scip_engine.py:258`
+`def installed(draw):`; matrix transfer: `tools/exp/bnc/scip_engine.py:69`
 `def instance_of(h, loc: dict) -> inst_io.Inst:`.
 
 **Growing the assignment restriction (#142 phase 2).** Previously the cluster stopped at
@@ -1921,7 +1924,7 @@ applies to each; the implementations differ in how they enforce the same P requi
   is §12.1 but the highspy lazy callback is never invoked in the 20-node probe; status is
   `not usable`. If the probe ever reports usable, the current function raises
   `NotImplementedError`, rather than silently solving without connectivity. Entry
-  at `tools/exp/bnc/arms.py:313`:
+  at `tools/exp/bnc/arms.py:318`:
   `def probe_highs_lazy(log=print) -> dict:`. It picks four vertices of a 20-node path at
   minimum cost with cheap disconnected endpoints, so a working callback must exclude that
   assignment. It is a capability test, not a fourth successful solve.
