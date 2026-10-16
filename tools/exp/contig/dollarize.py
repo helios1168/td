@@ -12,9 +12,9 @@ owner total (career, edj, imo, priafs, which every main-map scenario plans elsew
 into a file of another unit.  A run's `manifest.json` records the output's path and sha256
 (`run.write_manifest`), so a run traces back through `dollar_scale` to its descaled source.
 
-The output keeps the source's per-rep shares and firm map, so it is as confidential as the source:
-`main` refuses a name `.gitignore`'s `instance_descaled*.json.gz` does not cover, the source
-itself, and a source already in dollars.  `to_m_rel` is the reversal (`export_long.py`).  Nothing
+The written file carries no sales data (`state_extract.strip_sales`: empty per-rep shares, zero `share_free`, no firm
+map; `scale` itself keeps them).  Its dollars are still the owner's, so `main` refuses a name `.gitignore`'s
+`instance_descaled*.json.gz` does not cover, the source itself, and a source already in dollars.  `to_m_rel` is the reversal (`export_long.py`).  Nothing
 here prints a row's values.
 """
 from __future__ import annotations
@@ -47,6 +47,17 @@ def _score():
         sys.modules["looks_score"] = mod
         spec.loader.exec_module(mod)
     return sys.modules["looks_score"]
+
+
+def _strip_sales(ext: data.Extract) -> data.Extract:
+    """`state_extract.strip_sales`, loaded by path once (AGENTS.md, Masking)."""
+    if "contig_state_extract" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            "contig_state_extract", os.path.join(os.path.dirname(os.path.abspath(__file__)), "state_extract.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["contig_state_extract"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["contig_state_extract"].strip_sales(ext)
 
 
 def sha256(path: str) -> str:
@@ -101,7 +112,7 @@ def main(argv=None) -> int:
     ap.add_argument("out", help=f"the dollar extract; its name must match {IGNORED}")
     a = ap.parse_args(argv)
     if not fnmatch.fnmatch(os.path.basename(a.out), IGNORED):
-        sys.exit(f"{a.out}: the name must match {IGNORED} (.gitignore), the file carries rep shares")
+        sys.exit(f"{a.out}: the name must match {IGNORED} (.gitignore), the file is the owner's dollars")
     if os.path.exists(a.out) and os.path.samefile(a.source, a.out):
         sys.exit(f"{a.out} is the source")
     ext = data.load(a.source)
@@ -109,6 +120,7 @@ def main(argv=None) -> int:
         usd = scale(ext, os.path.basename(a.source), sha256(a.source))
     except ValueError as e:
         sys.exit(f"{a.source}: {e}")
+    usd = _strip_sales(usd)
     data.write(usd, a.out)
     info = usd.meta[KEY]
     print(f"{a.out}: {len(usd.z)} cells in {UNIT}, channels {', '.join(usd.channels)}; dropped "

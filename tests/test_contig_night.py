@@ -51,6 +51,52 @@ def test_a_state_extract_carries_no_rep_shares_share_free_or_firm_map():
     assert got.share == [{}, {}] and got.share_free == [0.0, 0.0] and got.firm == {}
 
 
+def _no_sales(ext: data.Extract) -> bool:
+    return all(sh == {} for sh in ext.share) and all(f == 0.0 for f in ext.share_free) and ext.firm == {}
+
+
+def test_a_merged_extract_written_by_merge_carries_no_sales_data():
+    merge = _import("contig_merge_masking", "merge.py")
+    ref = {"zcta": ["10001", "10002", "20001"], "state": ["NY", "NY", "DC"]}
+    real = geo.read_reference
+    geo.read_reference = lambda *a, **k: ref
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, "base.json.gz")
+            data.write(_sales_extract(), base)
+            full = _sales_extract()
+            folders = []
+            for name, keep in (("ny", {"10001", "10002"}), ("dc", {"20001"})):
+                f = os.path.join(tmp, name)
+                os.makedirs(f)
+                data.write(full.subset(keep), os.path.join(f, "x.json.gz"))        # a source that still carries sales
+                json.dump({"extract": os.path.join(f, "x.json.gz")}, open(os.path.join(f, "manifest.json"), "w"))
+                folders.append(f)
+            sources = [("NY", ("NY",), folders[0]), ("DC", ("DC",), folders[1])]
+            assert any(any(sh) for sh in data.load(os.path.join(folders[0], "x.json.gz")).share)
+            for kw in ({}, {"base": base}):                                       # merged sources, then the base's cut
+                out = os.path.join(tmp, "out", "m.json.gz")
+                merge.write_extract(sources, out, **kw)
+                got = data.load(out)
+                assert sorted(got.z) == ["10001", "10002", "20001"] and sum(got.m_rel) == 6.0     # m_rel is kept
+                assert _no_sales(got), kw
+    finally:
+        geo.read_reference = real
+
+
+def test_the_dollar_extract_dollarize_writes_carries_no_sales_data():
+    dollarize = _import("contig_dollarize_masking", "dollarize.py")
+    ext = data.Extract(("wh",), ["10001", "10002"], ["wh"] * 2, [1.0, 2.0], [{"R1": 0.4}, {"R2": 1.0}], [0.1, 0.2],
+                       {"R1": "F1", "R2": "F2"}, {"channels": ["wh"]})
+    with tempfile.TemporaryDirectory() as tmp:
+        src, out = os.path.join(tmp, "instance_descaled.json.gz"), os.path.join(tmp, "instance_descaled_usd.json.gz")
+        data.write(ext, src)
+        assert dollarize.main([src, out]) == 0
+        got = data.load(out)
+    assert got.meta["dollar_scale"]["unit"] == "$M" and len(got.m_rel) == 2 and all(m > 0 for m in got.m_rel)
+    assert _no_sales(got)
+
+
 # ------------------------------------------------------------------------------ C1, C2: the IFA index
 ifa_index = _import("contig_ifa_index_night", "ifa_index_night.py")
 score = ifa_index.check_gate().score

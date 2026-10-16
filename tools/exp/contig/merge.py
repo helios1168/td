@@ -196,9 +196,20 @@ def merge_extracts(extracts: list) -> data.Extract:
                         cat("share_free"), firm, dict(first.meta), {})
 
 
+def _strip_sales(ext: data.Extract) -> data.Extract:
+    """`state_extract.strip_sales`, loaded by path once (AGENTS.md, Masking)."""
+    if "contig_state_extract" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("contig_state_extract", os.path.join(HERE, "state_extract.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["contig_state_extract"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["contig_state_extract"].strip_sales(ext)
+
+
 def write_extract(sources: list, path: str, base: str | None = None) -> str:
     """The sources' extracts (their manifests' `extract`) merged and written to `path`; with
-    `base`, `base`'s rows in the sources' states (`Extract.subset`) instead."""
+    `base`, `base`'s rows in the sources' states (`Extract.subset`) instead.  The written extract carries no
+    sales data (`state_extract.strip_sales`: no per-rep shares, `share_free` or firm map)."""
     if base is None:
         ext = merge_extracts([data.load(json.load(open(os.path.join(f, "manifest.json"),
                                                        encoding="utf-8"))["extract"])
@@ -210,7 +221,7 @@ def write_extract(sources: list, path: str, base: str | None = None) -> str:
         full = data.load(base)
         ext = full.subset({z for z in set(full.z) if state.get(z) in keep})
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    data.write(ext, path)
+    data.write(_strip_sales(ext), path)
     return path
 
 
