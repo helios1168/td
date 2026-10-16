@@ -378,8 +378,16 @@ def all_runs(a) -> int:
     with first_sigint():        # a second Ctrl-C during the cleanup below is held until every group is ended
         try:
             _drive(a, jobs, running, todo, failed)
-        except BaseException:   # every child has its own session: an interrupt reaches none of them
-            reap_all(running)
+        except BaseException as e:      # every child has its own session: an interrupt reaches none of them
+            interrupted = False
+            while True:         # the first Ctrl-C can land on the entry to `reap_all`, before its own retry exists
+                try:
+                    reap_all(running)
+                    break
+                except KeyboardInterrupt:
+                    interrupted = True
+            if interrupted and not isinstance(e, KeyboardInterrupt):
+                raise KeyboardInterrupt from e
             raise
     report.write(a.out, a.instances)
     for i, r, rc in failed:

@@ -915,3 +915,62 @@ def test_a_second_interrupt_on_entry_to_the_campaign_cleanup_still_ends_the_grou
     finally:
         sys.settrace(None)
     assert sent, "the second interrupt was never delivered"
+
+
+def test_a_first_interrupt_on_entry_to_the_cleanup_after_a_failed_spawn_still_ends_every_earlier_group():
+    """A later spawn raises OSError, so the cleanup is entered by that error and the campaign's first Ctrl-C lands on
+    `reap_all`'s first line: the entry is retried, and every earlier group is ended and reaped."""
+    import signal
+    import subprocess
+    import time as real_time
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        a.arms, a.jobs = ["a", "b", "c"], 3
+        script = ("import os, sys, time; open(sys.argv[1], 'w').write(str(os.getpid())); time.sleep(120)")
+        real_popen, procs = subprocess.Popen, []
+
+        def popen(cmd, **kw):
+            if cmd[5] == "c":
+                for _ in range(300):        # the earlier children are up (their pid files written) when the spawn fails
+                    if all(os.path.exists(os.path.join(d, "pid_" + x)) for x in "ab"):
+                        break
+                    real_time.sleep(0.05)
+                raise OSError("fork failed")
+            procs.append(real_popen([sys.executable, "-c", script, os.path.join(d, "pid_" + cmd[5])], **kw))
+            return procs[-1]
+        sent = []
+
+        def first_interrupt(frame, event, arg):
+            if not sent and event == "line" and frame.f_code is bnc_run.reap_all.__code__:
+                sent.append(1)
+                os.kill(os.getpid(), signal.SIGINT)
+            return first_interrupt
+        saved, grace = bnc_run.subprocess, bnc_run.END_GRACE
+        bnc_run.END_GRACE = 5.0
+        bnc_run.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
+                                                   TimeoutExpired=subprocess.TimeoutExpired)
+        os.makedirs(a.instances)
+        left = []
+        sys.settrace(first_interrupt)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                try:
+                    bnc_run.all_runs(a)
+                except KeyboardInterrupt:
+                    pass
+                else:
+                    raise AssertionError("the interrupt was lost")
+        finally:
+            sys.settrace(None)
+            bnc_run.subprocess, bnc_run.END_GRACE = saved, grace
+            for p in procs:
+                if p.poll() is None:
+                    left.append(p.pid)
+                    os.killpg(p.pid, signal.SIGKILL)
+                    p.wait()
+        assert sent, "the interrupt was never delivered"
+        assert not left, f"the cleanup left child groups {left} running"
+        assert len(procs) == 2
+        for p, arm in zip(procs, "ab"):
+            assert p.returncode is not None, "a child group's leader was never reaped"
+            assert _gone(int(open(os.path.join(d, "pid_" + arm)).read()))
