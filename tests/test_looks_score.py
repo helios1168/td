@@ -297,7 +297,7 @@ def test_write_dollars():
     assert got[2] == ["WIFI", "W_02", "900.0", "850.0", "1150.0", "", "B", "0", "0", "0", "1"]
 
 
-def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
+def _score_toy(ch: str, rates: dict, fine=None, run_json=None, omit=None) -> dict:
     """`score.score` on a run folder holding channel `ch` laid out as X; with `fine`, its
     `run.json` names the scenario's fine channels; `run_json` adds to that file."""
     with tempfile.TemporaryDirectory() as d:
@@ -312,7 +312,7 @@ def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
         with open(os.path.join(d, "districts.csv"), "w", newline="") as fh:
             w = csv.DictWriter(fh, ["channel", "district", "drawn_mass"])
             w.writeheader()
-            w.writerows(_districts(ch, (1.0, 1.0)))
+            w.writerows(r for r in _districts(ch, (1.0, 1.0)) if r["district"] != omit)
         with open(os.path.join(d, "scorecard.md"), "w") as fh:
             fh.write(SCORECARD)
         return score.score(d, _geo(), rates)
@@ -354,6 +354,26 @@ def test_score_run_folder():
     # the scenario's fine channels come from run.json (#116): fi has no row at all
     both = _score_toy("WH", {"wh": 1.0e9}, fine=["wh", "fi"])
     assert both["m1"]["no_row"] == 2 + 6 and "from the ledger" not in both["m1"]["summary"]
+
+
+def test_score_refuses_a_ledger_and_district_table_that_name_different_districts():
+    """The gate walks districts.csv: an omitted (here under-window) district would never meet its window."""
+    for ch, rates in (("WH", {"wh": 1.0e9}), ("IFA", {})):
+        try:
+            _score_toy(ch, rates, omit=f"{ch}_02")
+        except ValueError as e:
+            assert "different districts" in str(e) and f"{ch}_02" in str(e), str(e)
+        else:
+            raise AssertionError(f"{ch}: a district the table omits was scored")
+    ledger = [{"model_channel": "WH", "district": "WH_01"}, {"model_channel": "WH", "district": ""}]
+    score.check_districts(ledger, [{"channel": "WH", "district": "WH_01"}])
+    for table in ([], [{"channel": "WH", "district": "WH_01"}, {"channel": "WH", "district": "WH_02"}],
+                  [{"channel": "FI", "district": "WH_01"}]):      # the pair is channel-qualified
+        try:
+            score.check_districts(ledger, table)
+        except ValueError:
+            continue
+        raise AssertionError(f"{table} was accepted")
 
 
 def _s(run, splits, defects, eligible=True, extent=100.0, worst=0.05):

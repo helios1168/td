@@ -730,3 +730,57 @@ def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
             assert bnc_run.all_runs(a) == 0
     finally:
         bnc_run.subprocess, bnc_run.time = saved
+
+
+def test_all_interrupted_ends_and_reaps_every_child_group_and_its_descendants():
+    """Each child has its own session, so a Ctrl-C reaches none of them: `all_runs` must end each child's group."""
+    import signal
+    import subprocess
+    import time as real_time
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        a.arms, a.jobs = ["a"], 1
+        pids = os.path.join(d, "pids")
+        # the child starts a grandchild that ignores SIGINT (a solver descendant) and sleeps
+        script = ("import os, signal, subprocess, sys, time; "
+                  "g = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(120)'], "
+                  "preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)); "
+                  f"open({pids!r}, 'w').write(f'{{os.getpid()}} {{g.pid}}'); time.sleep(120)")
+        real_popen, seen = subprocess.Popen, {}
+
+        def popen(cmd, **kw):
+            seen["kw"] = kw
+            return real_popen([sys.executable, "-c", script], **kw)
+
+        def sleep(s):
+            if not seen.get("interrupted") and os.path.exists(pids) and len(open(pids).read().split()) == 2:
+                seen["interrupted"] = True
+                raise KeyboardInterrupt
+            real_time.sleep(0.05)
+        saved, grace = (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE
+        bnc_run.END_GRACE = 2.0          # the SIGINT-ignoring grandchild is killed when the grace is up
+        bnc_run.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
+                                                   TimeoutExpired=subprocess.TimeoutExpired)
+        bnc_run.time = types.SimpleNamespace(sleep=sleep, time=real_time.time)
+        os.makedirs(a.instances)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                try:
+                    bnc_run.all_runs(a)
+                except KeyboardInterrupt:
+                    pass
+                else:
+                    raise AssertionError("the interrupt never reached the launcher")
+        finally:
+            (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE = saved, grace
+        assert seen["kw"]["start_new_session"] is True
+        for pid in map(int, open(pids).read().split()):
+            for _ in range(50):         # a killed grandchild is reaped by init a moment later
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+                real_time.sleep(0.1)
+            else:
+                os.kill(pid, signal.SIGKILL)
+                raise AssertionError(f"process {pid} of the interrupted campaign is still running")

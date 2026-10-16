@@ -201,6 +201,11 @@ MEM_GIB = {"m2": 24}            # the memory the smoke's peak RSS divides (D12)
 PDF_PAGE = (2600, 1500)         # a page without a map, when no map sets the size
 LIVE = set()                    # the stage processes running, for the stop
 LIVE_LOCK = threading.Lock()
+HALT = threading.Event()        # set by `schedule` while it unwinds: no stage starts, a started one is ended
+
+
+class Halted(BaseException):
+    """A stage refused because the scheduler is unwinding; not an `Exception`, so no point is labelled by it."""
 
 
 _LOAD_LOCK = threading.RLock()     # points start on threads; a module is never seen half-loaded
@@ -581,6 +586,8 @@ def _end(p) -> int:
 def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | None = None) -> dict:
     """One stage: `cmd` in its own process group, stdout and stderr to `log_path`, killed at
     `cap` seconds or at `deadline`; {rc, seconds, stop: None, "cap" or "deadline"}."""
+    if HALT.is_set():
+        raise Halted("the scheduler is unwinding")
     left = deadline - time.time()
     if left <= 0:
         return {"rc": None, "seconds": 0.0, "stop": "deadline"}
@@ -591,6 +598,8 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
         try:
             with LIVE_LOCK:
                 LIVE.add(p)
+            if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
+                raise Halted("the scheduler is unwinding")
             rc = p.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             stop = "deadline" if left <= cap else "cap"
@@ -852,27 +861,38 @@ def schedule(todo: list, slots: int, deadline: float, work, need=slots_of, clock
     """Run `work(point)` for the points of `todo`, in order, on `slots` slots, a point holding
     `need(point)` while it runs, first fit (a smaller point fills slots a larger one cannot);
     the points `work` returns (re-runs) go to the front of the queue.  No point starts at or after
-    `deadline`; returns those never started."""
+    `deadline`; returns those never started.  An interrupt (or a `work` that raises) ends every live stage
+    process group first (`HALT`, `stop_all`), then joins the workers; no stage starts meanwhile."""
     big = [p["id"] for p in todo if need(p) > slots]
     if big:
         raise ValueError(f"points needing more than {slots} slots: {big}")
     queue, running, free = list(todo), {}, slots
-    with concurrent.futures.ThreadPoolExecutor(max_workers=slots) as pool:
-        while queue or running:
-            if clock() < deadline:
-                for p in list(queue):
-                    if need(p) <= free:
-                        queue.remove(p)
-                        free -= need(p)
-                        running[pool.submit(work, p)] = p
-            if not running:
-                break
-            done, _ = concurrent.futures.wait(running, timeout=poll,
-                                              return_when=concurrent.futures.FIRST_COMPLETED)
-            for f in done:
-                p = running.pop(f)
-                free += need(p)
-                queue[:0] = f.result() or []
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=slots) as pool:
+            try:
+                while queue or running:
+                    if clock() < deadline:
+                        for p in list(queue):
+                            if need(p) <= free:
+                                queue.remove(p)
+                                free -= need(p)
+                                running[pool.submit(work, p)] = p
+                    if not running:
+                        break
+                    done, _ = concurrent.futures.wait(running, timeout=poll,
+                                                      return_when=concurrent.futures.FIRST_COMPLETED)
+                    for f in done:
+                        p = running.pop(f)
+                        free += need(p)
+                        queue[:0] = f.result() or []
+            except BaseException:   # before the pool's exit joins the workers: they wait on their stages
+                HALT.set()
+                for f in running:
+                    f.cancel()
+                stop_all()
+                raise
+    finally:
+        HALT.clear()
     return queue
 
 

@@ -322,6 +322,16 @@ def district_dollars(ch: str, ledger: list, rates: dict) -> dict:
     return out
 
 
+def check_districts(ledger: list, districts: list) -> None:
+    """Raise unless `ledger.csv` and `districts.csv` name the same (channel, district) pairs: the gate walks
+    `districts.csv`, so a district the table omits would never meet its window (as in `sealed.exact_rows`)."""
+    owned = {(r["model_channel"], r["district"]) for r in ledger if r["district"]}
+    listed = {(r["channel"], r["district"]) for r in districts}
+    if owned != listed:
+        raise ValueError(f"ledger.csv and districts.csv name different districts: only in the ledger "
+                         f"{sorted(owned - listed)[:5]}, only in districts.csv {sorted(listed - owned)[:5]}")
+
+
 def dollar_gate(ledger: list, districts: list, rates: dict, windows: dict = WINDOWS) -> list:
     """The dollar gate, one row per `districts.csv` row: `usd`, its channel's window in `windows`
     `lo`, `hi` (None without one), `states` it owns a ZCTA in, `whole_states` when it owns each
@@ -512,6 +522,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
         ledger = list(csv.DictReader(fh))
     with open(os.path.join(run_dir, "districts.csv"), newline="") as fh:
         districts = list(csv.DictReader(fh))
+    check_districts(ledger, districts)
     sc_path = os.path.join(run_dir, "scorecard.md")
     sc = open(sc_path, encoding="utf-8").read() if os.path.exists(sc_path) else ""
     chans = {ch: channel_looks(ch, ledger, districts, g) for ch in sorted({r["channel"] for r in districts})}

@@ -948,13 +948,15 @@ def manhattan_verdict(folder: str, gate_rc: int | None) -> dict | None:
 
 
 def scorer_eligibility(eligible: bool, why, verdict: dict | None, gate_rc: int | None) -> tuple:
-    """(eligible, why) with the scorer's raw-M1 reasons (`M1: fail, ...`, `score.eligibility`) dropped when the
+    """(eligible, why) with the scorer's raw-M1 reasons (`M1: fail, ...` and its scorecard duplicate
+    `audit: M1 polygon contiguity fails`, `score.eligibility`) dropped when the
     Manhattan adjudication passed a gate that exited 1: the adjudication replaces that one veto.  Every other
     reason stays (`M1: not checked` too), and a scorer that says `eligible: no` with no reason of its own
     stays ineligible."""
     if verdict is None or gate_rc != 1 or not verdict["passes"]:
         return eligible, list(why)
-    keep = [w for w in why if not w.startswith("M1: ") or w.startswith("M1: not checked")]
+    dup = f"audit: {score.audit.M1_CHECK} fails"
+    keep = [w for w in why if w != dup and (not w.startswith("M1: ") or w.startswith("M1: not checked"))]
     return eligible or (bool(why) and not keep), keep
 
 

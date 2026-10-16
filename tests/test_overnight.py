@@ -285,6 +285,45 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
             raise AssertionError(f"process {pid} of the interrupted stage is still running")
 
 
+def test_a_scheduler_interrupt_ends_the_live_stages_before_joining_and_starts_no_more():
+    """The pool's exit joins its workers, and a worker waits on its stage: `schedule` must end the live stage
+    groups itself, first, and refuse the next stage a worker would start."""
+    with tempfile.TemporaryDirectory() as tmp:
+        marker, pidfile = os.path.join(tmp, "second-stage"), os.path.join(tmp, "pid")
+        sleeper = [sys.executable, "-c", f"import os, time; open({pidfile!r}, 'w').write(str(os.getpid())); time.sleep(120)"]
+
+        def work(p):
+            overnight.child(sleeper, os.path.join(tmp, "a.log"), 120, time.time() + 300)
+            overnight.child([sys.executable, "-c", f"open({marker!r}, 'w').close()"], os.path.join(tmp, "b.log"),
+                            30, time.time() + 300)      # after the interrupt: refused
+
+        def clock():
+            if os.path.exists(pidfile) and open(pidfile).read():
+                raise KeyboardInterrupt
+            return time.time()
+        t0 = time.time()
+        try:
+            overnight.schedule([{"id": "p", "k": {"x": 1}}], 1, time.time() + 300, work, need=lambda p: 1, clock=clock, poll=0.05)
+        except KeyboardInterrupt:
+            pass
+        else:
+            raise AssertionError("the interrupt never reached the launcher")
+        assert time.time() - t0 < 60 and not overnight.LIVE and not overnight.HALT.is_set()
+        assert not os.path.exists(marker), "a stage started after the interrupt"
+        pid = int(open(pidfile).read())
+        for _ in range(50):
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.1)
+        else:
+            os.kill(pid, 9)
+            raise AssertionError("the interrupted stage is still running")
+        ok = overnight.child([sys.executable, "-c", "pass"], os.path.join(tmp, "c.log"), 30, time.time() + 60)
+        assert ok["rc"] == 0         # the halt is lifted once the scheduler has unwound
+
+
 def test_resume_keeps_finished_folders_and_sets_others_aside():
     with tempfile.TemporaryDirectory() as tmp:
         d = os.path.join(tmp, "draw")

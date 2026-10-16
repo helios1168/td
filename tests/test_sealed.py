@@ -1070,6 +1070,23 @@ def test_the_gate_stage_is_a_capped_child_that_records_its_own_evidence_and_a_st
         assert drv._merge(pt)[0] == "fails M1" and not os.path.exists(stale)
 
 
+def test_a_manhattan_only_pass_drops_both_m1_reasons_and_keeps_every_other_veto():
+    """`score.eligibility` gives an M1 failure two reasons, the scorer's `M1:` and the scorecard row's `audit:`."""
+    bad = {"status": "fail", "summary": "1 necks"}
+    rows = [{"district": "W_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0, "hi": 1150.0, "cap": None, "ok": True}]
+    manhattan = {"passes": True, "excepted": [("a neck in Manhattan", ["10001"])], "blocking": []}
+    raw, dup = "M1: fail, 1 necks", f"audit: {sealed.score.audit.M1_CHECK} fails"
+    routing, cover = "audit: ZIP contiguity fails", "audit: coverage fails"
+    assert sealed.scorer_eligibility(False, [dup, raw], manhattan, 1) == (True, [])
+    assert sealed.scorer_eligibility(False, [dup, raw, routing, cover], manhattan, 1) == (False, [routing, cover])
+    assert sealed.scorer_eligibility(False, [dup, raw, "M1: not checked"], manhattan, 1) == (False, ["M1: not checked"])
+    assert sealed.scorer_eligibility(False, [dup, raw], manhattan, 0) == (False, [dup, raw])
+    assert sealed.scorer_eligibility(False, [dup, raw], {**manhattan, "passes": False}, 1) == (False, [dup, raw])
+    assert sealed.label_point(bad, rows, [], False, False, [dup, raw], gate_rc=1, verdict=manhattan) == ("passes", "")
+    assert sealed.label_point(bad, rows, [], False, False, [dup, raw, routing], gate_rc=1,
+                              verdict=manhattan) == ("ineligible", routing)
+
+
 def test_a_manhattan_only_pass_drops_the_scorer_s_raw_m1_reason_and_no_other_veto():
     bad = {"status": "fail", "summary": "1 necks"}
     rows = [{"district": "W_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0, "hi": 1150.0, "cap": None, "ok": True}]

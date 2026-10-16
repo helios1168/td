@@ -45,6 +45,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -61,6 +62,7 @@ export = capture.sibling("bnc_export", "export.py")
 ROOT = export.ROOT
 TD_REPO = export.TD_REPO
 OUT = os.path.join(TD_REPO, "runs", "exp", "bnc_2026-10-15")
+END_GRACE = 10.0        # seconds a campaign child's group gets to stop on SIGINT before SIGKILL (`end_group`)
 INSTANCES = ("FI_PA", "FI_FL", "FI_NY", "WIFI_MD")
 
 
@@ -269,10 +271,53 @@ def _one(name: str, arm: str, a, cfg: dict, folder: str) -> int:
     return 0
 
 
+def end_group(proc) -> None:
+    """End a campaign child's process group and reap its leader: SIGINT (the solver stops and writes), then SIGKILL
+    to the group once `END_GRACE` seconds have passed with a member left, whether or not the leader exited (a solver
+    descendant outlives it)."""
+    def alive():
+        try:
+            os.killpg(proc.pid, 0)
+        except (ProcessLookupError, PermissionError):
+            return False
+        return True
+    grace = END_GRACE
+    end = time.time() + grace
+    try:
+        os.killpg(proc.pid, signal.SIGINT)
+    except (ProcessLookupError, PermissionError):
+        pass
+    try:
+        proc.wait(timeout=grace)
+    except subprocess.TimeoutExpired:
+        pass
+    while alive() and time.time() < end:
+        time.sleep(0.05)
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    proc.wait()
+
+
 def all_runs(a) -> int:
     report = capture.sibling("bnc_report", "report.py")
     failed = []
     jobs, running, todo = max(1, a.jobs), [], [(i, r) for i in a.insts for r in a.arms]
+    try:
+        _drive(a, jobs, running, todo, failed)
+    except BaseException:       # every child has its own session: an interrupt reaches none of them
+        for item in running:
+            end_group(item[2])
+        raise
+    report.write(a.out, a.instances)
+    for i, r, rc in failed:
+        print(f"FAILED {i} {r}: rc {rc} or no result.json (stderr in {os.path.join(a.out, i, r, 'stderr')})", flush=True)
+    return 1 if failed else 0
+
+
+def _drive(a, jobs: int, running: list, todo: list, failed: list) -> None:
+    """Start the `todo` (instance, arm) children `jobs` at a time, each in its own process group, until all are done."""
     py = sys.executable
     while todo or running:
         while todo and len(running) < jobs:
@@ -287,7 +332,7 @@ def all_runs(a) -> int:
                 os.replace(stale, os.path.join(a.out, i, r, "result.previous.json"))
             print("start", " ".join(cmd), flush=True)
             running.append((i, r, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=open(
-                os.path.join(a.out, i, r, "stderr"), "w"))))
+                os.path.join(a.out, i, r, "stderr"), "w"), start_new_session=True)))
         time.sleep(2)
         for item in list(running):
             if item[2].poll() is not None:
@@ -296,10 +341,6 @@ def all_runs(a) -> int:
                 made = os.path.exists(os.path.join(a.out, item[0], item[1], "result.json"))
                 if item[2].returncode != 0 or not made:
                     failed.append((item[0], item[1], item[2].returncode))
-    report.write(a.out, a.instances)
-    for i, r, rc in failed:
-        print(f"FAILED {i} {r}: rc {rc} or no result.json (stderr in {os.path.join(a.out, i, r, 'stderr')})", flush=True)
-    return 1 if failed else 0
 
 
 def main(argv=None) -> int:
