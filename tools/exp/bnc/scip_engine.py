@@ -22,7 +22,8 @@ gap until it holds a connected drawing and then for `FINAL_ABS_GAP`; SCIP always
 A SCIP solve runs in a child process (`solve_isolated`), so that a native fault (SIGSEGV inside
 `model.optimize()` on a 1,396-ZCTA window, #142) ends the child and not the driver.  The child's
 death is the engine's own stop reason, `crash` (with the signal), never `infeasible` and no ground
-for window growth.  A crashed solve is repeated once, at the time left of the same limit, with
+for window growth.  A crashed solve is repeated once, with the same time limit (on nw49-48 the
+fault came at the limit itself, 1350 s of 1350, so the time left would be none), with
 SCIP's primal heuristics off; a crash again leaves the window `unknown` (`kSolveError` to
 `_solve_group`: no incumbent, so the group's status stays `unknown`).  Every solve, with its
 setting and stop reason, is in the list `installed` yields (`repair.solve_window` files it under
@@ -207,12 +208,11 @@ class ScipHighs(highspy.Highs):
         if self.solved is not None and self.solved[0] == key and self.solved[1] == "optimal":
             return highspy.HighsStatus.kOk         # the same model, already proved to ABS_GAP
         inst, limit, log = instance_of(self, loc), float(self.options.get("time_limit", 1e20)), loc["log"]
-        t0 = time.time()
         res, x = self._attempt(inst, limit, log, True)
         if res["status"] == "crash":
             log(f"  c: SCIP crashed ({res['note']}) after {res['seconds']:.0f}s; "
                 f"retrying once with primal heuristics off")
-            res, x = self._attempt(inst, max(1.0, limit - (time.time() - t0)), log, False)
+            res, x = self._attempt(inst, limit, log, False)
         self.runs += 1
         self.solved = (key, res["status"])
         self.x = x

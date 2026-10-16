@@ -512,6 +512,7 @@ def test_a_crash_is_retried_once_with_heuristics_off_and_the_window_is_solved():
     assert (first["heuristics"], first["status"], first["signal"]) == (True, "crash", "SIGSEGV"), runs
     assert (runs[1]["heuristics"], runs[1]["status"]) == (False, "optimal"), runs
     assert sum(1 for r in runs if r["status"] == "crash") == 1, runs
+    assert runs[1]["limit"] == first["limit"], runs     # a crash at the limit leaves no time to share
     assert any("SCIP crashed" in x and "SIGSEGV" in x and "retrying once with primal heuristics off" in x
                for x in lines), lines
     assert any("primal heuristics off" in x for x in lines)
