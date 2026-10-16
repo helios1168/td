@@ -949,8 +949,9 @@ required. Unknown or DAG-only failure is never an infeasibility certificate.
 `def build_model(data):` adds the named $V_W,O,h,s,S_0,Q_0$ and cap components to F4's
 independent flow model; it rejects DAG/neck callbacks rather than silently omitting them.
 `tests/test_formulation_repair.py` checks three nested windows on 60 vertices against
-both production engines (relative gap zero), including optimal values and chosen feasible
-and infeasible assignments. Separate checks exercise binding caps, opened units, the
+both production engines through `repair.solve_window` (relative gap zero), including optimal
+values and chosen feasible and infeasible assignments. The tests independently prescribe the
+window, fixed owners, bodies, bands and holder caps and check the group the production adapter builds. Separate checks exercise binding caps, opened units, the
 adjacent ring, wider steps, both caps and the infeasible/unknown growth gate in sequential
 and raced settlement. `td/formulation/f4w.py:75`
 `def growth_sequence(W, candidates, *, limit, cap):` specifies the displayed recurrence.
@@ -1521,6 +1522,53 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
 - one name per district;
 - the certificate tier: exact, bounded or feasible only **[policy OD3]**.
 
+### 9.1 F9.I — IFA index acceptance of fixed gate evidence
+
+**Relation to F0: heuristic certification boundary**, not an optimizer or an independent
+routing/mass audit. The index now runs the gate fresh, records its actual neck/piece sides,
+and excepts an item only if it is a proved neck or detached piece whose side intersects
+$H=\{z:\operatorname{primaryCounty}(z)=36061\}$. This replaces the district-name waiver;
+it does not change the raw F9 gate. Entry:
+`tools/exp/contig/ifa_index_night.py:100`
+`def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, diagnostic=None) -> dict:`.
+Unresolved necks, coverage/ownership items, unverified status, diagnostics and unexplained
+failure block acceptance. Informational mass-neck items are ignored.
+
+For this section and the fixed-evidence certificates F11.G/R/W and F142.P, let $P$ be the
+named predicates below, with supplied truth values $q_p\in\{0,1\}$. A small specification
+uses $a\in\{0,1\}$ and
+
+$$
+a\le q_p\quad(p\in P),\qquad a\ge\sum_{p\in P}q_p-|P|+1.
+$$
+
+Its test objective is $\max a$, **not a territory objective**. These rows force exactly the
+conjunction (if any $q_p=0$, $a=0$; otherwise the lower row forces $a=1$), a direct proof.
+The spec only checks acceptance of supplied evidence; it does not prove that the gate has
+found every neck. Entry: `td/formulation/certificates.py:12`
+`def build_model(formulation, predicates):`. Each builder returns its own named model.
+
+F9.I's predicates are verified status, nondiagnostic input, explained failure, admissibility
+of every noninformational item, and every district's window. With recorded mass $m_j$, fixed
+IFA rate $r=1.2519681558$ million dollars per mass unit, and recorded window flag $w_j$,
+the implemented window predicate is
+
+$$
+10^9\le\operatorname{round}(10^6rm_j)\le1.4375\,10^9,
+\qquad w_j\notin\{\text{under},\text{over}\}.
+$$
+
+Entry: `tools/exp/contig/ifa_index_night.py:128`
+`        usd = round(v["m_rel"] * RATE * 1e6)`.
+This is whole-dollar rounding, not exact real-dollar feasibility; sub-dollar boundary
+breaches can be accepted. The mass is read from `run.json`, not recomputed by the index.
+Thus the certificate requires matching ledger/mass provenance; an index pass alone cannot
+establish that provenance. No numerical tolerance is added to F0 here.
+`tests/test_formulation_certificates.py` numerically checks the spec against the production
+gate/side recorder and verdict on 30-vertex maps, including Manhattan and non-Manhattan
+pieces, coverage failure, unresolved necks, diagnostics and window breaches. It compares
+the acceptance optimum at relative gap zero and both fixed acceptance-point verdicts.
+
 ## 10. Where each council item lands
 
 | item | here |
@@ -1553,27 +1601,39 @@ $$
 $$
 
 Reject if a donor empties, its detached components cannot be injectively matched to
-containing pre-move components, or its **returned neck witness sets** fail the analogous
-containment test. Require fewer recipient components and no increase in its returned neck
+containing pre-move components, its post-move neck check is unresolved, or its **returned
+neck witness sets** fail the analogous containment test. Require fewer recipient components and no increase in its returned neck
 count. These predicates define the search; there is no optimization objective or optimality
 certificate. A positive-mass ownership change raises an error. Entry:
-`tools/exp/contig/glue.py:101`
+`tools/exp/contig/glue.py:110`
 `def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIES,`;
-`tools/exp/contig/glue.py:175` `    positive = sorted(z for z in moved if mass.get(z, 0.0) != 0.0)`.
+`tools/exp/contig/glue.py:188` `    positive = sorted(z for z in moved if mass.get(z, 0.0) != 0.0)`.
 
 **Certificate.** Zero-only movement preserves dollar masses by the displayed equality.
 Piece containment has an injective witness. Neck-witness containment is **not** a theorem
 that every possible neck is preserved: the checker returns selected witnesses, not the
 entire forbidden-cut family. A clean donor is checked clean again; for an already-failing
 donor, “no new or enlarged neck” remains stronger than what this witness comparison proves.
-Unknown neck checks are not clean. The final full gate is still required.
+Unknown neck checks are not clean: their status now survives witness conversion and any
+unresolved post-move donor check vetoes the path, even if its set matches an old witness.
+The recipient still uses returned neck **counts**, not a resolved-status requirement;
+accepting a path therefore does not certify recipient M1. The final full gate is required.
+For the fixed-candidate F11.G spec, $P$ comprises zero path mass, nonempty donors, donor
+piece/witness containment, resolved donors, fewer recipient pieces and nonincreasing
+recipient neck count. The conjunction in §9.1 specifies this acceptance, not the path
+search or an all-neck theorem. The 30-vertex conformance case executes `glue_channel`
+with clean and unresolved donor evidence and with R5 gap edges on/off, checking unchanged
+dollar mass and both acceptance points.
 
 The historical §18 branch review correctly found missing relays and opt-in gap reading in
 old glue. #142 replaces that with the gate's graph and zero set:
-`tools/exp/contig/glue.py:195` `    ng = necks_gate.gate_graph(polygon)` and
-`tools/exp/contig/glue.py:196`
-`    return (lambda zs: [frozenset(n.zips) for n in necks_gate.gate_necks(zs, mass, ng)]), ng`.
-This fixes the input mismatch, not the all-witness guarantee.
+`tools/exp/contig/glue.py:214` `    ng = necks_gate.gate_graph(polygon)` and
+`tools/exp/contig/glue.py:215`
+`    return (lambda zs: [frozenset(n.zips) if n.status == "proved" else UnresolvedNeck(n.zips)`.
+Piece/path adjacency now also follows the gate's R5 switch:
+`tools/exp/contig/glue.py:203`
+`def gate_adjacency(polygon: dict, gap_width: bool | None = None) -> dict:`.
+These fix input/status mismatches, not the all-witness guarantee.
 
 ### 11.2 F11.W — warm-start chain and provenance
 
@@ -1591,9 +1651,15 @@ There are no new global variables, feasibility rows or optimization objective be
 stages invoked. **Certificate:** a passing final ledger is gate-verified with its matching
 source routing audit and fixed mass inputs. It has no global optimality certificate and
 is not “fully exact drawn” just because the inherited master tier is `exact`.
-Entry: `tools/exp/contig/warm.py:142` `def cmd_point(a) -> int:`.
+Entry: `tools/exp/contig/warm.py:141` `def cmd_point(a) -> int:`.
+Repair/glue now read the source region's cut extract if present, rather than the full
+extract's outside-channel cells; final scoring uses the full dollar extract (§11.3).
+Entry: `tools/exp/contig/warm.py:103`
+`def source_extract(main_dir: str, pid: str, run_name: str, full: str) -> str:`.
+F11.W's acceptance specification is F11.R's conjunction below, since it invokes the same
+driver; it does not import the IFA index's Manhattan-item exception.
 `final_undrawn` reads the source count, not final ZIP-by-ZIP provenance:
-`tools/exp/contig/warm.py:117`
+`tools/exp/contig/warm.py:116`
 `    return {c: v["undrawn_zctas"] for c, v in sorted(ch.items()) if v.get("undrawn_zctas")}`.
 The label “N ZCTAs placed by the realizer heuristic, not the exact draw” is therefore an
 inherited source-undrawn count (an upper bound on still-heuristic placements), not a
@@ -1611,7 +1677,7 @@ and each regional support belongs to the national family. Equal relative bands a
 different regional means do not satisfy that premise. The implemented driver changes
 parameters and uses F2/F4/repair; it has no national optimum certificate.
 
-Entry: `tools/exp/contig/sealed.py:386`
+Entry: `tools/exp/contig/sealed.py:387`
 `def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False,`.
 Independent channel partitions are supported; equal-or-disjoint state sets are **not**
 a driver requirement. When they are not aligned, combine cells using their designated
@@ -1622,13 +1688,29 @@ $$
 \qquad r=\operatorname{source}(\rho(z,f),s(z)).
 $$
 
-Entry: `tools/exp/contig/sealed.py:648`
+Entry: `tools/exp/contig/sealed.py:656`
 `def combine_point(runs: list, folders: dict, out: str, spec_path: str, extract_path: str) -> dict:`.
 `merge.py` alone still requires ZIP-disjoint sources. The strict driver accepts group
 statuses `optimal`/`connected`; its label “no connected drawing” also covers unknown/time
 limits and is not an infeasibility proof. The historical sealed runs did not test sealing
 with window bands; blaming symmetric bands alone was an inference, not a controlled result.
 Optional hard shape-limit files are experimental restrictions, not F0 mandates.
+
+**Final label certificate (F11.R/W).** A pass now requires successful gate exit as well as
+raw M1 pass, every scorer dollar row passing, scorer eligibility, and no hard-shape breach.
+These are $P$ in §9.1's conjunction. Missing gate completion is failure, not success; a
+saved passing `m1.json` cannot override nonzero exit. Entry:
+`tools/exp/contig/sealed.py:891`
+`def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),`.
+The score command now supplies the full extract, not the CONUS-cut merged extract, for
+$D_j=\sum_{(z,f):\lambda(z,f)=j}r_fm_{zf}$ with whole-extract $r_f$.
+Entry: `tools/exp/contig/sealed.py:612` `def score_cmd(folder: str, extract: str) -> list:`.
+Scorer window comparisons themselves round to whole dollars; this is numerical
+implementation behavior, not an F0 waiver. These labels still require **raw** M1 pass,
+so they can reject an authorized Manhattan-excepted map that F9.I accepts.
+The 30-vertex conformance test calls the production dollar gate and label function,
+including a district below its floor and missing/nonzero gate exits, and checks the
+full-extract argument in the production command chain.
 
 For arithmetic screening only, a channel without conditional caps needs
 
@@ -1709,6 +1791,23 @@ owners into the full source ledger with full-graph relays; its group verdict can
 proved pre-existing failures outside the group, while `map_m1` remains the raw whole-map
 verdict. A group pass is not automatically a whole-map pass.
 
+**F142.P — campaign provenance acceptance.** Relation to F0: heuristic evidence filter,
+not an optimization formulation or a new connectedness proof. A result is now admitted
+only with a nonempty source-content fingerprint matching the newest campaign result,
+as well as matching commit/dirty flag/limits/threads, same-arm settings and an available
+instance file with its recorded hash. These five predicates are $P$ in §9.1's specification;
+its sole variable/objective is the test acceptance bit. Entry:
+`tools/exp/bnc/report.py:91` `def split(out: str, instances: str | None = None) -> tuple:`.
+The source hash includes sorted relative paths and file hashes of the configured source
+globs, not timestamps or just Git status. Entry:
+`tools/exp/bnc/export.py:125` `def source_fingerprint(root: str = ROOT) -> str:`.
+This certifies recorded source/instance identity, not geography/extract identity or absence
+of edits during a solve. Independent checks likewise require a source hash, matching the
+tabled campaign when one exists. Historical records without it are now excluded, including
+the older table entries quoted below; those quotes remain historical, not a rerun of the
+current admission filter. The conformance test compares the acceptance optimum and both
+fixed points with production `report.split` for missing, changed and matching hashes.
+
 ### 12.2 F142.a–d and independent flow verification
 
 Each working arm solves §12.1, with the same objective. The relation/certificate above
@@ -1757,8 +1856,8 @@ required to select a vertex**. Entry on `m5-studio/bnc`, `tools/exp/bnc/verify.p
 root row at `tools/exp/bnc/verify.py:51` `            model.addCons(quicksum(rv.values()) == 1)`
 excludes an empty rootless district. F4/F142 separators permit it when `extra` already
 meets the residual lower bound. A 30-vertex fixed-point check of that root-row restriction
-reproduces the difference (without executing SCIP), including sequential overweight-extra
-semantics: `tests/test_formulation.py:341`
+now executes production arm a, `verify.flow_model` and `verify.run` and reproduces the
+difference, including sequential overweight-extra semantics: `tests/test_formulation.py:426`
 `def test_formulation_rootless_empty_extra_and_sequential_domain():`. Thus this verifier's
 infeasibility/optimum is a certificate for the **additional nonempty-rootless restriction**;
 it is a common-model certificate only when nonemptiness is implied by the base rows
@@ -1806,8 +1905,8 @@ and §18 branch checks are incorporated above, not reissued as new decisions. In
    the later #112/#134/#140 record, while §§3–12 describe code. The scorer still ranks
    splits first (`tools/looks/score.py:550`
    `    return (s["splits"], s["defects"], s["largest_extent_km"], s["states_per_district"], s["worst_dev"],`).
-   No `PROBLEM.md` edit is made. Manhattan is not implemented as a gate exception; no
-   all-Manhattan-touching waiver is invented. F0's numerical shape/balance functions remain owner inputs, and
+   No `PROBLEM.md` edit is made. Manhattan is not implemented in the raw gate; F9.I now
+   applies item-side exceptions in the IFA index only, never an all-district waiver. F0's numerical shape/balance functions remain owner inputs, and
    the Manhattan-neck identification needs owner confirmation; [F0.tex](F0.tex) states the
    supervisor's reading explicitly. The detached-piece ruling of 2026-10-15 is encoded in
    the F0 spec, not in the production gate.
