@@ -694,3 +694,55 @@ def test_cancelling_a_raced_window_ends_its_scip_child_before_the_slot_is_releas
                     os.environ.pop(k, None)
                 else:
                     os.environ[k] = v
+
+
+def test_a_cancel_landing_right_after_the_child_is_created_still_reaps_it():
+    """SIGTERM (`repair._stopped`: SystemExit) delivered the moment `Popen` returns: `solve_isolated`
+    holds it back until its cleanup guard is active, so the SCIP child is killed and reaped before
+    the SystemExit leaves `solve_isolated`, and so before any solve slot is given back."""
+    import signal
+    import tempfile
+    repair = _repair()
+    engine = repair.scip_engine()
+    real_popen, made = engine.subprocess.Popen, []
+
+    def popen_then_cancel(*a, **kw):
+        proc = real_popen(*a, **kw)
+        made.append(proc.pid)
+        os.kill(os.getpid(), signal.SIGTERM)
+        return proc
+
+    def stopped(*_):
+        raise SystemExit(128 + signal.SIGTERM)
+
+    old_env, old_solver = os.environ.get("TD_TEST_PID_FILE"), engine.CHILD_SOLVER
+    old_handler = signal.signal(signal.SIGTERM, stopped)
+    with tempfile.TemporaryDirectory() as tmp:
+        script, pids = os.path.join(tmp, "hang.py"), os.path.join(tmp, "pids")
+        with open(script, "w") as fh:
+            fh.write(HANGING)
+        os.environ["TD_TEST_PID_FILE"] = pids
+        engine.CHILD_SOLVER = f"{script}:solve"
+        engine.subprocess.Popen = popen_then_cancel
+        try:
+            name, kw = synth.cases()[0]
+            inst = synth.grid(name, **kw)
+            try:
+                engine.solve_isolated(inst, 60.0, quiet)
+                raise AssertionError("the cancel did not interrupt solve_isolated")
+            except SystemExit as e:
+                assert e.code == 128 + signal.SIGTERM, e.code
+            assert len(made) == 1, made
+            try:
+                os.kill(made[0], 0)
+                raise AssertionError(f"the SCIP child {made[0]} outlived its cancelled solve")
+            except ProcessLookupError:
+                pass                            # gone and reaped (a zombie would still answer)
+        finally:
+            engine.subprocess.Popen = real_popen
+            engine.CHILD_SOLVER = old_solver
+            signal.signal(signal.SIGTERM, old_handler)
+            if old_env is None:
+                os.environ.pop("TD_TEST_PID_FILE", None)
+            else:
+                os.environ["TD_TEST_PID_FILE"] = old_env

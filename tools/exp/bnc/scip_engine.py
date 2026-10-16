@@ -105,6 +105,7 @@ def _child(task_path: str, out_path: str) -> int:
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))        # no multi-GB core of a faulting solve
     except (ImportError, ValueError, OSError):
         pass
+    signal.pthread_sigmask(signal.SIG_SETMASK, set())           # not the parent's held-back signals
     pipe = os.fdopen(os.dup(1), "w", buffering=1)
     os.dup2(2, 1)
     with open(task_path, "rb") as fh:
@@ -146,9 +147,18 @@ def solve_isolated(inst, time_limit: float, log, start=None, heuristics: bool = 
             pickle.dump({"doc": inst.doc, "time_limit": float(time_limit), "start": start,
                          "heuristics": heuristics, "solver": CHILD_SOLVER}, fh,
                         protocol=pickle.HIGHEST_PROTOCOL)
-        proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--child", task, out_path],
-                                stdout=subprocess.PIPE, text=True)
+        # A cancelling SIGTERM (`repair._stopped` raises SystemExit) must not land between the
+        # child's creation and the guard below, or the child outlives its solve: it is held back
+        # across `Popen` and delivered once the `try` is entered.
+        held = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
         try:
+            proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--child", task, out_path],
+                                    stdout=subprocess.PIPE, text=True)
+        except BaseException:
+            signal.pthread_sigmask(signal.SIG_SETMASK, held)
+            raise
+        try:
+            signal.pthread_sigmask(signal.SIG_SETMASK, held)
             for line in proc.stdout:
                 if line.startswith(LOG_TAG):
                     log(line[len(LOG_TAG):].rstrip("\n"))
