@@ -134,7 +134,7 @@ def test_retry_keys_on_the_drawings_own_status():
 
 def _row(ch, usd, lo=850.0, hi=1150.0, cap=None, ok=False, d=None):
     return {"channel": ch, "district": d or f"{ch}_01", "usd": usd, "lo": lo, "hi": hi, "cap": cap,
-            "allowance": False, "ok": ok}
+            "allowance": False, "waiver": False, "ok": ok}
 
 
 def test_label_order_m1_then_dollars_then_scorer():
@@ -161,9 +161,9 @@ def test_rerun_direction():
 
 def test_dollars_and_score_files_read_back():
     gate = [{"channel": "WH", "district": "WH_01", "usd": 840.8e6, "lo": 0.85e9, "hi": 1.15e9,
-             "states": ["NJ", "NY"], "whole_states": False, "cap": None, "allowance": False, "ok": False},
+             "states": ["NJ", "NY"], "whole_states": False, "cap": None, "allowance": False, "waiver": False, "ok": False},
             {"channel": "WIFI", "district": "WIFI_01", "usd": 1.543e9, "lo": 0.85e9, "hi": 1.15e9,
-             "states": ["CO", "ID"], "whole_states": True, "cap": 1.6e9, "allowance": True, "ok": True}]
+             "states": ["CO", "ID"], "whole_states": True, "cap": 1.6e9, "allowance": True, "waiver": False, "ok": True}]
     with tempfile.TemporaryDirectory() as tmp:
         path = os.path.join(tmp, "dollars.csv")
         score.write_dollars(path, gate)
@@ -378,7 +378,7 @@ def test_morning_files_from_a_toy_grid():
             fh.write(REPORT)
         score.write_dollars(os.path.join(fin, "dollars.csv"), [
             {"channel": "WH", "district": f"WH_0{i}", "usd": u, "lo": 0.85e9, "hi": 1.15e9, "states": ["NY"],
-             "whole_states": False, "cap": None, "allowance": False, "ok": True}
+             "whole_states": False, "cap": None, "allowance": False, "waiver": False, "ok": True}
             for i, u in ((1, 0.9e9), (2, 1.1e9))])
         with open(os.path.join(fin, "m1.json"), "w") as fh:
             json.dump({"strict": {"status": "pass"}, "gap_width": {"status": "pass"}, "flips": []}, fh)
@@ -421,7 +421,7 @@ def test_index_rows_from_dollars_and_planned_tau():
         os.makedirs(fin)
         score.write_dollars(os.path.join(fin, "dollars.csv"), [
             {"channel": c, "district": d, "usd": u, "lo": lo, "hi": hi, "states": ["NY"], "whole_states": cap,
-             "cap": 1.6e9 if cap else None, "allowance": u > hi, "ok": ok}
+             "cap": 1.6e9 if cap else None, "allowance": u > hi, "waiver": False, "ok": ok}
             for c, d, u, lo, hi, cap, ok in (
                 ("WH", "WH_01", 0.8e9, 0.85e9, 1.15e9, False, False), ("WH", "WH_02", 1.0e9, 0.85e9, 1.15e9, False, True),
                 ("WH", "WH_03", 1.15e9, 0.85e9, 1.15e9, False, True),
