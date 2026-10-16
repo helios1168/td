@@ -904,21 +904,18 @@ def exact_rows(folder: str, mass: dict, rates: dict) -> list:
     are its ledger cells' masses in the full extract (`mass`, `ifa_index_night.extract_masses`; a cell it lacks
     raises, `cell_mass`) at the full extract's rates (`rates`, `score.dollar_rates`), unrounded, against the
     applicable bounds with the edges in (`hi`, or the whole-state `cap` for a district owning whole states).
-    `score.dollar_gate` rounds both sides to whole dollars, so a district $0.25 under its floor reads inside
-    there; its structure (states, whole-state districts, the cap) is used and its `ok` is not.  Rows in $M
-    like `overnight.read_dollars`; `usd_exact` is the dollars."""
+    `score.dollar_gate` compares unrounded dollars with the edges in (#105), so its `ok`, `allowance` and `waiver` are
+    used as they are.  Rows in $M like `overnight.read_dollars`; `usd_exact` is the dollars."""
     def read(name):
         with open(os.path.join(folder, name), newline="", encoding="utf-8") as fh:
             return list(csv.DictReader(fh))
     ledger = [dict(r, m_rel=ifa_index.cell_mass(r, mass)) if r["district"] else r for r in read("ledger.csv")]
     out = []
     for g in score.dollar_gate(ledger, read("districts.csv"), rates):
-        x, lo, hi, cap = g["usd"], g["lo"], g["hi"], g["cap"]
-        inside = lo is not None and lo <= x <= hi
-        allowance = not inside and lo is not None and cap is not None and lo <= x <= cap
         m = lambda v: None if v is None else v / 1e6
-        out.append({"channel": g["channel"], "district": g["district"], "usd": x / 1e6, "usd_exact": x,
-                    "lo": m(lo), "hi": m(hi), "cap": m(cap), "allowance": allowance, "ok": inside or allowance})
+        out.append({"channel": g["channel"], "district": g["district"], "usd": g["usd"] / 1e6, "usd_exact": g["usd"],
+                    "lo": m(g["lo"]), "hi": m(g["hi"]), "cap": m(g["cap"]), "allowance": g["allowance"],
+                    "waiver": g["waiver"], "ok": g["ok"]})
     return out
 
 

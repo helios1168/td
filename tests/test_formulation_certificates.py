@@ -206,7 +206,7 @@ def test_formulation_assembly_gate_and_full_extract_30():
     label, reason = sealed.label_point(m1, normalized, [], False, eligible=False, why=why + [other], gate_rc=1,
                                        verdict=verdict)
     assert label == 'ineligible' and reason == other
-    # Exact windows on 30 vertices: $849,999,999.75 is under the $850M floor although the scorer rounds it in,
+    # Exact windows on 30 vertices: $849,999,999.75 is under the $850M floor as the scorer's unrounded gate (#105) also reads it,
     # and $1,150,000,000.25 is over the ceiling of a district owning more than one state.
     for district_mass, want in ((849.99999975, False), (850.0, True), (900.0, True), (1150.0, True),
                                 (1150.00000025, False)):
@@ -228,7 +228,7 @@ def test_formulation_assembly_gate_and_full_extract_30():
             assert got['A']['ok'] == want == (0.85e9 <= exact <= 1.15e9), district_mass
             assert got['B']['ok'] and scored['B']['ok']
             if district_mass in (849.99999975, 1150.00000025):
-                assert scored['A']['ok']                     # the scorer's whole-dollar comparison accepts it
+                assert not scored['A']['ok']                 # the scorer compares unrounded dollars too (#105)
             rows = list(got.values())
             for warm in (False, True):
                 actual = sealed.label_point({'status': 'pass', 'summary': 'ok'}, rows, [], False)[0] == 'passes'

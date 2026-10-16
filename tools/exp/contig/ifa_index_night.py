@@ -46,9 +46,10 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from td import audit, data, geo  # noqa: E402
+from td import spec as tdspec  # noqa: E402
 
-LO, HI = 1000.0, 1437.5         # the IFA window, $M per district
-RATE = 1.2519681558             # $M per m_rel (merge.py's DOLLARS_PER_M_REL, the IFA rate)
+LO, HI = tdspec.IFA_WINDOW_M    # the IFA window, $M per district (shared with merge.py and score.py)
+RATE = tdspec.IFA_USD_PER_M_REL  # $M per m_rel, the IFA rate
 MASS_RTOL = 1e-9                # saved vs recomputed district mass (summation order only)
 MANHATTAN_COUNTY = "36061"
 EVIDENCE = "gate-evidence.json"  # a point's gate stage output, next to its `merged` folder

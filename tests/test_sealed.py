@@ -1123,7 +1123,7 @@ def test_the_merge_judges_the_dollar_window_on_unrounded_full_extract_masses():
             label, reason, _, extra = drv._merge(pt)
             assert label == want, (m1, label, reason)
             if want == "outside band":
-                assert scored["ok"] and "WH_01" in reason          # the scorer's whole-dollar comparison accepts it
+                assert not scored["ok"] and "WH_01" in reason      # the scorer compares unrounded dollars too (#105)
                 assert extra["summary"]["bands"]["WH"]["out"] == 1
 
 
