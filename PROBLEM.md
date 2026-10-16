@@ -112,6 +112,13 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   (`TD_NECK_GAP_WIDTH=1`, branch `m5-studio/explore-neck` d312834) and report both verdicts;
   any verdict other than TX El Paso that the flag flips goes to the owner. #131 lands the width on
   main as the default.
+  Manhattan (owner, 2026-10-14, in session: "keep manhattan excepted"; 2026-10-15, #140: "yes
+  the manhattan exception covers disconnected pieces", and to "Does the Manhattan exception also
+  cover a neck whose cut-off side contains Manhattan?" "yes"): a district's detached piece that
+  contains a Manhattan ZCTA (primary county 36061 in reference/2025/zcta_reference.csv.gz), and a
+  neck whose cut-off side contains one, do not fail M1. Nothing else is excepted. The gate
+  (tools/mandates/check.py) stays strict and still lists these items; each map lists the items
+  excepted under this rule.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
@@ -221,6 +228,7 @@ the file named.
 **Necks and gap width (owner, 2026-10-05/08)**
 
 - M1's rulings (multipart ZCTAs, the 159 + 16 approved connectors, footprint coverage, necks at 5% of land and 10 km, smaller side, gap width) are in the M1 row above: [#108](https://github.com/helios1168/td/issues/108), [#114](https://github.com/helios1168/td/issues/114), [#121](https://github.com/helios1168/td/issues/121), [#131](https://github.com/helios1168/td/issues/131).
+- M1's Manhattan exception: a detached piece or a neck's cut-off side containing a Manhattan (36061) ZCTA is excepted, nothing else: [#140](https://github.com/helios1168/td/issues/140).
 - G1: a neck's width also counts land in no ZCTA between a district's polygons; G3: until [#131](https://github.com/helios1168/td/issues/131) lands it is in effect with `TD_NECK_GAP_WIDTH=1`, both verdicts reported, any flip other than TX El Paso goes to the owner: [#131](https://github.com/helios1168/td/issues/131).
 - G2: an IFA district holding Manhattan also holds the Bronx and Westchester, and NY is planned with a land floor for thin units: [#132](https://github.com/helios1168/td/issues/132).
 - The 58 shortlist renders made before [#128](https://github.com/helios1168/td/issues/128) stay as they are and their T1 "render not current" failures are accepted; do not ask again (owner, 2026-10-08): [#128](https://github.com/helios1168/td/issues/128).
