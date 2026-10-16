@@ -232,8 +232,18 @@ def test_formulation_assembly_gate_and_full_extract_30():
             rows = list(got.values())
             for warm in (False, True):
                 actual = sealed.label_point({'status': 'pass', 'summary': 'ok'}, rows, [], False)[0] == 'passes'
-                _truth(spec.assembly_model(gate_rc=0, m1_pass=True, windows=[r['ok'] for r in got.values()],
-                                          eligible=True, hard=False, breaches=[], warm=warm), actual)
+                _truth(spec.assembly_ledger_model(
+                    owned_cells=[(r['zip_code'], 'wh', r['district']) for r in ledger],
+                    extract_mass=mass, rates={'wh': 1e6}, bounds={'A': (0.85e9, 1.15e9), 'B': (0.85e9, 1.15e9)},
+                    gate_rc=0, m1_pass=True, eligible=True, hard=False, breaches=[], warm=warm), actual)
+            # Stale ledger amounts must not replace full-extract masses in the production join.
+            for r in ledger:
+                r['m_rel'] = '0.0'
+            with open(os.path.join(tmp, 'ledger.csv'), 'w', newline='') as fh:
+                writer = csv.DictWriter(fh, list(ledger[0]))
+                writer.writeheader()
+                writer.writerows(ledger)
+            assert sealed.exact_rows(tmp, mass, {'wh': 1e6}) == rows
     chain = sealed.point_chain('p', '/p', [(('NY',), '/f')], '/spec', '/full', None, dict(sealed.CAPS))
     command = next(c for s, c, _, _ in chain if s == 'score')
     assert command[-2:] == ['--extract', '/full']

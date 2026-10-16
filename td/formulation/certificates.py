@@ -94,3 +94,26 @@ def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=
 def provenance_model(*, source, campaign_source, same_metadata, same_settings, instance_matches):
     return build_model('F142.P', dict(source_present=bool(source), source_matches=source == campaign_source,
         metadata=same_metadata, settings=same_settings, instance=instance_matches))
+
+
+def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(), **gate):
+    """F11.R/W with independently computed dollars, never production window flags.
+
+    owned_cells: (ZIP, fine channel, district); bounds: district -> (lower, effective upper)
+    in dollars, including an applicable whole-state cap supplied as the upper bound.
+    no_cell contains validated zero-mass territory cells absent from the extract.
+    Bounds and routing/whole-state classification are fixed evidence, not inferred here.
+    """
+    no_cell = set(no_cell)
+    districts = {j for _, _, j in owned_cells if j}
+    covered = all(((z, f) in extract_mass) != ((z, f) in no_cell)
+                  for z, f, j in owned_cells if j)
+    dollars = {j: sum(rates[f] * extract_mass.get((z, f), 0.0)
+                      for z, f, d in owned_cells if d == j) for j in districts}
+    windows = [covered, districts == set(bounds)]
+    windows += [bounds[j][0] is not None and bounds[j][0] <= dollars[j] <= bounds[j][1]
+                for j in districts if j in bounds]
+    model = assembly_model(windows=windows, **gate)
+    model.J = pyo.Set(initialize=sorted(districts))
+    model.D = pyo.Param(model.J, initialize=dollars)
+    return model

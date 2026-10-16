@@ -1762,10 +1762,17 @@ exact comparison, and it decides nothing in the label. Entry for the scoring com
 The sealed cut extracts carry no sales data
 (`state_extract.strip_sales`); `merge.py`'s merged extracts and `dollarize.py`'s dollar
 extracts are written by other modules and are not covered here.
-The 30-vertex conformance test calls the production dollar window and label function,
-including a district below its floor by less than a dollar, missing/nonzero gate exits, a
-Manhattan-only failed gate that stays eligible and one that keeps another eligibility
-reason, and checks the full-extract argument in the production command chain.
+The cell-level F11.R/W specification independently computes $D_j$ from the full-extract
+cell masses and supplied rates, with the effective bounds (including any applicable
+whole-state cap) as fixed evidence. Entry: `td/formulation/certificates.py:99`
+`def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(), **gate):`.
+It does not infer routing or the whole-state classification. The 30-vertex conformance test
+compares its acceptance optimum and both fixed acceptance points against `exact_rows`
+and `label_point`, rather than supplying the production window verdict to the spec.
+It covers both window endpoints and sub-dollar breaches on either side, and verifies that
+stale ledger amounts do not override the full extract. Separate cases cover missing/nonzero
+gate exits, a Manhattan-only failed gate that stays eligible and one that keeps another
+eligibility reason, and the full-extract argument in the production command chain.
 
 For arithmetic screening only, a channel without conditional caps needs
 
