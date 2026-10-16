@@ -4,7 +4,7 @@
     "$TD_PY" tools/exp/contig/ifa_index_night.py --gate <folder> --out <evidence.json>
 
 `--gate` is the sealed and warm driver's gate stage (a capped child): `tools/mandates/check.py`'s own output and exit
-code, with the gate's status, items, diagnostic and the neck and piece sides it judged written to `--out`, which the
+code, with the gate's status, items, diagnostic, counts (the necks measured or not) and the neck and piece sides it judged written to `--out`, which the
 driver reads (`sealed.manhattan_verdict`); no audit hook is installed in the driver's threads.
 
 Per K: the M1 verdict (a fresh run of the gate, `tools/mandates/check.py` `m1`, on the folder's ledger:
@@ -142,7 +142,8 @@ def gate_evidence(folder: str, out: str) -> int:
         raise RuntimeError(f"the gate judged {len(got)} folders, not 1")
     chk = got[0]["check"]
     doc = {"folder": os.path.abspath(folder), "rc": rc, "status": chk.status, "summary": chk.summary,
-           "items": list(chk.items), "diagnostic": got[0]["diagnostic"], "sides": sides_to_json(sides)}
+           "items": list(chk.items), "diagnostic": got[0]["diagnostic"], "counts": dict(chk.counts),
+           "sides": sides_to_json(sides)}
     with open(out + ".tmp", "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=1, default=str)
         fh.write("\n")
@@ -169,13 +170,25 @@ def side_of(item: str, sides: dict):
     return sides["pieces"].get((m.group(2), m.group(4), int(m.group(3)))) if m else None
 
 
-def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, diagnostic=None) -> dict:
+def neck_verified(counts) -> bool:
+    """True when the gate's counts say the necks were measured (`audit.check_m1`: `counts["necks"]` is None
+    without border lengths, and absent from a result that carries no counts)."""
+    return isinstance(counts, dict) and counts.get("necks") is not None
+
+
+def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, diagnostic=None, *,
+               counts: dict | None) -> dict:
     """`{"passes", "excepted": [(item, Manhattan ZCTAs)], "blocking": [text]}` of a gate result: the pass is
     the gate's own except for the items whose side holds a Manhattan ZCTA; the mass necks the gate lists
-    beside M1 fail nothing."""
+    beside M1 fail nothing.  `counts` is the gate check's (`audit.Check.counts`, `neck_verified`): a gate that
+    failed on its pieces alone has still not looked for necks when the polygon graph carries no border
+    lengths (`counts["necks"]` None), so a result without that evidence, or with the necks unmeasured, never
+    passes, whatever its items are."""
     blocking, excepted = [], []
     if status == "unverified":
         blocking.append(f"M1 unverified: {summary}")
+    elif not neck_verified(counts):
+        blocking.append(f"M1 necks not verified: {summary}")
     if diagnostic is not None:
         blocking.append(f"diagnostic folder ({diagnostic.get('label') or 'diagnostic band'}), never a deliverable")
     for item in items:
@@ -272,7 +285,7 @@ def load(root: str, k: int, manhattan=None, g=None, extract=None) -> dict:
         gate = check_gate().m1(d, g)
     chk = gate["check"]
     m1 = m1_verdict(chk.status, chk.summary, chk.items, sides,
-                    manhattan_zips() if manhattan is None else manhattan, gate["diagnostic"])
+                    manhattan_zips() if manhattan is None else manhattan, gate["diagnostic"], counts=chk.counts)
     exact = {j: v["m_rel"] * RATE for j, v in dist.items()}
     usd = dict(exact)
     over, under = window_verdict(dist)

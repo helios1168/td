@@ -1050,7 +1050,7 @@ def test_the_gate_stage_is_a_capped_child_that_records_its_own_evidence_and_a_st
         merged = os.path.join(tmp, "merged")
         os.makedirs(merged)
         doc = {"folder": os.path.abspath(merged), "rc": 1, "status": "fail", "summary": "s", "diagnostic": None,
-               "items": ["IFA/IFA_01: detached piece of 1 ZIPs (10001...)"],
+               "counts": {"necks": 0}, "items": ["IFA/IFA_01: detached piece of 1 ZIPs (10001...)"],
                "sides": {"necks": {}, "pieces": [["IFA_01", "10001", 1, ["10001"]]]}}
         path = sealed.evidence_path(merged)
         json.dump(doc, open(path, "w"))

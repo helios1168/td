@@ -107,8 +107,9 @@ REF = {"zcta": ["10001", "10002", "20001", "20002", "30001", "30002", "30003", "
 MANHATTAN = ifa_index.manhattan_zips(REF)
 
 
-def _toy_geo() -> "score.Geography":
-    """Chains 10001-10002-20001-20002, 30001-30002-30003-40001, every border 30 km (no neck)."""
+def _toy_geo(borders: bool = True) -> "score.Geography":
+    """Chains 10001-10002-20001-20002, 30001-30002-30003-40001, every border 30 km (no neck); with
+    `borders` False the polygon graph carries no border lengths, so no neck can be measured."""
     state = {"10001": "NY", "10002": "NY", "20001": "B", "20002": "B", "30001": "C", "30002": "C",
              "30003": "C", "40001": "D"}
     xy = {z: (float(i), 0.0) for i, z in enumerate(sorted(state))}
@@ -119,6 +120,8 @@ def _toy_geo() -> "score.Geography":
     polygon = {"vertices": sorted(state), "edges": [(a, b) for a in edge for b in edge[a] if a < b],
                "state": state, "border": {(a, b): 30e3 for a in edge for b in edge[a] if a < b},
                "connectors": [], "aland": dict.fromkeys(state, 1e8)}
+    if not borders:
+        polygon = {k: v for k, v in polygon.items() if k not in ("border", "connectors", "aland")}
     return score.Geography(state, xy, edge, polygon)
 
 
@@ -147,7 +150,8 @@ def _gate(owners: dict) -> dict:
             got = ifa_index.check_gate().m1(d, _toy_geo())
         chk = got["check"]
         return {"status": chk.status, "verdict": ifa_index.m1_verdict(
-            chk.status, chk.summary, chk.items, sides, MANHATTAN, got["diagnostic"]), "items": chk.items}
+            chk.status, chk.summary, chk.items, sides, MANHATTAN, got["diagnostic"], counts=chk.counts), "items": chk.items,
+            "counts": chk.counts}
 
 
 def test_the_manhattan_exception_is_read_from_the_pieces_the_gate_names_not_from_a_district_name():
@@ -173,11 +177,45 @@ def test_a_coverage_or_ownership_item_or_an_unverified_gate_blocks_the_pass_besi
     assert not got["verdict"]["passes"] and got["verdict"]["excepted"]
     assert any("no row" in b for b in got["verdict"]["blocking"])
     v = ifa_index.m1_verdict("unverified", "no polygon graph: M1 is not checked", [], {"necks": {}, "pieces": {}},
-                             MANHATTAN)
+                             MANHATTAN, counts={"necks": None})
     assert not v["passes"] and "unverified" in v["blocking"][0]
-    v = ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN, {"label": "tau 5%"})
+    v = ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN, {"label": "tau 5%"},
+                             counts={"necks": 0})
     assert not v["passes"] and "diagnostic" in v["blocking"][0]
-    assert ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN)["passes"]
+    assert ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN, counts={"necks": 0})["passes"]
+
+
+def test_a_manhattan_only_gate_failure_never_passes_with_the_necks_unmeasured():
+    """A polygon graph without border lengths leaves the necks unmeasured; the gate's pieces still fail it, so
+    its status is `fail`, not `unverified`, and the Manhattan piece alone must not carry the pass."""
+    import contextlib
+    import io
+    owners = {"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"], "IFA_03": ["30001", "30002"],
+              "IFA_04": ["30003", "40001"]}
+    real_geo = score.geography
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            d = _toy_run(tmp, owners)
+            out = os.path.join(tmp, ifa_index.EVIDENCE)
+            for borders in (True, False):
+                score.geography = lambda borders=borders: _toy_geo(borders)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    assert ifa_index.main(["--gate", d, "--out", out]) == 1
+                ev = ifa_index.read_gate_evidence(out, d, 1)
+                v = ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], MANHATTAN,
+                                         ev["diagnostic"], counts=ev["counts"])
+                assert ev["status"] == "fail" and [h for _, h in v["excepted"]] == [["10001"]]   # the piece is Manhattan
+                assert (ev["counts"]["necks"] is None) == (not borders)
+                if borders:
+                    assert v["passes"] and not v["blocking"]
+                else:
+                    assert not v["passes"] and v["blocking"] == [f"M1 necks not verified: {ev['summary']}"]
+                    assert "necks not checked" in ev["summary"]
+    finally:
+        score.geography = real_geo
+    for counts in (None, {}, {"necks": None}):                 # no evidence of the necks is no pass
+        v = ifa_index.m1_verdict("fail", "s", [], {"necks": {}, "pieces": {}}, MANHATTAN, counts=counts)
+        assert not v["passes"] and "necks not verified" in v["blocking"][0]
 
 
 def test_a_neck_is_excepted_only_when_its_proved_side_holds_a_manhattan_zcta():
@@ -188,7 +226,8 @@ def test_a_neck_is_excepted_only_when_its_proved_side_holds_a_manhattan_zcta():
         item_u = audit.neck_item("IFA", "IFA_14", neck(["10001"], "unresolved"))
         mass = audit.neck_item("IFA", "IFA_12", neck(["10001"]), audit.MASS_NECK)
     assert audit.neck_item is not None and audit.neck_item.__name__ == "neck_item"   # restored, not the wrapper
-    v = ifa_index.m1_verdict("fail", "3 necks", [item_m, item_o, item_u, mass], sides, MANHATTAN)
+    v = ifa_index.m1_verdict("fail", "3 necks", [item_m, item_o, item_u, mass], sides, MANHATTAN,
+                             counts={"necks": 3})
     assert [(i, h) for i, h in v["excepted"]] == [(item_m, ["10001"])]
     assert v["blocking"] == [item_o, item_u] and not v["passes"]       # the mass neck fails nothing; unresolved never excepted
 
@@ -279,7 +318,7 @@ def test_load_takes_no_cell_territory_as_zero_mass_and_refuses_a_ledger_cell_wit
     ext = data.Extract(("ifa",), ["10001"], ["ifa"], [801.0], [{}], [0.0])
     real = (ifa_index.check_gate, ifa_index.manhattan_zips)
     ifa_index.check_gate = lambda: types.SimpleNamespace(m1=lambda d, g=None: {
-        "check": types.SimpleNamespace(status="pass", summary="ok", items=[]), "diagnostic": None})
+        "check": types.SimpleNamespace(status="pass", summary="ok", items=[], counts={"necks": 0}), "diagnostic": None})
     try:
         with tempfile.TemporaryDirectory() as tmp:
             root, base = os.path.join(tmp, "root"), os.path.join(tmp, "full.json.gz")
@@ -322,7 +361,8 @@ def test_the_gate_child_writes_the_gate_s_own_sides_and_exit_code_for_the_driver
             assert rc == 1 and "M1 fail" in buf.getvalue()                       # check.py's own line and code
             assert (audit.neck_item, audit.district_pieces) == held              # no hook left behind
             ev = ifa_index.read_gate_evidence(out, d, 1)
-            v = ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], MANHATTAN, ev["diagnostic"])
+            v = ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], MANHATTAN, ev["diagnostic"],
+                                    counts=ev["counts"])
             assert v["passes"] and [h for _, h in v["excepted"]] == [["10001"]] and not v["blocking"]
             direct = _gate({"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"], "IFA_03": ["30001", "30002"],
                             "IFA_04": ["30003", "40001"]})
@@ -357,7 +397,7 @@ def test_load_judges_the_window_on_the_current_ledger_not_on_run_json():
     ext = data.Extract(("ifa",), ["10001", "10002"], ["ifa", "ifa"], [800.0, 1.0], [{}, {}], [0.0, 0.0])
     real = (ifa_index.check_gate, ifa_index.manhattan_zips)
     ifa_index.check_gate = lambda: types.SimpleNamespace(m1=lambda d, g=None: {
-        "check": types.SimpleNamespace(status="pass", summary="ok", items=[]), "diagnostic": None})
+        "check": types.SimpleNamespace(status="pass", summary="ok", items=[], counts={"necks": 0}), "diagnostic": None})
     try:
         with tempfile.TemporaryDirectory() as tmp:
             root, base = os.path.join(tmp, "root"), os.path.join(tmp, "full.json.gz")

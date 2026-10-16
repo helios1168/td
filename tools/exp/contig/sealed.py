@@ -936,7 +936,7 @@ def manhattan_verdict(folder: str, gate_rc: int | None) -> dict | None:
     try:
         ev = ifa_index.read_gate_evidence(evidence_path(folder), folder, gate_rc)
         return ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], ifa_index.manhattan_zips(),
-                                    ev["diagnostic"])
+                                    ev["diagnostic"], counts=ev["counts"])
     except Exception as e:     # the gate exits 1 on a crash too; a gate with no evidence adjudicates nothing
         return {"passes": False, "excepted": [], "blocking": [f"gate evidence unavailable: {type(e).__name__}: {e}"]}
 

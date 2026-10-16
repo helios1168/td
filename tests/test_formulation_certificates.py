@@ -49,7 +49,7 @@ def test_formulation_ifa_gate_items_and_windows_30():
                  if not (variant == 'coverage' and z == zs[-1])]
         with ifa_index.recorded_sides() as sides:
             check = audit.check_m1(audit.Run(cells, {'IFA': audit.Channel(2)}, polygon=polygon, fine=('ifa',)))
-        verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, manhattan)
+        verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, manhattan, counts=check.counts)
         # Independently chosen piece sides, not derived from the production recorder.
         items = [] if variant == 'clean' else [('piece', {zs[0]})]
         if variant == 'other_piece':
@@ -76,7 +76,7 @@ def test_formulation_ifa_gate_items_and_windows_30():
         with ifa_index.recorded_sides() as sides:
             item = audit.neck_item('IFA', 'A', audit.Neck(1.0, (zs[0],), .1, .1, (), kind))
         for diagnostic in (None, {'label': 'diagnostic'}):
-            actual = ifa_index.m1_verdict('fail', 'neck', [item], sides, manhattan, diagnostic)['passes']
+            actual = ifa_index.m1_verdict('fail', 'neck', [item], sides, manhattan, diagnostic, counts={'necks': 1})['passes']
             _truth(spec.ifa_model(items=[(kind, {zs[0]})], manhattan=manhattan,
                                  diagnostic=diagnostic is not None), actual)
 
@@ -186,7 +186,7 @@ def test_formulation_assembly_gate_and_full_extract_30():
              for i, z in enumerate(zs)]
     with ifa_index.recorded_sides() as sides:
         check = audit.check_m1(audit.Run(cells, {'WH': audit.Channel(2)}, polygon=polygon, fine=('wh',)))
-    verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, {zs[0]})
+    verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, {zs[0]}, counts=check.counts)
     assert check.status == 'fail' and verdict['passes']
     why = sealed.score.eligibility({'coverage': 'pass'}, check, {'WH': 48}, {}, m1=check, gate=[])
     assert any(w.startswith('M1: fail') for w in why)
