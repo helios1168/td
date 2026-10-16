@@ -76,10 +76,12 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
 of `tools/looks/study.py` (stage `shape`, `sealed.py shape`: a child killed at its cap or the
 `--hours` stop; every district's row in `shape-districts.json` and `.csv` beside the merged ledger,
 the channel summary and the limit breaches in `shape.json`).  **Labels**: `fails M1` (the gap-width
-verdict of `m1.json`, or a gate that exited other than 0; a gate that exited 1 is re-run in-process and
-passes when every item it names is Manhattan's, owner 2026-10-14, td#140: `manhattan_verdict`), else `outside band` (a district outside its channel's dollar window,
-`dollars.csv`), else `ineligible` (`score.txt`'s `eligible: no` with its reasons, such as a main
-map K outside the allowed range), else `passes`; `fails shape` instead when the shape limits file
+verdict of `m1.json`, or a gate that exited other than 0; a gate that exited 1 passes when every item it names
+is Manhattan's, owner 2026-10-14, td#140: `manhattan_verdict` reads the sides the gate stage's own process
+recorded, `ifa_index_night.py --gate`), else `outside band` (a district outside its channel's dollar window, judged on
+unrounded dollars of the full extract's cell masses, `exact_rows`; `dollars.csv` decides nothing), else `ineligible`
+(`score.txt`'s `eligible: no` with its reasons, such as a main map K outside the allowed range; a Manhattan-only
+gate pass drops the scorer's `M1:` reasons and no other, `scorer_eligibility`), else `passes`; `fails shape` instead when the shape limits file
 says `"hard": true` and a district breaches one (a missing or non-finite value of a hard-limited measure is an `error`); `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
 `infeasible` (a run with no plan inside its window), `stopped` (a stage's cap or the `--hours` stop), `error` otherwise.
 Shape limits (`L.json`: `{"hard": false, "limits": {<study column>: {"min": x, "max": y}}}`) are
@@ -619,6 +621,12 @@ def score_cmd(folder: str, extract: str) -> list:
     return overnight.score_cmd(folder) + ["--extract", extract]
 
 
+def gate_cmd(folder: str, evidence: str) -> list:
+    """The gate stage: `check.py`'s output and exit code, and the gate's items and sides in `evidence`
+    (`ifa_index_night.py --gate`), recorded in the stage's own process."""
+    return [sys.executable, "-u", os.path.join(HERE, "ifa_index_night.py"), "--gate", folder, "--out", evidence]
+
+
 def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str, window: str | None,
                 caps: dict) -> list:
     """[(stage, command, cap, env)] of a point's merge, gate, score, land and shape."""
@@ -626,7 +634,7 @@ def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str,
     sources = [f"{'+'.join(states)}={final}" for states, final in finals]
     return [("merge", merge_cmd(base_spec, merged, os.path.join(pdir, "merged_extract.json.gz"), extract, sources,
                                 window), caps["merge"], GAP_ENV),
-            ("gate", overnight.gate_cmd(merged), overnight.CAP_S["gate"], GAP_ENV),
+            ("gate", gate_cmd(merged, os.path.join(pdir, ifa_index.EVIDENCE)), overnight.CAP_S["gate"], GAP_ENV),
             ("score", score_cmd(merged, extract), overnight.CAP_S["post"], GAP_ENV),
             ("land", overnight.land_cmd(merged), overnight.CAP_S["post"], None),
             ("shape", shape_cmd(merged, pid, merged), caps["shape"], None)]
@@ -891,21 +899,60 @@ def cmd_shape(a) -> int:
 
 
 # ------------------------------------------------------------------------------ labels
+def exact_rows(folder: str, mass: dict, rates: dict) -> list:
+    """`dollars.csv`'s rows of the merged `folder` with the dollar window judged exactly: each district's dollars
+    are its ledger cells' masses in the full extract (`mass`, `ifa_index_night.extract_masses`; a cell it lacks
+    raises, `cell_mass`) at the full extract's rates (`rates`, `score.dollar_rates`), unrounded, against the
+    applicable bounds with the edges in (`hi`, or the whole-state `cap` for a district owning whole states).
+    `score.dollar_gate` rounds both sides to whole dollars, so a district $0.25 under its floor reads inside
+    there; its structure (states, whole-state districts, the cap) is used and its `ok` is not.  Rows in $M
+    like `overnight.read_dollars`; `usd_exact` is the dollars."""
+    def read(name):
+        with open(os.path.join(folder, name), newline="", encoding="utf-8") as fh:
+            return list(csv.DictReader(fh))
+    ledger = [dict(r, m_rel=ifa_index.cell_mass(r, mass)) if r["district"] else r for r in read("ledger.csv")]
+    out = []
+    for g in score.dollar_gate(ledger, read("districts.csv"), rates):
+        x, lo, hi, cap = g["usd"], g["lo"], g["hi"], g["cap"]
+        inside = lo is not None and lo <= x <= hi
+        allowance = not inside and lo is not None and cap is not None and lo <= x <= cap
+        m = lambda v: None if v is None else v / 1e6
+        out.append({"channel": g["channel"], "district": g["district"], "usd": x / 1e6, "usd_exact": x,
+                    "lo": m(lo), "hi": m(hi), "cap": m(cap), "allowance": allowance, "ok": inside or allowance})
+    return out
+
+
+def evidence_path(folder: str) -> str:
+    """The gate stage's evidence of a point's `merged` folder: beside it, in the point's folder."""
+    return os.path.join(os.path.dirname(os.path.normpath(folder)), ifa_index.EVIDENCE)
+
+
 def manhattan_verdict(folder: str, gate_rc: int | None) -> dict | None:
     """The shared item-side adjudication (`ifa_index_night.m1_verdict`, owner 2026-10-14, td#140) of the exact
-    gate on `folder`, re-run in-process so the sides are the ones the gate judged; None unless the gate
+    gate on `folder`, from the status, items and sides the gate stage's own process wrote
+    (`ifa_index_night.gate_evidence`), so the sides are the ones the gate judged; None unless the gate
     exited 1, the one code a completed gate gives to a failed M1 (0 passed outright, anything else did not
-    complete).  A re-run that raises is a blocking verdict, never an exception."""
+    complete).  Evidence that is missing, unreadable or of another folder or exit code is a blocking verdict,
+    never an exception."""
     if gate_rc != 1:
         return None
     try:
-        with ifa_index.recorded_sides() as sides:
-            gate = ifa_index.check_gate().m1(folder)
-        chk = gate["check"]
-        return ifa_index.m1_verdict(chk.status, chk.summary, chk.items, sides, ifa_index.manhattan_zips(),
-                                    gate["diagnostic"])
-    except Exception as e:     # the gate exits 1 on a crash too; a gate that cannot be re-run adjudicates nothing
-        return {"passes": False, "excepted": [], "blocking": [f"gate re-run failed: {type(e).__name__}: {e}"]}
+        ev = ifa_index.read_gate_evidence(evidence_path(folder), folder, gate_rc)
+        return ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], ifa_index.manhattan_zips(),
+                                    ev["diagnostic"])
+    except Exception as e:     # the gate exits 1 on a crash too; a gate with no evidence adjudicates nothing
+        return {"passes": False, "excepted": [], "blocking": [f"gate evidence unavailable: {type(e).__name__}: {e}"]}
+
+
+def scorer_eligibility(eligible: bool, why, verdict: dict | None, gate_rc: int | None) -> tuple:
+    """(eligible, why) with the scorer's raw-M1 reasons (`M1: fail, ...`, `score.eligibility`) dropped when the
+    Manhattan adjudication passed a gate that exited 1: the adjudication replaces that one veto.  Every other
+    reason stays (`M1: not checked` too), and a scorer that says `eligible: no` with no reason of its own
+    stays ineligible."""
+    if verdict is None or gate_rc != 1 or not verdict["passes"]:
+        return eligible, list(why)
+    keep = [w for w in why if not w.startswith("M1: ") or w.startswith("M1: not checked")]
+    return eligible or (bool(why) and not keep), keep
 
 
 def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),
@@ -913,9 +960,9 @@ def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool
     """(label, reason): `fails M1` on the gap-width verdict of `m1.json` or when the gate stage
     (`tools/mandates/check.py`, exact, gap width on) exited other than 0 (`gate_rc`: its nonzero code is a failed
     M1 or a diagnostic folder, and no `m1.json` makes up for it), else `outside band` when a
-    district of `dollars.csv` is outside its window, else `ineligible` with the scorer's reasons
-    (`eligible`, `why` of `overnight.read_score`: the main K outside its range, a failed audit check),
-    else `fails shape` for a breach under a hard limits file, else `passes`.  The one waiver is the Manhattan
+    district of `rows` (`exact_rows`, unrounded dollars) is outside its window, else `ineligible` with the scorer's reasons
+    (`eligible`, `why` of `overnight.read_score`: the main K outside its range, a failed audit check; the
+    scorer's `M1:` reasons are dropped after a Manhattan-only pass, `scorer_eligibility`), else `fails shape` for a breach under a hard limits file, else `passes`.  The one waiver is the Manhattan
     exception (owner, 2026-10-14, td#140): with a `verdict` (`manhattan_verdict`, for a gate that exited 1)
     that passes, the gate's failure and `m1.json`'s are waived; every item outside the exception, an
     unresolved neck, a diagnostic folder and an unverified M1 still fail M1 (`verdict["blocking"]`)."""
@@ -932,6 +979,7 @@ def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool
         return "outside band", "; ".join(
             f"{r['district']} {r['usd']:,.1f}M outside "
             + ("no window" if r["lo"] is None else f"{r['lo']:,.1f}-{(r['cap'] or r['hi']):,.1f}M") for r in bad)
+    eligible, why = scorer_eligibility(eligible, why, verdict, gate_rc)
     if not eligible:
         return "ineligible", "; ".join(why) or "score.txt says eligible: no"
     if hard and breaches:
@@ -994,6 +1042,15 @@ class Driver(overnight.Runner):
         self.lock = threading.Lock()
         self.pending = collections.Counter()
         self.specs = {}
+        self._masses = None             # (cell masses, rates) of the full dollar extract, `dollar_masses`
+
+    def dollar_masses(self) -> tuple:
+        """(cell masses, dollar rates) of the full dollar extract, read once: the exact window of every point."""
+        with self.lock:
+            if self._masses is None:
+                ext = data.load(self.extract)
+                self._masses = (ifa_index.extract_masses(ext), score.dollar_rates(ext))
+            return self._masses
 
     # -- bookkeeping
     def spec_of(self, pt: dict):
@@ -1214,6 +1271,8 @@ class Driver(overnight.Runner):
             if not finished(merged):
                 raise Stop("error", f"merge.py exited {info['rc']}: {overnight._tail(os.path.join(pdir, 'merge.log'))}")
         gate_rc = None
+        if os.path.exists(os.path.join(pdir, ifa_index.EVIDENCE)):
+            os.remove(os.path.join(pdir, ifa_index.EVIDENCE))       # a stale record is never the gate's of this run
         for name in ("gate", "score", "land"):
             cmd, cap, env = chain[name]
             log = {"gate": os.path.join(pdir, "gate.log"), "score": os.path.join(merged, "score.txt"),
@@ -1228,7 +1287,10 @@ class Driver(overnight.Runner):
                 raise Stop("error", f"score.py wrote no {f}: {overnight._tail(os.path.join(merged, 'score.txt'))}")
         with open(os.path.join(merged, "m1.json"), encoding="utf-8") as fh:
             m1 = json.load(fh)
-        rows = overnight.read_dollars(os.path.join(merged, "dollars.csv"))
+        try:
+            rows = exact_rows(merged, *self.dollar_masses())
+        except (OSError, ValueError, KeyError) as e:
+            raise Stop("error", f"exact dollar window of {merged}: {type(e).__name__}: {e}")
         try:
             eligible, why = overnight.read_score(os.path.join(merged, "score.txt"))
         except ValueError as e:

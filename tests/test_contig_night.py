@@ -207,6 +207,92 @@ def test_current_masses_join_the_ledger_to_the_extract_and_refuse_a_cell_it_lack
         raise AssertionError("a ledger cell with no extract mass was accepted")
 
 
+def test_a_zero_mass_no_cell_territory_row_adds_nothing_and_every_other_omission_is_refused():
+    ext = _mass_extract()
+    cell = lambda z, f, d, reason, m: {"zip_code": z, "current_channel": f, "district": d, "reason": reason, "m_rel": m}
+    territory = cell("30001", "ifa", "IFA_01", audit.NO_CELL, "0.0")             # a footprint cell the extract lacks
+    only = cell("30002", "ifa", "IFA_03", audit.NO_CELL, "0.0")
+    got = ifa_index.current_masses([cell("10001", "ifa", "IFA_01", "", "1.5"), territory, only], ext)
+    assert got == {"IFA_01": 1.5, "IFA_03": 0.0}                                  # a district of territory only stays
+    for bad in (cell("30001", "ifa", "IFA_01", "", "0.0"),                        # silent: no NO_CELL marker
+                cell("30001", "ifa", "IFA_01", audit.NO_CELL, "0.5"),             # NO_CELL with opportunity
+                cell("30001", "ifa", "IFA_01", audit.NO_CELL, ""),                # NO_CELL with no mass column
+                cell("10001", "ifa", "IFA_01", audit.NO_CELL, "0.0"),             # NO_CELL, yet the extract holds it
+                cell("30001", "ifa", "IFA_01", audit.DROPPED, "0.0")):            # another reason
+        try:
+            ifa_index.current_masses([bad], ext)
+        except ValueError as e:
+            assert "30001/ifa" in str(e) or "10001/ifa" in str(e)
+        else:
+            raise AssertionError(f"accepted {bad}")
+    ext2 = data.Extract(("ifa",), ["10001", "10001"], ["ifa", "ifa"], [1.0, 0.5], [{}] * 2, [0.0] * 2)
+    assert ifa_index.current_masses([cell("10001", "ifa", "D", "", "1.5")], ext2) == {"D": 1.5}   # duplicate cells sum
+
+
+def test_load_takes_no_cell_territory_as_zero_mass_and_refuses_a_ledger_cell_without_the_marker():
+    ext = data.Extract(("ifa",), ["10001"], ["ifa"], [801.0], [{}], [0.0])
+    real = (ifa_index.check_gate, ifa_index.manhattan_zips)
+    ifa_index.check_gate = lambda: types.SimpleNamespace(m1=lambda d, g=None: {
+        "check": types.SimpleNamespace(status="pass", summary="ok", items=[]), "diagnostic": None})
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = os.path.join(tmp, "root"), os.path.join(tmp, "full.json.gz")
+            data.write(ext, base)
+            d = os.path.join(root, "K48")
+            os.makedirs(d)
+            open(os.path.join(d, "districts.csv"), "w").write("district,district_name\nIFA_01,one\n")
+            open(os.path.join(d, "manifest.json"), "w").write("{}")
+            json.dump({"districts": {"IFA_01": {"m_rel": 801.0, "window": "in"}}}, open(os.path.join(d, "run.json"), "w"))
+            for reason, ok in ((audit.NO_CELL, True), ("", False)):
+                open(os.path.join(d, "ledger.csv"), "w").write(
+                    "zip_code,current_channel,state,district,reason,m_rel\n"
+                    f"10001,ifa,NY,IFA_01,,801.0\n10002,ifa,NY,IFA_01,{reason},0.0\n")
+                try:
+                    r = ifa_index.load(root, 48, frozenset(), extract=base)
+                except ValueError as e:
+                    assert not ok and "10002/ifa" in str(e)
+                else:
+                    assert ok and r["in"] == 1 and r["usd"]["IFA_01"] == 801.0 * ifa_index.RATE
+    finally:
+        ifa_index.check_gate, ifa_index.manhattan_zips = real
+
+
+def test_the_gate_child_writes_the_gate_s_own_sides_and_exit_code_for_the_driver():
+    import contextlib
+    import io
+    real_geo = score.geography
+    score.geography = _toy_geo
+    held = (audit.neck_item, audit.district_pieces)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            # IFA_01 holds 10001 away from its 20001-20002 body: a detached Manhattan piece, gate exit 1
+            d = _toy_run(tmp, {"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"],
+                               "IFA_03": ["30001", "30002"], "IFA_04": ["30003", "40001"]})
+            out = os.path.join(tmp, ifa_index.EVIDENCE)
+            open(out, "w").write("stale")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = ifa_index.main(["--gate", d, "--out", out])
+            assert rc == 1 and "M1 fail" in buf.getvalue()                       # check.py's own line and code
+            assert (audit.neck_item, audit.district_pieces) == held              # no hook left behind
+            ev = ifa_index.read_gate_evidence(out, d, 1)
+            v = ifa_index.m1_verdict(ev["status"], ev["summary"], ev["items"], ev["sides"], MANHATTAN, ev["diagnostic"])
+            assert v["passes"] and [h for _, h in v["excepted"]] == [["10001"]] and not v["blocking"]
+            direct = _gate({"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"], "IFA_03": ["30001", "30002"],
+                            "IFA_04": ["30003", "40001"]})
+            assert v == direct["verdict"] and ev["items"] == direct["items"]
+            for rc_seen, folder in ((0, d), (1, os.path.join(tmp, "elsewhere"))):   # another exit code or folder
+                try:
+                    ifa_index.read_gate_evidence(out, folder, rc_seen)
+                except ValueError as e:
+                    assert "not of" in str(e)
+                else:
+                    raise AssertionError("evidence of another gate was read")
+    finally:
+        score.geography = real_geo
+        assert (audit.neck_item, audit.district_pieces) == held
+
+
 def test_saved_district_masses_that_disagree_with_current_ownership_are_rejected():
     saved = {"IFA_01": {"m_rel": 3.75, "window": "in"}, "IFA_02": {"m_rel": 4.0, "window": "in"}}
     got = ifa_index.checked_districts(saved, {"IFA_01": 3.75 * (1 + 1e-12), "IFA_02": 4.0})

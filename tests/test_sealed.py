@@ -933,10 +933,15 @@ class _MergeStub(sealed.Driver):
         return {"rc": self.rcs.get(name, 0), "stop": None, "seconds": 0.0}
 
 
+def _toy_dollar_extract(whole=11360.0, district=900.0) -> data.Extract:
+    """A dollar extract ($M cells) whose `wh` rate is exactly 1e6: the district's cell `a1` is $900M, the rest `a2`."""
+    return data.Extract(("wh",), ["a1", "a2"], ["wh", "wh"], [district, whole - district], [{}, {}], [0.0, 0.0])
+
+
 def _merge_driver(tmp, doc=None, caps=None, limits=None, real=(), on_merge=None, rcs=None):
     (pt,) = _validate(doc or _doc(), tmp)
     extract = os.path.join(tmp, "extract.json.gz")
-    open(extract, "wb").write(b"toy")
+    data.write(_toy_dollar_extract(), extract)
     grid = sealed.open_state(tmp, "m5", extract, 1.0, "p", "sha", [pt])
     drv = _MergeStub(grid, tmp, "m5", extract, CELLS, {pt["id"]: pt}, caps or dict(sealed.CAPS), set(), None,
                      limits or sealed.load_limits(None), real=real, on_merge=on_merge, rcs=rcs)
@@ -954,7 +959,10 @@ def _merged_folder(tmp, pid, score="# toy\ndir: x\neligible: yes\n", shape_rows=
     merged = os.path.join(tmp, pid, "merged")
     os.makedirs(merged, exist_ok=True)
     json.dump({"status": "done"}, open(os.path.join(merged, "manifest.json"), "w"))
-    open(os.path.join(merged, "ledger.csv"), "w").write("zip_code\n")
+    open(os.path.join(merged, "ledger.csv"), "w").write(
+        "zip_code,current_channel,state,model_channel,district,reason,m_rel\n"
+        "a1,wh,A,WIFI,WIFI_01,,900.0\n")
+    open(os.path.join(merged, "districts.csv"), "w").write("channel,district,drawn_mass\nWIFI,WIFI_01,900.0\n")
     ok = {"status": "pass", "summary": "0 districts in pieces, 0 necks"}
     json.dump({"gap_width": ok, "strict": ok}, open(os.path.join(merged, "m1.json"), "w"))
     open(os.path.join(merged, "dollars.csv"), "w").write(DOLLARS)
@@ -1027,7 +1035,113 @@ def test_a_manhattan_only_failed_gate_passes_the_label_and_every_other_item_stil
     assert sealed.label_point(bad, rows, [], False, gate_rc=1)[0] == "fails M1"                       # no verdict: raw M1
     assert sealed.manhattan_verdict("/nowhere", 0) is None and sealed.manhattan_verdict("/nowhere", 2) is None
     crash = sealed.manhattan_verdict(os.path.join(tempfile.gettempdir(), "no-such-gate-folder"), 1)
-    assert crash["passes"] is False and "gate re-run failed" in crash["blocking"][0]                 # a crash is a veto
+    assert crash["passes"] is False and "gate evidence unavailable" in crash["blocking"][0]          # no evidence is a veto
+
+
+def test_the_gate_stage_is_a_capped_child_that_records_its_own_evidence_and_a_stale_record_is_a_veto():
+    chain = dict((s, (c, cap)) for s, c, cap, _ in sealed.point_chain("p", "/p", [(("A",), "/f")], "/spec", "/full",
+                                                                        None, dict(sealed.CAPS)))
+    cmd, cap = chain["gate"]
+    assert cmd[-4:] == ["--gate", "/p/merged", "--out", "/p/gate-evidence.json"]
+    assert cmd[1] == "-u" and os.path.samefile(cmd[2], sealed.ifa_index.__file__) and cmd[2].endswith("ifa_index_night.py")
+    assert cap == sealed.overnight.CAP_S["gate"]
+    assert sealed.evidence_path("/p/merged") == "/p/gate-evidence.json"
+    with tempfile.TemporaryDirectory() as tmp:
+        merged = os.path.join(tmp, "merged")
+        os.makedirs(merged)
+        doc = {"folder": os.path.abspath(merged), "rc": 1, "status": "fail", "summary": "s", "diagnostic": None,
+               "items": ["IFA/IFA_01: detached piece of 1 ZIPs (10001...)"],
+               "sides": {"necks": {}, "pieces": [["IFA_01", "10001", 1, ["10001"]]]}}
+        path = sealed.evidence_path(merged)
+        json.dump(doc, open(path, "w"))
+        good = sealed.manhattan_verdict(merged, 1)
+        assert sealed.ifa_index.read_gate_evidence(path, merged, 1)["sides"]["pieces"] == {
+            ("IFA_01", "10001", 1): frozenset({"10001"})}
+        assert good["passes"] and good["excepted"] == [("IFA/IFA_01: detached piece of 1 ZIPs (10001...)", ["10001"])]
+        json.dump(dict(doc, rc=2), open(path, "w"))                    # another exit code than the one the driver saw
+        assert "gate evidence unavailable" in sealed.manhattan_verdict(merged, 1)["blocking"][0]
+        json.dump(dict(doc, folder="/elsewhere/merged"), open(path, "w"))
+        assert "gate evidence unavailable" in sealed.manhattan_verdict(merged, 1)["blocking"][0]
+    with tempfile.TemporaryDirectory() as tmp:                         # the merge removes a record it did not write
+        drv, pt = _merge_driver(tmp, rcs={"gate": 1})
+        _merged_folder(tmp, "toy-pt", shape_rows=[])
+        stale = os.path.join(tmp, "toy-pt", sealed.ifa_index.EVIDENCE)
+        json.dump(dict(doc, folder=os.path.join(tmp, "toy-pt", "merged")), open(stale, "w"))
+        assert drv._merge(pt)[0] == "fails M1" and not os.path.exists(stale)
+
+
+def test_a_manhattan_only_pass_drops_the_scorer_s_raw_m1_reason_and_no_other_veto():
+    bad = {"status": "fail", "summary": "1 necks"}
+    rows = [{"district": "W_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0, "hi": 1150.0, "cap": None, "ok": True}]
+    manhattan = {"passes": True, "excepted": [("a neck in Manhattan", ["10001"])], "blocking": []}
+    raw, other = "M1: fail, 1 necks", "main K 47 outside 48-52"
+    assert sealed.scorer_eligibility(False, [raw], manhattan, 1) == (True, [])
+    assert sealed.scorer_eligibility(False, [raw, other], manhattan, 1) == (False, [other])
+    assert sealed.scorer_eligibility(False, [], manhattan, 1) == (False, [])                # a bare `eligible: no`
+    assert sealed.scorer_eligibility(False, ["M1: not checked"], manhattan, 1) == (False, ["M1: not checked"])
+    assert sealed.scorer_eligibility(False, [raw], manhattan, 0) == (False, [raw])           # no failed gate: no waiver
+    assert sealed.scorer_eligibility(False, [raw], {**manhattan, "passes": False}, 1) == (False, [raw])
+    assert sealed.scorer_eligibility(False, [raw], None, 1) == (False, [raw])
+    assert sealed.label_point(bad, rows, [], False, False, [raw], gate_rc=1, verdict=manhattan) == ("passes", "")
+    assert sealed.label_point(bad, rows, [], False, False, [raw, other], gate_rc=1,
+                              verdict=manhattan) == ("ineligible", other)
+    assert sealed.label_point(bad, rows, [], False, False, [], gate_rc=1, verdict=manhattan)[0] == "ineligible"
+    # through the merge: the scorer says `eligible: no` with only the raw M1 reason
+    real = sealed.manhattan_verdict
+    try:
+        sealed.manhattan_verdict = lambda folder, rc: manhattan if rc == 1 else None
+        for lines, want in ((f"eligible: no\n  - {raw}\n", "passes"), (f"eligible: no\n  - {raw}\n  - {other}\n", "ineligible")):
+            with tempfile.TemporaryDirectory() as tmp:
+                drv, pt = _merge_driver(tmp, rcs={"gate": 1})
+                _merged_folder(tmp, "toy-pt", f"# toy\ndir: x\n{lines}", shape_rows=[])
+                label, reason, _, extra = drv._merge(pt)
+                assert label == want and (want == "passes" or reason == other), (label, reason)
+    finally:
+        sealed.manhattan_verdict = real
+
+
+def test_the_merge_judges_the_dollar_window_on_unrounded_full_extract_masses():
+    total = sealed.score.DOLLARS["wh"] / 1e6
+    # WH_01 and WH_02 share a state (neither is a whole-state district), a1/a2 are their cells of the dollar extract
+    for m1, want in ((849.99999975, "outside band"), (850.0, "passes"), (1150.0, "passes"),
+                     (1150.00000025, "outside band")):
+        with tempfile.TemporaryDirectory() as tmp:
+            drv, pt = _merge_driver(tmp)
+            merged = _merged_folder(tmp, "toy-pt", shape_rows=[])
+            ext = data.Extract(("wh",), ["a1", "a2", "a3"], ["wh"] * 3, [m1, 900.0, total - m1 - 900.0],
+                               [{}] * 3, [0.0] * 3)
+            data.write(ext, drv.extract)
+            open(os.path.join(merged, "ledger.csv"), "w").write(
+                "zip_code,current_channel,state,model_channel,district,reason,m_rel\n"
+                "a1,wh,A,WH,WH_01,,1.0\na2,wh,A,WH,WH_02,,1.0\n")      # the ledger's own m_rel decides nothing
+            open(os.path.join(merged, "districts.csv"), "w").write(
+                "channel,district,drawn_mass\nWH,WH_01,1\nWH,WH_02,1\n")
+            rates = sealed.score.dollar_rates(ext)
+            scored = sealed.score.dollar_gate(
+                [{"zip_code": "a1", "current_channel": "wh", "state": "A", "model_channel": "WH", "district": "WH_01",
+                  "m_rel": str(m1)}], [{"channel": "WH", "district": "WH_01"}], rates)[0]
+            label, reason, _, extra = drv._merge(pt)
+            assert label == want, (m1, label, reason)
+            if want == "outside band":
+                assert scored["ok"] and "WH_01" in reason          # the scorer's whole-dollar comparison accepts it
+                assert extra["summary"]["bands"]["WH"]["out"] == 1
+
+
+def test_a_ledger_cell_the_extract_lacks_stops_the_merge_unless_it_is_zero_mass_no_cell_territory():
+    for row, want in (("a9,wh,A,WH,WH_01,,0.0\n", "error"),
+                      (f"a9,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "passes"),
+                      (f"a9,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.5\n", "error"),
+                      (f"a1,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "error")):   # a1 is in the extract
+        with tempfile.TemporaryDirectory() as tmp:
+            drv, pt = _merge_driver(tmp)
+            merged = _merged_folder(tmp, "toy-pt", shape_rows=[])
+            open(os.path.join(merged, "ledger.csv"), "a").write(row)
+            try:
+                label = drv._merge(pt)[0]
+            except sealed.Stop as e:
+                label = e.label
+                assert "exact dollar window" in e.reason
+            assert label == want, (row, label)
 
 
 def test_the_merge_waives_a_manhattan_only_failed_gate_and_vetoes_the_rest():

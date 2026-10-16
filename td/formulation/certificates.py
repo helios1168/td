@@ -43,16 +43,19 @@ def ifa_model(*, items, manhattan, verified=True, diagnostic=False, unexplained_
     return build_model('F9.I', q)
 
 
-def ifa_ledger_model(*, owned_cells, extract_mass, saved, **gate):
+def ifa_ledger_model(*, owned_cells, extract_mass, saved, no_cell=(), **gate):
     """F9.I from cell-level evidence, independently of the production mass join.
 
     owned_cells: (ZIP, fine channel, district); extract_mass: (ZIP, fine) -> mass;
-    saved: district -> (saved mass, window flag). Missing extract cells fail provenance.
+    saved: district -> (saved mass, window flag). A cell the extract lacks fails provenance unless it is
+    a validated zero-mass NO_CELL territory cell (`no_cell`, ledger rows the extract lacks, mass 0);
+    a NO_CELL cell the extract holds fails it too.
     """
     districts = {j for _, _, j in owned_cells if j}
     current = {j: sum(extract_mass.get((z, f), 0.0) for z, f, d in owned_cells if d == j)
                for j in districts}
-    covered = all((z, f) in extract_mass for z, f, j in owned_cells if j)
+    no_cell = set(no_cell)
+    covered = all(((z, f) in extract_mass) != ((z, f) in no_cell) for z, f, j in owned_cells if j)
     matches = districts == set(saved) and all(
         abs(saved[j][0] - current[j]) <= max(1e-12, 1e-9 * max(abs(saved[j][0]), abs(current[j])))
         for j in districts)
@@ -72,10 +75,17 @@ def glue_model(*, zero_path, donor_nonempty, piece_containment, neck_containment
         recipient_neck_count=recipient_neck_count))
 
 
-def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=False, manhattan_pass=False):
+def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=False, manhattan_pass=False,
+                   reasons=None):
     """The final label: a completed gate (exit 0, or 1 for a failed M1), M1 accepted (raw pass on exit 0, or on
     exit 1 the item-side Manhattan adjudication `manhattan_pass`), every window, eligibility, shape.
-    Eligibility is a separate veto, including the scorer's raw-M1 failure even when adjudicated here."""
+    `windows` are exact (unrounded dollars, edges in). `eligible` is the scorer's flag and `reasons` its
+    reasons (None: the flag stands alone). The adjudicated M1 replaces the scorer's raw-M1 reasons (`M1: ...`,
+    not `M1: not checked`) and only those: any other reason, or a flag with no reason, still vetoes."""
+    waived = reasons is not None and gate_rc == 1 and bool(manhattan_pass)
+    if waived:
+        rest = [r for r in reasons if not r.startswith('M1: ') or r.startswith('M1: not checked')]
+        eligible = bool(eligible) or (bool(reasons) and not rest)
     return build_model('F11.W' if warm else 'F11.R', dict(gate_completed=gate_rc in (0, 1),
         m1=(gate_rc == 0 and bool(m1_pass)) or (gate_rc == 1 and bool(manhattan_pass)),
         windows=all(windows), eligible=eligible, shape=not hard or not breaches))

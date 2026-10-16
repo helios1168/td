@@ -1,6 +1,7 @@
 """Fixed-evidence specs versus production acceptance paths on 30-vertex maps.
 Agent: modeler (openai-codex/gpt-6-astra).
 """
+import csv
 import json
 import os
 import tempfile
@@ -87,8 +88,11 @@ def test_formulation_ifa_current_ledger_mass_provenance_30():
     # and windows, but stale saved totals must prevent certification.
     mass = dict.fromkeys(((z, 'ifa') for z in zs), 60.0)
     saved = {'A': (900.0, 'in'), 'B': (900.0, 'in')}
-    for variant in ('matching', 'moved', 'updated', 'missing_cell', 'missing_district', 'roundoff'):
+    no_cell = audit.NO_CELL
+    for variant in ('matching', 'moved', 'updated', 'missing_cell', 'missing_district', 'roundoff',
+                    'no_cell_territory', 'no_cell_with_mass', 'no_cell_in_extract'):
         cells, extract, recorded = list(base), dict(mass), dict(saved)
+        reason, m_rel, territory = {}, {}, set()
         if variant in ('moved', 'updated'):
             cells[14] = (zs[14], 'ifa', 'B')
         if variant == 'updated':
@@ -99,9 +103,23 @@ def test_formulation_ifa_current_ledger_mass_provenance_30():
             del recorded['B']
         if variant == 'roundoff':
             recorded['A'] = (900.0 + 1e-8, 'in')
+        if variant.startswith('no_cell'):
+            # a footprint cell the extract lacks, owned at zero opportunity (`output.ledger`'s NO_CELL row);
+            # its district keeps the other 14 cells' mass
+            cells[0] = (zs[0], 'ifa', 'A')
+            reason[zs[0], 'ifa'] = no_cell
+            recorded['A'] = (840.0, 'in')
+            if variant != 'no_cell_in_extract':
+                del extract[zs[0], 'ifa']
+            if variant == 'no_cell_with_mass':
+                m_rel[zs[0], 'ifa'] = 0.5
+            else:
+                territory = {(zs[0], 'ifa')}
         ext = data.Extract(('ifa',), [z for z, f in extract], [f for z, f in extract],
                            list(extract.values()), [{} for _ in extract], [0.0 for _ in extract])
-        ledger = [dict(zip_code=z, current_channel=f, district=j) for z, f, j in cells]
+        ledger = [dict(zip_code=z, current_channel=f, district=j, reason=reason.get((z, f), ''),
+                       m_rel=m_rel.get((z, f), 0.0 if (z, f) in reason else extract.get((z, f), 0.0)))
+                  for z, f, j in cells]
         try:
             now = ifa_index.current_masses(ledger, ext)
             checked = ifa_index.checked_districts(
@@ -110,8 +128,8 @@ def test_formulation_ifa_current_ledger_mass_provenance_30():
             accepted = not (over or under)
         except ValueError:
             accepted = False
-        assert accepted == (variant in ('matching', 'updated', 'roundoff')), variant
-        _truth(spec.ifa_ledger_model(owned_cells=cells, extract_mass=extract, saved=recorded,
+        assert accepted == (variant in ('matching', 'updated', 'roundoff', 'no_cell_territory')), variant
+        _truth(spec.ifa_ledger_model(owned_cells=cells, extract_mass=extract, saved=recorded, no_cell=territory,
                                     items=[], manhattan=set()), accepted)
 
 
@@ -162,8 +180,8 @@ def test_formulation_assembly_gate_and_full_extract_30():
             actual = sealed.label_point(ok, normalized, [], False, gate_rc=rc, verdict=verdict)[0] == 'passes'
             _truth(spec.assembly_model(gate_rc=rc, m1_pass=False, windows=[True], eligible=True, hard=False,
                 breaches=[], manhattan_pass=verdict['passes']), actual)
-    # Real 30-vertex Manhattan-only gate evidence still fails scorer eligibility.
-    # This binds the independent eligibility predicate, rather than assuming it true.
+    # Real 30-vertex Manhattan-only gate evidence: the scorer's raw-M1 reason is replaced by the adjudication,
+    # every other reason (and a flag with no reason) still vetoes, in the production label and in the spec.
     cells = [audit.Cell(z, 'wh', 'WH', 'B' if i == 0 or i >= 15 else 'A', 60.0)
              for i, z in enumerate(zs)]
     with ifa_index.recorded_sides() as sides:
@@ -172,12 +190,50 @@ def test_formulation_assembly_gate_and_full_extract_30():
     assert check.status == 'fail' and verdict['passes']
     why = sealed.score.eligibility({'coverage': 'pass'}, check, {'WH': 48}, {}, m1=check, gate=[])
     assert any(w.startswith('M1: fail') for w in why)
-    for warm in (False, True):
-        actual = sealed.label_point({'status': check.status, 'summary': check.summary}, normalized, [], False,
-                                    eligible=not why, why=why, gate_rc=1, verdict=verdict)[0]
-        assert actual == 'ineligible'
-        _truth(spec.assembly_model(gate_rc=1, m1_pass=False, windows=[True], eligible=not why,
-                                  hard=False, breaches=[], warm=warm, manhattan_pass=True), False)
+    other = 'main K 47 outside 48-52'
+    m1 = {'status': check.status, 'summary': check.summary}
+    for reasons, flag in ((why, False), (why + [other], False), ([other], False), ([], False),
+                          (['M1: not checked'], False), ([], True)):
+        for warm in (False, True):
+            for rc, v in ((1, verdict), (1, None), (0, verdict)):
+                actual = sealed.label_point(m1 if rc else {'status': 'pass', 'summary': 'ok'}, normalized, [], False,
+                                            eligible=flag, why=reasons, gate_rc=rc, verdict=v)[0] == 'passes'
+                _truth(spec.assembly_model(gate_rc=rc, m1_pass=rc == 0, windows=[True], eligible=flag,
+                                          hard=False, breaches=[], warm=warm,
+                                          manhattan_pass=bool(v and v['passes']), reasons=reasons), actual)
+    assert sealed.label_point(m1, normalized, [], False, eligible=False, why=why, gate_rc=1,
+                              verdict=verdict) == ('passes', '')
+    label, reason = sealed.label_point(m1, normalized, [], False, eligible=False, why=why + [other], gate_rc=1,
+                                       verdict=verdict)
+    assert label == 'ineligible' and reason == other
+    # Exact windows on 30 vertices: $849,999,999.75 is under the $850M floor although the scorer rounds it in,
+    # and $1,150,000,000.25 is over the ceiling of a district owning more than one state.
+    for district_mass, want in ((849.99999975, False), (850.0, True), (900.0, True), (1150.0, True),
+                                (1150.00000025, False)):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = [dict(zip_code=z, current_channel='wh', state='NY' if i % 2 else 'PA', model_channel='WH',
+                           district='A' if i < 15 else 'B', reason='', m_rel=str(district_mass if i == 0 else 900.0 if i == 15 else 0.0))
+                      for i, z in enumerate(zs)]
+            for name, rows in (('ledger.csv', ledger), ('districts.csv', [dict(channel='WH', district='A'),
+                                                                          dict(channel='WH', district='B')])):
+                with open(os.path.join(tmp, name), 'w', newline='') as fh:
+                    w = csv.DictWriter(fh, list(rows[0]))
+                    w.writeheader()
+                    w.writerows(rows)
+            mass = {(r['zip_code'], 'wh'): float(r['m_rel']) for r in ledger}
+            got = {r['district']: r for r in sealed.exact_rows(tmp, mass, {'wh': 1e6})}
+            scored = {r['district']: r for r in sealed.score.dollar_gate(ledger, [{'channel': 'WH', 'district': 'A'},
+                      {'channel': 'WH', 'district': 'B'}], {'wh': 1e6})}
+            exact = sum(float(r['m_rel']) for r in ledger if r['district'] == 'A') * 1e6
+            assert got['A']['ok'] == want == (0.85e9 <= exact <= 1.15e9), district_mass
+            assert got['B']['ok'] and scored['B']['ok']
+            if district_mass in (849.99999975, 1150.00000025):
+                assert scored['A']['ok']                     # the scorer's whole-dollar comparison accepts it
+            rows = list(got.values())
+            for warm in (False, True):
+                actual = sealed.label_point({'status': 'pass', 'summary': 'ok'}, rows, [], False)[0] == 'passes'
+                _truth(spec.assembly_model(gate_rc=0, m1_pass=True, windows=[r['ok'] for r in got.values()],
+                                          eligible=True, hard=False, breaches=[], warm=warm), actual)
     chain = sealed.point_chain('p', '/p', [(('NY',), '/f')], '/spec', '/full', None, dict(sealed.CAPS))
     command = next(c for s, c, _, _ in chain if s == 'score')
     assert command[-2:] == ['--extract', '/full']

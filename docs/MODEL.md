@@ -1525,14 +1525,17 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
 ### 9.1 F9.I — IFA index acceptance of fixed gate evidence
 
 **Relation to F0: heuristic certification boundary**, not an optimizer or an independent
-routing/mass audit. The index now runs the gate fresh, records its actual neck/piece sides,
+routing/mass audit. The index runs the gate fresh, records its actual neck/piece sides,
 and excepts an item only if it is a proved neck or detached piece whose side intersects
 $H=\{z:\operatorname{primaryCounty}(z)=36061\}$. This replaces the district-name waiver;
 it does not change the raw F9 gate. Entry:
-`tools/exp/contig/ifa_index_night.py:107`
+`tools/exp/contig/ifa_index_night.py:171`
 `def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, diagnostic=None) -> dict:`.
 Unresolved necks, coverage/ownership items, unverified status, diagnostics and unexplained
-failure block acceptance. Informational mass-neck items are ignored.
+failure block acceptance. Informational mass-neck items are ignored. The sealed and warm
+drivers (§11.3) take the same adjudication from evidence recorded in the gate stage's own
+child process (`ifa_index_night.py --gate`), never from audit hooks installed in the driver's
+threads.
 
 For this section and the fixed-evidence certificates F11.G/R/W and F142.P, let $P$ be the
 named predicates below, with supplied truth values $q_p\in\{0,1\}$. A small specification
@@ -1559,22 +1562,28 @@ $$
 \qquad w_j\notin\{\text{under},\text{over}\}.
 $$
 
-Entry: `tools/exp/contig/ifa_index_night.py:135`
+Entry: `tools/exp/contig/ifa_index_night.py:199`
 `        usd = v["m_rel"] * RATE * 1e6`.
 There is no rounding: a sub-dollar breach (for example \$999,999,999.75) is under the floor.
 The index does not trust `run.json`'s saved mass: `current_masses` sums the extract's $m_{zf}$
 over the ledger's cells $(z,f)$ of each district, `checked_districts` raises when the district
 sets differ or a saved mass $\bar m_j$ fails
 $|\bar m_j-m_j|\le\max(10^{-12},10^{-9}\max(|\bar m_j|,|m_j|))$, and a
-ledger cell with no extract mass raises. This tolerance compares saved and recomputed mass,
-not the dollar window. Entry: `tools/exp/contig/ifa_index_night.py:164`
+ledger cell with no extract mass raises, with one convention: a ledger row whose reason is
+`NO_CELL` (a footprint cell the extract lacks, territory at zero opportunity,
+`output.ledger`) and whose `m_rel` is 0 adds mass 0 to its district, so a district of such
+territory keeps its place in the district set. A `NO_CELL` row with opportunity, or whose
+cell the extract does hold, raises like any other unexplained omission. A ZIP's duplicate
+extract cells are summed, as the ledger does. This tolerance compares saved and recomputed
+mass, not the dollar window. Entry: `tools/exp/contig/ifa_index_night.py:248`
 `    off = sorted(j for j in saved if not math.isclose(saved[j]["m_rel"], now[j], rel_tol=MASS_RTOL, abs_tol=1e-12))`.
 The predicate "matching mass provenance" is that check passing; a stale in-window
 `run.json` cannot keep a pass after a material ownership change. The cell-level specification
 `td/formulation/certificates.py:46`
-`def ifa_ledger_model(*, owned_cells, extract_mass, saved, **gate):`
+`def ifa_ledger_model(*, owned_cells, extract_mass, saved, no_cell=(), **gate):`
 independently sums the same ledger cells and checks this predicate. Its 30-vertex production conformance covers a connected boundary transfer,
-updated totals, missing extract cells/districts and summation roundoff.
+updated totals, missing extract cells/districts, summation roundoff, zero-mass `NO_CELL`
+territory (accepted) and a `NO_CELL` row with mass or in the extract (refused).
 No numerical tolerance is added to F0 here.
 `tests/test_formulation_certificates.py` numerically checks the spec against the production
 gate/side recorder and verdict on 30-vertex maps, including Manhattan and non-Manhattan
@@ -1689,7 +1698,7 @@ and each regional support belongs to the national family. Equal relative bands a
 different regional means do not satisfy that premise. The implemented driver changes
 parameters and uses F2/F4/repair; it has no national optimum certificate.
 
-Entry: `tools/exp/contig/sealed.py:390`
+Entry: `tools/exp/contig/sealed.py:392`
 `def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False,`.
 Independent channel partitions are supported; equal-or-disjoint state sets are **not**
 a driver requirement. When they are not aligned, combine cells using their designated
@@ -1700,7 +1709,7 @@ $$
 \qquad r=\operatorname{source}(\rho(z,f),s(z)).
 $$
 
-Entry: `tools/exp/contig/sealed.py:659`
+Entry: `tools/exp/contig/sealed.py:667`
 `def combine_point(runs: list, folders: dict, out: str, spec_path: str, extract_path: str) -> dict:`.
 `merge.py` alone still requires ZIP-disjoint sources. The strict driver accepts group
 statuses `optimal`/`connected`; its label “no connected drawing” also covers unknown/time
@@ -1709,33 +1718,54 @@ with window bands; blaming symmetric bands alone was an inference, not a control
 Optional hard shape-limit files are experimental restrictions, not F0 mandates.
 
 **Final label certificate (F11.R/W).** A pass requires a completed exact gate, M1 acceptance,
-every scorer dollar row passing, scorer eligibility, and no hard-shape breach. M1 acceptance
+every district's dollar window, scorer eligibility, and no hard-shape breach. M1 acceptance
 is the raw pass (gate exit 0) or, for a gate that exited 1, the shared item-side adjudication
-of §9.1 (`manhattan_verdict` re-runs the gate in-process and applies `m1_verdict`): every item
-must be a proved neck or detached piece whose side holds a primary-county-36061 ZCTA, and an
-unresolved neck, any other item, an unverified status, a diagnostic folder or a re-run that
-raises still vetoes. These are $P$ in §9.1's conjunction. Missing gate completion (no exit code,
-or a code other than 0 or 1) is failure, not success; a saved passing `m1.json` cannot override
-a nonzero exit. Entry:
-`tools/exp/contig/sealed.py:911`
+of §9.1 (`manhattan_verdict` applies `m1_verdict` to the status, items and neck/piece sides
+that the gate stage's own child process wrote, `ifa_index_night.py --gate`, beside the point's
+`merged` folder; the file names its folder and exit code and the merge deletes a stale one):
+every item must be a proved neck or detached piece whose side holds a primary-county-36061
+ZCTA, and an unresolved neck, any other item, an unverified status, a diagnostic folder or
+missing, unreadable or mismatched evidence still vetoes. These are $P$ in §9.1's
+conjunction. Missing gate completion (no exit code, or a code other than 0 or 1) is failure,
+not success; a saved passing `m1.json` cannot override a nonzero exit. Entry:
+`tools/exp/contig/sealed.py:958`
 `def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),`.
-The score command now supplies the full extract, not the CONUS-cut merged extract, for
-$D_j=\sum_{(z,f):\lambda(z,f)=j}r_fm_{zf}$ with whole-extract $r_f$.
-Entry: `tools/exp/contig/sealed.py:615` `def score_cmd(folder: str, extract: str) -> list:`.
-Scorer window comparisons themselves round to whole dollars; this is numerical
-implementation behavior, not an F0 waiver. **Conformance finding:** the labels and F9.I
-share the item-side M1 adjudication, but do **not** necessarily accept the same maps.
-The scorer adds a raw-M1 failure to eligibility at `tools/looks/score.py:459`
-`    if m1 is None or m1.status != "pass":`, and the label keeps that independent veto at
-`tools/exp/contig/sealed.py:935` `    if not eligible:`. A 30-vertex Manhattan-only
-piece example passes the item adjudication but is still labelled `ineligible`; the
-conformance test executes the gate, scorer eligibility and label to pin this distinction.
+
+**Eligibility after the adjudication.** The looks scorer adds its own raw-M1 reason
+(`M1: fail, ...`) to `score.txt`'s eligibility. The adjudication replaces that one veto and
+no other: after a gate that exited 1 and passed the adjudication, `scorer_eligibility` drops
+the scorer's `M1:` reasons (not `M1: not checked`); any remaining reason, a reason-less
+`eligible: no`, or a gate that did not exit 1 keeps the point `ineligible`. So the labels
+and F9.I accept the same Manhattan-excepted maps unless another eligibility rule fails.
+Entry: `tools/exp/contig/sealed.py:947`
+`def scorer_eligibility(eligible: bool, why, verdict: dict | None, gate_rc: int | None) -> tuple:`;
+the spec `td/formulation/certificates.py:78`
+`def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=False, manhattan_pass=False,`
+states it independently from the scorer's reasons.
+
+**Windows are exact.** The label's windows are judged on unrounded dollars: each district's
+$D_j=\sum_{(z,f):\lambda(z,f)=j}r_fm_{zf}$ with the full dollar extract's cell masses
+$m_{zf}$ (a ledger cell the extract lacks raises, except the zero-mass `NO_CELL`
+territory above) and its whole-extract rates $r_f$, against the applicable bounds with the
+edges in: $L\le D_j\le U$, where $U$ is the window ceiling, or the whole-state cap for a
+district owning whole states alone (`score.dollar_gate`'s structure). A sub-dollar breach
+such as \$849,999,999.75 against the \$850M WH floor is outside. Entry:
+`tools/exp/contig/sealed.py:917` `        inside = lo is not None and lo <= x <= hi`.
+`tools/looks/score.py:337`
+`        inside = lo is not None and round(lo) <= round(x) <= round(hi)`
+still rounds both sides to whole dollars (the scorer's `dollars.csv`, `score.txt` and its own
+window eligibility reasons); that is scorer behavior, which can only accept more than the
+exact comparison, and it decides nothing in the label. Entry for the scoring command:
+`tools/exp/contig/sealed.py:617` `def score_cmd(folder: str, extract: str) -> list:`
+(the full extract, not the CONUS-cut merged extract, so $r_f$ is whole-extract).
+
 The sealed cut extracts carry no sales data
 (`state_extract.strip_sales`); `merge.py`'s merged extracts and `dollarize.py`'s dollar
 extracts are written by other modules and are not covered here.
-The 30-vertex conformance test calls the production dollar gate and label function,
-including a district below its floor, missing/nonzero gate exits and a Manhattan-only
-failed gate, and checks the full-extract argument in the production command chain.
+The 30-vertex conformance test calls the production dollar window and label function,
+including a district below its floor by less than a dollar, missing/nonzero gate exits, a
+Manhattan-only failed gate that stays eligible and one that keeps another eligibility
+reason, and checks the full-extract argument in the production command chain.
 
 For arithmetic screening only, a channel without conditional caps needs
 
