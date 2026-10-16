@@ -10,6 +10,7 @@ import inspect
 import json
 import math
 import os
+import sys
 from pathlib import Path
 from types import SimpleNamespace as NS
 from unittest.mock import patch
@@ -20,6 +21,16 @@ import pyomo.environ as pyo
 
 from td.formulation import f0, f4, f142
 from tests.test_contig_realize import _draw
+
+BNC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools", "exp", "bnc")
+if BNC not in sys.path:
+    sys.path.append(BNC)
+
+import capture  # noqa: E402
+import synth  # noqa: E402
+
+bnc_arms = capture.sibling("bnc_arms", "arms.py")
+bnc_verify = capture.sibling("bnc_verify", "verify.py")
 
 
 def _solve(model, assignment=None):
@@ -402,6 +413,13 @@ def test_formulation_separators_reject_locally_valid_disconnected_point():
     assert result.status == "infeasible" and result.cuts > 0
 
 
+def _bnc_rootless_path(extra, sequential):
+    """`test_formulation_rootless_empty_extra_and_sequential_domain`'s group as a bnc instance: a 30-ZCTA
+    path of mass 1, districts A and B with no body, band [30, 35], B holding `extra` outside the group."""
+    return synth.grid("rootless-path", w=30, h=1, bodies={}, rootless=("A", "B"), band=(30.0, 35.0),
+                      extra={"B": extra}, sequential=sequential, heavy={(0, c): 1.0 for c in range(30)})
+
+
 def test_formulation_rootless_empty_extra_and_sequential_domain():
     # F142 separators (and draw) allow an empty rootless district if `extra`
     # already meets its band. bnc verify.py's unconditional sum r=1 does not.
@@ -419,9 +437,20 @@ def test_formulation_rootless_empty_extra_and_sequential_domain():
         for build in (f4.build_model, f142.build_model):
             verdict, value = _solve(build(data), point)
             assert verdict == "optimal" and abs(value - actual.objective) < 2e-6
-        forced_root = f4.build_model(data)
-        forced_root.t["B"].fix(1)  # the independent bnc flow verifier's restriction
-        assert _solve(forced_root, point)[0] == "infeasible"
+        # The same group as a bnc instance (30 ZCTAs on a path, both districts rootless, B's `extra` as above):
+        # draw.py's complete model, run through bnc's arm a, takes the empty B; the production flow verifier
+        # (`verify.flow_model`, `verify.run`) roots every rootless district and so cannot.
+        inst = _bnc_rootless_path(extra=call["extra"]["B"], sequential=sequential)
+        arm = bnc_arms.solve("a", inst, 60.0, None, lambda *_: None)
+        assert arm["status"] == "optimal" and set(arm["owner"].values()) == {"A"}, arm
+        model, xs = bnc_verify.flow_model(inst)
+        for (z, j), i in inst.xcol.items():
+            value = float(j == "A")                       # the point: every ZCTA to A, as above
+            model.chgVarLb(xs[i], value)
+            model.chgVarUb(xs[i], value)
+        model.optimize()
+        assert model.getStatus() == "infeasible"
+        assert bnc_verify.run(inst, 60.0, lambda *_: None)["scip_status"] == "infeasible"
     call["sequential"] = False
     assert _production(call, centres, point).status == "infeasible"
     assert _solve(f4.build_model(f4.prepare(call, centres=centres)), point)[0] == "infeasible"

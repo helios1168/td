@@ -27,10 +27,13 @@ def cell(r: int, c: int) -> str:
 
 
 def grid(name: str, w: int, h: int, bodies: dict, seed: int = 1, delta: float = 0.2,
-         heavy: dict | None = None, rootless: tuple = (), k: int | None = None) -> inst_io.Inst:
+         heavy: dict | None = None, rootless: tuple = (), k: int | None = None,
+         band: tuple | None = None, extra: dict | None = None, sequential: bool = False) -> inst_io.Inst:
     """`bodies` {district: [(r, c), ...]} fixed cells (one body per connected run, listed as one
     body when adjacent, else one each); `rootless` districts with no body; `heavy` {(r, c): mass}.
-    The band is τ(1 ± delta) for τ the total mass over the number of districts."""
+    The band is τ(1 ± delta) for τ the total mass over the number of districts, or `band` (lo, hi);
+    `extra` {district: mass} is the mass a district holds outside the group (draw.py's `extra`) and
+    `sequential` draw.py's flag of that name."""
     rng = random.Random(seed)
     nodes = [(r, c) for r in range(h) for c in range(w)]
     mass = {cell(r, c): float(rng.randint(1, 4)) for r, c in nodes}
@@ -57,7 +60,7 @@ def grid(name: str, w: int, h: int, bodies: dict, seed: int = 1, delta: float = 
             left -= comp
         comps[j] = sorted(out, key=lambda b: (-len(b), b[0]))
     tau = sum(mass.values()) / (k or len(js))
-    lo, hi = tau * (1 - delta), tau * (1 + delta)
+    lo, hi = band if band else (tau * (1 - delta), tau * (1 + delta))
     units = {"L": [z for z in unit if unit[z] == "L"], "R": [z for z in unit if unit[z] == "R"]}
     snap = {
         "c": "X", "zs": free, "allowed": {z: list(js) for z in free},
@@ -67,7 +70,7 @@ def grid(name: str, w: int, h: int, bodies: dict, seed: int = 1, delta: float = 
         "unit_of": unit, "hold": {"L": list(js), "R": list(js)}, "planned": [],
         "support": {j: ["L", "R"] for j in js}, "targets": {j: tau for j in js}, "tau": tau,
         "M": [], "unit_zips": units, "lo": lo, "hi": hi, "arm": "arm1", "fixed_targets": False,
-        "extra": None, "sequential": False, "border": None, "land": None, "centres": []}
+        "extra": extra, "sequential": sequential, "border": None, "land": None, "centres": []}
     draw = capture.load_draw()
     base = capture.rebuild_model(draw, snap)
     doc = {"schema": inst_io.SCHEMA, "id": name,
