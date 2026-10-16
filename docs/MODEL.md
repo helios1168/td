@@ -1564,9 +1564,17 @@ Entry: `tools/exp/contig/ifa_index_night.py:135`
 There is no rounding: a sub-dollar breach (for example \$999,999,999.75) is under the floor.
 The index does not trust `run.json`'s saved mass: `current_masses` sums the extract's $m_{zf}$
 over the ledger's cells $(z,f)$ of each district, `checked_districts` raises when the district
-sets differ or a saved mass is off the current one by more than relative $10^{-9}$, and a
-ledger cell with no extract mass raises. The predicate "matching mass provenance" is that
-check passing; a stale in-window `run.json` cannot keep a pass after an ownership change.
+sets differ or a saved mass $\bar m_j$ fails
+$|\bar m_j-m_j|\le\max(10^{-12},10^{-9}\max(|\bar m_j|,|m_j|))$, and a
+ledger cell with no extract mass raises. This tolerance compares saved and recomputed mass,
+not the dollar window. Entry: `tools/exp/contig/ifa_index_night.py:164`
+`    off = sorted(j for j in saved if not math.isclose(saved[j]["m_rel"], now[j], rel_tol=MASS_RTOL, abs_tol=1e-12))`.
+The predicate "matching mass provenance" is that check passing; a stale in-window
+`run.json` cannot keep a pass after a material ownership change. The cell-level specification
+`td/formulation/certificates.py:46`
+`def ifa_ledger_model(*, owned_cells, extract_mass, saved, **gate):`
+independently sums the same ledger cells and checks this predicate. Its 30-vertex production conformance covers a connected boundary transfer,
+updated totals, missing extract cells/districts and summation roundoff.
 No numerical tolerance is added to F0 here.
 `tests/test_formulation_certificates.py` numerically checks the spec against the production
 gate/side recorder and verdict on 30-vertex maps, including Manhattan and non-Manhattan
@@ -1715,8 +1723,14 @@ The score command now supplies the full extract, not the CONUS-cut merged extrac
 $D_j=\sum_{(z,f):\lambda(z,f)=j}r_fm_{zf}$ with whole-extract $r_f$.
 Entry: `tools/exp/contig/sealed.py:615` `def score_cmd(folder: str, extract: str) -> list:`.
 Scorer window comparisons themselves round to whole dollars; this is numerical
-implementation behavior, not an F0 waiver. The labels and F9.I now accept the same
-Manhattan-excepted maps. The sealed cut extracts carry no sales data
+implementation behavior, not an F0 waiver. **Conformance finding:** the labels and F9.I
+share the item-side M1 adjudication, but do **not** necessarily accept the same maps.
+The scorer adds a raw-M1 failure to eligibility at `tools/looks/score.py:459`
+`    if m1 is None or m1.status != "pass":`, and the label keeps that independent veto at
+`tools/exp/contig/sealed.py:935` `    if not eligible:`. A 30-vertex Manhattan-only
+piece example passes the item adjudication but is still labelled `ineligible`; the
+conformance test executes the gate, scorer eligibility and label to pin this distinction.
+The sealed cut extracts carry no sales data
 (`state_extract.strip_sales`); `merge.py`'s merged extracts and `dollarize.py`'s dollar
 extracts are written by other modules and are not covered here.
 The 30-vertex conformance test calls the production dollar gate and label function,

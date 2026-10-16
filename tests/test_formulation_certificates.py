@@ -7,7 +7,7 @@ import tempfile
 
 import pyomo.environ as pyo
 
-from td import audit
+from td import audit, data
 from td.formulation import certificates as spec
 from tests.test_contig_night import ifa_index
 from tests.test_sealed import glue, sealed
@@ -80,6 +80,41 @@ def test_formulation_ifa_gate_items_and_windows_30():
                                  diagnostic=diagnostic is not None), actual)
 
 
+def test_formulation_ifa_current_ledger_mass_provenance_30():
+    zs = _polygon()['vertices']
+    base = [(z, 'ifa', 'A' if i < 15 else 'B') for i, z in enumerate(zs)]
+    # Both districts start at mass 900. Moving one boundary cell keeps connectivity
+    # and windows, but stale saved totals must prevent certification.
+    mass = dict.fromkeys(((z, 'ifa') for z in zs), 60.0)
+    saved = {'A': (900.0, 'in'), 'B': (900.0, 'in')}
+    for variant in ('matching', 'moved', 'updated', 'missing_cell', 'missing_district', 'roundoff'):
+        cells, extract, recorded = list(base), dict(mass), dict(saved)
+        if variant in ('moved', 'updated'):
+            cells[14] = (zs[14], 'ifa', 'B')
+        if variant == 'updated':
+            recorded = {'A': (840.0, 'in'), 'B': (960.0, 'in')}
+        if variant == 'missing_cell':
+            del extract[zs[0], 'ifa']
+        if variant == 'missing_district':
+            del recorded['B']
+        if variant == 'roundoff':
+            recorded['A'] = (900.0 + 1e-8, 'in')
+        ext = data.Extract(('ifa',), [z for z, f in extract], [f for z, f in extract],
+                           list(extract.values()), [{} for _ in extract], [0.0 for _ in extract])
+        ledger = [dict(zip_code=z, current_channel=f, district=j) for z, f, j in cells]
+        try:
+            now = ifa_index.current_masses(ledger, ext)
+            checked = ifa_index.checked_districts(
+                {j: dict(m_rel=m, window=w) for j, (m, w) in recorded.items()}, now)
+            over, under = ifa_index.window_verdict(checked)
+            accepted = not (over or under)
+        except ValueError:
+            accepted = False
+        assert accepted == (variant in ('matching', 'updated', 'roundoff')), variant
+        _truth(spec.ifa_ledger_model(owned_cells=cells, extract_mass=extract, saved=recorded,
+                                    items=[], manhattan=set()), accepted)
+
+
 def test_formulation_glue_resolved_donor_and_gap_adjacency_30():
     polygon = _polygon()
     zs = polygon['vertices']
@@ -127,6 +162,22 @@ def test_formulation_assembly_gate_and_full_extract_30():
             actual = sealed.label_point(ok, normalized, [], False, gate_rc=rc, verdict=verdict)[0] == 'passes'
             _truth(spec.assembly_model(gate_rc=rc, m1_pass=False, windows=[True], eligible=True, hard=False,
                 breaches=[], manhattan_pass=verdict['passes']), actual)
+    # Real 30-vertex Manhattan-only gate evidence still fails scorer eligibility.
+    # This binds the independent eligibility predicate, rather than assuming it true.
+    cells = [audit.Cell(z, 'wh', 'WH', 'B' if i == 0 or i >= 15 else 'A', 60.0)
+             for i, z in enumerate(zs)]
+    with ifa_index.recorded_sides() as sides:
+        check = audit.check_m1(audit.Run(cells, {'WH': audit.Channel(2)}, polygon=polygon, fine=('wh',)))
+    verdict = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, {zs[0]})
+    assert check.status == 'fail' and verdict['passes']
+    why = sealed.score.eligibility({'coverage': 'pass'}, check, {'WH': 48}, {}, m1=check, gate=[])
+    assert any(w.startswith('M1: fail') for w in why)
+    for warm in (False, True):
+        actual = sealed.label_point({'status': check.status, 'summary': check.summary}, normalized, [], False,
+                                    eligible=not why, why=why, gate_rc=1, verdict=verdict)[0]
+        assert actual == 'ineligible'
+        _truth(spec.assembly_model(gate_rc=1, m1_pass=False, windows=[True], eligible=not why,
+                                  hard=False, breaches=[], warm=warm, manhattan_pass=True), False)
     chain = sealed.point_chain('p', '/p', [(('NY',), '/f')], '/spec', '/full', None, dict(sealed.CAPS))
     command = next(c for s, c, _, _ in chain if s == 'score')
     assert command[-2:] == ['--extract', '/full']
