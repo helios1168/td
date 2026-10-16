@@ -465,6 +465,8 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
             # not infeasible, no growth, no drawing taken
             g.status, g.owner = "unknown", {}
             g.note = f"SCIP crashed ({runs[-1]['signal']}) in both settings; " + g.note
+            if not dag:
+                crashed.append(g)
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
             f"{'' if cap else ' (no cap)'}{' [scip]' if engine == 'scip' else ''}: "
             f"{len(g.districts)} districts, {g.columns} columns"
@@ -472,8 +474,10 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
             f"{(' (' + g.note + ')') if g.note else ''}")
         calls.append(runs)
         return g
-    tried, calls = [], []
+    tried, calls, crashed = [], [], []
     g = draw._attempt(solve, None, tried)
+    if crashed:             # the complete model's crash is unresolved: `draw._attempt` falls back to
+        g = crashed[0]      # the DAG's connected drawing, which nothing proved or improved
     for t, runs in zip(tried, calls):       # a SCIP crash and its retry are in the record (scip_engine.py)
         if runs:
             t["engine_runs"] = runs
@@ -922,6 +926,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
 
 # ------------------------------------------------------------------------------ in parallel (#123)
 WORKER = "contig_repair_worker"     # the name a worker process runs this file under
+STOP_WINDOW = 10.0                  # seconds a stopped window worker gets to end its SCIP child
 
 
 def _race(pool, n, launch, settle, wanted) -> None:
@@ -1075,16 +1080,22 @@ class WindowPool:
             self.idle.append((self.done.pop(conn)[0], conn))
             return
         proc = self.busy.pop(conn)
-        self._give()
         self._stop(proc, conn)
+        self._give()                            # the slot is free once the worker's SCIP child is reaped
         self.idle.append(self._spawn())
 
     def _spawn(self):
         return _spawn("window", self.shared, log=self.log)
 
     def _stop(self, proc, conn) -> None:
-        proc.kill()
-        proc.join()
+        """SIGTERM first: a window worker on `--engine scip` kills and reaps its isolated SCIP child
+        (`_stopped`, `scip_engine.solve_isolated`), which a SIGKILL of the worker would leave
+        running; SIGKILL once the worker has not exited within `STOP_WINDOW` seconds."""
+        proc.terminate()
+        proc.join(STOP_WINDOW)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
         conn.close()
 
     def close(self) -> None:
@@ -1138,13 +1149,15 @@ def _serve(conn, role: str, shared: str, slots, log: bool) -> None:
     """A worker process, HiGHS pinned to one thread before anything else: `window` solves window
     tasks (`_window_task`) until its connection closes; `channel` repairs one channel
     (`repair_channel`) with a `WindowPool` and sends (owner, attempts).  A channel leads its own
-    process group, its windows in it, and on SIGTERM (`run.stop`) closes its pool and exits."""
+    process group, its windows in it, and on SIGTERM (`run.stop`) closes its pool and exits.  A
+    window ends on SIGTERM too (`WindowPool.kill`), its SCIP child killed and reaped on the way
+    out (`scip_engine.solve_isolated`)."""
     import signal
     import traceback
     run.pin_threads()
     if role == "channel":
         os.setpgrp()
-        signal.signal(signal.SIGTERM, _stopped)
+    signal.signal(signal.SIGTERM, _stopped)
     _log = _print if log else (lambda *_: None)
     with open(shared, "rb") as fh:
         sh = pickle.load(fh)
