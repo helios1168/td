@@ -8,7 +8,10 @@ import pyomo.environ as pyo
 
 
 def build_model(*, unit_zips, mass, family, weights, k, lo, hi, banned=()):
-    """Small whole-unit set partition model; mass is per ZIP, weights per support."""
+    """Small whole-unit set partition model with closed [lo, hi] bounds.
+
+    Mass is per ZIP, weights per support; endpoints need no widening of delta_w.
+    """
     zips = [z for zs in unit_zips.values() for z in zs]
     if not 1 <= len(zips) <= 300 or len(set(zips)) != len(zips):
         raise ValueError('F2.W requires disjoint nonempty units and at most 300 ZIPs')

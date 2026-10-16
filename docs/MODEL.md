@@ -400,8 +400,10 @@ Entry: `tools/exp/contig/wholeplan.py:93`
 The window branch is `tools/exp/contig/wholeplan.py:113`
 `        window = d.method == "window"       # a window band: no δ to minimise, feasibility in the window only`.
 `td/formulation/f2w.py` independently specifies the reduced master; the 30-ZCTA conformance
-test compares its optimum and fixed feasible/infeasible points with F2, and checks the
-wholeplan window records. This contract does not change the legacy symmetric-band search.
+test compares its optimum and fixed feasible/infeasible points with F2, including a closed-window
+endpoint case: $\tau=65/64$, $[L,U]=[1,33/32]$, with district masses at both endpoints.
+It checks the wholeplan window records without widening either endpoint. This contract does
+not change the legacy symmetric-band search.
 
 #### 3.6.6 The rounding margin μ_S (U33)
 

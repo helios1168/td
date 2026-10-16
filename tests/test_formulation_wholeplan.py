@@ -49,7 +49,8 @@ def _solve(model):
 
 
 def test_formulation_whole_unit_window_optimum_and_points_30():
-    for lo, hi in ((0.9, 1.123456), (0.999, 1.001)):
+    # tau = 65/64: the middle window puts masses 1 and 33/32 exactly on its endpoints.
+    for lo, hi in ((0.9, 1.123456), (64 / 65, 66 / 65), (0.999, 1.001)):
         inst, polygon = _instance(lo, hi)
         fam = supports.family(inst, 'X')
         for banned in ((), (frozenset({'PA', 'NY'}),)):
@@ -75,7 +76,7 @@ def test_formulation_whole_unit_window_optimum_and_points_30():
                 assert symbolic_feasible == (not master.violations(production, x))
         # The real wholeplan loop uses the same fixed window and raw-gate geometry.
         result = _wholeplan().loop(inst, 'X', polygon, log=lambda *_: None)
-        feasible = lo == 0.9
+        feasible = lo != 0.999
         assert result['status'] == ('passed' if feasible else 'no plan'), result
         reference = _symbolic(inst, fam)
         assert pyo.value(reference.minimum_delta_certificate) == 0
