@@ -225,6 +225,49 @@ def test_child_cap_deadline_and_exit():
     assert not overnight.LIVE
 
 
+def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
+    """The stage runs in its own session, so a Ctrl-C reaches only the launcher: `child` ends the stage's process
+    group on any unwinding, leaving nothing running and nothing in LIVE."""
+    import _thread
+    import signal
+    # the stage starts a grandchild and sleeps; both are in the stage's group
+    script = ("import subprocess, sys, time; "
+              "g = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+              "print(g.pid, flush=True); time.sleep(60)")
+    with tempfile.TemporaryDirectory() as tmp:
+        log = os.path.join(tmp, "s.log")
+        seen = {}
+
+        def interrupt():
+            for _ in range(200):
+                with overnight.LIVE_LOCK:
+                    live = list(overnight.LIVE)
+                if live and open(log).read().strip():
+                    seen["stage"], seen["grandchild"] = live[0].pid, int(open(log).read().split()[0])
+                    break
+                time.sleep(0.05)
+            _thread.interrupt_main()
+        threading.Thread(target=interrupt, daemon=True).start()
+        t0 = time.time()
+        try:
+            overnight.child([sys.executable, "-c", script], log, 60, time.time() + 120)
+        except KeyboardInterrupt:
+            pass
+        else:
+            raise AssertionError("the interrupt never reached the launcher")
+    assert time.time() - t0 < 30 and not overnight.LIVE and {"stage", "grandchild"} <= set(seen)
+    for pid in (seen["stage"], seen["grandchild"]):
+        for _ in range(50):         # a killed grandchild is reaped by init a moment later
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.1)
+        else:
+            os.killpg(pid, signal.SIGKILL) if pid == seen["stage"] else os.kill(pid, signal.SIGKILL)
+            raise AssertionError(f"process {pid} of the interrupted stage is still running")
+
+
 def test_resume_keeps_finished_folders_and_sets_others_aside():
     with tempfile.TemporaryDirectory() as tmp:
         d = os.path.join(tmp, "draw")

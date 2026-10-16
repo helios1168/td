@@ -10,12 +10,13 @@ exact window repair from the first attempt's full drawing, then glue, merge, gat
 `draw.py`'s non-contiguous fallback in the groups it left undrawn) and the point's other runs'
 finals from `<main>/SEALED.json` (a run whose drawing finished), and does in `<root>/<ID>/`:
 
-1. `r1/`: `repair.py` pass 1 (`overnight.REPAIR[1]`, `--keep-support --flow`, `--budget`), then `r2/` (pass 2,
+1. `r1/`: `repair.py` pass 1 (`overnight.REPAIR[1]`, `--keep-support --flow`, `--budget`; on the extract the first attempt
+   was drawn on, `source_extract`), then `r2/` (pass 2,
    from `r1/`) when a channel of `r1/` is still in pieces or necked.  Every window is exact, with the
    channel's final band, which under the window band is its dollar window.
 2. `glue/`: `glue.py` on the last pass.
 3. `sealed.Driver.finish` on that folder and the other runs' finals: merge, gate, `score.py` (with `--extract` the
-   full dollar extract: the merged extract's rates are 2% off, see `point_state`), `land.py`
+   full dollar extract: the merged extract's rates are 2% off, see `sealed.score_cmd`), `land.py`
    and the shape measures, the label of `sealed.label_point`.  `warm.json` holds the label, the
    undrawn ZCTAs the final ledger still carries per channel (`undrawn_zctas` of the final `contig.json`),
    the pieces and necks left, and the dollar window verdict.
@@ -99,6 +100,15 @@ def point_state(a, pt: dict, rdir: str):
     return drv, main["points"][pid]
 
 
+def source_extract(main_dir: str, pid: str, run_name: str, full: str) -> str:
+    """The extract the first attempt of `<main>/<ID>/<run>/` was drawn on: its own cut extract when the sealed driver
+    made one (`sealed.Driver.run_extract`: channels outside the run have cells in its states), else `full`.  The
+    repair and the glue read this one, so their cells are the draw's; only the final scoring reads the full dollar
+    extract."""
+    own = os.path.join(main_dir, pid, run_name, sealed.RUN_EXTRACT)
+    return own if os.path.exists(own) else full
+
+
 def final_undrawn(folder: str) -> dict:
     """{channel: undrawn ZCTAs} of a folder's contig.json, the channels with some."""
     with open(os.path.join(folder, "contig.json"), encoding="utf-8") as fh:
@@ -129,6 +139,14 @@ def left_over(folder: str) -> dict:
 
 
 def cmd_point(a) -> int:
+    try:
+        return _point(a)
+    except BaseException:       # an interrupt ends the stage still running and its solver session
+        overnight.stop_all()
+        raise
+
+
+def _point(a) -> int:
     pid = a.id
     a.main, a.root = os.path.abspath(a.main), os.path.abspath(a.root)
     pt = next((p for p in sealed.load_partition(a.partition) if p["id"] == pid), None)
@@ -141,7 +159,7 @@ def cmd_point(a) -> int:
     src = os.path.join(a.main, pid, run["name"], "draw")
     if not sealed.finished(src):
         raise SystemExit(f"{src}: no finished first drawing to start from")
-    plans, extract = drv.plans, drv.extract
+    plans, extract = drv.plans, source_extract(a.main, pid, run["name"], drv.extract)
     label = f"warm {pid}"
     for npass in (1, 2):
         out = os.path.join(pdir, f"r{npass}")

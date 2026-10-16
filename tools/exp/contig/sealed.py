@@ -149,6 +149,7 @@ RUN_BAD = ("error", "stopped", NO_DRAWING, "infeasible")   # a run's failing sta
 DRAWN_OK = ("optimal", "connected")        # a group or channel drawing the owner accepts (2026-10-14: contiguity at the solver)
 STRUCTURES = {k: (os.path.join(ROOT, p), rule) for k, (p, rule) in overnight.STRUCTURES.items()}
 GAP_ENV = overnight.GAP_ENV
+RUN_EXTRACT = "extract.json.gz"           # a run's own cut extract, in its folder, when channels outside it have cells there
 SHAPE_ROWS = "shape-districts.json"     # every district's study measures, beside the merged ledger (+ .csv)
 POINT_NAMES = ("SEALED.json", "SEALED.json.tmp", "SEALED.md", "_plans")     # written in the root
 RUN_NAMES = ("alt", "merged", "combined", "spec-merge.toml", "merged_extract.json.gz", "merge.log", "gate.log",
@@ -989,7 +990,7 @@ class Driver(overnight.Runner):
         cells in its states, `<run>/extract.json.gz` less their fine channels (made once)."""
         if not plan["outside"]:
             return self.extract
-        path = os.path.join(rdir, "extract.json.gz")
+        path = os.path.join(rdir, RUN_EXTRACT)
         if not os.path.exists(path):
             if self.state_of is None:
                 self.state_of = zip_states()
@@ -1414,7 +1415,7 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             print(run_spec_text(text, pt["id"], run["name"], run["states"], plan, forbid | set(map(tuple, run["forbid"])),
                                 a.max_size, run.get("overrides")), end="")
             print("---")
-            rx = os.path.join(rdir, "extract.json.gz") if plan["outside"] else a.extract
+            rx = os.path.join(rdir, RUN_EXTRACT) if plan["outside"] else a.extract
             for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, rx, plan, caps, a.drawable_alone):
                 print(f"[{stage}, cap {cap:g} s{', env ' + str(env) if env else ''}] " + " ".join(map(q, cmd)))
             finals.append((run["states"], os.path.join(rdir, "glue")))

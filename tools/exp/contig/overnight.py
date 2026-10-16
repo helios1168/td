@@ -567,13 +567,16 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
     with open(log_path, "w") as lg:
         p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                              env={**os.environ, **(env or {})}, start_new_session=True)
-        with LIVE_LOCK:
-            LIVE.add(p)
         try:
+            with LIVE_LOCK:
+                LIVE.add(p)
             rc = p.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             stop = "deadline" if left <= cap else "cap"
             rc = _end(p)
+        except BaseException:       # an interrupt: the stage has its own session, so nothing else ends or reaps it
+            _end(p)
+            raise
         finally:
             with LIVE_LOCK:
                 LIVE.discard(p)

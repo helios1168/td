@@ -2,12 +2,15 @@
 IFA index's pass verdict, warm.py's extracts and stage cleanup, the regional shell scripts."""
 from __future__ import annotations
 
+import csv
 import importlib.util
+import json
 import os
 import sys
 import tempfile
+import types
 
-from td import data, geo
+from td import audit, data, geo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONTIG = os.path.join(HERE, "..", "tools", "exp", "contig")
@@ -49,11 +52,6 @@ def test_a_state_extract_carries_no_rep_shares_share_free_or_firm_map():
 
 
 # ------------------------------------------------------------------------------ C1, C2: the IFA index
-import csv
-import json
-
-from td import audit
-
 ifa_index = _import("contig_ifa_index_night", "ifa_index_night.py")
 score = ifa_index.check_gate().score
 
@@ -172,3 +170,90 @@ def test_window_verdict_uses_the_unrounded_mass_not_the_rounded_dollars():
     assert ifa_index.window_verdict(dist) == (["B", "D"], ["A"])
     edge = {"E": {"m_rel": 1000.0 / rate, "usd_m": 1000.0}, "F": {"m_rel": 1437.5 / rate, "usd_m": 1437.5}}
     assert ifa_index.window_verdict(edge) == ([], [])                          # the edges, in whole dollars, are in
+
+
+# ------------------------------------------------------------------------------ C7, C8: warm.py
+warm = _import("contig_warm", "warm.py")
+
+
+def _done_folder(path: str, contig: dict | None = None) -> str:
+    os.makedirs(path, exist_ok=True)
+    json.dump({"status": "done"}, open(os.path.join(path, "manifest.json"), "w"))
+    open(os.path.join(path, "ledger.csv"), "w").write("zip_code\n")
+    json.dump(contig or {"channels": {"WIFI": {"connected": True, "necks_left": [], "undrawn_zctas": 0, "groups": []}}},
+               open(os.path.join(path, "contig.json"), "w"))
+    return path
+
+
+class _Grid:
+    def get(self, pid):
+        return {"label": "passes", "reason": "", "final": None, "summary": {}}
+
+
+class _Drv:
+    def __init__(self, extract, plans):
+        self.extract, self.plans, self.grid = extract, plans, _Grid()
+
+    def note(self, *a, **k):
+        pass
+
+    def finish(self, pt):
+        pass
+
+
+def _run_warm_point(main: str, root: str, cut: bool) -> tuple:
+    """Run `warm._point` with the stages stubbed; the commands it issued, in order, and the full extract."""
+    full = "/hub/instance_descaled_usd.json.gz"
+    _done_folder(os.path.join(main, "p1", "south", "draw"))
+    if cut:
+        open(os.path.join(main, "p1", "south", sealed_mod.RUN_EXTRACT), "w").write("cut")
+    json.dump({"extract": full, "extract_sha256": "x", "host": "m5", "partition": {"path": "P"},
+               "points": {"p1": {"runs": {}}}}, open(os.path.join(main, sealed_mod.STATE_JSON), "w"))
+    pt = {"id": "p1", "structure": "s", "runs": [{"name": "south", "states": ["TX"], "ks": {"WIFI": 2}}]}
+    issued = []
+    saved = warm.sealed.load_partition, warm.point_state, warm.run_stage
+    warm.sealed.load_partition = lambda path: [pt]
+    warm.point_state = lambda a, p, rdir: (_Drv(full, os.path.join(main, "_plans")),
+                                              {"runs": {"south": {"ks": {"WIFI": 2}}}})
+    warm.run_stage = lambda drv, pid, name, cmd, log, cap, env=None: issued.append((name, cmd)) or {"rc": 0, "stop": None}
+    try:
+        a = types.SimpleNamespace(id="p1", main=main, root=root, partition="P", run_name="south", jobs=1, budget=60.0,
+                                  hours=1.0, wait_r1=False)
+        warm._point(a)
+    finally:
+        warm.sealed.load_partition, warm.point_state, warm.run_stage = saved
+    return issued, full
+
+
+sealed_mod = warm.sealed
+
+
+def test_warm_repairs_and_glues_on_the_extract_the_run_was_drawn_on():
+    for cut in (True, False):
+        with tempfile.TemporaryDirectory() as tmp:
+            main, root = os.path.join(tmp, "main"), os.path.join(tmp, "root")
+            os.makedirs(main)
+            os.makedirs(root)
+            issued, full = _run_warm_point(main, root, cut)
+        names = [n for n, _ in issued]
+        assert names == ["r1", "r2", "glue"] or names == ["r1", "glue"], names
+        want = os.path.join(main, "p1", "south", sealed_mod.RUN_EXTRACT) if cut else full
+        for name, cmd in issued:
+            assert cmd[cmd.index("--extract") + 1] == want, (name, cmd)
+    assert warm.source_extract("/m", "p1", "south", "/full") == "/full"
+
+
+def test_an_interrupt_in_a_warm_point_ends_the_stages_still_running():
+    calls, real = [], (warm._point, warm.overnight.stop_all)
+    warm._point = lambda a: (_ for _ in ()).throw(KeyboardInterrupt())
+    warm.overnight.stop_all = lambda: calls.append("stop_all")
+    try:
+        try:
+            warm.cmd_point(types.SimpleNamespace())
+        except KeyboardInterrupt:
+            pass
+        else:
+            raise AssertionError("the interrupt was swallowed")
+    finally:
+        warm._point, warm.overnight.stop_all = real
+    assert calls == ["stop_all"]
