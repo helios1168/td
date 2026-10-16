@@ -151,23 +151,22 @@ def solve_isolated(inst, time_limit: float, log, start=None, heuristics: bool = 
         # child's creation and the guard below, or the child outlives its solve: it is held back
         # across `Popen` and delivered once the `try` is entered.
         held = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
+        proc = None
         try:
             proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--child", task, out_path],
                                     stdout=subprocess.PIPE, text=True)
-        except BaseException:
-            signal.pthread_sigmask(signal.SIG_SETMASK, held)
-            raise
-        try:
             signal.pthread_sigmask(signal.SIG_SETMASK, held)
             for line in proc.stdout:
                 if line.startswith(LOG_TAG):
                     log(line[len(LOG_TAG):].rstrip("\n"))
             rc = proc.wait()
         finally:
-            if proc.poll() is None:
-                proc.kill()
-                proc.wait()
-            proc.stdout.close()
+            if proc is not None:
+                if proc.poll() is None:
+                    proc.kill()
+                    proc.wait()
+                proc.stdout.close()
+            signal.pthread_sigmask(signal.SIG_SETMASK, held)        # a cancel held back or landed early
         done = None
         if rc == 0 and os.path.exists(out_path):
             with open(out_path, "rb") as fh:
