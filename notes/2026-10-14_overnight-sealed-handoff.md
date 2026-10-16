@@ -44,3 +44,8 @@ The owner delegated every decision for the night (#105, comment of 2026-10-14). 
 - Glue donor rule (#140): failing donors may give zero-opportunity ZCTAs if no failure grows.
 - Shape limits (#135, #138): calibration showed no generalising threshold; candidate next measure: cut sinuosity.
 - Band formulation (new): asymmetric window in the master vs carve-first.
+
+## Addendum (2026-10-14 evening): unsealed national grid with the window band
+- Landed nothing new on main; branches pushed: `m5-studio/window-band` (8a22136, build-review clean: window band in td/master.py etc., per-channel partition overrides), `m5-studio/warm-start` (53dac30, warm.py/balance.py), plus the run package `runs/exp/national_2026-10-14/INDEX.md` (published: https://github.com/helios1168/td/blob/night/d/INDEX.md).
+- 3 new passing main maps (ne-48-bal, ne-50-filight, ne-cmp-tierP), all via warm start; every point planned in window; drawing large coupled groups exactly is the bottleneck.
+- Next: land window-band after the owner looks; targeted NY repair with bigger windows for ne-50-bal / ne-52-filight / ne-52-bal / nw49-48/52; fix sealed.py's score extract; consider warm start as the default chain (draw with fallback as a start, exact repair, exact gate).
