@@ -18,6 +18,7 @@ One file per question. Read `STATE.md` and the issue you were given first.
 - `docs/MODEL.md` (the method), `docs/CODE_MAP.md` (how the code works), `docs/RESULTS.md` (one dated entry per experiment, linking `results/`): implementer.
 - `notes/<date>_<slug>.md`: handoffs and research, flat, write-once. `docs/archive/`: moved, never deleted, not read by default (old memory, lenses, problem briefs, rpiv artifacts).
 - A decision's record is its issue's `DECIDED` comment; add its one line to `PROBLEM.md` when the owner closes it. A new doc needs no registry: say what question it answers or do not add it.
+- `.okf/` is the memory store (sv-ntlee `docs/architecture/memory-store.md`). Entries change only through `okf` (stage, apply-verdict, owner-apply); the pre-commit hook enforces the gates. `/review` is the owner gate; `okf query` filters by state and kind. `docs/REFERENCES.md` stays until its citations are ACCEPTED.
 
 ## Environment
 
