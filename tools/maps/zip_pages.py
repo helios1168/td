@@ -2,7 +2,7 @@
 channel (#120; ported from `runs/autonomous_2026-10-05/batch_border/zip_pages.py`, m5, gitignored).
 
     "$TD_PY" tools/maps/zip_pages.py <run_dir> <label> <out_dir> [--corridor] [--fac PATH]
-        [--cache DIR] [--style exec]
+        [--cache DIR] [--style exec] [--title TEXT] [--no-footer] [--palette clean]
 
 `tools/maps/render.py` calls `main`; this CLI is the same.  The pages are the primary view of a
 rendered run (owner, 2026-10-13): `zip_summary.png`, then one `zip_<channel>.png` per planning
@@ -24,6 +24,16 @@ to one flat polygon in one of `EXEC_PALETTE`'s muted colours (no two neighbours 
 ZCTA that lies against districts joined to them (`exec_fill_gaps`), thin district outlines, bold
 state borders, `N-08 · $1.2B` at the district's area centroid, the biggest metros lightly, a small
 legend; no pieces, necks or ZIP texture.  In `zip_pages.pdf` these pages follow the summary.
+
+Three opt-in flags restyle the owner pages (each default leaves the output unchanged): `--title TEXT`
+is the whole suptitle of every page (summary, channel, exec); `--no-footer` drops every bottom
+`fig.text` caption (legends, inset titles and in-map labels stay) and trims the empty band;
+`--palette clean` calms the colours of the summary and channel pages only: a Blues ramp from a pale
+blue-grey instead of YlGnBu's yellow, the split outline in the ramp's dark navy at `CLEAN_SPLIT_LW`,
+drawn on the state with islands dropped, inlets closed and the line simplified by `CLEAN_SIMPLIFY_M`
+(`clean_outline`) so coasts do not blob, and on the
+channel page `CLEAN_PALETTE` assigned by `colouring_far` (no alike colour within `CLEAN_NEAR_M`
+when avoidable, alike = Lab distance under `CLEAN_ALIKE`).
 
 Every page labels the major metros (`metros`): the `METROS` CBSA Metro Areas with the most
 opportunity $ in the run's ledger (owned rows, through the ledger's `cbsa`), each at its CBSA's
@@ -91,12 +101,24 @@ CHANNELS = ["national", "WH", "FI", "WIFI", "IFA"]   # the page order
 ABBR = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "W", "IFA": "IFA"}
 COUNT_BINS = 6              # the summary's fill: 1, 2, ..., COUNT_BINS or more territories
 SPLIT_EDGE = "#7a0000"
+# `--palette clean`: the summary ramp, the split outline and the district colours
+CLEAN_CMAP, CLEAN_RAMP, CLEAN_BEND = "Blues", (0.08, 0.64), 0.75   # fill for 1 .. COUNT_BINS territories; bend < 1 widens the pale steps
+CLEAN_SPLIT_EDGE, CLEAN_SPLIT_LW = "#08306b", 1.3  # the ramp's dark end
+CLEAN_SIMPLIFY_M = 10000.0  # the split outline is drawn on the state closed, de-islanded and simplified by this
+CLEAN_ISLAND_M2 = 5e9       # a state part under 5,000 km2 (barrier islands, keys) has no outline
+CLEAN_NEAR_M = 150e3        # decay length of the clash between alike colours on close districts
+CLEAN_ALIKE = 50.0          # CIE76 distance at which two colours stop clashing
 METROS = 30                 # metros labelled, before thinning
 TWIN = ("Dallas", "Minneapolis")   # metros named by their first two principal cities
 AREAS = os.path.join(geo.REFERENCE_DIR, "areas.csv.gz")
 PALETTE = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6",
            "#bfef45", "#9a6324", "#469990", "#dcbeff", "#800000", "#aaffc3", "#808000",
            "#ffd8b1", "#000075", "#fabed4", "#ffe119"]
+CLEAN_PALETTE = [           # tab20 (light and dark of a hue) and tab20b's saturated shades
+    "#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", "#9467bd",
+    "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", "#7f7f7f", "#bcbd22", "#dbdb8d", "#17becf",
+    "#9edae5", "#393b79", "#637939", "#8ca252", "#843c39", "#ad494a", "#7b4173", "#a55194", "#e7ba52",
+    "#3182bd", "#6baed6", "#31a354", "#fd8d3c", "#756bb1", "#de2d26", "#636363"]
 # the executive style (`--style exec`): a few muted colours, after the Census regions map
 EXEC_PALETTE = ["#8fb8d0", "#e3bd86", "#a1c89f", "#dba3a3", "#bba9d2", "#e6d98f", "#92c8c2", "#cdb6a0",
                 "#a8b4c8"]
@@ -184,6 +206,39 @@ def colouring(unions: dict, near: dict, palette: list = PALETTE) -> dict:
         taken = collections.Counter(out[x] for x in near[d] if x in out)
         out[d] = min(palette, key=lambda c: (taken[c], used[c], palette.index(c)))
         used[out[d]] += 1
+    return out
+
+
+def lab(hex_colour: str) -> np.ndarray:
+    """CIE L*a*b* (D65) of an sRGB hex colour."""
+    c = np.array(matplotlib.colors.to_rgb(hex_colour))
+    c = np.where(c > 0.04045, ((c + 0.055) / 1.055) ** 2.4, c / 12.92)
+    xyz = c @ np.array([[0.4124, 0.2126, 0.0193], [0.3576, 0.7152, 0.1192], [0.1805, 0.0722, 0.9505]])
+    f = xyz / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(f > 216 / 24389, np.cbrt(f), (24389 / 27 * f + 16) / 116)
+    return np.array([116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])])
+
+
+def colouring_far(unions: dict, near: dict, palette: list = CLEAN_PALETTE, reach: float = CLEAN_NEAR_M,
+                  alike: float = CLEAN_ALIKE) -> dict:
+    """`colouring`, but by distance: each district, most-bordered first, takes the palette colour
+    with the least clash against the districts placed, a clash being `reach`-decayed nearness
+    (`exp(-gap / reach)`, the gap between the districts in m) times `max(0, 1 - dE / alike)`^2 (dE
+    the Lab distance of the two colours, so the same colour counts fully and a similar one less).
+    Ties go to the least used colour.  A colour worn within 5 km (`near`) costs a district extra."""
+    ids = sorted(unions)
+    simple = {d: unions[d].simplify(5000) for d in ids}
+    labs = [lab(c) for c in palette]
+    like = [[max(0.0, 1 - float(np.linalg.norm(a - b)) / alike) ** 2 for b in labs] for a in labs]
+    index = {c: i for i, c in enumerate(palette)}
+    out, used = {}, collections.Counter()
+    for d in sorted(ids, key=lambda d: (-len(near[d]), d)):
+        weight = {x: np.exp(-shapely.distance(simple[d], simple[x]) / reach) + (10.0 if x in near[d] else 0.0)
+                  for x in out}
+        cost = [sum(w * like[i][index[out[x]]] for x, w in weight.items()) for i in range(len(palette))]
+        i = min(range(len(palette)), key=lambda i: (round(cost[i], 6), used[palette[i]], i))
+        out[d] = palette[i]
+        used[palette[i]] += 1
     return out
 
 
@@ -315,6 +370,18 @@ def label_metros(ax, metro, fs=6.5) -> list:
     return place_labels(ax, metro, fs=fs, avoid=list(ax.texts), style="italic", color="#111111")
 
 
+FIG_H, FOOTER_IN = 11.5, 1.03   # figure height (in); the bottom band a page's captions need (in)
+
+
+def frame(footer: bool = True):
+    """(figure height in, y, h): `y`/`h` map a position/height written as a fraction of the 11.5 in
+    page to the page with the footer band trimmed (`--no-footer`); unchanged with the footer."""
+    if footer:
+        return FIG_H, lambda v: v, lambda v: v
+    height = FIG_H - FOOTER_IN
+    return height, lambda v: (v * FIG_H - FOOTER_IN) / height, lambda v: v * FIG_H / height
+
+
 def draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, box=None, labels=True, fs=7):
     if other is not None and not other.is_empty:
         ax.add_patch(PathPatch(_polygon_path(other), facecolor=OTHER_FILL, edgecolor=OTHER_EDGE,
@@ -353,16 +420,17 @@ def draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, box=None, la
 
 
 def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names, dollars, insets, out_dir, extra,
-         metro=()):
+         metro=(), title=None, footer=True, palette="default"):
     unions = {d: shapely.union_all([polys[z] for z in zs if z in polys]).buffer(150).buffer(-150)
               for d, zs in ch_rows.items()}
     near = neighbours(unions)
-    colour = colouring(unions, near)
+    colour = colouring_far(unions, near) if palette == "clean" else colouring(unions, near)
     lines = [shapely.line_merge(g) if g.geom_type == "MultiLineString" else g for g in borders(unions, near)]
     k = len(ch_rows)
-    fig = plt.figure(figsize=(20, 11.5), dpi=130, facecolor="white")
+    height, y, h = frame(footer)
+    fig = plt.figure(figsize=(20, height), dpi=130, facecolor="white")
     n_in = len(insets)
-    ax = fig.add_axes([0.005, 0.12, 0.66, 0.80])
+    ax = fig.add_axes([0.005, y(0.12), 0.66, h(0.80)])
     x0, y0, x1, y1 = shapely.total_bounds(list(st.values()))
     pad = 0.01 * (x1 - x0)
     main_box = (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
@@ -370,15 +438,15 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     for spine in ax.spines.values():
         spine.set_visible(False)
     label_metros(ax, metro)
-    hgt = 0.80 / max(n_in, 1)
-    for i, (title, lonlat) in enumerate(insets):
+    hgt = h(0.80) / max(n_in, 1)
+    for i, (name, lonlat) in enumerate(insets):
         b = bbox(lonlat)
         ax.add_patch(Rectangle((b[0], b[1]), b[2] - b[0], b[3] - b[1], fill=False,
                                edgecolor="black", linewidth=1.0, zorder=7))
         ax.text(b[0], b[3], f" {chr(65 + i)}", ha="left", va="bottom", fontsize=9, fontweight="bold", zorder=7)
-        iax = fig.add_axes([0.665, 0.12 + 0.80 - (i + 1) * hgt + 0.01, 0.20, hgt - 0.02])
+        iax = fig.add_axes([0.665, y(0.12) + h(0.80) - (i + 1) * hgt + h(0.01), 0.20, hgt - h(0.02)])
         draw(iax, ch_rows, polys, unions, colour, lines, st, gap, other, b, fs=8)
-        iax.set_title(f"{chr(65 + i)}: {title}", fontsize=10)
+        iax.set_title(f"{chr(65 + i)}: {name}", fontsize=10)
         label_metros(iax, metro, fs=7.5)
     handles = [Patch(facecolor=colour[d], alpha=0.75, edgecolor="#202020",
                      label=f"{d.rsplit('_', 1)[1]} {names.get(d, d).split(' ', 1)[-1][:30]}")
@@ -389,21 +457,22 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     if other_names:
         handles.append(Patch(facecolor=OTHER_FILL, edgecolor=OTHER_EDGE, hatch="////",
                              label=f"Planned in {', '.join(other_names)} (its own page)"))
-    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.868, 0.93), fontsize=6.3 if k < 30 else 5.6,
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.868, y(0.93)), fontsize=6.3 if k < 30 else 5.6,
                frameon=False, ncol=1, handlelength=1.2, borderaxespad=0)
     t = TARGET.get(ch)
     m = list(dollars.values())
     mean = sum(m) / len(m)
     vs = f"target \\${t / 1e6:,.0f}M ±{100 * DOLLAR_BAND:.0f}%" if t else "no \\$ target"
-    fig.suptitle(f"{label}  ·  {ch}: {k} districts", fontsize=17, fontweight="bold", y=0.975)
-    fig.text(0.01, 0.075, f"\\${min(m):,.0f}M to \\${max(m):,.0f}M per district, drawn mean \\${mean:,.0f}M ({vs})  ·  "
-             f"{extra['splits']}", fontsize=10.5)
-    fig.text(0.01, 0.045, f"Every ZCTA a district owns is filled, zero-opportunity territory included.  "
-             f"Grey: land in no ZCTA, unassigned (owner ruling), not a hole in a district.  "
-             f"Black: borders between districts; dashed: state lines.  Run: {os.path.relpath(run_dir, TD_REPO)}", fontsize=8.5, color="#404040")
-    fig.text(0.01, 0.022, "Opportunity \\$ = m_rel × the owner's channel totals; no sales data.  "
-             f"No-ZCTA land: cb_2025_us_state_500k less every CONUS ZCTA (250 m simplified), opened by "
-             f"{OPEN_M / 1000:g} km.", fontsize=8.5, color="#404040")
+    fig.suptitle(title or f"{label}  ·  {ch}: {k} districts", fontsize=17, fontweight="bold", y=y(0.975))
+    if footer:
+        fig.text(0.01, 0.075, f"\\${min(m):,.0f}M to \\${max(m):,.0f}M per district, drawn mean \\${mean:,.0f}M ({vs})  ·  "
+                 f"{extra['splits']}", fontsize=10.5)
+        fig.text(0.01, 0.045, f"Every ZCTA a district owns is filled, zero-opportunity territory included.  "
+                 f"Grey: land in no ZCTA, unassigned (owner ruling), not a hole in a district.  "
+                 f"Black: borders between districts; dashed: state lines.  Run: {os.path.relpath(run_dir, TD_REPO)}", fontsize=8.5, color="#404040")
+        fig.text(0.01, 0.022, "Opportunity \\$ = m_rel × the owner's channel totals; no sales data.  "
+                 f"No-ZCTA land: cb_2025_us_state_500k less every CONUS ZCTA (250 m simplified), opened by "
+                 f"{OPEN_M / 1000:g} km.", fontsize=8.5, color="#404040")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"zip_{ch}.png")
     fig.savefig(path, dpi=130, facecolor="white")
@@ -452,7 +521,7 @@ def exec_fill_gaps(unions: dict, gap) -> dict:
             for d, u in out.items()}
 
 
-def exec_page(label, ch, ch_rows, polys, st, gap, dollars, out_dir, metro=()):
+def exec_page(label, ch, ch_rows, polys, st, gap, dollars, out_dir, metro=(), title=None):
     """The executive page (`--style exec`): each district dissolved into one flat-filled polygon
     in a few muted colours, thin district outlines, bold state borders, the district id and $B at
     the area centroid, the biggest metros labelled lightly and a small legend.  No ZIP texture,
@@ -494,7 +563,7 @@ def exec_page(label, ch, ch_rows, polys, st, gap, dollars, out_dir, metro=()):
     window = f"\\${min(m) / 1000:.1f}B to \\${max(m) / 1000:.1f}B per district"
     if t:
         window += f"  (target \\${t / 1e9:.1f}B ±{100 * DOLLAR_BAND:.0f}%)"
-    fig.suptitle(f"{label}  ·  {ch}", fontsize=18, fontweight="bold", y=0.975)
+    fig.suptitle(title or f"{label}  ·  {ch}", fontsize=18, fontweight="bold", y=0.975)
     fig.legend(handles=[Patch(facecolor="none", edgecolor="none", label=window),
                         Patch(facecolor="none", edgecolor="none", label="Label: district id · opportunity \\$")],
                title=f"{ch}: {len(ch_rows)} districts", title_fontproperties=dict(weight="bold", size=11),
@@ -506,12 +575,15 @@ def exec_page(label, ch, ch_rows, polys, st, gap, dollars, out_dir, metro=()):
     return fig, path
 
 
-def count_fill(n: int) -> str:
+def count_fill(n: int, palette: str = "default") -> str:
     """The summary's fill for `n` territories in a state: a light ramp, so labels stay legible."""
     if n <= 0:
         return "white"
-    return matplotlib.colors.to_hex(plt.get_cmap("YlGnBu")(0.02 + 0.6 * (min(n, COUNT_BINS) - 1)
-                                                         / (COUNT_BINS - 1)))
+    cmap, (lo, hi) = ("YlGnBu", (0.02, 0.62)) if palette != "clean" else (CLEAN_CMAP, CLEAN_RAMP)
+    frac = (min(n, COUNT_BINS) - 1) / (COUNT_BINS - 1)
+    if palette == "clean":
+        frac **= CLEAN_BEND
+    return matplotlib.colors.to_hex(plt.get_cmap(cmap)(lo + (hi - lo) * frac))
 
 
 def state_text(s: str, chs: dict, order: list) -> str:
@@ -519,17 +591,29 @@ def state_text(s: str, chs: dict, order: list) -> str:
     return s + "\n" + " · ".join(f"{ABBR.get(c, c)} {chs[c]}" for c in order if chs.get(c))
 
 
-def draw_states(ax, st, counts, order, box, fs, metro, inset=None):
+def clean_outline(poly):
+    """A state's split outline for `--palette clean`: parts under `CLEAN_ISLAND_M2` dropped, inlets
+    narrower than `CLEAN_SIMPLIFY_M` closed, then simplified, so a coast is a line, not a blob."""
+    parts = [p for p in shapely.get_parts(poly) if p.area >= CLEAN_ISLAND_M2] or [poly]
+    closed = shapely.union_all(parts).buffer(CLEAN_SIMPLIFY_M / 2).buffer(-CLEAN_SIMPLIFY_M / 2)
+    return closed.simplify(CLEAN_SIMPLIFY_M / 2)
+
+
+def draw_states(ax, st, counts, order, box, fs, metro, inset=None, palette="default"):
     """One summary map (module doc): fills, split outlines, state labels, metros.  With `inset`
     (a data box), a state in it whose label does not fit inside it is left to the inset."""
     split = {s for s, chs in counts.items() if any(n > 1 for n in chs.values())}
     for s, poly in st.items():
         n = sum(counts.get(s, {}).values())
-        ax.add_patch(PathPatch(_polygon_path(poly), facecolor=count_fill(n), edgecolor="#606060",
+        ax.add_patch(PathPatch(_polygon_path(poly), facecolor=count_fill(n, palette), edgecolor="#606060",
                                linewidth=0.6, zorder=2))
+    clean = palette == "clean"
     for s in sorted(split & set(st)):
-        ax.add_patch(PathPatch(_polygon_path(st[s]), facecolor="none", edgecolor=SPLIT_EDGE,
-                               linewidth=2.2, zorder=3))
+        outline = clean_outline(st[s]) if clean else st[s]
+        ax.add_patch(PathPatch(_polygon_path(outline), facecolor="none",
+                               edgecolor=CLEAN_SPLIT_EDGE if clean else SPLIT_EDGE,
+                               linewidth=CLEAN_SPLIT_LW if clean else 2.2, zorder=3,
+                               **(dict(joinstyle="round") if clean else {})))
     ax.set_xlim(box[0], box[2])
     ax.set_ylim(box[1], box[3])
     ax.set_aspect("equal")
@@ -559,50 +643,54 @@ def draw_states(ax, st, counts, order, box, fs, metro, inset=None):
     label_metros(ax, metro, fs=fs - 0.5)
 
 
-def summary_page(run_dir, label, counts, k, st, metro, out_dir):
+def summary_page(run_dir, label, counts, k, st, metro, out_dir, title=None, footer=True, palette="default"):
     """The summary page (module doc): `counts` from `state_territories`, `k` {channel: districts};
     the figure and `zip_summary.png`."""
     order = [c for c in CHANNELS if c in k] + sorted(c for c in k if c not in CHANNELS)
-    fig = plt.figure(figsize=(20, 11.5), dpi=130, facecolor="white")
-    ax = fig.add_axes([0.005, 0.12, 0.575, 0.80])
+    height, y, h = frame(footer)
+    fig = plt.figure(figsize=(20, height), dpi=130, facecolor="white")
+    ax = fig.add_axes([0.005, y(0.12), 0.575, h(0.80)])
     x0, y0, x1, y1 = shapely.total_bounds(list(st.values()))
     pad = 0.01 * (x1 - x0)
-    title, lonlat = NORTHEAST
+    name, lonlat = NORTHEAST
     b = bbox(lonlat)
     main_box = (x0 - pad, y0 - pad, max(x1, b[2]) + pad, y1 + pad)     # the inset's frame in view
-    draw_states(ax, st, counts, order, main_box, 7.5, metro, inset=b)
+    draw_states(ax, st, counts, order, main_box, 7.5, metro, inset=b, palette=palette)
     ax.add_patch(Rectangle((b[0], b[1]), b[2] - b[0], b[3] - b[1], fill=False, edgecolor="black",
                            linewidth=1.0, zorder=7))
     ax.text(b[0], b[3], " B", ha="left", va="bottom", fontsize=9, fontweight="bold", zorder=7)
-    iax = fig.add_axes([0.595, 0.12, 0.28, 0.80])
-    draw_states(iax, st, counts, order, b, 9, metro)
-    iax.set_title(f"B: {title}", fontsize=11)
+    iax = fig.add_axes([0.595, y(0.12), 0.28, h(0.80)])
+    draw_states(iax, st, counts, order, b, 9, metro, palette=palette)
+    iax.set_title(f"B: {name}", fontsize=11)
     for spine in iax.spines.values():
         spine.set_visible(True)
-    handles = [Patch(facecolor=count_fill(n), edgecolor="#606060",
+    clean = palette == "clean"
+    handles = [Patch(facecolor=count_fill(n, palette), edgecolor="#606060",
                      label=f"{n}{'+' if n == COUNT_BINS else ''} territor{'y' if n == 1 else 'ies'} in the state")
                for n in range(1, COUNT_BINS + 1)]
-    handles.append(Patch(facecolor="white", edgecolor=SPLIT_EDGE, linewidth=2.2,
+    handles.append(Patch(facecolor="white", edgecolor=CLEAN_SPLIT_EDGE if clean else SPLIT_EDGE,
+                         linewidth=CLEAN_SPLIT_LW if clean else 2.2,
                          label="Split: 2+ districts of one channel"))
     handles += [Patch(facecolor="none", edgecolor="none",
                       label=f"{ABBR.get(c, c)} = {c}: {k[c]} districts") for c in order]
     handles.append(METRO_HANDLE)
-    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.882, 0.93), fontsize=7.5, frameon=False,
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.882, y(0.93)), fontsize=7.5, frameon=False,
                handlelength=1.4, borderaxespad=0)
     split = split_states(counts)
     total = sum(k.values())
-    fig.suptitle(f"{label}  ·  territories per state", fontsize=17, fontweight="bold", y=0.975)
-    held = {c: sum(1 for s in counts if counts[s].get(c)) for c in order}
-    fig.text(0.01, 0.083, "  ·  ".join(f"{c}: {k[c]} districts in {held[c]} states, {len(split.get(c, []))} split: "
-                                        f"{' '.join(split.get(c, [])) or 'none'}" for c in order),
-             fontsize=10.5)
-    fig.text(0.01, 0.055, f"Fill: territories (districts, all {len(order)} channels, {total} in all) owning a ZCTA "
-             "filed in the state; label: each channel's count there, bold where split; dark outline: split "
-             "in some channel.  Small states: inset B.", fontsize=8.5, color="#404040")
-    fig.text(0.01, 0.030, f"Metros: the top {METROS} CBSA Metro Areas by opportunity \\$ in this run, as room "
-             "allows, at their internal points (2025 gazetteer).  Opportunity "
-             f"\\$ = m_rel × the owner's channel totals; no sales data.  Run: {os.path.relpath(run_dir, TD_REPO)}",
-             fontsize=8.5, color="#404040")
+    fig.suptitle(title or f"{label}  ·  territories per state", fontsize=17, fontweight="bold", y=y(0.975))
+    if footer:
+        held = {c: sum(1 for s in counts if counts[s].get(c)) for c in order}
+        fig.text(0.01, 0.083, "  ·  ".join(f"{c}: {k[c]} districts in {held[c]} states, {len(split.get(c, []))} split: "
+                                            f"{' '.join(split.get(c, [])) or 'none'}" for c in order),
+                 fontsize=10.5)
+        fig.text(0.01, 0.055, f"Fill: territories (districts, all {len(order)} channels, {total} in all) owning a ZCTA "
+                 "filed in the state; label: each channel's count there, bold where split; dark outline: split "
+                 "in some channel.  Small states: inset B.", fontsize=8.5, color="#404040")
+        fig.text(0.01, 0.030, f"Metros: the top {METROS} CBSA Metro Areas by opportunity \\$ in this run, as room "
+                 "allows, at their internal points (2025 gazetteer).  Opportunity "
+                 f"\\$ = m_rel × the owner's channel totals; no sales data.  Run: {os.path.relpath(run_dir, TD_REPO)}",
+                 fontsize=8.5, color="#404040")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "zip_summary.png")
     fig.savefig(path, dpi=130, facecolor="white")
@@ -630,7 +718,12 @@ def main(argv=None):
     ap.add_argument("--cache", default=CACHE, help="the state shapes and the pickled geometry")
     ap.add_argument("--style", choices=("default", "exec"), default="default",
                     help="exec: also write the executive page zip_exec_<channel>.png (after the summary in the PDF)")
+    ap.add_argument("--title", default=None, help="the whole suptitle of every page (default `<label>  ·  ...`)")
+    ap.add_argument("--no-footer", action="store_true", help="drop the captions at the bottom of every page")
+    ap.add_argument("--palette", choices=("default", "clean"), default="default",
+                    help="clean: calmer summary ramp and split outline, spread district colours (module doc)")
     a = ap.parse_args(argv)
+    look = dict(title=a.title, footer=not a.no_footer)
     FAC = read_fac(a.fac)
     polys, st, gap = geometry(a.cache)
     with open(os.path.join(a.run_dir, "districts.csv"), newline="") as fh:
@@ -658,7 +751,7 @@ def main(argv=None):
     metro = metros(by_cbsa)
     counts = state_territories(filed)
     fig, path = summary_page(a.run_dir, a.label, counts, {c: len(owned[c]) for c in owned}, st, metro,
-                             a.out_dir)
+                             a.out_dir, palette=a.palette, **look)
     plt.close(fig)
     written = [path]
     execs = []
@@ -681,11 +774,13 @@ def main(argv=None):
         other = (shapely.union_all([polys[z] for z in elsewhere if z in polys]).buffer(150).buffer(-150)
                  if elsewhere else None)
         fig, path = page(a.run_dir, a.label, ch, rows, polys, st, gap, other, other_names, names,
-                         {d: usd[ch][d] for d in rows}, insets, a.out_dir, extra, metro)
+                         {d: usd[ch][d] for d in rows}, insets, a.out_dir, extra, metro,
+                         palette=a.palette, **look)
         plt.close(fig)
         written.append(path)
         if a.style == "exec":
-            fig, xpath = exec_page(a.label, ch, rows, polys, st, gap, {d: usd[ch][d] for d in rows}, a.out_dir, metro)
+            fig, xpath = exec_page(a.label, ch, rows, polys, st, gap, {d: usd[ch][d] for d in rows}, a.out_dir, metro,
+                                  title=a.title)
             plt.close(fig)
             execs.append(xpath)
         print(f"{ch}: {len(rows)} districts, {sum(map(len, rows.values()))} ZCTAs, "
