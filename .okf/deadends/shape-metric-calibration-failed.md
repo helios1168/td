@@ -8,11 +8,13 @@ tags:
 - shape-metrics
 - calibration
 - m1
-status: draft
+status: stable
 generated:
   by: session-reviewer/glm-5.3
   at: 2026-10-17T10:46:11Z
-state: STAGED
+verified:
+- {by: 'human:owner', at: '2026-10-17T22:05:20Z'}
+state: ACCEPTED
 kind: deadend
 evidence:
 - pi-session:01a13930-cf7a-75cb-9a2d-ab837963b1be#ac73b40c
@@ -21,6 +23,7 @@ uses: []
 supersedes: null
 history:
 - {at: '2026-10-17T10:46:11Z', from: null, to: STAGED, by: session-reviewer/glm-5.3, gate: intake}
+- {at: '2026-10-17T22:05:20Z', from: STAGED, to: ACCEPTED, by: 'human:owner', gate: owner, result: pass, review_id: 242985e3-860c-4f9f-9559-16b8e9f39f37}
 ---
 
 Calibrating hard shape limits from the owner's eye: two blind sheets of 40 districts each, 80 verdicts, 74 distinct districts, 16 rejected. Nothing separated clean:

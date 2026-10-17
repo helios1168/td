@@ -8,11 +8,13 @@ tags:
 - planning
 - band
 - regions
-status: draft
+status: stable
 generated:
   by: session-reviewer/glm-5.3
   at: 2026-10-17T10:45:49Z
-state: STAGED
+verified:
+- {by: 'human:owner', at: '2026-10-17T22:05:20Z'}
+state: ACCEPTED
 kind: deadend
 evidence:
 - pi-session:01a13930-cf7a-75cb-9a2d-ab837963b1be#9ca7434a
@@ -22,6 +24,7 @@ uses: []
 supersedes: null
 history:
 - {at: '2026-10-17T10:45:49Z', from: null, to: STAGED, by: session-reviewer/glm-5.3, gate: intake}
+- {at: '2026-10-17T22:05:20Z', from: STAGED, to: ACCEPTED, by: 'human:owner', gate: owner, result: pass, review_id: 242985e3-860c-4f9f-9559-16b8e9f39f37}
 ---
 
 The 2026-10-14 sealed overnight ran the main map with a Northeast corridor fenced off and the rest planned as one region per channel; 9 of 18 region runs failed planning on m5 and every 'rest' region failed on m2. Testing causes one at a time on ne-48-bal's rest region ruled out the drawable-only check, the 4-state district cap (even raised to 6) and narrow split lists (even widened to 9 WH split states). The confirmed cause: with the WIFI states removed, the rest falls into a western block (WA, OR, CA, NV, AZ, UT, CO) and an eastern block that do not touch each other, while the region keeps one symmetric band centred on its average district - the western block's districts average about $900M, just below the $918-1,150M band, even though $900M is inside the dollar window. Another rest region (21 states, national K6) was proved unplannable in its band; the corridor's own coupled NY-NJ-PA-MD-DC drawing also ran out of time. The night ended 1 of 15 points passing, and that point was the unsealed 2026-10-13 ne-48-bal, whose plan had used corridor states (NY, NJ, PA) as filler.

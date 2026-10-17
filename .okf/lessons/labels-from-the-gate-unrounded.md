@@ -8,11 +8,13 @@ tags:
 - labels
 - gate
 - verification
-status: draft
+status: stable
 generated:
   by: session-reviewer/glm-5.3
   at: 2026-10-17T10:45:49Z
-state: STAGED
+verified:
+- {by: 'human:owner', at: '2026-10-17T22:05:20Z'}
+state: ACCEPTED
 kind: lesson
 evidence:
 - pi-session:01a13930-cf7a-75cb-9a2d-ab837963b1be#f3b953c3
@@ -23,6 +25,7 @@ uses: []
 supersedes: null
 history:
 - {at: '2026-10-17T10:45:49Z', from: null, to: STAGED, by: session-reviewer/glm-5.3, gate: intake}
+- {at: '2026-10-17T22:05:20Z', from: STAGED, to: ACCEPTED, by: 'human:owner', gate: owner, result: pass, review_id: 242985e3-860c-4f9f-9559-16b8e9f39f37}
 ---
 
 Between 2026-10-14 and 2026-10-16 independent review found four ways a map could be labelled without earning it:
