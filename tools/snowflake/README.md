@@ -9,6 +9,8 @@ keys are typed at work and never saved.
 | `00_profile.sql` | counts and shapes of `raw` (no names, no amounts), enough to generate a synthetic table outside work; also send `DESCRIBE TABLE raw` |
 | `01_build_safe.sql` | builds `scratch.td_safe` from `raw(zip_code, firm, wholesaler, channel, opportunity, sales)` |
 | `02_check_and_export.sql` | the checks that must pass, then the unload to `td_safe.csv.gz` |
+| `03_rank.sql` | ranks wholesalers on one merged-company scale by sales / expected sales; needs `raw`, `channel_map(firm, source_channel, channel)` and `filler_keys` in the session |
+| `synth.py` | writes a synthetic `raw`, `channel_map` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03_rank.sql` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
 source table name and fill in the salt and the filler keys first. Copy the file to
