@@ -1,0 +1,39 @@
+# `tools/snowflake/`: a safe copy of the live sales table
+
+How to make a synthetic copy of the live sales table that can leave work, so SQL can be
+written and tested against it outside work. Nothing here holds data; the salt and the filler
+keys are typed at work and never saved.
+
+| file | what it does |
+|---|---|
+| `00_profile.sql` | counts and shapes of `raw` (no names, no amounts), enough to generate a synthetic table outside work; also send `DESCRIBE TABLE raw` |
+| `01_build_safe.sql` | builds `scratch.td_safe` from `raw(zip_code, firm, wholesaler, channel, opportunity, sales)` |
+| `02_check_and_export.sql` | the checks that must pass, then the unload to `td_safe.csv.gz` |
+
+Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
+source table name and fill in the salt and the filler keys first. Copy the file to
+`data/safe/` in the hub; it is gitignored.
+
+## What survives, what does not
+
+| kept | replaced |
+|---|---|
+| ZIP codes (public) and channel names | firm and wholesaler ids: `FX…` / `WX…`, ranked by a salted hash, not by book |
+| the row count and the rows per (zip, channel) | each row's firm and wholesaler: shuffled across rows, so no territory survives |
+| which values are NULL, 0, negative or positive | every number: opportunity is one random lognormal per cell, sales a random part of it |
+| vacancy rows, as wholesaler `VACANT` | the filler keys' names |
+
+A cell's sales sum to less than 0.9 of its opportunity, so share and headroom logic sees
+sensible values. The shuffle can put one wholesaler twice in a cell; check 4 counts those rows.
+If the source splits a cell's opportunity over several rows, each part gets the whole made-up
+value.
+
+## Why not Snowflake's own tools
+
+- `SNOWFLAKE.DATA_PRIVACY.GENERATE_SYNTHETIC_DATA` copies categorical strings through: "a
+  string column with few unique values … Generated data uses actual values from the source
+  data" ([docs](https://docs.snowflake.com/en/user-guide/synthetic-data), read 2026-10-18).
+  Firm and wholesaler are categorical, so real names would leave. It also works row by row,
+  so one opportunity per cell and sales within opportunity do not hold.
+- Masking policies hide values per role at query time: hashes or `***` instead of usable
+  numbers, over a table that is still real.

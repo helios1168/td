@@ -21,6 +21,9 @@ instance_descaled*.json.gz
 # Public geography downloads (cached; reference/2025/ holds the committed outputs)
 data/public/
 
+# Synthetic Snowflake exports (tools/snowflake/); never commit data
+data/safe/
+
 # Run output (python -m td run)
 runs/
 
