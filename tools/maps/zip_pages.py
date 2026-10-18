@@ -225,7 +225,7 @@ def colouring_far(unions: dict, near: dict, palette: list = CLEAN_PALETTE, reach
     with the least clash against the districts placed, a clash being `reach`-decayed nearness
     (`exp(-gap / reach)`, the gap between the districts in m) times `max(0, 1 - dE / alike)`^2 (dE
     the Lab distance of the two colours, so the same colour counts fully and a similar one less).
-    Ties go to the least used colour.  A colour worn within 5 km (`near`) costs a district extra."""
+    Ties go to the least used colour.  A colour worn within 5 km (`near`) costs a district extra.  A district with no polygon clashes with none."""
     ids = sorted(unions)
     simple = {d: unions[d].simplify(5000) for d in ids}
     labs = [lab(c) for c in palette]
@@ -234,7 +234,7 @@ def colouring_far(unions: dict, near: dict, palette: list = CLEAN_PALETTE, reach
     out, used = {}, collections.Counter()
     for d in sorted(ids, key=lambda d: (-len(near[d]), d)):
         weight = {x: np.exp(-shapely.distance(simple[d], simple[x]) / reach) + (10.0 if x in near[d] else 0.0)
-                  for x in out}
+                  for x in out if not (simple[d].is_empty or simple[x].is_empty)}
         cost = [sum(w * like[i][index[out[x]]] for x, w in weight.items()) for i in range(len(palette))]
         i = min(range(len(palette)), key=lambda i: (round(cost[i], 6), used[palette[i]], i))
         out[d] = palette[i]
