@@ -131,6 +131,21 @@ Settings at the top: `out_credit` (1.0) and `shrink_cells` (1.0). One row per wh
 | `channel_weight` | the channel's share of the person's expected sales: their time split, by opportunity |
 | `terr_cells`, `cells_with_sales`, `opp`, `expected`, `sales_in`, `sales_out`, `sales_orphan`, `credited` | the working |
 
+## Step 5. Whose opportunity is it (`06_opportunity_diagnostic.sql`)
+
+Both firms are measured against one firm's opportunity, so it must be the whole market. Per firm and
+channel the query returns:
+
+| column | market opportunity | one firm's own potential |
+|---|---|---|
+| `cells_no_opp` | near 0 for both firms | the other firm has many |
+| `cells_sales_exceed_opp` | 0: both firms together sit inside the market | the other firm's sales exceed it in places |
+| `corr_log_sales_log_opp` | about equal for both firms | clearly higher for the firm that owns it |
+| `pooled_rate`, `median_cell_rate` | differ by real performance | differ by fit to the owning firm's pattern too |
+
+If it reads as one firm's potential: get a market opportunity (third-party industry data), or rank
+only on cells where both firms can sell.
+
 ## Known limits
 
 - Settled (owner, 2026-10-19): a zip absent from the long table has zero opportunity, so territory zips
