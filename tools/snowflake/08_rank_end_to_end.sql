@@ -61,9 +61,15 @@ UNION ALL SELECT 'zips not 5 characters (os)',            COUNT_IF(LENGTH(zip_co
 UNION ALL SELECT 'zips not 5 characters (territory)',     COUNT_IF(LENGTH(zip_code) <> 5), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src
 UNION ALL SELECT 'territory firms not found in os',
   COUNT(DISTINCT firm), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src WHERE firm NOT IN (SELECT DISTINCT firm FROM ssdb_integration.lr_strategy.rank_os WHERE firm IS NOT NULL)
-UNION ALL SELECT 'territory rows whose original channel has no mapping',
+UNION ALL SELECT 'territory rows whose channel matches DIST_CH only ignoring case/spaces',   -- spelling: wrongly dropped
   COUNT(*), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src t
   WHERE NOT EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm AND m.original_channel = t.original_channel)
+    AND EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm
+                AND UPPER(TRIM(m.original_channel)) = UPPER(TRIM(t.original_channel)))
+UNION ALL SELECT 'territory rows in channels absent from the sales table (out of scope, dropped)',
+  COUNT(*), FALSE FROM ssdb_integration.lr_strategy.rank_terr_src t
+  WHERE NOT EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm
+                    AND UPPER(TRIM(m.original_channel)) = UPPER(TRIM(t.original_channel)))
 UNION ALL SELECT 'cells with opportunity on both firms (would count twice)',
   COUNT(*), TRUE FROM cell_firms WHERE n > 1
 UNION ALL SELECT 'firms carrying opportunity (expect 1)',
