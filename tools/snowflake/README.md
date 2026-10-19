@@ -12,6 +12,7 @@ keys are typed at work and never saved.
 | `03_rank.sql` | ranks wholesalers on one merged-company scale by sales / expected sales; needs `raw`, `channel_map(firm, source_channel, channel)` and `filler_keys` in the session |
 | `04_territory_profile.sql` | counts and firm-level ratios of `territory` against `raw`, safe to bring back: coverage, orphans, share of sales in own / other / no territory |
 | `05_rank_territory.sql` | ranks against assigned territories; out-of-territory sales credited (`out_credit`, default 1), with a territory-only index beside it; needs `territory(firm, wholesaler, zip_code, channel)` too |
+| `07_rank_wholesalers.sql` | the ranking on `opportunity_sales` (original and target channel on each row) and `territory` in original channels; market rate per channel, each cell's opportunity split among its holders |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
