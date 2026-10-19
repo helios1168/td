@@ -117,6 +117,7 @@ Run it and read these rows; the output is counts and per-firm percentages only, 
 | `territory_cells_without_opp`, `pct_sales_in_cells_without_opp` | under about 1% of a firm's sales is fine; above that, fill in those cells' opportunity at the source first, or their sales become free credit |
 | `pct_sales_by_where_sold` | the gap between the firms' outside-territory shares; a few points is negligible, a large gap argues for `out_credit` = 0.5 |
 | `wholesalers_with_sales_no_territory`, `wholesalers_with_territory_no_sales` | people missing from one side |
+| `territory_zips_not_in_raw`, `territory_cells_without_opp` (`cell_not_in_raw` / `cell_opp_zero`), `territory_zips_per_wholesaler_not_in_raw_pct` | territory zips the sales/opportunity table never mentions. They drop out of `expected`, which is right only if they truly have no opportunity (PO-box and unique ZIPs, empty zips). If the opportunity source left out zips that do have opportunity, their holders' indexes read high; the per-wholesaler spread shows whether that falls on a few people or one firm |
 
 ## Step 4. Rank (`05_rank_territory.sql`)
 
@@ -192,10 +193,23 @@ UNION ALL SELECT 'pct_sales_by_where_sold', f.firm_label || ':' || where_sold,
 -- opportunity must sit on one firm's rows only; the other firm's cells must still find it
 UNION ALL SELECT 'opp_rows_nonzero', f.firm_label, COUNT(*)
   FROM raw r JOIN f USING (firm) WHERE COALESCE(r.opportunity, 0) <> 0 GROUP BY 2
-UNION ALL SELECT 'territory_cells_without_opp', f.firm_label, COUNT(*)
+-- a territory zip absent from raw drops out of `expected`: right if it has no opportunity, wrong
+-- (the holder's index reads high) if the opportunity source just left it out
+UNION ALL SELECT 'territory_zips_not_in_raw', f.firm_label, COUNT(DISTINCT t.zip_code)
+  FROM t JOIN f USING (firm)
+  WHERE t.zip_code NOT IN (SELECT zip_code FROM raw WHERE zip_code IS NOT NULL) GROUP BY 2
+UNION ALL SELECT 'territory_cells_without_opp', f.firm_label || ':' ||
+         CASE WHEN c.zip_code IS NULL THEN 'cell_not_in_raw' ELSE 'cell_opp_zero' END, COUNT(*)
   FROM t JOIN f USING (firm)
   LEFT JOIN cell c ON c.zip_code = t.zip_code AND c.channel = t.channel
   WHERE COALESCE(c.opp, 0) <= 0 GROUP BY 2
+UNION ALL SELECT 'territory_zips_per_wholesaler_not_in_raw_pct', f.firm_label || ':' ||
+         CASE WHEN pct = 0 THEN '0' WHEN pct < 10 THEN '<10' WHEN pct < 25 THEN '10-25'
+              WHEN pct < 50 THEN '25-50' ELSE '50+' END, COUNT(*)
+  FROM (SELECT t.firm, t.wholesaler,
+               100.0 * COUNT(DISTINCT CASE WHEN t.zip_code NOT IN (SELECT zip_code FROM raw WHERE zip_code IS NOT NULL)
+                                           THEN t.zip_code END) / COUNT(DISTINCT t.zip_code) AS pct
+        FROM t GROUP BY 1, 2) x JOIN f USING (firm) GROUP BY 2
 UNION ALL SELECT 'pct_sales_in_cells_without_opp', f.firm_label,
   ROUND(100 * SUM(CASE WHEN COALESCE(c.opp, 0) <= 0 THEN m.sales ELSE 0 END) / NULLIF(SUM(m.sales), 0), 1)
   FROM m JOIN f USING (firm)

@@ -36,7 +36,7 @@ def zips(n, rng):
     path = os.path.join(ROOT, "reference", "2025", "zcta_reference.csv.gz")
     with gzip.open(path, "rt") as fh:
         z = [r["zcta"] for r in csv.DictReader(fh) if r["graph_vertex"] == "1"]
-    return sorted(rng.sample(z, n))          # sorted ZIPs are roughly geographic, so chunks are territories
+    return sorted(rng.sample(z, n)), z       # sorted ZIPs are roughly geographic, so chunks are territories
 
 
 def chunks(seq, k):
@@ -45,7 +45,7 @@ def chunks(seq, k):
 
 def build(seed):
     rng = random.Random(seed)
-    zs = zips(10000, rng)
+    zs, all_zips = zips(10000, rng)
     cells = [(z, c) for z in zs for c, f in CHANNELS.items() if rng.random() < f]
     # which firm covers each cell: A only, B only, or both
     cover = {}
@@ -98,6 +98,11 @@ def build(seed):
                 spill.setdefault(cell, []).append(w)
     orphans = set(rng.sample(zs, len(zs) * 3 // 100))   # zips no territory holds; their sales stay
     territory = sorted((f, w, cell[0], cell[1]) for (cell, f), w in owner.items() if cell[0] not in orphans)
+    # territories also list zips the sales/opportunity table never mentions (no opportunity there)
+    extra = sorted(set(all_zips) - set(zs))
+    for f, w, z, c in rng.sample(territory, 1500):
+        territory.append((f, w, rng.choice(extra), c))
+    territory = sorted(set(territory))
     rows = []
     for cell in cells:
         z, c = cell
