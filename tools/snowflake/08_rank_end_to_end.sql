@@ -6,9 +6,12 @@
 
 ------------------------------------------------------------------------------------------------
 -- Part 0.  Edit here only.
+-- Every table is named in full.  The three working objects below are session-temporary
+-- (ssdb_integration.lr_strategy.rank_os, rank_terr_src, rank_filler_keys); they need CREATE VIEW / CREATE TABLE on
+-- ssdb_integration.lr_strategy and vanish when the session ends.
 ------------------------------------------------------------------------------------------------
 -- Sales and opportunity, long across both firms, one fiscal year (the table is already filtered).
-CREATE OR REPLACE TEMPORARY VIEW os AS
+CREATE OR REPLACE TEMPORARY VIEW ssdb_integration.lr_strategy.rank_os AS
 SELECT ZIP_CODE                       AS zip_code,
        SOURCE                         AS firm,              -- the wholesaling firm (one of the two merging)
        SALES_WHOLESALER_TERRITORY_ID  AS sales_wholesaler,  -- who made the sale; = territory CLEAN_ID
@@ -22,7 +25,7 @@ SELECT ZIP_CODE                       AS zip_code,
 FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys;
 
 -- Territories, in original channels.
-CREATE OR REPLACE TEMPORARY VIEW terr_src AS
+CREATE OR REPLACE TEMPORARY VIEW ssdb_integration.lr_strategy.rank_terr_src AS
 SELECT SOURCE     AS firm,
        CLEAN_ID   AS wholesaler,                         -- = os.sales_wholesaler
        CLEAN_NAME AS wholesaler_name,
@@ -31,68 +34,68 @@ SELECT SOURCE     AS firm,
 FROM ssdb_integration.lr_strategy.territories;
 
 -- Vacancy / filler keys that appear as a sales wholesaler.  Leave the table empty if there are none.
-CREATE OR REPLACE TEMPORARY TABLE filler_keys (key VARCHAR);
--- INSERT INTO filler_keys VALUES ('<filler key>');
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.rank_filler_keys (key VARCHAR);
+-- INSERT INTO ssdb_integration.lr_strategy.rank_filler_keys VALUES ('<filler key>');
 
 ------------------------------------------------------------------------------------------------
 -- Part 1.  Checks.  must_be_zero rows must show 0; the others are information.
 ------------------------------------------------------------------------------------------------
 WITH
-ch_map AS (SELECT DISTINCT firm, original_channel, channel FROM os),
+ch_map AS (SELECT DISTINCT firm, original_channel, channel FROM ssdb_integration.lr_strategy.rank_os),
 terr AS (
   SELECT DISTINCT t.firm, t.wholesaler, t.zip_code, m.channel
-  FROM terr_src t
+  FROM ssdb_integration.lr_strategy.rank_terr_src t
   JOIN ch_map m ON m.firm = t.firm AND m.original_channel = t.original_channel),
 cell_firms AS (
   SELECT zip_code, channel, COUNT(DISTINCT firm) AS n
-  FROM os WHERE COALESCE(opp, 0) <> 0 GROUP BY 1, 2)
-SELECT 'os rows'                                         AS check_name, COUNT(*) AS value, FALSE AS must_be_zero FROM os
-UNION ALL SELECT 'fiscal years in os (expect 1)',          COUNT(DISTINCT fiscal_yr), FALSE FROM os
-UNION ALL SELECT 'territory rows',                         COUNT(*), FALSE FROM terr_src
+  FROM ssdb_integration.lr_strategy.rank_os WHERE COALESCE(opp, 0) <> 0 GROUP BY 1, 2)
+SELECT 'os rows'                                         AS check_name, COUNT(*) AS value, FALSE AS must_be_zero FROM ssdb_integration.lr_strategy.rank_os
+UNION ALL SELECT 'fiscal years in os (expect 1)',          COUNT(DISTINCT fiscal_yr), FALSE FROM ssdb_integration.lr_strategy.rank_os
+UNION ALL SELECT 'territory rows',                         COUNT(*), FALSE FROM ssdb_integration.lr_strategy.rank_terr_src
 UNION ALL SELECT 'territory rows after channel expansion', COUNT(*), FALSE FROM terr
 UNION ALL SELECT 'os rows with NULL firm or target channel',
-  COUNT_IF(firm IS NULL OR channel IS NULL), TRUE FROM os
+  COUNT_IF(firm IS NULL OR channel IS NULL), TRUE FROM ssdb_integration.lr_strategy.rank_os
 UNION ALL SELECT 'os rows with NULL zip (their sales count as outside)',
-  COUNT_IF(zip_code IS NULL), FALSE FROM os
-UNION ALL SELECT 'zips not 5 characters (os)',            COUNT_IF(LENGTH(zip_code) <> 5), TRUE FROM os
-UNION ALL SELECT 'zips not 5 characters (territory)',     COUNT_IF(LENGTH(zip_code) <> 5), TRUE FROM terr_src
+  COUNT_IF(zip_code IS NULL), FALSE FROM ssdb_integration.lr_strategy.rank_os
+UNION ALL SELECT 'zips not 5 characters (os)',            COUNT_IF(LENGTH(zip_code) <> 5), TRUE FROM ssdb_integration.lr_strategy.rank_os
+UNION ALL SELECT 'zips not 5 characters (territory)',     COUNT_IF(LENGTH(zip_code) <> 5), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src
 UNION ALL SELECT 'territory firms not found in os',
-  COUNT(DISTINCT firm), TRUE FROM terr_src WHERE firm NOT IN (SELECT DISTINCT firm FROM os WHERE firm IS NOT NULL)
+  COUNT(DISTINCT firm), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src WHERE firm NOT IN (SELECT DISTINCT firm FROM ssdb_integration.lr_strategy.rank_os WHERE firm IS NOT NULL)
 UNION ALL SELECT 'territory rows whose original channel has no mapping',
-  COUNT(*), TRUE FROM terr_src t
+  COUNT(*), TRUE FROM ssdb_integration.lr_strategy.rank_terr_src t
   WHERE NOT EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm AND m.original_channel = t.original_channel)
 UNION ALL SELECT 'cells with opportunity on both firms (would count twice)',
   COUNT(*), TRUE FROM cell_firms WHERE n > 1
 UNION ALL SELECT 'firms carrying opportunity (expect 1)',
-  COUNT(DISTINCT firm), FALSE FROM os WHERE COALESCE(opp, 0) <> 0
+  COUNT(DISTINCT firm), FALSE FROM ssdb_integration.lr_strategy.rank_os WHERE COALESCE(opp, 0) <> 0
 UNION ALL SELECT 'original channels split across target channels',
   COUNT(*), FALSE FROM (SELECT firm, original_channel FROM ch_map GROUP BY 1, 2 HAVING COUNT(*) > 1)
 UNION ALL SELECT 'pct of sales with no sales wholesaler (left out)',
-  ROUND(100 * SUM(CASE WHEN sales_wholesaler IS NULL THEN sales ELSE 0 END) / NULLIF(SUM(sales), 0), 2), FALSE FROM os
+  ROUND(100 * SUM(CASE WHEN sales_wholesaler IS NULL THEN sales ELSE 0 END) / NULLIF(SUM(sales), 0), 2), FALSE FROM ssdb_integration.lr_strategy.rank_os
 UNION ALL SELECT 'sales wholesalers with no territory rows',
-  COUNT(DISTINCT sales_wholesaler), FALSE FROM os o
-  WHERE sales <> 0 AND sales_wholesaler NOT IN (SELECT key FROM filler_keys)
-    AND NOT EXISTS (SELECT 1 FROM terr_src t WHERE t.firm = o.firm AND t.wholesaler = o.sales_wholesaler)
+  COUNT(DISTINCT sales_wholesaler), FALSE FROM ssdb_integration.lr_strategy.rank_os o
+  WHERE sales <> 0 AND sales_wholesaler NOT IN (SELECT key FROM ssdb_integration.lr_strategy.rank_filler_keys)
+    AND NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.rank_terr_src t WHERE t.firm = o.firm AND t.wholesaler = o.sales_wholesaler)
 UNION ALL SELECT 'territory wholesalers with no sales',
-  COUNT(DISTINCT wholesaler), FALSE FROM terr_src t
-  WHERE NOT EXISTS (SELECT 1 FROM os o WHERE o.firm = t.firm AND o.sales_wholesaler = t.wholesaler AND o.sales <> 0)
+  COUNT(DISTINCT wholesaler), FALSE FROM ssdb_integration.lr_strategy.rank_terr_src t
+  WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.rank_os o WHERE o.firm = t.firm AND o.sales_wholesaler = t.wholesaler AND o.sales <> 0)
 UNION ALL SELECT 'territory IDs with more than one name',
-  COUNT(*), FALSE FROM (SELECT firm, wholesaler FROM terr_src GROUP BY 1, 2 HAVING COUNT(DISTINCT wholesaler_name) > 1)
+  COUNT(*), FALSE FROM (SELECT firm, wholesaler FROM ssdb_integration.lr_strategy.rank_terr_src GROUP BY 1, 2 HAVING COUNT(DISTINCT wholesaler_name) > 1)
 UNION ALL SELECT 'pct of sales where terr_wholesaler_name is not in the territory table',   -- matched on names
   ROUND(100 * SUM(CASE WHEN o.terr_wholesaler_name IS NOT NULL AND t.wholesaler_name IS NULL THEN o.sales ELSE 0 END)
         / NULLIF(SUM(o.sales), 0), 2), FALSE
-  FROM os o
-  LEFT JOIN (SELECT DISTINCT firm, wholesaler_name, zip_code, original_channel FROM terr_src) t
+  FROM ssdb_integration.lr_strategy.rank_os o
+  LEFT JOIN (SELECT DISTINCT firm, wholesaler_name, zip_code, original_channel FROM ssdb_integration.lr_strategy.rank_terr_src) t
     ON t.firm = o.firm AND t.wholesaler_name = o.terr_wholesaler_name
    AND t.zip_code = o.zip_code AND t.original_channel = o.original_channel
 UNION ALL SELECT 'pct of sales in cells without opportunity',
   ROUND(100 * SUM(CASE WHEN COALESCE(c.opp, 0) <= 0 THEN o.sales ELSE 0 END) / NULLIF(SUM(o.sales), 0), 2), FALSE
-  FROM os o
-  LEFT JOIN (SELECT zip_code, channel, SUM(opp) AS opp FROM os GROUP BY 1, 2) c
+  FROM ssdb_integration.lr_strategy.rank_os o
+  LEFT JOIN (SELECT zip_code, channel, SUM(opp) AS opp FROM ssdb_integration.lr_strategy.rank_os GROUP BY 1, 2) c
     ON c.zip_code = o.zip_code AND c.channel = o.channel;
 
 ------------------------------------------------------------------------------------------------
--- Part 2.  The ranking.  To keep it: CREATE OR REPLACE TABLE <db>.<schema>.wholesaler_rank AS
+-- Part 2.  The ranking.  To keep it: CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.wholesaler_rank AS
 ------------------------------------------------------------------------------------------------
 WITH
 params AS (SELECT CAST(1.0 AS DOUBLE) AS out_credit,     -- outside-territory sales count in full
@@ -100,18 +103,18 @@ params AS (SELECT CAST(1.0 AS DOUBLE) AS out_credit,     -- outside-territory sa
 
 opp AS (       -- zip x target channel; NULLs on the other firm's rows add nothing
   SELECT zip_code, channel, SUM(opp) AS opp
-  FROM os GROUP BY zip_code, channel),
+  FROM ssdb_integration.lr_strategy.rank_os GROUP BY zip_code, channel),
 
 rate AS (      -- the market rate per target channel
   SELECT channel, DIV0(SUM(sales), SUM(opp)) AS rate
-  FROM os GROUP BY channel),
+  FROM ssdb_integration.lr_strategy.rank_os GROUP BY channel),
 
 ch_map AS (    -- original -> target channel, per firm
-  SELECT DISTINCT firm, original_channel, channel FROM os),
+  SELECT DISTINCT firm, original_channel, channel FROM ssdb_integration.lr_strategy.rank_os),
 
 terr AS (      -- territory in target channels; DISTINCT so two originals into one target count once
   SELECT DISTINCT t.firm, t.wholesaler, t.zip_code, m.channel
-  FROM terr_src t
+  FROM ssdb_integration.lr_strategy.rank_terr_src t
   JOIN ch_map m ON m.firm = t.firm AND m.original_channel = t.original_channel),
 
 holders AS (
@@ -137,8 +140,8 @@ prior AS (     -- one typical held cell's expected, per channel
 
 ws AS (        -- each seller's net sales per cell; vacancy rows and rows with no seller left out
   SELECT firm, sales_wholesaler AS wholesaler, zip_code, channel, SUM(sales) AS sales
-  FROM os
-  WHERE sales_wholesaler IS NOT NULL AND sales_wholesaler NOT IN (SELECT key FROM filler_keys)
+  FROM ssdb_integration.lr_strategy.rank_os
+  WHERE sales_wholesaler IS NOT NULL AND sales_wholesaler NOT IN (SELECT key FROM ssdb_integration.lr_strategy.rank_filler_keys)
   GROUP BY 1, 2, 3, 4),
 
 credited AS (  -- inside = a held cell with opportunity; everything else is outside
@@ -174,10 +177,10 @@ names AS (     -- one display name per ID: the territory's, else the sales table
   SELECT COALESCE(t.firm, s.firm) AS firm, COALESCE(t.wholesaler, s.wholesaler) AS wholesaler,
          COALESCE(t.wholesaler_name, s.wholesaler_name) AS wholesaler_name
   FROM (SELECT firm, wholesaler, MAX(wholesaler_name) AS wholesaler_name
-        FROM terr_src GROUP BY 1, 2) t
+        FROM ssdb_integration.lr_strategy.rank_terr_src GROUP BY 1, 2) t
   FULL OUTER JOIN
        (SELECT firm, sales_wholesaler AS wholesaler, MAX(sales_wholesaler_name) AS wholesaler_name
-        FROM os WHERE sales_wholesaler IS NOT NULL GROUP BY 1, 2) s
+        FROM ssdb_integration.lr_strategy.rank_os WHERE sales_wholesaler IS NOT NULL GROUP BY 1, 2) s
     ON s.firm = t.firm AND s.wholesaler = t.wholesaler),
 
 o AS (
