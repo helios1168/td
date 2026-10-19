@@ -1,5 +1,5 @@
 -- Wholesaler ranking, end to end.  Run top to bottom in one Snowsight worksheet.
---   Part 0  edit: the two table names and any vacancy keys   (the only edits)
+--   Part 0  edit: any vacancy keys (the only edit left)
 --   Part 1  checks: one result grid; every row with must_be_zero = TRUE must show 0
 --   Part 2  the ranking
 -- Method: tools/snowflake/RUNBOOK.md.  index = credited sales / expected sales, one merged scale.
@@ -19,7 +19,7 @@ SELECT ZIP_CODE                       AS zip_code,
        MM_OPP                         AS opp,               -- on one firm's rows, NULL on the other's
        ACTUAL_SALES_AMOUNT            AS sales,
        FISCAL_YR                      AS fiscal_yr          -- checks only: expect one value
-FROM <db>.<schema>.<opportunity_sales table>;
+FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys;
 
 -- Territories, in original channels.
 CREATE OR REPLACE TEMPORARY VIEW terr_src AS
@@ -28,7 +28,7 @@ SELECT SOURCE     AS firm,
        CLEAN_NAME AS wholesaler_name,
        ZIP_CODE   AS zip_code,
        CHANNEL    AS original_channel                    -- same values as the sales table's DIST_CH
-FROM <db>.<schema>.<territory table>;
+FROM ssdb_integration.lr_strategy.territories;
 
 -- Vacancy / filler keys that appear as a sales wholesaler.  Leave the table empty if there are none.
 CREATE OR REPLACE TEMPORARY TABLE filler_keys (key VARCHAR);
