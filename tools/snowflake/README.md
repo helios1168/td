@@ -14,6 +14,7 @@ keys are typed at work and never saved.
 | `05_rank_territory.sql` | ranks against assigned territories; out-of-territory sales credited (`out_credit`, default 1), with a territory-only index beside it; needs `territory(firm, wholesaler, zip_code, channel)` too |
 | `07_rank_wholesalers.sql` | the ranking on `opportunity_sales` (original and target channel on each row) and `territory` in original channels; market rate per channel, each cell's opportunity split among its holders |
 | `08_rank_end_to_end.sql` | the whole run on the owner's two tables: one mapping block to edit, a checks grid, then `07`'s ranking |
+| `09_channel_match_diagnostic.sql` | after `08` Part 0: territory channel values beside sales `DIST_CH` values per firm, to find why territory rows have no mapping |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
