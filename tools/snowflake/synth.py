@@ -6,12 +6,14 @@ every name and number made up.  Nothing is read from the live data.
 Writes to data/safe/ (gitignored):
   td_synth.csv.gz   raw(zip_code, firm, wholesaler, channel, opportunity, sales), channel = the firm's own
   channel_map.csv   (firm, source_channel, channel): the generalist firm's codes -> the channelized firm's
+  territory.csv     (firm, wholesaler, zip_code, channel): assigned territories, channel = the channelized firm's
   td_synth_truth.csv the answer key: each wholesaler's role, home channel and latent skill
 
 Sales are opportunity x channel base rate x skill x firm effect x noise, with the same effort per
 zip for both roles: an index that recovers skill for both roles is measuring people, not time
-split.  `--check` loads the files into DuckDB, runs 03_rank.sql, and prints how its ranks and
-plain within-channel volume track the answer key.
+split.  Out-of-territory sales come from three places: specialists' stray sales in other channels,
+sales in another wholesaler's zips, and orphan zips no territory holds.  `--check` loads the files
+into DuckDB, runs 03_rank.sql and 05_rank_territory.sql, and prints how they track the answer key.
 
     python3 tools/snowflake/synth.py [--seed 7] [--check]
 """
@@ -71,6 +73,7 @@ def build(seed):
                 if (z, c) in cover and FIRM_B in cover[z, c]:
                     owner[(z, c), FIRM_B] = w
     skill = {t["wholesaler"]: t["skill"] for t in truth}
+    firm_of = {t["wholesaler"]: t["firm"] for t in truth}
     b_code = {c: [k for k, v in B_CODES.items() if v == c] for c in CHANNELS}
     # firm A specialists also show some sales outside their home channel (only 10 of 140 sell in one channel)
     home = {}
@@ -83,13 +86,24 @@ def build(seed):
             for c in CHANNELS:
                 if (z, c) in cover and FIRM_A in cover[z, c] and owner[(z, c), FIRM_A] != w and rng.random() < 0.08:
                     spill.setdefault((z, c), []).append(w)
+    # sales in another wholesaler's zips: a same-firm colleague who could work that channel
+    pool = {(f, c): sorted({w for (cell, ff), w in owner.items() if ff == f and cell[1] == c})
+            for f in (FIRM_A, FIRM_B) for c in CHANNELS}
+    for cell in cells:
+        if rng.random() < 0.03:
+            f = rng.choice(sorted(cover[cell]))
+            w = rng.choice(pool[f, cell[1]])
+            if w != owner[cell, f]:
+                spill.setdefault(cell, []).append(w)
+    orphans = set(rng.sample(zs, len(zs) * 3 // 100))   # zips no territory holds; their sales stay
+    territory = sorted((f, w, cell[0], cell[1]) for (cell, f), w in owner.items() if cell[0] not in orphans)
     rows = []
     for cell in cells:
         z, c = cell
         opp = round(math.exp(rng.gauss(0, 1.2)), 4)
         both = len(cover[cell]) == 2
         slots = [(f, owner[cell, f], 1.0) for f in sorted(cover[cell])]
-        slots += [(FIRM_A, w, 0.2) for w in spill.get(cell, [])]
+        slots += [(firm_of[w], w, 0.2) for w in spill.get(cell, [])]
         crow = []
         for f, w, effort in slots:
             code = c if f == FIRM_A else rng.choice(b_code[c])
@@ -115,10 +129,10 @@ def build(seed):
     r = rng.choice(rows)
     rows.append([None, r[1], r[2], r[3], 0.0, round(rng.uniform(0.01, 0.1), 4)])  # one row with no ZIP
     rng.shuffle(rows)
-    return rows, truth
+    return rows, truth, territory
 
 
-def write(rows, truth):
+def write(rows, truth, territory):
     os.makedirs(OUT, exist_ok=True)
     with gzip.open(os.path.join(OUT, "td_synth.csv.gz"), "wt", newline="") as fh:
         w = csv.writer(fh)
@@ -129,6 +143,10 @@ def write(rows, truth):
         w.writerow(["firm", "source_channel", "channel"])
         w.writerows([FIRM_A, c, c] for c in CHANNELS)
         w.writerows([FIRM_B, k, v] for k, v in B_CODES.items())
+    with open(os.path.join(OUT, "territory.csv"), "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["firm", "wholesaler", "zip_code", "channel"])
+        w.writerows(territory)
     with open(os.path.join(OUT, "td_synth_truth.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(truth[0]))
         w.writeheader()
@@ -136,13 +154,16 @@ def write(rows, truth):
 
 
 def check():
-    sql = open(os.path.join(ROOT, "tools", "snowflake", "03_rank.sql")).read().strip().rstrip(";")
+    def q(name):
+        return open(os.path.join(ROOT, "tools", "snowflake", name)).read().strip().rstrip(";")
+    sql = q("03_rank.sql")
     d = OUT
     script = f"""
 CREATE TABLE raw AS SELECT * FROM read_csv('{d}/td_synth.csv.gz', types={{'zip_code': 'VARCHAR'}});
 CREATE TABLE channel_map AS SELECT * FROM read_csv('{d}/channel_map.csv');
 CREATE TABLE filler_keys AS SELECT 'VACANT' AS key;
 CREATE TABLE truth AS SELECT * FROM read_csv('{d}/td_synth_truth.csv');
+CREATE TABLE territory AS SELECT * FROM read_csv('{d}/territory.csv', types={{'zip_code': 'VARCHAR'}});
 SELECT COUNT(*) AS unmapped FROM raw r LEFT JOIN channel_map cm
   ON cm.firm = r.firm AND cm.source_channel = r.channel WHERE cm.channel IS NULL;
 CREATE TABLE ranked AS {sql};
@@ -163,6 +184,18 @@ UNION ALL
 SELECT 'channel volume', role, COUNT(*), ROUND(CORR(sales, ability), 3), ROUND(AVG(volume_rank / ranked_in_channel), 3) FROM v GROUP BY role
 ORDER BY 1, 2;
 SELECT COUNT(DISTINCT wholesaler) AS wholesalers, COUNT(*) AS wholesaler_channels FROM ranked;
+{q("04_territory_profile.sql")};
+CREATE TABLE ranked_t AS {q("05_rank_territory.sql")};
+-- territory ranking: index per unit of ability (1.0 = fair) and tracking, with and without outside sales
+WITH w AS (SELECT DISTINCT r.wholesaler, r.index_overall, r.index_territory_only, r.out_share, t.role,
+                  t.skill * CASE r.firm WHEN '{FIRM_A}' THEN {FIRM_EFFECT[FIRM_A]} ELSE {FIRM_EFFECT[FIRM_B]} END AS ability
+           FROM ranked_t r JOIN truth t USING (wholesaler))
+SELECT role, COUNT(*) AS n, ROUND(AVG(out_share), 3) AS out_share,
+       ROUND(AVG(index_overall / ability), 3) AS with_outside_per_ability,
+       ROUND(AVG(index_territory_only / ability), 3) AS territory_only_per_ability,
+       ROUND(CORR(index_overall, ability), 3) AS corr_with_outside,
+       ROUND(CORR(index_territory_only, ability), 3) AS corr_territory_only
+FROM w GROUP BY role ORDER BY role;
 """
     r = subprocess.run(["duckdb", "-box"], input=script, capture_output=True, text=True)
     sys.stdout.write(r.stdout + r.stderr)
@@ -174,8 +207,8 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args(argv)
-    rows, truth = build(a.seed)
-    write(rows, truth)
+    rows, truth, territory = build(a.seed)
+    write(rows, truth, territory)
     cells = len({(r[0], B_CODES.get(r[3], r[3])) for r in rows})
     print(f"{OUT}: {len(rows)} rows, {cells} cells, {len(truth)} wholesalers")
     return check() if a.check else 0
