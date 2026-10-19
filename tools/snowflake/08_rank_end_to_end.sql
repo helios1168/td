@@ -66,6 +66,7 @@ UNION ALL SELECT 'territory rows whose channel matches DIST_CH only ignoring cas
   WHERE NOT EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm AND m.original_channel = t.original_channel)
     AND EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm
                 AND UPPER(TRIM(m.original_channel)) = UPPER(TRIM(t.original_channel)))
+-- owner, 2026-10-19: the territory table's extra channels are outside the scope of this analysis
 UNION ALL SELECT 'territory rows in channels absent from the sales table (out of scope, dropped)',
   COUNT(*), FALSE FROM ssdb_integration.lr_strategy.rank_terr_src t
   WHERE NOT EXISTS (SELECT 1 FROM ch_map m WHERE m.firm = t.firm
