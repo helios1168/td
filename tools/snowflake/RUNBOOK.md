@@ -133,6 +133,9 @@ Settings at the top: `out_credit` (1.0) and `shrink_cells` (1.0). One row per wh
 
 ## Known limits
 
+- Settled (owner, 2026-10-19): a zip absent from the long table has zero opportunity, so territory zips
+  missing from it rightly add nothing to `expected`; `territory_zips_not_in_raw` is information only.
+
 - An original channel split across target channels whose distribution companies the holder rarely
   works inflates their expected and lowers their index there. If a split in Step 2 is large, weight
   the expansion by each distribution company's share of the cell's opportunity (needs the
