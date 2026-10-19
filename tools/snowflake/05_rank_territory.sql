@@ -20,11 +20,19 @@
 --   filler_keys(key)                                               -- vacancy sentinels
 -- If the territory table has no channel, build `territory` as a view: a specialist's zips in
 -- their home channel, a generalist's zips crossed with every channel.
--- Run first; both must return 0:
+-- Opportunity may sit on one firm's rows only, NULL on the other's: `cell` sums it across firms,
+-- so each (zip, channel) counts it once and both firms are measured against it.  A territory cell
+-- with no opportunity drops out of `expected` and its sales count as outside; 04_territory_profile
+-- reports how many (`territory_cells_without_opp`, `pct_sales_in_cells_without_opp`).
+-- Run first; all three must return 0:
 --   SELECT COUNT(*) FROM raw r LEFT JOIN channel_map cm
 --     ON cm.firm = r.firm AND cm.source_channel = r.channel WHERE cm.channel IS NULL;
 --   SELECT COUNT(*) FROM territory t
 --     WHERE t.channel NOT IN (SELECT DISTINCT channel FROM channel_map);
+--   SELECT COUNT(*) FROM (SELECT r.zip_code, cm.channel FROM raw r JOIN channel_map cm      -- cells where
+--       ON cm.firm = r.firm AND cm.source_channel = r.channel                              -- two firms
+--     WHERE COALESCE(r.opportunity, 0) <> 0                                                 -- both carry
+--     GROUP BY 1, 2 HAVING COUNT(DISTINCT r.firm) > 1);                                     -- opportunity
 WITH
 params AS (SELECT CAST(1.0 AS DOUBLE) AS shrink_cells, CAST(1.0 AS DOUBLE) AS out_credit),
 m AS (       -- every row, in the channelized firm's channels

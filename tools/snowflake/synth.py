@@ -9,7 +9,8 @@ Writes to data/safe/ (gitignored):
   territory.csv     (firm, wholesaler, zip_code, channel): assigned territories, channel = the channelized firm's
   td_synth_truth.csv the answer key: each wholesaler's role, home channel and latent skill
 
-Sales are opportunity x channel base rate x skill x firm effect x noise, with the same effort per
+Opportunity sits on firm A's rows only and is NULL on firm B's, as in the live table, so it sums
+once per (zip, channel); a few cells only firm B works carry none.  Sales are opportunity x channel base rate x skill x firm effect x noise, with the same effort per
 zip for both roles: an index that recovers skill for both roles is measuring people, not time
 split.  Out-of-territory sales come from three places: specialists' stray sales in other channels,
 sales in another wholesaler's zips, and orphan zips no territory holds.  `--check` loads the files
@@ -117,17 +118,26 @@ def build(seed):
             parts = rng.choice([2, 3, 4]) if rng.random() < 0.08 else 1    # the unknown extra grain
             for i in range(parts):
                 crow.append([z, f, w, code, 0.0, round(s / parts, 4)])
-        if len(crow) > 1 and rng.random() < 0.05:        # opportunity split over two rows
-            crow[0][4], crow[1][4] = round(opp * 0.6, 4), round(opp * 0.4, 4)
-        else:
-            crow[0][4] = opp                             # opportunity on one row, the rest 0
+        # opportunity lives on firm A's rows only (NULL on firm B's), so a plain SUM counts it once;
+        # a cell only firm B works gets an A row that carries it, except a few that have none
+        a_idx = [i for i, r in enumerate(crow) if r[1] == FIRM_A]
+        if not a_idx and rng.random() < 0.95:
+            crow.append([z, FIRM_A, "VACANT", c, 0.0, 0.0])
+            a_idx = [len(crow) - 1]
+        for r in crow:
+            if r[1] == FIRM_B:
+                r[4] = None
+        if len(a_idx) > 1 and rng.random() < 0.05:       # opportunity split over two rows
+            crow[a_idx[0]][4], crow[a_idx[1]][4] = round(opp * 0.6, 4), round(opp * 0.4, 4)
+        elif a_idx:
+            crow[a_idx[0]][4] = opp                      # opportunity on one row, the rest 0
         rows += crow
     for r in rng.sample(rows, 14):                       # reversals
-        rows.append([r[0], r[1], r[2], r[3], 0.0, -round(rng.uniform(0.001, 0.01), 4)])
+        rows.append([r[0], r[1], r[2], r[3], None if r[1] == FIRM_B else 0.0, -round(rng.uniform(0.001, 0.01), 4)])
     for r in rng.sample([r for r in rows if r[4] == 0.0], 14):  # opportunity adjustments
         r[4] = -round(rng.uniform(0.001, 0.01), 4)
     r = rng.choice(rows)
-    rows.append([None, r[1], r[2], r[3], 0.0, round(rng.uniform(0.01, 0.1), 4)])  # one row with no ZIP
+    rows.append([None, r[1], r[2], r[3], None if r[1] == FIRM_B else 0.0, round(rng.uniform(0.01, 0.1), 4)])  # one row with no ZIP
     rng.shuffle(rows)
     return rows, truth, territory
 

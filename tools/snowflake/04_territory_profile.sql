@@ -8,6 +8,9 @@ m AS (SELECT r.zip_code, r.firm, r.wholesaler, cm.channel, r.opportunity, r.sale
       FROM raw r JOIN channel_map cm ON cm.firm = r.firm AND cm.source_channel = r.channel
       WHERE r.wholesaler NOT IN (SELECT key FROM filler_keys)),
 t AS (SELECT DISTINCT firm, wholesaler, zip_code, channel FROM territory),
+cell AS (SELECT r.zip_code, cm.channel, SUM(r.opportunity) AS opp     -- across firms: NULLs add nothing
+         FROM raw r JOIN channel_map cm ON cm.firm = r.firm AND cm.source_channel = r.channel
+         GROUP BY 1, 2),
 tw AS (SELECT firm, wholesaler, COUNT(DISTINCT zip_code) AS n_zip, COUNT(DISTINCT channel) AS n_ch
        FROM t GROUP BY 1, 2),
 s AS (SELECT m.firm, m.sales,
@@ -39,4 +42,15 @@ UNION ALL SELECT 'rows_by_where_sold', f.firm_label || ':' || where_sold, COUNT(
 UNION ALL SELECT 'pct_sales_by_where_sold', f.firm_label || ':' || where_sold,
   ROUND(100 * SUM(sales) / SUM(SUM(sales)) OVER (PARTITION BY f.firm_label))
   FROM s JOIN f USING (firm) GROUP BY f.firm_label, where_sold
+-- opportunity must sit on one firm's rows only; the other firm's cells must still find it
+UNION ALL SELECT 'opp_rows_nonzero', f.firm_label, COUNT(*)
+  FROM raw r JOIN f USING (firm) WHERE COALESCE(r.opportunity, 0) <> 0 GROUP BY 2
+UNION ALL SELECT 'territory_cells_without_opp', f.firm_label, COUNT(*)
+  FROM t JOIN f USING (firm)
+  LEFT JOIN cell c ON c.zip_code = t.zip_code AND c.channel = t.channel
+  WHERE COALESCE(c.opp, 0) <= 0 GROUP BY 2
+UNION ALL SELECT 'pct_sales_in_cells_without_opp', f.firm_label,
+  ROUND(100 * SUM(CASE WHEN COALESCE(c.opp, 0) <= 0 THEN m.sales ELSE 0 END) / NULLIF(SUM(m.sales), 0), 1)
+  FROM m JOIN f USING (firm)
+  LEFT JOIN cell c ON c.zip_code = m.zip_code AND c.channel = m.channel GROUP BY 2
 ORDER BY grp, k
