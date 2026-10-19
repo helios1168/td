@@ -38,16 +38,15 @@ SELECT <zip>               AS zip_code,     -- VARCHAR, 5 characters
        <sales>             AS sales
 FROM <sales table>;
 
--- b) Distribution-company code -> the channelized firm's channels (the existing mapping)
+-- b) Distribution-company code -> the channelized firm's channels, as the sales table defines it
 CREATE OR REPLACE TEMPORARY VIEW channel_map AS
-SELECT <firm> AS firm, <distribution code> AS source_channel, <target channel> AS channel
-FROM <mapping table>;
+SELECT DISTINCT <firm> AS firm, <distribution code> AS source_channel, <target channel> AS channel
+FROM <sales table>;
 
--- c) Each firm's original channel name -> the target channels its distribution companies map to
+-- c) Each firm's original channel name -> the target channels, from the same table
 CREATE OR REPLACE TEMPORARY VIEW territory_channel_map AS
-SELECT DISTINCT s.<firm> AS firm, s.<original channel> AS territory_channel, cm.channel
-FROM <sales table> s
-JOIN channel_map cm ON cm.firm = s.<firm> AND cm.source_channel = s.<distribution code>;
+SELECT DISTINCT <firm> AS firm, <original channel> AS territory_channel, <target channel> AS channel
+FROM <sales table>;
 -- if the sales table has no original channel name, write this by hand:
 --   SELECT * FROM VALUES ('<firm>', '<original channel>', '<target channel>'), ...
 --     AS v(firm, territory_channel, channel)
@@ -69,7 +68,18 @@ of them. Several original channels that map to one target channel collapse into 
 
 ## Step 2. Checks: each must return 0
 
+Both mappings are read off the sales table, so they cover only codes and channels that appear in it.
+A territory row in a channel with no sales rows at all fails the second territory check below.
+
 ```sql
+-- each distribution code maps to exactly one target channel; a code with two would duplicate its
+-- rows in the join and count their sales and opportunity twice
+SELECT COUNT(*) FROM (
+  SELECT firm, source_channel FROM channel_map GROUP BY 1, 2 HAVING COUNT(*) > 1);
+
+-- no NULL target channel (those rows would drop out of every join)
+SELECT COUNT(*) FROM channel_map WHERE channel IS NULL;
+
 -- every raw row maps to a target channel
 SELECT COUNT(*) FROM raw r
 LEFT JOIN channel_map cm ON cm.firm = r.firm AND cm.source_channel = r.channel
