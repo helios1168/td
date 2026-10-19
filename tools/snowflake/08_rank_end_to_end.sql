@@ -1,5 +1,5 @@
 -- Wholesaler ranking, end to end.  Run top to bottom in one Snowsight worksheet.
---   Part 0  edit: table names, column choices, fiscal year, vacancy keys   (the only edits)
+--   Part 0  edit: the two table names and any vacancy keys   (the only edits)
 --   Part 1  checks: one result grid; every row with must_be_zero = TRUE must show 0
 --   Part 2  the ranking
 -- Method: tools/snowflake/RUNBOOK.md.  index = credited sales / expected sales, one merged scale.
@@ -7,25 +7,27 @@
 ------------------------------------------------------------------------------------------------
 -- Part 0.  Edit here only.
 ------------------------------------------------------------------------------------------------
--- Sales and opportunity, long across both firms; one row per whatever grain the table has.
+-- Sales and opportunity, long across both firms, one fiscal year (the table is already filtered).
 CREATE OR REPLACE TEMPORARY VIEW os AS
-SELECT ZIP_CODE                    AS zip_code,
-       SOURCE                      AS firm,              -- the wholesaling firm (one of the two merging)
-       SALES_WHOLESALER_CLEAN_NAME AS sales_wholesaler,  -- who made the sale; must match territory's key
-       TERR_WHOLESALER_CLEAN_NAME  AS terr_wholesaler,   -- whose territory it is (checks only)
-       CHANNEL                     AS original_channel,  -- the firm's own channel, as in the territory table
-       NEW_DIST                    AS channel,           -- the target (channelized firm's) channel
-       MM_OPP                      AS opp,               -- on one firm's rows, NULL on the other's
-       SALES_AMOUNT                AS sales
-FROM <db>.<schema>.<opportunity_sales table>
-WHERE FISCAL_YR = '<fiscal year>';                       -- one period; the territory is today's
+SELECT ZIP_CODE                       AS zip_code,
+       SOURCE                         AS firm,              -- the wholesaling firm (one of the two merging)
+       SALES_WHOLESALER_TERRITORY_ID  AS sales_wholesaler,  -- who made the sale; = territory CLEAN_ID
+       SALES_WHOLESALER_CLEAN_NAME    AS sales_wholesaler_name,
+       TERR_WHOLESALER_CLEAN_NAME     AS terr_wholesaler_name, -- whose territory it is (checks only)
+       DIST_CH                        AS original_channel,  -- the firm's own channel, as in the territory table
+       CHANNEL                        AS channel,           -- the target channel
+       MM_OPP                         AS opp,               -- on one firm's rows, NULL on the other's
+       ACTUAL_SALES_AMOUNT            AS sales,
+       FISCAL_YR                      AS fiscal_yr          -- checks only: expect one value
+FROM <db>.<schema>.<opportunity_sales table>;
 
 -- Territories, in original channels.
 CREATE OR REPLACE TEMPORARY VIEW terr_src AS
 SELECT SOURCE     AS firm,
-       CLEAN_NAME AS wholesaler,                         -- same key as os.sales_wholesaler
+       CLEAN_ID   AS wholesaler,                         -- = os.sales_wholesaler
+       CLEAN_NAME AS wholesaler_name,
        ZIP_CODE   AS zip_code,
-       CHANNEL    AS original_channel
+       CHANNEL    AS original_channel                    -- same values as the sales table's DIST_CH
 FROM <db>.<schema>.<territory table>;
 
 -- Vacancy / filler keys that appear as a sales wholesaler.  Leave the table empty if there are none.
@@ -45,6 +47,7 @@ cell_firms AS (
   SELECT zip_code, channel, COUNT(DISTINCT firm) AS n
   FROM os WHERE COALESCE(opp, 0) <> 0 GROUP BY 1, 2)
 SELECT 'os rows'                                         AS check_name, COUNT(*) AS value, FALSE AS must_be_zero FROM os
+UNION ALL SELECT 'fiscal years in os (expect 1)',          COUNT(DISTINCT fiscal_yr), FALSE FROM os
 UNION ALL SELECT 'territory rows',                         COUNT(*), FALSE FROM terr_src
 UNION ALL SELECT 'territory rows after channel expansion', COUNT(*), FALSE FROM terr
 UNION ALL SELECT 'os rows with NULL firm or target channel',
@@ -73,12 +76,14 @@ UNION ALL SELECT 'sales wholesalers with no territory rows',
 UNION ALL SELECT 'territory wholesalers with no sales',
   COUNT(DISTINCT wholesaler), FALSE FROM terr_src t
   WHERE NOT EXISTS (SELECT 1 FROM os o WHERE o.firm = t.firm AND o.sales_wholesaler = t.wholesaler AND o.sales <> 0)
-UNION ALL SELECT 'pct of sales where terr_wholesaler is not in the territory table',
-  ROUND(100 * SUM(CASE WHEN o.terr_wholesaler IS NOT NULL AND t.wholesaler IS NULL THEN o.sales ELSE 0 END)
+UNION ALL SELECT 'territory IDs with more than one name',
+  COUNT(*), FALSE FROM (SELECT firm, wholesaler FROM terr_src GROUP BY 1, 2 HAVING COUNT(DISTINCT wholesaler_name) > 1)
+UNION ALL SELECT 'pct of sales where terr_wholesaler_name is not in the territory table',   -- matched on names
+  ROUND(100 * SUM(CASE WHEN o.terr_wholesaler_name IS NOT NULL AND t.wholesaler_name IS NULL THEN o.sales ELSE 0 END)
         / NULLIF(SUM(o.sales), 0), 2), FALSE
   FROM os o
-  LEFT JOIN (SELECT DISTINCT firm, wholesaler, zip_code, original_channel FROM terr_src) t
-    ON t.firm = o.firm AND t.wholesaler = o.terr_wholesaler
+  LEFT JOIN (SELECT DISTINCT firm, wholesaler_name, zip_code, original_channel FROM terr_src) t
+    ON t.firm = o.firm AND t.wholesaler_name = o.terr_wholesaler_name
    AND t.zip_code = o.zip_code AND t.original_channel = o.original_channel
 UNION ALL SELECT 'pct of sales in cells without opportunity',
   ROUND(100 * SUM(CASE WHEN COALESCE(c.opp, 0) <= 0 THEN o.sales ELSE 0 END) / NULLIF(SUM(o.sales), 0), 2), FALSE
@@ -165,6 +170,16 @@ scored AS (
   LEFT JOIN prior pr ON pr.channel = wc.channel
   CROSS JOIN params p),
 
+names AS (     -- one display name per ID: the territory's, else the sales table's
+  SELECT COALESCE(t.firm, s.firm) AS firm, COALESCE(t.wholesaler, s.wholesaler) AS wholesaler,
+         COALESCE(t.wholesaler_name, s.wholesaler_name) AS wholesaler_name
+  FROM (SELECT firm, wholesaler, MAX(wholesaler_name) AS wholesaler_name
+        FROM terr_src GROUP BY 1, 2) t
+  FULL OUTER JOIN
+       (SELECT firm, sales_wholesaler AS wholesaler, MAX(sales_wholesaler_name) AS wholesaler_name
+        FROM os WHERE sales_wholesaler IS NOT NULL GROUP BY 1, 2) s
+    ON s.firm = t.firm AND s.wholesaler = t.wholesaler),
+
 o AS (
   SELECT scored.*,
          CASE WHEN expected > 0 THEN (credited + prior) / (expected + prior) END            AS perf_index,
@@ -178,10 +193,11 @@ o AS (
   FROM scored)
 
 SELECT DENSE_RANK() OVER (ORDER BY index_overall DESC NULLS LAST)                          AS rank_overall,
-       firm, wholesaler, index_overall, index_territory_only, out_share,
+       o.firm, o.wholesaler, n.wholesaler_name, index_overall, index_territory_only, out_share,
        channel, channel_weight,
        CASE WHEN perf_index IS NOT NULL
             THEN RANK() OVER (PARTITION BY channel, perf_index IS NULL ORDER BY perf_index DESC) END AS rank_in_channel,
        perf_index, held_cells, expected, sales_in, sales_out, credited
 FROM o
-ORDER BY rank_overall, firm, wholesaler, channel_weight DESC NULLS LAST;
+LEFT JOIN names n ON n.firm = o.firm AND n.wholesaler = o.wholesaler
+ORDER BY rank_overall, o.firm, o.wholesaler, channel_weight DESC NULLS LAST;
