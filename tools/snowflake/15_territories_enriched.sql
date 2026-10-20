@@ -1,19 +1,21 @@
--- The territories table with opportunity and sales appended: one output row per territories row.
+-- The territories table with opportunity and sales appended, by target channel: one output row per
+-- territories row and target CHANNEL its DIST_CH maps to (out-of-scope rows: one row, CHANNEL NULL).
 -- Reads only the two source tables; creates nothing.  Two statements:
 --   Statement 1  checks: every row with MUST_BE_ZERO = TRUE must show 0
 --   Statement 2  the territories rows, enriched
 --
 -- A territories row is (SOURCE, CLEAN_ID, ZIP_CODE, CHANNEL); territories.CHANNEL holds DIST_CH values
--- of that SOURCE.  The union table maps DIST_CH -> CHANNEL per SOURCE; DIST_CH values do not
+-- of that SOURCE.  In the output that value is in DIST_CH, and CHANNEL is the target channel, as in
+-- the union table.  The union table maps DIST_CH -> CHANNEL per SOURCE; DIST_CH values do not
 -- correspond across SOURCEs (owner, 2026-10-20), so CHANNEL, ZIP_CODE and PRODUCT_V2 are all they share.
 --
 -- Sales: read directly.  The union table's rows carry the same SOURCE and the same DIST_CH values, so
---   a territories row's sales are that SOURCE's ACTUAL_SALES_AMOUNT in (ZIP_CODE, DIST_CH = CHANNEL),
+--   a territories row's sales are that SOURCE's ACTUAL_SALES_AMOUNT in (ZIP_CODE, DIST_CH, CHANNEL),
 --   split into the holder's (SALES_WHOLESALER_TERRITORY_ID = CLEAN_ID) and everyone else's.
 --
 -- Opportunity: MM_OPP is non-null only on the rows of one SOURCE (the carrier).  Each SOURCE sells its
 --   own set of PRODUCT_V2 values (those it has ACTUAL_SALES_AMOUNT > 0 in) and gets MM_OPP for those only.
---   - carrier SOURCE (OPPORTUNITY_METHOD 'exact'): MM_OPP on its own rows, (ZIP_CODE, DIST_CH = CHANNEL).
+--   - carrier SOURCE (OPPORTUNITY_METHOD 'exact'): MM_OPP on its own rows, (ZIP_CODE, DIST_CH, CHANNEL).
 --   - other SOURCE (OPPORTUNITY_METHOD 'sales_mix_held'): the carrier's MM_OPP per (ZIP_CODE, CHANNEL),
 --     for this SOURCE's products, divided among this SOURCE's DIST_CH values held in that ZIP_CODE
 --     by each DIST_CH's national share of this SOURCE's sales in that CHANNEL, rescaled over the held
@@ -24,12 +26,12 @@
 --     correlation 0.99.  It uses the SOURCE's own sales to size each DIST_CH's share: one national
 --     share per DIST_CH, so no one's own sales move their own opportunity, but a DIST_CH that sells
 --     weakly overall is given less opportunity.
---   OPPORTUNITY repeats on every holder of the same (SOURCE, ZIP_CODE, CHANNEL); OPPORTUNITY_SHARE
+--   OPPORTUNITY repeats on every holder of the same (SOURCE, ZIP_CODE, DIST_CH); OPPORTUNITY_SHARE
 --   divides it by HOLDERS_SAME_SOURCE, so summing OPPORTUNITY_SHARE over rows does not double count.
 --   Across SOURCEs nothing is divided: each SOURCE's row shows its own products' opportunity.
 --
 -- Territories rows whose CHANNEL is not a DIST_CH of that SOURCE in the union table are kept with
--- IN_SCOPE = FALSE and zeros (owner, 2026-10-19: those channels are outside the scope).
+-- IN_SCOPE = FALSE, CHANNEL NULL and zeros (owner, 2026-10-19: those channels are outside the scope).
 
 ------------------------------------------------------------------------------------------------
 -- Statement 1.  Checks.
@@ -122,12 +124,12 @@ products AS (        -- each SOURCE's product set: the PRODUCT_V2 values it has 
   WHERE ACTUAL_SALES_AMOUNT > 0),
 
 -- carrier SOURCE: exact
-opp_exact AS (       -- per (SOURCE, ZIP_CODE, DIST_CH): its own MM_OPP, its own products
-  SELECT u.SOURCE, u.ZIP_CODE, u.DIST_CH, SUM(u.MM_OPP) AS MM_OPP
+opp_exact AS (       -- per (SOURCE, ZIP_CODE, DIST_CH, CHANNEL): its own MM_OPP, its own products
+  SELECT u.SOURCE, u.ZIP_CODE, u.DIST_CH, u.CHANNEL, SUM(u.MM_OPP) AS MM_OPP
   FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
   JOIN carrier c  ON c.SOURCE = u.SOURCE
   JOIN products p ON p.SOURCE = u.SOURCE AND p.PRODUCT_V2 = u.PRODUCT_V2
-  GROUP BY u.SOURCE, u.ZIP_CODE, u.DIST_CH),
+  GROUP BY u.SOURCE, u.ZIP_CODE, u.DIST_CH, u.CHANNEL),
 
 -- other SOURCE: sales_mix_held
 pairs AS (           -- its DIST_CH -> CHANNEL pairs, with positive sales in each
@@ -156,40 +158,44 @@ channel_opp AS (     -- the carrier's MM_OPP per (ZIP_CODE, CHANNEL), for each o
   JOIN products p ON p.PRODUCT_V2 = u.PRODUCT_V2 AND p.SOURCE NOT IN (SELECT SOURCE FROM carrier)
   GROUP BY p.SOURCE, u.ZIP_CODE, u.CHANNEL),
 
-opp_mix AS (         -- per (SOURCE, ZIP_CODE, DIST_CH)
-  SELECT w.SOURCE, w.ZIP_CODE, w.DIST_CH, SUM(o.MM_OPP * w.W) AS MM_OPP
+opp_mix AS (         -- per (SOURCE, ZIP_CODE, DIST_CH, CHANNEL)
+  SELECT w.SOURCE, w.ZIP_CODE, w.DIST_CH, w.CHANNEL, SUM(o.MM_OPP * w.W) AS MM_OPP
   FROM held_w w
   JOIN channel_opp o ON o.SOURCE = w.SOURCE AND o.ZIP_CODE = w.ZIP_CODE AND o.CHANNEL = w.CHANNEL
-  GROUP BY w.SOURCE, w.ZIP_CODE, w.DIST_CH),
+  GROUP BY w.SOURCE, w.ZIP_CODE, w.DIST_CH, w.CHANNEL),
 
 opp_cell AS (
-  SELECT SOURCE, ZIP_CODE, DIST_CH, MM_OPP FROM opp_exact
+  SELECT SOURCE, ZIP_CODE, DIST_CH, CHANNEL, MM_OPP FROM opp_exact
   UNION ALL
-  SELECT SOURCE, ZIP_CODE, DIST_CH, MM_OPP FROM opp_mix),
+  SELECT SOURCE, ZIP_CODE, DIST_CH, CHANNEL, MM_OPP FROM opp_mix),
 
-scope AS (           -- (SOURCE, DIST_CH) present in the union table
-  SELECT DISTINCT SOURCE, DIST_CH FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
+ch_map AS (          -- (SOURCE, DIST_CH) -> target CHANNEL, as the union table pairs them
+  SELECT DISTINCT SOURCE, DIST_CH, CHANNEL FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
 
-sales_cell AS (      -- per (SOURCE, ZIP_CODE, DIST_CH): all sales
-  SELECT SOURCE, ZIP_CODE, DIST_CH, SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
+sales_cell AS (      -- per (SOURCE, ZIP_CODE, DIST_CH, CHANNEL): all sales
+  SELECT SOURCE, ZIP_CODE, DIST_CH, CHANNEL, SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
   FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
-  GROUP BY SOURCE, ZIP_CODE, DIST_CH),
+  GROUP BY SOURCE, ZIP_CODE, DIST_CH, CHANNEL),
 
-sales_seller AS (    -- per (SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID)
-  SELECT SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID, SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
+sales_seller AS (    -- per (SOURCE, ZIP_CODE, DIST_CH, CHANNEL, SALES_WHOLESALER_TERRITORY_ID)
+  SELECT SOURCE, ZIP_CODE, DIST_CH, CHANNEL, SALES_WHOLESALER_TERRITORY_ID,
+         SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
   FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
   WHERE SALES_WHOLESALER_TERRITORY_ID IS NOT NULL
-  GROUP BY SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID),
+  GROUP BY SOURCE, ZIP_CODE, DIST_CH, CHANNEL, SALES_WHOLESALER_TERRITORY_ID),
 
-holders AS (         -- holders of each (SOURCE, ZIP_CODE, CHANNEL) in territories
+holders AS (         -- holders of each (SOURCE, ZIP_CODE, DIST_CH) in territories (territories.CHANNEL = DIST_CH)
   SELECT SOURCE, ZIP_CODE, CHANNEL, COUNT(DISTINCT CLEAN_ID) AS HOLDERS_SAME_SOURCE
   FROM ssdb_integration.lr_strategy.territories
   GROUP BY SOURCE, ZIP_CODE, CHANNEL)
 
-SELECT t.*,
-       sc.SOURCE IS NOT NULL                                                   AS IN_SCOPE,
+SELECT t.SOURCE, t.NAME, t.ZIP_CODE, t.STATE,
+       t.CHANNEL                                                               AS DIST_CH,
+       m.CHANNEL,                                                              -- the target channel
+       t.CLEAN_NAME, t.CLEAN_ID,
+       m.SOURCE IS NOT NULL                                                    AS IN_SCOPE,
        COALESCE(h.HOLDERS_SAME_SOURCE, 0)                                      AS HOLDERS_SAME_SOURCE,
-       CASE WHEN sc.SOURCE IS NULL THEN NULL
+       CASE WHEN m.SOURCE IS NULL THEN NULL
             WHEN t.SOURCE IN (SELECT SOURCE FROM carrier) THEN 'exact'
             ELSE 'sales_mix_held' END                                          AS OPPORTUNITY_METHOD,
        COALESCE(o.MM_OPP, 0)                                                   AS OPPORTUNITY,
@@ -198,15 +204,15 @@ SELECT t.*,
        COALESCE(s.ACTUAL_SALES_AMOUNT, 0) - COALESCE(ss.ACTUAL_SALES_AMOUNT, 0) AS SALES_BY_OTHERS,
        COALESCE(s.ACTUAL_SALES_AMOUNT, 0)                                      AS SALES_TOTAL
 FROM ssdb_integration.lr_strategy.territories t
+LEFT JOIN ch_map m
+  ON m.SOURCE = t.SOURCE AND m.DIST_CH = t.CHANNEL
 LEFT JOIN holders h
   ON h.SOURCE = t.SOURCE AND h.ZIP_CODE = t.ZIP_CODE AND h.CHANNEL = t.CHANNEL
-LEFT JOIN scope sc
-  ON sc.SOURCE = t.SOURCE AND sc.DIST_CH = t.CHANNEL
 LEFT JOIN opp_cell o
-  ON o.SOURCE = t.SOURCE AND o.ZIP_CODE = t.ZIP_CODE AND o.DIST_CH = t.CHANNEL
+  ON o.SOURCE = t.SOURCE AND o.ZIP_CODE = t.ZIP_CODE AND o.DIST_CH = t.CHANNEL AND o.CHANNEL = m.CHANNEL
 LEFT JOIN sales_cell s
-  ON s.SOURCE = t.SOURCE AND s.ZIP_CODE = t.ZIP_CODE AND s.DIST_CH = t.CHANNEL
+  ON s.SOURCE = t.SOURCE AND s.ZIP_CODE = t.ZIP_CODE AND s.DIST_CH = t.CHANNEL AND s.CHANNEL = m.CHANNEL
 LEFT JOIN sales_seller ss
-  ON ss.SOURCE = t.SOURCE AND ss.ZIP_CODE = t.ZIP_CODE AND ss.DIST_CH = t.CHANNEL
+  ON ss.SOURCE = t.SOURCE AND ss.ZIP_CODE = t.ZIP_CODE AND ss.DIST_CH = t.CHANNEL AND ss.CHANNEL = m.CHANNEL
  AND ss.SALES_WHOLESALER_TERRITORY_ID = t.CLEAN_ID
-ORDER BY t.SOURCE, t.CLEAN_ID, t.ZIP_CODE, t.CHANNEL;
+ORDER BY t.SOURCE, t.CLEAN_ID, t.ZIP_CODE, t.CHANNEL, m.CHANNEL;
