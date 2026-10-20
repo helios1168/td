@@ -1,190 +1,200 @@
 -- The territories table with opportunity and sales appended: one output row per territories row.
--- Reads only the two source tables; creates nothing.  Two statements:
---   Statement 1  checks: every row with must_be_zero = TRUE must show 0
+-- Reads the two source tables and the crosswalk; creates nothing (Statement 0 is a template you run
+-- once, at work, to create the crosswalk).
+--   Statement 0  (commented) create ssdb_integration.lr_strategy.dist_ch_crosswalk
+--   Statement 1  checks: every row with MUST_BE_ZERO = TRUE must show 0
 --   Statement 2  the territories rows, enriched
 --
--- A territories row is (SOURCE, CLEAN_ID, ZIP_CODE, CHANNEL), CHANNEL in that firm's own DIST_CH names.
+-- A territories row is (SOURCE, CLEAN_ID, ZIP_CODE, CHANNEL); territories.CHANNEL holds DIST_CH values
+-- of that SOURCE.
 --
--- Sales: read directly.  The union table's rows carry the same firm and the same DIST_CH names, so a
---   territory row's sales are the firm's sales in (ZIP_CODE, DIST_CH = CHANNEL): by the holder
---   (SALES_WHOLESALER_TERRITORY_ID = CLEAN_ID) and by anyone else.
+-- Sales: read directly.  The union table's rows carry the same SOURCE and the same DIST_CH values, so
+--   a territories row's sales are that SOURCE's ACTUAL_SALES_AMOUNT in (ZIP_CODE, DIST_CH = CHANNEL),
+--   split into the holder's (SALES_WHOLESALER_TERRITORY_ID = CLEAN_ID) and everyone else's.
 --
--- Opportunity: only one firm's rows carry MM_OPP, and the firms sell different product sets
---   (a firm's product set = the PRODUCT_V2 values it has sales in).  The two firms share only the
---   target CHANNEL and PRODUCT_V2, so:
---   A. the firm whose rows carry MM_OPP: its own rows, its own products, by its own DIST_CH, per zip.
---   B. a firm whose rows do not: opportunity per (zip, target channel, product) from whichever rows
---      carry it, for that firm's products only, shared out among the firm's DIST_CHs that map to the
---      target channel in proportion to the firm's own sales in each (DIST_CH, target channel) pair.
---      Each target channel's opportunity is then counted once per firm, and a pair that holds a
---      sliver of the firm's sales gets a sliver of the opportunity, not all of it.
---   Two holders of one (firm, zip, CHANNEL) each show the cell's opportunity; opportunity_share
---   divides it by holders_same_firm, so summing opportunity_share over rows does not double count.
---   Across firms nothing is divided: each firm's row shows that firm's own opportunity.
+-- Opportunity: MM_OPP is non-null only on the rows of one SOURCE (the carrier).  Each SOURCE sells its
+--   own set of PRODUCT_V2 values (those it has ACTUAL_SALES_AMOUNT > 0 in) and is given MM_OPP for
+--   those products only.
+--   - carrier SOURCE: MM_OPP on its own rows, in (ZIP_CODE, DIST_CH = CHANNEL).
+--   - other SOURCE:   MM_OPP on the carrier's rows, in ZIP_CODE, for the carrier DIST_CH values that
+--                     the crosswalk maps this DIST_CH to (OPP_DIST_CH).  No split, no sales weights.
+--   OPPORTUNITY repeats on every holder of the same (SOURCE, ZIP_CODE, CHANNEL); OPPORTUNITY_SHARE
+--   divides it by HOLDERS_SAME_SOURCE, so summing OPPORTUNITY_SHARE over rows does not double count.
+--   Across SOURCEs nothing is divided: each SOURCE's row shows its own products' opportunity.
 --
--- Territory rows in channels absent from the union table are kept, in_scope = FALSE, with zeros
--- (owner, 2026-10-19: those channels are outside the scope).
+-- Territories rows whose CHANNEL is not a DIST_CH of that SOURCE in the union table are kept with
+-- IN_SCOPE = FALSE and zeros (owner, 2026-10-19: those channels are outside the scope).
+
+------------------------------------------------------------------------------------------------
+-- Statement 0.  Template: create the crosswalk once, at work.  Its values name partners: keep it
+-- there.  One row per (non-carrier SOURCE, its DIST_CH, a carrier DIST_CH it covers); a DIST_CH
+-- covering several carrier DIST_CH values gets several rows.  The carrier SOURCE needs no rows.
+------------------------------------------------------------------------------------------------
+-- CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.dist_ch_crosswalk (
+--   SOURCE      VARCHAR,   -- the non-carrier SOURCE
+--   DIST_CH     VARCHAR,   -- its DIST_CH value, as in the union table and territories.CHANNEL
+--   OPP_DIST_CH VARCHAR    -- a carrier DIST_CH value whose MM_OPP it takes
+-- );
+-- INSERT INTO ssdb_integration.lr_strategy.dist_ch_crosswalk VALUES
+--   ('<SOURCE>', '<DIST_CH>', '<carrier DIST_CH>'),
+--   ('<SOURCE>', '<DIST_CH>', '<carrier DIST_CH>');
 
 ------------------------------------------------------------------------------------------------
 -- Statement 1.  Checks.
 ------------------------------------------------------------------------------------------------
 WITH
-src AS (
-  SELECT ZIP_CODE AS zip_code, SOURCE AS firm, DIST_CH AS original_channel, CHANNEL AS channel,
-         PRODUCT_V2 AS product, MM_OPP AS opp, ACTUAL_SALES_AMOUNT AS sales,
-         SALES_WHOLESALER_TERRITORY_ID AS seller
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
-terr AS (
-  SELECT SOURCE AS firm, CLEAN_ID AS wholesaler, ZIP_CODE AS zip_code, CHANNEL AS original_channel
-  FROM ssdb_integration.lr_strategy.territories),
-f AS (
-  SELECT firm, 'firm_' || DENSE_RANK() OVER (ORDER BY firm) AS firm_label
-  FROM (SELECT DISTINCT firm FROM src WHERE firm IS NOT NULL) x),
-scope AS (SELECT DISTINCT firm, original_channel FROM src),
-firm_products AS (SELECT DISTINCT firm, product FROM src WHERE sales > 0),
-opp_carriers AS (SELECT DISTINCT firm FROM src WHERE COALESCE(opp, 0) <> 0),
-opp_products AS (SELECT product FROM src GROUP BY product HAVING SUM(COALESCE(opp, 0)) > 0),
-pairs AS (
-  SELECT firm, original_channel, channel, SUM(CASE WHEN sales > 0 THEN sales ELSE 0 END) AS pos_sales
-  FROM src GROUP BY firm, original_channel, channel),
-weights AS (
-  SELECT firm, channel,
-         SUM(CASE WHEN tot > 0 THEN pos_sales / tot ELSE 1.0 / n END) AS w_sum
-  FROM (SELECT p.*, SUM(pos_sales) OVER (PARTITION BY firm, channel) AS tot,
-               COUNT(*) OVER (PARTITION BY firm, channel) AS n FROM pairs p) x
-  GROUP BY firm, channel),
-held AS (SELECT DISTINCT firm, zip_code, original_channel FROM terr)
-SELECT 'territories rows' AS check_name, COUNT(*) AS value, FALSE AS must_be_zero FROM terr
+carrier AS (
+  SELECT DISTINCT SOURCE FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  WHERE COALESCE(MM_OPP, 0) <> 0),
+labels AS (
+  SELECT SOURCE, 'source_' || DENSE_RANK() OVER (ORDER BY SOURCE) AS SOURCE_LABEL
+  FROM (SELECT DISTINCT SOURCE FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+        WHERE SOURCE IS NOT NULL) x),
+scope AS (
+  SELECT DISTINCT SOURCE, DIST_CH FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
+products AS (
+  SELECT DISTINCT SOURCE, PRODUCT_V2 FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  WHERE ACTUAL_SALES_AMOUNT > 0),
+opp_products AS (
+  SELECT PRODUCT_V2 FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  GROUP BY PRODUCT_V2 HAVING SUM(COALESCE(MM_OPP, 0)) > 0),
+held AS (
+  SELECT DISTINCT SOURCE, ZIP_CODE, CHANNEL FROM ssdb_integration.lr_strategy.territories)
+SELECT 'territories rows' AS CHECK_NAME, COUNT(*) AS VALUE, FALSE AS MUST_BE_ZERO
+FROM ssdb_integration.lr_strategy.territories
 UNION ALL SELECT 'duplicate territories rows (SOURCE, CLEAN_ID, ZIP_CODE, CHANNEL)',
-  COUNT(*) - COUNT(DISTINCT firm || '|' || wholesaler || '|' || zip_code || '|' || original_channel), FALSE FROM terr
-UNION ALL SELECT 'rows with NULL SOURCE, DIST_CH, CHANNEL or PRODUCT_V2 (union table)',
-  COUNT_IF(firm IS NULL OR original_channel IS NULL OR channel IS NULL OR product IS NULL), TRUE FROM src
-UNION ALL SELECT 'firms whose rows carry MM_OPP (expect 1)', COUNT(*), FALSE FROM opp_carriers
-UNION ALL SELECT '(zip, channel, product) with MM_OPP on both firms (would count twice)',
-  COUNT(*), TRUE FROM (SELECT zip_code, channel, product FROM src WHERE COALESCE(opp, 0) <> 0
-                       GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT firm) > 1)
-UNION ALL SELECT 'territories rows whose CHANNEL matches DIST_CH only ignoring case/spaces',
-  COUNT(*), TRUE FROM terr t
-  WHERE NOT EXISTS (SELECT 1 FROM scope s WHERE s.firm = t.firm AND s.original_channel = t.original_channel)
-    AND EXISTS (SELECT 1 FROM scope s WHERE s.firm = t.firm
-                AND UPPER(TRIM(s.original_channel)) = UPPER(TRIM(t.original_channel)))
-UNION ALL SELECT 'territories rows out of scope (CHANNEL absent from the union table)',
-  COUNT(*), FALSE FROM terr t
-  WHERE NOT EXISTS (SELECT 1 FROM scope s WHERE s.firm = t.firm AND s.original_channel = t.original_channel)
-UNION ALL SELECT '(firm, target channel) whose DIST_CH weights do not sum to 1',
-  COUNT_IF(ABS(w_sum - 1) > 1e-9), TRUE FROM weights
-UNION ALL SELECT 'products sold by ' || f.firm_label, COUNT(fp.product), FALSE
-  FROM f LEFT JOIN firm_products fp ON fp.firm = f.firm GROUP BY f.firm_label
-UNION ALL SELECT 'products sold by both firms', COUNT(*), FALSE
-  FROM (SELECT product FROM firm_products GROUP BY product HAVING COUNT(*) > 1)
-UNION ALL SELECT 'pct of ' || f.firm_label || ' sales in products with no MM_OPP anywhere',
-  ROUND(100 * SUM(CASE WHEN op.product IS NULL THEN s.sales ELSE 0 END) / NULLIF(SUM(s.sales), 0), 2), FALSE
-  FROM src s JOIN f ON f.firm = s.firm LEFT JOIN opp_products op ON op.product = s.product
-  GROUP BY f.firm_label
-UNION ALL SELECT 'pct of ' || f.firm_label || ' sales in (zip, DIST_CH) cells no territories row holds',
-  ROUND(100 * SUM(CASE WHEN h.firm IS NULL THEN s.sales ELSE 0 END) / NULLIF(SUM(s.sales), 0), 2), FALSE
-  FROM src s JOIN f ON f.firm = s.firm
-  LEFT JOIN held h ON h.firm = s.firm AND h.zip_code = s.zip_code AND h.original_channel = s.original_channel
-  GROUP BY f.firm_label
-UNION ALL SELECT 'DIST_CH -> target channel pairs of ' || f.firm_label || ' holding under 1% of the DIST_CH''s sales',
-  COUNT_IF(p.pos_sales < 0.01 * x.tot), FALSE
-  FROM pairs p JOIN f ON f.firm = p.firm
-  JOIN (SELECT firm, original_channel, SUM(pos_sales) AS tot FROM pairs GROUP BY 1, 2) x
-    ON x.firm = p.firm AND x.original_channel = p.original_channel
-  GROUP BY f.firm_label;
+  COUNT(*) - COUNT(DISTINCT SOURCE || '|' || CLEAN_ID || '|' || ZIP_CODE || '|' || CHANNEL), FALSE
+  FROM ssdb_integration.lr_strategy.territories
+UNION ALL SELECT 'union rows with NULL SOURCE, ZIP_CODE, DIST_CH or PRODUCT_V2',
+  COUNT_IF(SOURCE IS NULL OR ZIP_CODE IS NULL OR DIST_CH IS NULL OR PRODUCT_V2 IS NULL), FALSE
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+UNION ALL SELECT 'SOURCEs whose rows carry MM_OPP, minus 1 (two carriers would need another rule)',
+  ABS((SELECT COUNT(*) FROM carrier) - 1), TRUE
+UNION ALL SELECT 'in-scope DIST_CH of a non-carrier SOURCE with no crosswalk row (would get no opportunity)',
+  COUNT(*), TRUE FROM scope s
+  WHERE s.SOURCE NOT IN (SELECT SOURCE FROM carrier)
+    AND NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.dist_ch_crosswalk x
+                    WHERE x.SOURCE = s.SOURCE AND x.DIST_CH = s.DIST_CH)
+UNION ALL SELECT 'crosswalk rows whose (SOURCE, DIST_CH) is not in the union table (typo?)',
+  COUNT(*), TRUE FROM ssdb_integration.lr_strategy.dist_ch_crosswalk x
+  WHERE NOT EXISTS (SELECT 1 FROM scope s WHERE s.SOURCE = x.SOURCE AND s.DIST_CH = x.DIST_CH)
+UNION ALL SELECT 'crosswalk OPP_DIST_CH values that are not a carrier DIST_CH (typo?)',
+  COUNT(*), TRUE FROM ssdb_integration.lr_strategy.dist_ch_crosswalk x
+  WHERE NOT EXISTS (SELECT 1 FROM scope s JOIN carrier c ON c.SOURCE = s.SOURCE WHERE s.DIST_CH = x.OPP_DIST_CH)
+UNION ALL SELECT 'carrier DIST_CH mapped from two DIST_CH of one SOURCE (its MM_OPP would count twice)',
+  COUNT(*), TRUE FROM (SELECT SOURCE, OPP_DIST_CH FROM ssdb_integration.lr_strategy.dist_ch_crosswalk
+                       GROUP BY SOURCE, OPP_DIST_CH HAVING COUNT(DISTINCT DIST_CH) > 1)
+UNION ALL SELECT 'crosswalk pairs whose two DIST_CH share no CHANNEL (look at these)',
+  COUNT(*), FALSE FROM ssdb_integration.lr_strategy.dist_ch_crosswalk x
+  WHERE NOT EXISTS (
+    SELECT 1 FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys a
+    JOIN ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys b ON b.CHANNEL = a.CHANNEL
+    WHERE a.SOURCE = x.SOURCE AND a.DIST_CH = x.DIST_CH
+      AND b.SOURCE IN (SELECT SOURCE FROM carrier) AND b.DIST_CH = x.OPP_DIST_CH)
+UNION ALL SELECT 'territories rows whose CHANNEL matches a DIST_CH only ignoring case/spaces',
+  COUNT(*), TRUE FROM ssdb_integration.lr_strategy.territories t
+  WHERE NOT EXISTS (SELECT 1 FROM scope s WHERE s.SOURCE = t.SOURCE AND s.DIST_CH = t.CHANNEL)
+    AND EXISTS (SELECT 1 FROM scope s WHERE s.SOURCE = t.SOURCE
+                AND UPPER(TRIM(s.DIST_CH)) = UPPER(TRIM(t.CHANNEL)))
+UNION ALL SELECT 'territories rows out of scope (CHANNEL not a DIST_CH of that SOURCE)',
+  COUNT(*), FALSE FROM ssdb_integration.lr_strategy.territories t
+  WHERE NOT EXISTS (SELECT 1 FROM scope s WHERE s.SOURCE = t.SOURCE AND s.DIST_CH = t.CHANNEL)
+UNION ALL SELECT 'PRODUCT_V2 values sold by ' || l.SOURCE_LABEL, COUNT(p.PRODUCT_V2), FALSE
+  FROM labels l LEFT JOIN products p ON p.SOURCE = l.SOURCE GROUP BY l.SOURCE_LABEL
+UNION ALL SELECT 'PRODUCT_V2 values sold by both SOURCEs', COUNT(*), FALSE
+  FROM (SELECT PRODUCT_V2 FROM products GROUP BY PRODUCT_V2 HAVING COUNT(*) > 1)
+UNION ALL SELECT 'pct of ' || l.SOURCE_LABEL || ' sales in PRODUCT_V2 values with no MM_OPP anywhere',
+  ROUND(100 * SUM(CASE WHEN op.PRODUCT_V2 IS NULL THEN u.ACTUAL_SALES_AMOUNT ELSE 0 END)
+        / NULLIF(SUM(u.ACTUAL_SALES_AMOUNT), 0), 2), FALSE
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  JOIN labels l ON l.SOURCE = u.SOURCE
+  LEFT JOIN opp_products op ON op.PRODUCT_V2 = u.PRODUCT_V2
+  GROUP BY l.SOURCE_LABEL
+UNION ALL SELECT 'pct of carrier MM_OPP in carrier DIST_CH values no crosswalk row reaches',
+  ROUND(100 * SUM(CASE WHEN x.OPP_DIST_CH IS NULL THEN u.MM_OPP ELSE 0 END) / NULLIF(SUM(u.MM_OPP), 0), 2), FALSE
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  JOIN carrier c ON c.SOURCE = u.SOURCE
+  LEFT JOIN (SELECT DISTINCT OPP_DIST_CH FROM ssdb_integration.lr_strategy.dist_ch_crosswalk) x
+    ON x.OPP_DIST_CH = u.DIST_CH
+UNION ALL SELECT 'pct of ' || l.SOURCE_LABEL || ' sales in (ZIP_CODE, DIST_CH) no territories row holds',
+  ROUND(100 * SUM(CASE WHEN h.SOURCE IS NULL THEN u.ACTUAL_SALES_AMOUNT ELSE 0 END)
+        / NULLIF(SUM(u.ACTUAL_SALES_AMOUNT), 0), 2), FALSE
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  JOIN labels l ON l.SOURCE = u.SOURCE
+  LEFT JOIN held h ON h.SOURCE = u.SOURCE AND h.ZIP_CODE = u.ZIP_CODE AND h.CHANNEL = u.DIST_CH
+  GROUP BY l.SOURCE_LABEL;
 
 ------------------------------------------------------------------------------------------------
 -- Statement 2.  The territories rows, enriched.  To keep it, put this in front of WITH:
 --   CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.territories_enriched AS
 ------------------------------------------------------------------------------------------------
 WITH
-src AS (
-  SELECT ZIP_CODE AS zip_code, SOURCE AS firm, DIST_CH AS original_channel, CHANNEL AS channel,
-         PRODUCT_V2 AS product, MM_OPP AS opp, ACTUAL_SALES_AMOUNT AS sales,
-         SALES_WHOLESALER_TERRITORY_ID AS seller
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
+carrier AS (         -- the SOURCE whose rows carry MM_OPP
+  SELECT DISTINCT SOURCE FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  WHERE COALESCE(MM_OPP, 0) <> 0),
 
-firm_products AS (   -- each firm's product set: what it has sales in
-  SELECT DISTINCT firm, product FROM src WHERE sales > 0),
+products AS (        -- each SOURCE's product set: the PRODUCT_V2 values it has sales in
+  SELECT DISTINCT SOURCE, PRODUCT_V2 FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  WHERE ACTUAL_SALES_AMOUNT > 0),
 
-opp_carriers AS (    -- the firm(s) whose rows carry MM_OPP
-  SELECT DISTINCT firm FROM src WHERE COALESCE(opp, 0) <> 0),
+opp_map AS (         -- which carrier DIST_CH values each (SOURCE, DIST_CH) takes MM_OPP from
+  SELECT DISTINCT u.SOURCE, u.DIST_CH, u.DIST_CH AS OPP_DIST_CH          -- the carrier: itself
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  JOIN carrier c ON c.SOURCE = u.SOURCE
+  UNION
+  SELECT SOURCE, DIST_CH, OPP_DIST_CH                                    -- everyone else: the crosswalk
+  FROM ssdb_integration.lr_strategy.dist_ch_crosswalk),
 
--- A. a firm whose rows carry MM_OPP: its own rows, its own products, by its own DIST_CH
-opp_direct AS (
-  SELECT s.firm, s.zip_code, s.original_channel, SUM(s.opp) AS opp
-  FROM src s
-  JOIN opp_carriers c   ON c.firm = s.firm
-  JOIN firm_products fp ON fp.firm = s.firm AND fp.product = s.product
-  GROUP BY s.firm, s.zip_code, s.original_channel),
+carrier_opp AS (     -- the carrier's MM_OPP per (ZIP_CODE, DIST_CH, PRODUCT_V2)
+  SELECT u.ZIP_CODE, u.DIST_CH, u.PRODUCT_V2, SUM(u.MM_OPP) AS MM_OPP
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  JOIN carrier c ON c.SOURCE = u.SOURCE
+  GROUP BY u.ZIP_CODE, u.DIST_CH, u.PRODUCT_V2),
 
--- B. a firm whose rows do not: (zip, target channel, product) opportunity, shared out over its DIST_CHs
-opp_zcp AS (
-  SELECT zip_code, channel, product, SUM(opp) AS opp
-  FROM src GROUP BY zip_code, channel, product
-  HAVING SUM(opp) <> 0),
+opp_cell AS (        -- per (SOURCE, ZIP_CODE, DIST_CH): MM_OPP of its mapped carrier DIST_CH, its own products
+  SELECT m.SOURCE, o.ZIP_CODE, m.DIST_CH, SUM(o.MM_OPP) AS MM_OPP
+  FROM opp_map m
+  JOIN carrier_opp o ON o.DIST_CH = m.OPP_DIST_CH
+  JOIN products p    ON p.SOURCE = m.SOURCE AND p.PRODUCT_V2 = o.PRODUCT_V2
+  GROUP BY m.SOURCE, o.ZIP_CODE, m.DIST_CH),
 
-pairs AS (           -- each firm's DIST_CH -> target channel pairs, with its positive sales in each
-  SELECT firm, original_channel, channel, SUM(CASE WHEN sales > 0 THEN sales ELSE 0 END) AS pos_sales
-  FROM src GROUP BY firm, original_channel, channel),
+scope AS (           -- (SOURCE, DIST_CH) present in the union table
+  SELECT DISTINCT SOURCE, DIST_CH FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
 
-weights AS (         -- share of a target channel's opportunity each DIST_CH takes; equal if no sales
-  SELECT firm, original_channel, channel,
-         CASE WHEN SUM(pos_sales) OVER (PARTITION BY firm, channel) > 0
-              THEN pos_sales / SUM(pos_sales) OVER (PARTITION BY firm, channel)
-              ELSE 1.0 / COUNT(*) OVER (PARTITION BY firm, channel) END AS w
-  FROM pairs
-  WHERE firm NOT IN (SELECT firm FROM opp_carriers)),
+sales_cell AS (      -- per (SOURCE, ZIP_CODE, DIST_CH): all sales
+  SELECT SOURCE, ZIP_CODE, DIST_CH, SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  GROUP BY SOURCE, ZIP_CODE, DIST_CH),
 
-opp_mapped AS (
-  SELECT w.firm, o.zip_code, w.original_channel, SUM(w.w * o.opp) AS opp
-  FROM weights w
-  JOIN firm_products fp ON fp.firm = w.firm
-  JOIN opp_zcp o        ON o.channel = w.channel AND o.product = fp.product
-  GROUP BY w.firm, o.zip_code, w.original_channel),
+sales_seller AS (    -- per (SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID)
+  SELECT SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID, SUM(ACTUAL_SALES_AMOUNT) AS ACTUAL_SALES_AMOUNT
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  WHERE SALES_WHOLESALER_TERRITORY_ID IS NOT NULL
+  GROUP BY SOURCE, ZIP_CODE, DIST_CH, SALES_WHOLESALER_TERRITORY_ID),
 
-opp_cell AS (        -- per (firm, zip, DIST_CH)
-  SELECT * FROM opp_direct
-  UNION ALL
-  SELECT * FROM opp_mapped),
-
-scope AS (           -- (firm, DIST_CH) present in the union table, with how many target channels
-  SELECT firm, original_channel, COUNT(DISTINCT channel) AS n_target_channels
-  FROM src GROUP BY firm, original_channel),
-
-sales_cell AS (      -- per (firm, zip, DIST_CH): all sales
-  SELECT firm, zip_code, original_channel, SUM(sales) AS sales
-  FROM src GROUP BY firm, zip_code, original_channel),
-
-sales_seller AS (    -- per (firm, zip, DIST_CH, seller)
-  SELECT firm, zip_code, original_channel, seller, SUM(sales) AS sales
-  FROM src WHERE seller IS NOT NULL
-  GROUP BY firm, zip_code, original_channel, seller),
-
-holders AS (         -- holders of each (firm, zip, CHANNEL) in the territories table
-  SELECT SOURCE, ZIP_CODE, CHANNEL, COUNT(DISTINCT CLEAN_ID) AS holders_same_firm
+holders AS (         -- holders of each (SOURCE, ZIP_CODE, CHANNEL) in territories
+  SELECT SOURCE, ZIP_CODE, CHANNEL, COUNT(DISTINCT CLEAN_ID) AS HOLDERS_SAME_SOURCE
   FROM ssdb_integration.lr_strategy.territories
   GROUP BY SOURCE, ZIP_CODE, CHANNEL)
 
 SELECT t.*,
-       sc.firm IS NOT NULL                                   AS in_scope,
-       COALESCE(sc.n_target_channels, 0)                     AS n_target_channels,
-       COALESCE(h.holders_same_firm, 0)                      AS holders_same_firm,
-       COALESCE(o.opp, 0)                                    AS opportunity,
-       COALESCE(o.opp, 0) / NULLIF(h.holders_same_firm, 0)   AS opportunity_share,
-       COALESCE(sh.sales, 0)                                 AS sales_by_holder,
-       COALESCE(s.sales, 0) - COALESCE(sh.sales, 0)          AS sales_by_others,
-       COALESCE(s.sales, 0)                                  AS sales_total
+       sc.SOURCE IS NOT NULL                                                   AS IN_SCOPE,
+       COALESCE(h.HOLDERS_SAME_SOURCE, 0)                                      AS HOLDERS_SAME_SOURCE,
+       COALESCE(o.MM_OPP, 0)                                                   AS OPPORTUNITY,
+       COALESCE(o.MM_OPP, 0) / NULLIF(h.HOLDERS_SAME_SOURCE, 0)                AS OPPORTUNITY_SHARE,
+       COALESCE(ss.ACTUAL_SALES_AMOUNT, 0)                                     AS SALES_BY_HOLDER,
+       COALESCE(s.ACTUAL_SALES_AMOUNT, 0) - COALESCE(ss.ACTUAL_SALES_AMOUNT, 0) AS SALES_BY_OTHERS,
+       COALESCE(s.ACTUAL_SALES_AMOUNT, 0)                                      AS SALES_TOTAL
 FROM ssdb_integration.lr_strategy.territories t
 LEFT JOIN holders h
   ON h.SOURCE = t.SOURCE AND h.ZIP_CODE = t.ZIP_CODE AND h.CHANNEL = t.CHANNEL
 LEFT JOIN scope sc
-  ON sc.firm = t.SOURCE AND sc.original_channel = t.CHANNEL
+  ON sc.SOURCE = t.SOURCE AND sc.DIST_CH = t.CHANNEL
 LEFT JOIN opp_cell o
-  ON o.firm = t.SOURCE AND o.zip_code = t.ZIP_CODE AND o.original_channel = t.CHANNEL
+  ON o.SOURCE = t.SOURCE AND o.ZIP_CODE = t.ZIP_CODE AND o.DIST_CH = t.CHANNEL
 LEFT JOIN sales_cell s
-  ON s.firm = t.SOURCE AND s.zip_code = t.ZIP_CODE AND s.original_channel = t.CHANNEL
-LEFT JOIN sales_seller sh
-  ON sh.firm = t.SOURCE AND sh.zip_code = t.ZIP_CODE AND sh.original_channel = t.CHANNEL
- AND sh.seller = t.CLEAN_ID
+  ON s.SOURCE = t.SOURCE AND s.ZIP_CODE = t.ZIP_CODE AND s.DIST_CH = t.CHANNEL
+LEFT JOIN sales_seller ss
+  ON ss.SOURCE = t.SOURCE AND ss.ZIP_CODE = t.ZIP_CODE AND ss.DIST_CH = t.CHANNEL
+ AND ss.SALES_WHOLESALER_TERRITORY_ID = t.CLEAN_ID
 ORDER BY t.SOURCE, t.CLEAN_ID, t.ZIP_CODE, t.CHANNEL;
