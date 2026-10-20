@@ -21,6 +21,7 @@ keys are typed at work and never saved.
 | `13_product_profile.sql` | per product: share of opportunity and of each firm's sales, and which firm's rows carry its opportunity; the input to controlling for product sets |
 | `14_rank_by_product.sql` | the ranking controlled for product only, straight from the two source tables: each firm charged for its own products, rate per channel x product over held opportunity; territories expanded to target channels as in `08` |
 | `15_territories_enriched.sql` | the territories table with opportunity and sales appended, one row per territories row: each firm's own products, its DIST_CH mapped to target channels by its own sales mix |
+| `16_split_exposure.sql` | how many (zip, target channel) cells have several DIST_CHs held by several people: where the split rule in `15` reaches individuals |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
