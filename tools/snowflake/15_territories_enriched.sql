@@ -1,8 +1,5 @@
 -- The territories table with opportunity and sales appended, by target channel: one output row per
--- territories row and target CHANNEL its DIST_CH maps to, kept where that CHANNEL has opportunity or
--- sales; a territories row with none in any CHANNEL keeps one row, in its DIST_CH's main CHANNEL (the
--- one with most of the SOURCE's sales, then most rows).  Out-of-scope rows: one row, CHANNEL NULL.
--- Every territories row appears at least once, and no opportunity or sales is dropped.
+-- territories row and target CHANNEL its DIST_CH maps to (out-of-scope rows: one row, CHANNEL NULL).
 -- Reads only the two source tables; creates nothing.  Two statements:
 --   Statement 1  checks: every row with MUST_BE_ZERO = TRUE must show 0
 --   Statement 2  the territories rows, enriched
@@ -190,19 +187,8 @@ sales_seller AS (    -- per (SOURCE, ZIP_CODE, DIST_CH, CHANNEL, SALES_WHOLESALE
 holders AS (         -- holders of each (SOURCE, ZIP_CODE, DIST_CH) in territories (territories.CHANNEL = DIST_CH)
   SELECT SOURCE, ZIP_CODE, CHANNEL, COUNT(DISTINCT CLEAN_ID) AS HOLDERS_SAME_SOURCE
   FROM ssdb_integration.lr_strategy.territories
-  GROUP BY SOURCE, ZIP_CODE, CHANNEL),
+  GROUP BY SOURCE, ZIP_CODE, CHANNEL)
 
-main_ch AS (         -- each (SOURCE, DIST_CH)'s main target CHANNEL
-  SELECT SOURCE, DIST_CH, CHANNEL
-  FROM (SELECT SOURCE, DIST_CH, CHANNEL,
-               ROW_NUMBER() OVER (PARTITION BY SOURCE, DIST_CH
-                                  ORDER BY SUM(CASE WHEN ACTUAL_SALES_AMOUNT > 0 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) DESC,
-                                           COUNT(*) DESC, CHANNEL) AS RN
-        FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
-        GROUP BY SOURCE, DIST_CH, CHANNEL) x
-  WHERE RN = 1),
-
-out_all AS (
 SELECT t.SOURCE, t.NAME, t.ZIP_CODE, t.STATE,
        t.CHANNEL                                                               AS DIST_CH,
        m.CHANNEL,                                                              -- the target channel
@@ -229,19 +215,4 @@ LEFT JOIN sales_cell s
 LEFT JOIN sales_seller ss
   ON ss.SOURCE = t.SOURCE AND ss.ZIP_CODE = t.ZIP_CODE AND ss.DIST_CH = t.CHANNEL AND ss.CHANNEL = m.CHANNEL
  AND ss.SALES_WHOLESALER_TERRITORY_ID = t.CLEAN_ID
-)
-
-SELECT o.SOURCE, o.NAME, o.ZIP_CODE, o.STATE, o.DIST_CH, o.CHANNEL, o.CLEAN_NAME, o.CLEAN_ID,
-       o.IN_SCOPE, o.HOLDERS_SAME_SOURCE, o.OPPORTUNITY_METHOD, o.OPPORTUNITY, o.OPPORTUNITY_SHARE,
-       o.SALES_BY_HOLDER, o.SALES_BY_OTHERS, o.SALES_TOTAL
-FROM (
-  SELECT a.*,
-         CASE WHEN a.OPPORTUNITY <> 0 OR a.SALES_TOTAL <> 0 OR a.SALES_BY_HOLDER <> 0 THEN 1 ELSE 0 END AS HAS_DATA,
-         MAX(CASE WHEN a.OPPORTUNITY <> 0 OR a.SALES_TOTAL <> 0 OR a.SALES_BY_HOLDER <> 0 THEN 1 ELSE 0 END)
-           OVER (PARTITION BY a.SOURCE, a.NAME, a.ZIP_CODE, a.STATE, a.DIST_CH, a.CLEAN_NAME, a.CLEAN_ID) AS ROW_HAS_DATA
-  FROM out_all a) o
-LEFT JOIN main_ch mc ON mc.SOURCE = o.SOURCE AND mc.DIST_CH = o.DIST_CH AND mc.CHANNEL = o.CHANNEL
-WHERE NOT o.IN_SCOPE                                  -- out of scope: its one row
-   OR o.HAS_DATA = 1                                  -- a CHANNEL with opportunity or sales
-   OR (o.ROW_HAS_DATA = 0 AND mc.CHANNEL IS NOT NULL) -- nothing anywhere: the main CHANNEL only
-ORDER BY o.SOURCE, o.CLEAN_ID, o.ZIP_CODE, o.DIST_CH, o.CHANNEL;
+ORDER BY t.SOURCE, t.CLEAN_ID, t.ZIP_CODE, t.CHANNEL, m.CHANNEL;
