@@ -18,6 +18,7 @@ keys are typed at work and never saved.
 | `10_rank_sanity.sql` | after `08` is kept as `ssdb_integration.lr_strategy.wholesaler_rank`: median index by firm and channels held, a fairness check on the real data |
 | `11_rank_diagnostic.sql` | when `10` shows a jump between channels-held groups: who has no sales at all, and how each original channel spreads over target channels |
 | `12_rank_by_dist_company.sql` | the ranking straight from the two source tables, opportunity brought to each territory's (zip, firm, DIST_CH) through the distribution company; replaces `08`'s expansion to whole target channels |
+| `13_product_profile.sql` | per product: share of opportunity and of each firm's sales, and which firm's rows carry its opportunity; the input to controlling for product sets |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
