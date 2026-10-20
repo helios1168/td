@@ -22,6 +22,7 @@ keys are typed at work and never saved.
 | `14_rank_by_product.sql` | the ranking controlled for product only, straight from the two source tables: each firm charged for its own products, rate per channel x product over held opportunity; territories expanded to target channels as in `08` |
 | `15_territories_enriched.sql` | the territories table with opportunity and sales appended, one row per territories row, in the source tables' own column names: each SOURCE's own PRODUCT_V2 set; the non-carrier SOURCE takes MM_OPP through `ssdb_integration.lr_strategy.dist_ch_crosswalk` (SOURCE, DIST_CH, OPP_DIST_CH) |
 | `16_split_exposure.sql` | how many (zip, target channel) cells have several DIST_CHs held by several people: where the split rule in `15` reaches individuals |
+| `17_split_rule_calibration.sql` | tests rules for dividing CHANNEL-level MM_OPP among DIST_CH values on the carrier SOURCE, whose per-DIST_CH MM_OPP is known: per-person error of each rule |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
