@@ -23,7 +23,7 @@ keys are typed at work and never saved.
 | `15_territories_enriched.sql` | the territories table with opportunity and sales appended, one row per territories row, in the source tables' own column names: each SOURCE's own PRODUCT_V2 set; the carrier SOURCE's MM_OPP exact by DIST_CH, the other SOURCE's by CHANNEL divided over its held DIST_CH by sales mix (calibrated with `17`) |
 | `16_split_exposure.sql` | how many (zip, target channel) cells have several DIST_CHs held by several people: where the split rule in `15` reaches individuals |
 | `17_split_rule_calibration.sql` | tests rules for dividing CHANNEL-level MM_OPP among DIST_CH values on the carrier SOURCE, whose per-DIST_CH MM_OPP is known: per-person error of each rule |
-| `18_worked_example.sql` | one real (ZIP_CODE, CHANNEL) walked through step by step: how `15` gives the non-carrier SOURCE its opportunity there; output has real names and amounts, keep it at work |
+| `18_worked_example.sql` | walks chosen territories rows (a ZIP_CODE, wholesalers from either SOURCE, or both) step by step through `15`: opportunity by product, the DIST_CH split, OPPORTUNITY_SHARE, sales; output has real names and amounts, keep it at work |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
