@@ -26,6 +26,7 @@ keys are typed at work and never saved.
 | `18_worked_example.sql` | walks chosen territories rows (a ZIP_CODE, wholesalers from either SOURCE, or both) step by step through `15`: opportunity by product, the DIST_CH split, OPPORTUNITY_SHARE, sales; output has real names and amounts, keep it at work |
 | `19_structure_profile.sql` | the structure of the two source tables for a synthetic copy, safe to bring back as one CSV: column shapes, row grain, DIST_CH -> CHANNEL, products, where MM_OPP sits, people and holders, geography, FIRM and PARENT; SOURCE as firm_1/firm_2, DIST_CH and PRODUCT_V2 as codes, amount distributions divided by their median |
 | `20_synthetic_tables.sql` | `synthetic_union` and `synthetic_territories`: coded copies of both source tables (the real rows, every name, ID, DIST_CH, product, FIRM, PARENT and CBD_ID coded, amounts divided by a median cell), same columns, so 15-19 run on them; `synthetic_key` maps codes back and stays at work; checks that must be 0 before download |
+| `DATASET_LOG.md` | running record of the union and territories tables' structure, from the coded extract: dated findings, questions for the owner and their answers |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
