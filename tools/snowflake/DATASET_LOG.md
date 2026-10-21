@@ -21,8 +21,9 @@ Decisions made before this log, still in force (from the session record):
   held `DIST_CH` by national sales mix (`sales_mix_held`, chosen with `17`).
 - A ZIP absent from the union table has zero opportunity; territories `DIST_CH` values absent from the
   union table are out of scope (owner, 2026-10-19).
-- Distribution company (`FIRM`, `CBD_ID`) was dropped as a cross-firm key (`12` rejected). **Reopened
-  by Q1 below.**
+- ~~Distribution company (`FIRM`, `CBD_ID`) was dropped as a cross-firm key (`12` rejected).~~
+  Superseded 2026-10-21 (Q1): `CBD_ID` is the same distribution company in both `SOURCE`s and joins
+  them; ZIP_CODE x `CBD_ID` x `PRODUCT_V2` is the common unit of market for both firms.
 
 ## 2026-10-20: first look at the coded extract
 
@@ -125,6 +126,9 @@ cross-firm key. In this extract `CBD_ID` matches across `SOURCE`s (370 shared, s
 `MM_OPP`. Is `CBD_ID` the same distribution company in both firms' data (the table's "join keys")? If
 yes, `firm_2` opportunity can be taken per (`ZIP_CODE`, `CBD_ID`) instead of estimated per
 (`ZIP_CODE`, `CHANNEL`) with a sales-mix split.
+
+> **Answer (owner, 2026-10-21):** "Cbd_id is indeed the same distribution company across both source
+> firms." Moved to Settled.
 
 Q2. **What does `MM_OPP` measure?** The whole market at that distribution company, ZIP and product (all
 providers), or what `firm_1` can address? This decides whether `firm_2` can use it as is for `PR01`, and
