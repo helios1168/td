@@ -2,8 +2,8 @@
 -- the row grain, how DIST_CH, CHANNEL, PRODUCT_V2, ZIP_CODE and the people relate, where MM_OPP
 -- sits, and the shape (not the size) of every amount.  Safe to bring back: no names, no ID values,
 -- no DIST_CH or PRODUCT_V2 values, no amounts.  SOURCE is firm_1 / firm_2 (in SOURCE order, as in 13
--- and 16); DIST_CH values (either table) are D01, D02, ... per SOURCE and PRODUCT_V2 values PR01, ...,
--- numbered by row count; target CHANNEL values are kept.  A distribution of amounts is divided by its
+-- and 16); DIST_CH values (either table) are D1_01, D1_02, ... (D2_.. for firm_2) and PRODUCT_V2 values
+-- PR01, ..., numbered by row count, the same codes as 20_masked_extract.sql; target CHANNEL values are kept.  A distribution of amounts is divided by its
 -- own median (METRIC ends "/ median", P50 = 1): shape only.  Distributions: VALUE = observations.
 -- One result set; download it as CSV.  Before sending, read K1, K2 and METRIC: they hold only codes,
 -- CHANNEL values, column names and fixed labels.
@@ -20,16 +20,17 @@ dv AS (              -- every DIST_CH value of either table, with its rows in ea
         UNION ALL
         SELECT SOURCE, CHANNEL, 0, COUNT(*) FROM t GROUP BY SOURCE, CHANNEL) x
   GROUP BY SOURCE, V),
-dc AS (              -- DIST_CH -> D01.. per SOURCE, union rows first, then territories rows
+dc AS (              -- DIST_CH -> D1_01.. (D<SOURCE number>_), union rows first, then territories rows; as in 20
   SELECT SOURCE, V, UN, TN,
          CASE WHEN V IS NULL THEN 'NULL'
-              ELSE 'D' || LPAD(CAST(ROW_NUMBER() OVER (PARTITION BY SOURCE ORDER BY UN DESC, TN DESC, SHA2(V)) AS VARCHAR), 2, '0')
+              ELSE 'D' || CAST(DENSE_RANK() OVER (ORDER BY SOURCE) AS VARCHAR) || '_'
+                   || LPAD(CAST(ROW_NUMBER() OVER (PARTITION BY SOURCE ORDER BY CASE WHEN V IS NULL THEN 1 ELSE 0 END, UN DESC, TN DESC, SHA2(V)) AS VARCHAR), 2, '0')
          END AS DC
   FROM dv),
-pc AS (              -- PRODUCT_V2 -> PR01..
+pc AS (              -- PRODUCT_V2 -> PR01..; as in 20
   SELECT PRODUCT_V2 AS V,
          CASE WHEN PRODUCT_V2 IS NULL THEN 'NULL'
-              ELSE 'PR' || LPAD(CAST(ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, SHA2(PRODUCT_V2)) AS VARCHAR), 2, '0')
+              ELSE 'PR' || LPAD(CAST(ROW_NUMBER() OVER (ORDER BY CASE WHEN PRODUCT_V2 IS NULL THEN 1 ELSE 0 END, COUNT(*) DESC, SHA2(PRODUCT_V2)) AS VARCHAR), 2, '0')
          END AS PC
   FROM u GROUP BY PRODUCT_V2),
 ux AS (
