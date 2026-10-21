@@ -1,35 +1,103 @@
-# The union and territories tables: what we know, what we asked
+# The union and territories tables: conventions, definitions, decisions, history
 
-A running record of how `data_withnewchannel_union_w_joinkeys` (the union table) and `territories`
-are built and how they relate, from exploring the coded extract. Append a dated entry; never rewrite an
-old one. When the owner answers a question, add the answer under it (with the date) and copy the
-resulting rule to "Settled".
+One file for everything we track about the two source tables and the analysis built on them. Sections:
+**Conventions** (naming), **Definitions** (every `DEF_` column, current), **Settled** (decisions in
+force), **Open questions** (index), **Log** (dated findings, append-only).
+
+- Log entries are never rewritten. A wrong finding is corrected by a later entry that names it.
+- An owner answer goes under its question in the log (quoted, dated), its rule into Settled, and the
+  question leaves the Open questions index.
+- A definition is never edited in meaning: a revision is a new column (`_V2`) and a new row.
 
 Values are the codes from `20_synthetic_tables.sql`: `firm_1` / `firm_2` (`SOURCE`), `D1_01..` /
 `D2_01..` (`DIST_CH` and `territories.CHANNEL`), `N1_01..` (`NEW_DIST`), `PR01..` (`PRODUCT_V2`).
 Amounts appear only as percentages. No names, IDs or dollar amounts go in this file.
 
+## Conventions
+
+Agreed with the owner 2026-10-21.
+
+**Database.** Everything lives in the dedicated database and schema, so tables carry no prefix. Every
+reference uses the full `database.schema.table` path; CTEs are exempt.
+
+**Files.** `<NN>_<layer>.sql`, one per layer, continuing the numbering: `30_cell.sql`,
+`31_cell_person.sql`, `40_person_rank.sql`. Each file's first statement builds its table, the next is its
+checks grid. One-off digging: `explore/<topic>.sql`.
+
+**Tables.** Named for their grain, singular: `CELL` (one row per `ZIP_CODE` x `CBD_ID` x `CHANNEL` x
+`PRODUCT_V2`), `CELL_PERSON` (cell x `SOURCE` x person), `PERSON_RANK` (one row per person).
+
+**Columns.**
+
+| kind | rule | examples |
+|---|---|---|
+| source columns | keep their names exactly | `SOURCE`, `ZIP_CODE`, `CBD_ID`, `CHANNEL`, `PRODUCT_V2`, `DIST_CH`, `MM_OPP`, `ACTUAL_SALES_AMOUNT`, `CLEAN_ID` |
+| one amount per firm (wide layers) | source name + `_FIRM_1` / `_FIRM_2`; `FIRM_1` is the first `SOURCE` in sort order, `FIRM_2` the second | `ACTUAL_SALES_AMOUNT_FIRM_1` |
+| derived amounts | source name + what was done to it | `MM_OPP_ASSIGNED` |
+| definitions | `DEF_<subject>_<rule>`; BOOLEAN for yes/no, text for labels; a revision adds `_V2` | `DEF_CONTESTED_SOLD`, `DEF_CHANNEL_GROUP` |
+| ratios | `SHARE_` for 0-1, `PCT_` for 0-100, naming what is divided by what | `SHARE_SALES_OF_MM_OPP`, `PCT_OF_SOURCE_SALES` |
+| rankings | `RANK_<within>_<by>` | `RANK_SOURCE_SALES`, `RANK_ALL_SHARE_SALES_OF_MM_OPP` |
+| checks | `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO` (as in `15`) | |
+
+**Words.** Both firms are annuity carriers, so "carrier" never means a `SOURCE`. Say `firm_1` (the
+`SOURCE` whose rows hold `MM_OPP`) or `firm_2`. Log entries before 2026-10-21 use "carrier" for
+`firm_1`. "Sells" means positive net `ACTUAL_SALES_AMOUNT` over the scope named.
+
+## Definitions
+
+Columns of `CELL` (`30_cell.sql`). Counts are on the coded extract of 2026-10-20.
+
+| column | type | rule | decided | coded-extract count |
+|---|---|---|---|---|
+| `DEF_ZIP_VALID` | BOOLEAN | `ZIP_CODE` is 5 digits and not `00000` | session, 2026-10-21 | false: 217 cells, 0.1% of `firm_1` sales |
+| `DEF_CHANNEL_GROUP` | text | `'IFA'` for IFA; `'National+WH+FI'` for the other three; NULL for any other `CHANNEL` | owner, 2026-10-21 | IFA: 52,077 cells, 59.8% of `MM_OPP`, 26.4% / 62.0% of `firm_1` / `firm_2` sales |
+| `DEF_PRODUCT_SCOPE` | text | which firms sell this `PRODUCT_V2` anywhere: `'both'`, `'firm_1 only'`, `'firm_2 only'`, `'neither'` | settled product-set rule | both: 48.8% of `MM_OPP`, 17.9% / 82.2% of sales |
+| `DEF_CONTESTED_SOLD` | BOOLEAN | A: both firms sell in this cell | owner, 2026-10-21, Q11 | true: 466 cells, 5.8% of `MM_OPP`, 7.4% / 12.8% of sales |
+| `DEF_CONTESTED_OFFERED` | BOOLEAN | B: both firms sell this `PRODUCT_V2` to this `CBD_ID` in this `CHANNEL`, in any ZIP | owner, 2026-10-21, Q11 (`CHANNEL` added by the cell key) | true: 15,629 cells, 30.4% of `MM_OPP`, 17.3% / 62.1% of sales |
+
+Every A cell is a B cell. Combine definitions by grouping or filtering on several `DEF_` columns at once.
+
 ## Settled
 
-Decisions made before this log, still in force (from the session record):
-
-- `SOURCE` is the firm key; `firm_1` carries `MM_OPP`, `firm_2` carries none.
+- `SOURCE` is the firm key; `firm_1` holds `MM_OPP`, `firm_2` holds none.
 - Original channel = `DIST_CH` (= `territories.CHANNEL`); target channel = union `CHANNEL`.
 - `SALES_WHOLESALER_TERRITORY_ID` joins `territories.CLEAN_ID`. Sales = `ACTUAL_SALES_AMOUNT`.
 - A `SOURCE`'s product set is the `PRODUCT_V2` values where it has positive sales.
-- `firm_2` opportunity: the carrier's `MM_OPP` per (`ZIP_CODE`, `CHANNEL`), own products, split over its
-  held `DIST_CH` by national sales mix (`sales_mix_held`, chosen with `17`).
+- `firm_2` opportunity in `15`: `firm_1`'s `MM_OPP` per (`ZIP_CODE`, `CHANNEL`), own products, split over
+  its held `DIST_CH` by national sales mix (`sales_mix_held`, chosen with `17`). Under review now that
+  `CBD_ID` joins the firms.
 - A ZIP absent from the union table has zero opportunity; territories `DIST_CH` values absent from the
   union table are out of scope (owner, 2026-10-19).
-- ~~Distribution company (`FIRM`, `CBD_ID`) was dropped as a cross-firm key (`12` rejected).~~
-  Superseded 2026-10-21 (Q1): `CBD_ID` is the same distribution company in both `SOURCE`s and joins
-  them; ZIP_CODE x `CBD_ID` x `PRODUCT_V2` is the common unit of market for both firms.
-- Head-to-head (Q11, owner 2026-10-21) is reported under two definitions side by side, on cells
-  `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`: **A, sold**: both firms sell this product to this distribution
-  company in this ZIP; **B, offered (strict)**: both firms sell this product to this distribution company
-  in any ZIP. "Sells" = positive `ACTUAL_SALES_AMOUNT` in the fiscal year.
+- `CBD_ID` is the same distribution company in both `SOURCE`s and joins them (owner, 2026-10-21, Q1).
+  This supersedes the earlier rejection of distribution company as a cross-firm key (`12`).
+- The unit of market is the cell `ZIP_CODE` x `CBD_ID` x `CHANNEL` x `PRODUCT_V2`. `CHANNEL` is in the
+  key because 18 distribution companies sell through several channels (log, 2026-10-21 correction).
+- Head-to-head is reported under two definitions side by side (owner, 2026-10-21, Q11): **A, sold**, both
+  firms sell this product to this distribution company in this cell; **B, offered (strict)**, both firms
+  sell this product to this distribution company in any ZIP.
+- Naming: see Conventions (owner, 2026-10-21).
 
-## 2026-10-20: first look at the coded extract
+## Open questions
+
+| Q | question | log entry |
+|---|---|---|
+| Q2 | What does `MM_OPP` measure: whole market or what `firm_1` can address? | 2026-10-20 |
+| Q3 | Who gets `firm_1`'s National `MM_OPP` that sits on a `DIST_CH` that does not sell there? | 2026-10-20 |
+| Q4 | What are `D1_04`-`D1_07`; rank their 34 people? | 2026-10-20 |
+| Q5 | Is the `firm_2` block with no `CLEAN_ID` a vacancy? | 2026-10-20 |
+| Q6 | Do real `NEW_DIST` values match across `SOURCE`s? | 2026-10-20 |
+| Q7 | Same period and same ZIP basis for `MM_OPP` and sales? | 2026-10-20 |
+| Q8 | What is `PR05`; leave it out of market share? | 2026-10-20 |
+| Q9 | Opportunity at distribution companies a firm never sells to | 2026-10-21 |
+| Q10 | Report vacant territory as its own rows? | 2026-10-21 |
+| Q12 | `firm_2` `PR05`: contribution only? | 2026-10-21 |
+| Q13 | Compare National, WH, FI per distribution company rather than per ZIP? | 2026-10-21 |
+| Q14 | Is there a record of selling agreements per distribution company? | 2026-10-21 |
+| Q15 | For a distribution company in several channels, what decides a row's `CHANNEL`? | 2026-10-21 correction |
+
+## Log
+
+### 2026-10-20: first look at the coded extract
 
 Source: `data/safe/extract_2026-10-20/` (gitignored), loaded as `ssdb.duckdb` under the real table
 names. Union: 97,361 rows, 18 of 23 columns (no `FISCAL_YR`, `TERR_WHOLESALER`, `SALES_WHOLESALER`,
@@ -37,7 +105,7 @@ names. Union: 97,361 rows, 18 of 23 columns (no `FISCAL_YR`, `TERR_WHOLESALER`, 
 Amounts loaded as the exported integers / 10,000 (assumed factor). `15`'s checks all pass; its
 out-of-scope count (154,442) equals the count from the real run at work, so territories is complete.
 
-### Findings
+#### Findings
 
 **The union table is two tables stacked.**
 
@@ -122,7 +190,7 @@ out-of-scope count (154,442) equals the count from the real run at work, so terr
 - Sales vs holders: 85% of each firm's sales are by the holder of the (`ZIP_CODE`, `DIST_CH`), 10% by
   another person of the firm who holds it, 2-5% by a seller who holds the ZIP in another `DIST_CH`.
 
-### Questions for the owner
+#### Questions for the owner
 
 Q1. **Can the distribution company join the two firms after all?** We dropped `FIRM`/`CBD_ID` as a
 cross-firm key. In this extract `CBD_ID` matches across `SOURCE`s (370 shared, same `FIRM` and
@@ -157,7 +225,7 @@ the advisor's office (the same ZIP `MM_OPP` uses)? The weak sales-`MM_OPP` corre
 
 Q8. **What is `PR05`?** 7.7% of `firm_2`'s sales, no `MM_OPP` anywhere. Leave it out of market share?
 
-## 2026-10-21: what `CBD_ID` would change in the `firm_2` opportunity
+### 2026-10-21: what `CBD_ID` would change in the `firm_2` opportunity
 
 Compared, per `firm_2` person, the current rule (A, as in `15`) with a `CBD_ID` rule (B): `MM_OPP` in
 `firm_2`'s products per (`ZIP_CODE`, `CBD_ID`), given to the `DIST_CH` that `firm_2` sells that
@@ -165,7 +233,7 @@ distribution company through in that ZIP; where it does not sell it there, by th
 company's national `DIST_CH` mix; where it never sells it, by the `CHANNEL` mix (as A). Query:
 `explore/cbd_vs_channel.sql`. Assumes Q1 is "yes".
 
-### Findings
+#### Findings
 
 - How much of `firm_2`'s opportunity B can place by distribution company: 39.1% in cells where `firm_2`
   sells that `CBD_ID` in that ZIP, 39.8% where it sells it elsewhere, 21.1% at distribution companies
@@ -184,7 +252,7 @@ company's national `DIST_CH` mix; where it never sells it, by the `CHANNEL` mix 
 - `firm_1` is unchanged by B: its `DIST_CH` is already fixed per distribution company. The exception is
   National (Q3), where `CBD_ID` would let opportunity follow the `DIST_CH` that sells that company.
 
-### Questions for the owner
+#### Questions for the owner
 
 Q9. **Opportunity at distribution companies a firm has never sold to** (21% of `firm_2`'s): count it
 in that firm's territories (spread by `CHANNEL` mix, as now), or only where the firm already does
@@ -193,13 +261,13 @@ business with that company?
 Q10. **Vacant territory:** report its opportunity and sales as unassigned (a "vacant" row per ZIP), rather
 than giving it to another holder in the same ZIP?
 
-## 2026-10-21: head-to-head vs uncontested at `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`
+### 2026-10-21: head-to-head vs uncontested at `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`
 
 Owner's idea: compare the firms only where they compete directly, using the cell's own `MM_OPP` for
 both (no imputation), and handle each firm's uncontested part separately. Query:
 `explore/contested_cells.sql`. Sales are net per cell; bad ZIPs left out (0.08% of `firm_1` sales).
 
-### Findings
+#### Findings
 
 Contested = both firms have positive sales in the cell:
 
@@ -224,7 +292,7 @@ Contested = both firms have positive sales in the cell:
 - In contested cells each firm's `DIST_CH` is on its own rows (one per cell in 98% / 84%), so the holder
   of a contested cell needs no attribution.
 
-### Questions for the owner
+#### Questions for the owner
 
 Q11. **Contested by outcome or by offer?** "Both sold there" (6% of `MM_OPP`) or "both offer the product
 to that distribution company" (36%)? The second is apples to apples without favouring whoever already
@@ -236,7 +304,7 @@ won the cell.
 Q12. **Uncontested opportunity of `firm_2`.** `PR04` has `MM_OPP` but only `firm_2` sells it; that is
 uncontested but still measured. `PR05` has no `MM_OPP`: rank `firm_2` on it by sales contribution only?
 
-## 2026-10-21: the same split, IFA apart from National + WH + FI
+### 2026-10-21: the same split, IFA apart from National + WH + FI
 
 Query: the IFA section of `explore/contested_cells.sql`.
 
@@ -261,13 +329,13 @@ Definition 2 (shared product x shared `CBD_ID`), shares within each group:
   the largest company holds 50% of National `MM_OPP` and 40% of WH's.
 - By channel within definition 2, `firm_1` / `firm_2` sales: FI 0.07, IFA 0.14, National 0.27, WH 0.42.
 
-### Questions for the owner
+#### Questions for the owner
 
 Q13. **Is non-IFA a key-account market?** With 53 distribution companies, should National, WH and FI be
 compared per distribution company (both firms' sales against that company's `MM_OPP`) rather than per
 ZIP? Who covers a key account may be set by relationship, not by the ZIP of the office.
 
-## 2026-10-21: Q11, three readings of "both firms compete in this cell"
+### 2026-10-21: Q11, three readings of "both firms compete in this cell"
 
 Cell = `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`. "Sells" = positive `ACTUAL_SALES_AMOUNT` in the fiscal year.
 
@@ -286,3 +354,42 @@ Cell = `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`. "Sells" = positive `ACTUAL_SALES_AM
 
 Q14. **Is there a record of selling agreements or approved products per distribution company** (who is
 allowed to sell what to whom)? It would replace the inference from sales for "offered".
+
+### 2026-10-21: correction, a distribution company can sit in several `CHANNEL`s
+
+The 2026-10-20 finding "each `CBD_ID` has one `FIRM`, one `CHANNEL` and one `NEW_DIST`" is wrong for
+`CHANNEL`: that query counted `NEW_DIST` per `CBD_ID` within a `CHANNEL`, so it could not see a
+`CBD_ID` in two channels. Checked directly:
+
+- 18 `CBD_ID` values have rows in 2+ `CHANNEL`s (mostly IFA with FI or WH). They are large: the biggest
+  holds 10.3% of `MM_OPP` and 12.4% of positive sales; together 20% of `MM_OPP`.
+- 1,982 of 80,376 `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2` cells have 2+ `CHANNEL`s (4.3% of `MM_OPP`, 7.9% of
+  positive sales); 587 of them have both firms.
+- `FIRM` and `PARENT` are one per `CBD_ID` (one exception each); `STATE` is one per `ZIP_CODE`.
+- So `CHANNEL` goes into the cell key. The 2026-10-21 contested and IFA-split figures took one `CHANNEL`
+  per cell and are approximate on these cells; `30_cell.sql` recomputes them.
+
+Q15. **For a distribution company in several channels, what decides a row's `CHANNEL`?** The office or
+branch (so the same company is truly in two markets), or each firm's own classification (so the same
+business can be IFA for one firm and FI for the other)? If the latter, a cross-firm comparison should
+match on `CBD_ID` without `CHANNEL`.
+
+### 2026-10-21: `30_cell.sql` built; figures on the cell key with `CHANNEL`
+
+`CELL` on the coded extract: 82,367 cells; checks all 0 (totals of `MM_OPP` and each firm's sales match
+the source exactly; no duplicate keys). 88 cells have a NULL `CBD_ID`; 217 an invalid ZIP.
+
+With `CHANNEL` in the key, the IFA split moves from the 2026-10-21 approximation: IFA is 59.8% of
+`MM_OPP` (was 61.2), 26.4% of `firm_1` sales (31.4), 62.0% of `firm_2` sales (63.5). B covers 30.4% of
+`MM_OPP` (31.3), A 5.8% (6.0).
+
+A and B by channel group, valid ZIPs, shares within the group:
+
+| group | A | B | % of group `MM_OPP` | % `firm_1` | % `firm_2` |
+|---|---|---|---|---|---|
+| IFA | no | no | 68.3 | 72.5 | 41.4 |
+| IFA | no | yes | 25.1 | 11.9 | 47.6 |
+| IFA | yes | yes | 6.6 | 15.6 | 11.0 |
+| National+WH+FI | no | no | 71.5 | 86.3 | 32.3 |
+| National+WH+FI | no | yes | 24.0 | 9.2 | 52.0 |
+| National+WH+FI | yes | yes | 4.6 | 4.5 | 15.7 |
