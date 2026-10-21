@@ -10,8 +10,9 @@
 --   PRODUCT_V2                              -> PR01, ... (as in 19)
 --   every person ID (CLEAN_ID, SALES_ and TERRITORY_WHOLESALER_TERRITORY_ID) -> W00001, ... one space
 --   every name (NAME, CLEAN_NAME, the four *WHOLESALER* name columns)          -> M00001, ... one space
---   the two ADDRESS_IDs -> A00001, ...;  FIRM -> P00001, ...;  CBD_ID -> C00001, ...
--- People, names, addresses, FIRM and CBD_ID are numbered in random order.
+--   FIRM and PARENT -> P00001, ... one space (a FIRM that is also a PARENT keeps one code)
+--   the two ADDRESS_IDs -> A00001, ...;  CBD_ID -> C00001, ...
+-- People, names, addresses, FIRM, PARENT and CBD_ID are numbered in random order.
 -- Amounts: MM_OPP / the median ZIP_CODE x CHANNEL MM_OPP; ACTUAL_SALES_AMOUNT and SALES_AMOUNT / the
 -- median ZIP_CODE x CHANNEL positive sales.  Every share, split and comparison stays exact; the dollar
 -- level and the sales-to-MM_OPP level are hidden.
@@ -57,6 +58,7 @@ vals AS (            -- the randomly numbered kinds
   UNION SELECT 'address', SALES_WHOLESALER_ADDRESS_ID FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
   UNION SELECT 'address', TERRITORY_WHOLESALER_ADDRESS_ID FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
   UNION SELECT 'FIRM', FIRM FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  UNION SELECT 'FIRM', PARENT FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
   UNION SELECT 'CBD_ID', CBD_ID FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
 rnd AS (
   SELECT KIND, V, ROW_NUMBER() OVER (PARTITION BY KIND ORDER BY RANDOM()) AS R
@@ -114,6 +116,7 @@ SELECT u.FISCAL_YR,
        n4.CODE  AS SALES_WHOLESALER_CLEAN_NAME,
        cb.CODE  AS CBD_ID,
        fi.CODE  AS FIRM,
+       pa.CODE  AS PARENT,
        dc.CODE  AS DIST_CH,
        nd.CODE  AS NEW_DIST,
        u.CHANNEL,
@@ -138,6 +141,7 @@ LEFT JOIN k n3 ON n3.KIND = 'name'       AND n3.VALUE = u.TERR_WHOLESALER_CLEAN_
 LEFT JOIN k n4 ON n4.KIND = 'name'       AND n4.VALUE = u.SALES_WHOLESALER_CLEAN_NAME
 LEFT JOIN k cb ON cb.KIND = 'CBD_ID'     AND cb.VALUE = u.CBD_ID
 LEFT JOIN k fi ON fi.KIND = 'FIRM'       AND fi.VALUE = u.FIRM
+LEFT JOIN k pa ON pa.KIND = 'FIRM'       AND pa.VALUE = u.PARENT
 LEFT JOIN k dc ON dc.KIND = 'DIST_CH'    AND dc.SOURCE = u.SOURCE AND dc.VALUE = u.DIST_CH
 LEFT JOIN k nd ON nd.KIND = 'NEW_DIST'   AND nd.SOURCE = u.SOURCE AND nd.VALUE = u.NEW_DIST
 LEFT JOIN k pr ON pr.KIND = 'PRODUCT_V2' AND pr.VALUE = u.PRODUCT_V2
@@ -168,6 +172,7 @@ synthetic_vals AS (     -- every coded value in the two synthetic tables
   UNION SELECT SALES_WHOLESALER_CLEAN_NAME FROM ssdb_integration.lr_strategy.synthetic_union
   UNION SELECT CBD_ID FROM ssdb_integration.lr_strategy.synthetic_union
   UNION SELECT FIRM FROM ssdb_integration.lr_strategy.synthetic_union
+  UNION SELECT PARENT FROM ssdb_integration.lr_strategy.synthetic_union
   UNION SELECT DIST_CH FROM ssdb_integration.lr_strategy.synthetic_union
   UNION SELECT NEW_DIST FROM ssdb_integration.lr_strategy.synthetic_union
   UNION SELECT PRODUCT_V2 FROM ssdb_integration.lr_strategy.synthetic_union
@@ -198,14 +203,14 @@ UNION ALL SELECT 'territories values with no code (SOURCE, NAME, CHANNEL, CLEAN_
 UNION ALL SELECT 'union values with no code (non-NULL in, NULL out)',
        (SELECT COUNT_IF(SOURCE IS NOT NULL) + COUNT_IF(TERR_WHOLESALER IS NOT NULL) + COUNT_IF(SALES_WHOLESALER IS NOT NULL)
              + COUNT_IF(TERR_WHOLESALER_CLEAN_NAME IS NOT NULL) + COUNT_IF(SALES_WHOLESALER_CLEAN_NAME IS NOT NULL)
-             + COUNT_IF(CBD_ID IS NOT NULL) + COUNT_IF(FIRM IS NOT NULL) + COUNT_IF(DIST_CH IS NOT NULL)
+             + COUNT_IF(CBD_ID IS NOT NULL) + COUNT_IF(FIRM IS NOT NULL) + COUNT_IF(PARENT IS NOT NULL) + COUNT_IF(DIST_CH IS NOT NULL)
              + COUNT_IF(NEW_DIST IS NOT NULL) + COUNT_IF(PRODUCT_V2 IS NOT NULL)
              + COUNT_IF(SALES_WHOLESALER_TERRITORY_ID IS NOT NULL) + COUNT_IF(SALES_WHOLESALER_ADDRESS_ID IS NOT NULL)
              + COUNT_IF(TERRITORY_WHOLESALER_TERRITORY_ID IS NOT NULL) + COUNT_IF(TERRITORY_WHOLESALER_ADDRESS_ID IS NOT NULL)
         FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys) -
        (SELECT COUNT_IF(SOURCE IS NOT NULL) + COUNT_IF(TERR_WHOLESALER IS NOT NULL) + COUNT_IF(SALES_WHOLESALER IS NOT NULL)
              + COUNT_IF(TERR_WHOLESALER_CLEAN_NAME IS NOT NULL) + COUNT_IF(SALES_WHOLESALER_CLEAN_NAME IS NOT NULL)
-             + COUNT_IF(CBD_ID IS NOT NULL) + COUNT_IF(FIRM IS NOT NULL) + COUNT_IF(DIST_CH IS NOT NULL)
+             + COUNT_IF(CBD_ID IS NOT NULL) + COUNT_IF(FIRM IS NOT NULL) + COUNT_IF(PARENT IS NOT NULL) + COUNT_IF(DIST_CH IS NOT NULL)
              + COUNT_IF(NEW_DIST IS NOT NULL) + COUNT_IF(PRODUCT_V2 IS NOT NULL)
              + COUNT_IF(SALES_WHOLESALER_TERRITORY_ID IS NOT NULL) + COUNT_IF(SALES_WHOLESALER_ADDRESS_ID IS NOT NULL)
              + COUNT_IF(TERRITORY_WHOLESALER_TERRITORY_ID IS NOT NULL) + COUNT_IF(TERRITORY_WHOLESALER_ADDRESS_ID IS NOT NULL)
