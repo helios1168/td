@@ -184,3 +184,43 @@ business with that company?
 
 Q10. **Vacant territory:** report its opportunity and sales as unassigned (a "vacant" row per ZIP), rather
 than giving it to another holder in the same ZIP?
+
+## 2026-10-21: head-to-head vs uncontested at `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`
+
+Owner's idea: compare the firms only where they compete directly, using the cell's own `MM_OPP` for
+both (no imputation), and handle each firm's uncontested part separately. Query:
+`explore/contested_cells.sql`. Sales are net per cell; bad ZIPs left out (0.08% of `firm_1` sales).
+
+### Findings
+
+Contested = both firms have positive sales in the cell:
+
+| cell class | cells | % of `MM_OPP` | % `firm_1` sales | % `firm_2` sales |
+|---|---|---|---|---|
+| both sell | 494 | 6.0 | 7.7 | 13.3 |
+| `firm_1` only sells | 6,437 | 14.3 | 92.3 | 0 |
+| `firm_2` only sells | 7,104 | 13.3 | 0 | 86.7 |
+| nobody sells (`MM_OPP` only) | 64,409 | 66.4 | 0 | 0 |
+
+- Only `PR01` is sold by both firms, so every contested cell is `PR01`. `firm_1`'s main product (`PR03`,
+  73% of its sales) and `firm_2`'s `PR04`/`PR05` are uncontested by construction.
+- Too thin to rank people: the median seller has 6% (`firm_1`) / 8% (`firm_2`) of their sales in
+  contested cells; 53 of 72 `firm_1` sellers have under 10%.
+- At `ZIP_CODE` x `CBD_ID` (any product) both sell in cells with 17.7% of `MM_OPP` and 38.5% / 34.7% of
+  each firm's sales.
+- Defining "contested" by who sold is circular: a cell a firm failed to win drops out of its
+  contested market. A definition by what both firms offer avoids that. Product both firms sell (`PR01`)
+  x `CBD_ID` both firms sell to (anywhere): 35.9% of `MM_OPP`, 17.5% of `firm_1` sales, 75.8% of `firm_2`
+  sales; median seller 18.5% (`firm_1`) / 73% (`firm_2`) of their sales in it. There `firm_1` sells 0.17x
+  what `firm_2` sells against the same `MM_OPP`.
+- In contested cells each firm's `DIST_CH` is on its own rows (one per cell in 98% / 84%), so the holder
+  of a contested cell needs no attribution.
+
+### Questions for the owner
+
+Q11. **Contested by outcome or by offer?** "Both sold there" (6% of `MM_OPP`) or "both offer the product
+to that distribution company" (36%)? The second is apples to apples without favouring whoever already
+won the cell.
+
+Q12. **Uncontested opportunity of `firm_2`.** `PR04` has `MM_OPP` but only `firm_2` sells it; that is
+uncontested but still measured. `PR05` has no `MM_OPP`: rank `firm_2` on it by sales contribution only?
