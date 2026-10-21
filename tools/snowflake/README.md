@@ -25,7 +25,7 @@ keys are typed at work and never saved.
 | `17_split_rule_calibration.sql` | tests rules for dividing CHANNEL-level MM_OPP among DIST_CH values on the carrier SOURCE, whose per-DIST_CH MM_OPP is known: per-person error of each rule |
 | `18_worked_example.sql` | walks chosen territories rows (a ZIP_CODE, wholesalers from either SOURCE, or both) step by step through `15`: opportunity by product, the DIST_CH split, OPPORTUNITY_SHARE, sales; output has real names and amounts, keep it at work |
 | `19_structure_profile.sql` | the structure of the two source tables for a synthetic copy, safe to bring back as one CSV: column shapes, row grain, DIST_CH -> CHANNEL, products, where MM_OPP sits, people and holders, geography; SOURCE as firm_1/firm_2, DIST_CH and PRODUCT_V2 as codes, amount distributions divided by their median |
-| `20_masked_extract.sql` | masked copies of both source tables, same columns and rows, for ZIP- and territory-level work outside work: every name, ID, DIST_CH, product, FIRM and CBD_ID coded, amounts divided by a median cell; the key (`mask_key`) stays at work; checks that must be 0 before download |
+| `20_masked_extract.sql` | masked copies of both source tables, CTEs only, same columns and rows, for ZIP- and territory-level work outside work: every name, ID, DIST_CH, product, FIRM and CBD_ID coded (people etc. by salted hash, so every query and run agrees), amounts divided by a median cell; four queries: the two downloads, the key (stays at work), the checks |
 | `synth.py` | writes a synthetic `raw`, `channel_map`, `territory` and answer key to `data/safe/` from the profile's shape (no live data); `--check` runs `03`-`05` on it in DuckDB |
 
 Run both in one Snowsight worksheet session (the filler-key table is temporary). Edit the
