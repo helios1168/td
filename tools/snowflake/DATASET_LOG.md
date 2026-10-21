@@ -259,3 +259,23 @@ Definition 2 (shared product x shared `CBD_ID`), shares within each group:
 Q13. **Is non-IFA a key-account market?** With 53 distribution companies, should National, WH and FI be
 compared per distribution company (both firms' sales against that company's `MM_OPP`) rather than per
 ZIP? Who covers a key account may be set by relationship, not by the ZIP of the office.
+
+## 2026-10-21: Q11, three readings of "both firms compete in this cell"
+
+Cell = `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`. "Sells" = positive `ACTUAL_SALES_AMOUNT` in the fiscal year.
+
+| reading | test on the data | cells | % `MM_OPP` | % `firm_1` sales | % `firm_2` sales | `firm_1` / `firm_2` sales |
+|---|---|---|---|---|---|---|
+| A sold | both firms sell this product to this company in this ZIP | 494 | 6.0 | 7.7 | 13.3 | 0.43 |
+| B offered, strict | both firms sell this product to this company, in any ZIP | 15,632 | 31.3 | 17.4 | 63.7 | 0.20 |
+| C offered, loose | both firms sell this product (anywhere) and both sell to this company (any product) | 18,899 | 35.9 | 17.5 | 75.8 | 0.17 |
+
+- 107 distribution companies have sales from both firms; at 56 of them both sell `PR01`.
+- A doubles `firm_1`'s apparent standing (0.43 against 0.20) because it keeps only cells `firm_1` already
+  won: the selection effect of defining the market by outcome.
+- C counts a company as contested for `PR01` even where `firm_1` sells it only `PR03`; B does not.
+- "Offered" is inferred from a year of sales. A selling agreement with no sales this year reads as not
+  offered; one stray sale reads as offered.
+
+Q14. **Is there a record of selling agreements or approved products per distribution company** (who is
+allowed to sell what to whom)? It would replace the inference from sales for "offered".
