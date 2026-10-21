@@ -224,3 +224,34 @@ won the cell.
 
 Q12. **Uncontested opportunity of `firm_2`.** `PR04` has `MM_OPP` but only `firm_2` sells it; that is
 uncontested but still measured. `PR05` has no `MM_OPP`: rank `firm_2` on it by sales contribution only?
+
+## 2026-10-21: the same split, IFA apart from National + WH + FI
+
+Query: the IFA section of `explore/contested_cells.sql`.
+
+| group | % of `MM_OPP` | % `firm_1` sales | % `firm_2` sales | distribution companies |
+|---|---|---|---|---|
+| IFA | 61.2 | 31.4 | 63.5 | 362 |
+| National + WH + FI | 38.8 | 68.6 | 36.5 | 53 |
+
+Definition 2 (shared product x shared `CBD_ID`), shares within each group:
+
+| group | % of group `MM_OPP` | % of group `firm_1` sales | % of group `firm_2` sales | `firm_1` / `firm_2` sales | median seller's share of their group sales |
+|---|---|---|---|---|---|
+| IFA | 35.9 | 25.5 | 67.5 | 0.14 | `firm_1` 22.6%, `firm_2` 66.0% |
+| National + WH + FI | 36.0 | 13.9 | 90.4 | 0.22 | `firm_1` 10.1%, `firm_2` 91.6% |
+
+- Definition 1 (both sold in the cell) stays thin in both: 6.8% of IFA `MM_OPP` (14.1% / 11.8% of the
+  firms' IFA sales), 4.7% of non-IFA `MM_OPP` (4.8% / 15.9%).
+- Non-IFA `firm_1` business is `PR03` (83.6% of its non-IFA sales), which `firm_2` does not sell; 32 of 64
+  `firm_1` sellers have under 10% of their non-IFA sales in the contestable segment. `firm_2`'s
+  non-IFA business is almost all contestable (`PR01` at shared distribution companies).
+- Non-IFA is a few large distribution companies (National 4, WH 13, FI about 28), IFA many small ones;
+  the largest company holds 50% of National `MM_OPP` and 40% of WH's.
+- By channel within definition 2, `firm_1` / `firm_2` sales: FI 0.07, IFA 0.14, National 0.27, WH 0.42.
+
+### Questions for the owner
+
+Q13. **Is non-IFA a key-account market?** With 53 distribution companies, should National, WH and FI be
+compared per distribution company (both firms' sales against that company's `MM_OPP`) rather than per
+ZIP? Who covers a key account may be set by relationship, not by the ZIP of the office.

@@ -58,3 +58,18 @@ SELECT CASE WHEN PRODUCT_V2 IN (SELECT * FROM p_both) AND CBD_ID IN (SELECT * FR
        ROUND(100*SUM(S1)/(SELECT SUM(S1) FROM c),1) pct_f1_sales, ROUND(100*SUM(S2)/(SELECT SUM(S2) FROM c),1) pct_f2_sales,
        ROUND((SUM(S1)/NULLIF(SUM(OPP),0)) / NULLIF(SUM(S2)/NULLIF(SUM(OPP),0),0),2) f1_to_f2_sales_ratio
 FROM c GROUP BY 1 ORDER BY 1;
+-- IFA against National + WH + FI (2026-10-21)
+CREATE TEMP TABLE x AS SELECT *, CASE WHEN CHANNEL = 'IFA' THEN 'IFA' ELSE 'non-IFA' END AS GRP,
+  CASE WHEN S1 > 0 AND S2 > 0 THEN 'both sell' WHEN S1 > 0 THEN 'firm_1 only sells' WHEN S2 > 0 THEN 'firm_2 only sells' WHEN OPP <> 0 THEN 'nobody sells' END AS D1,
+  CASE WHEN PRODUCT_V2 IN (SELECT * FROM p_both) AND CBD_ID IN (SELECT * FROM cbd_both) THEN '1 shared product x shared CBD'
+       WHEN PRODUCT_V2 IN (SELECT * FROM p_both) THEN '2 shared product, CBD one firm' ELSE '3 product one firm only' END AS D2
+FROM cell;
+CREATE TEMP TABLE g AS SELECT GRP, SUM(OPP) TO_, SUM(S1) T1, SUM(S2) T2 FROM x GROUP BY 1;
+.print '== IFA vs non-IFA: share of the total'
+SELECT GRP, ROUND(100*TO_/SUM(TO_) OVER (),1) pct_mm_opp, ROUND(100*T1/SUM(T1) OVER (),1) pct_f1, ROUND(100*T2/SUM(T2) OVER (),1) pct_f2 FROM g ORDER BY 1;
+.print '== definition 1 (who sold), shares within the group'
+SELECT x.GRP, D1, COUNT(*) cells, ROUND(100*SUM(OPP)/ANY_VALUE(TO_),1) pct_opp, ROUND(100*SUM(S1)/ANY_VALUE(T1),1) pct_f1, ROUND(100*SUM(S2)/ANY_VALUE(T2),1) pct_f2
+FROM x JOIN g USING (GRP) WHERE D1 IS NOT NULL GROUP BY x.GRP, D1 ORDER BY 1, 2;
+.print '== definition 2 (who offers), shares within the group'
+SELECT x.GRP, D2, COUNT(*) cells, ROUND(100*SUM(OPP)/ANY_VALUE(TO_),1) pct_opp, ROUND(100*SUM(S1)/ANY_VALUE(T1),1) pct_f1, ROUND(100*SUM(S2)/ANY_VALUE(T2),1) pct_f2,
+       ROUND(SUM(S1)/NULLIF(SUM(S2),0),2) f1_over_f2 FROM x JOIN g USING (GRP) GROUP BY x.GRP, D2 ORDER BY 1, 2;
