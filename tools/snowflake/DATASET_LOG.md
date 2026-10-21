@@ -24,6 +24,10 @@ Decisions made before this log, still in force (from the session record):
 - ~~Distribution company (`FIRM`, `CBD_ID`) was dropped as a cross-firm key (`12` rejected).~~
   Superseded 2026-10-21 (Q1): `CBD_ID` is the same distribution company in both `SOURCE`s and joins
   them; ZIP_CODE x `CBD_ID` x `PRODUCT_V2` is the common unit of market for both firms.
+- Head-to-head (Q11, owner 2026-10-21) is reported under two definitions side by side, on cells
+  `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`: **A, sold**: both firms sell this product to this distribution
+  company in this ZIP; **B, offered (strict)**: both firms sell this product to this distribution company
+  in any ZIP. "Sells" = positive `ACTUAL_SALES_AMOUNT` in the fiscal year.
 
 ## 2026-10-20: first look at the coded extract
 
@@ -225,6 +229,9 @@ Contested = both firms have positive sales in the cell:
 Q11. **Contested by outcome or by offer?** "Both sold there" (6% of `MM_OPP`) or "both offer the product
 to that distribution company" (36%)? The second is apples to apples without favouring whoever already
 won the cell.
+
+> **Answer (owner, 2026-10-21):** "Let's go with both definitions A and B" (see the 2026-10-21 Q11
+> entry: A sold, B offered strict). Moved to Settled.
 
 Q12. **Uncontested opportunity of `firm_2`.** `PR04` has `MM_OPP` but only `firm_2` sells it; that is
 uncontested but still measured. `PR05` has no `MM_OPP`: rank `firm_2` on it by sales contribution only?
