@@ -148,3 +148,39 @@ Q7. **Same period?** Are `MM_OPP` and sales for the same fiscal year, and is a s
 the advisor's office (the same ZIP `MM_OPP` uses)? The weak sales-`MM_OPP` correlation could be either.
 
 Q8. **What is `PR05`?** 7.7% of `firm_2`'s sales, no `MM_OPP` anywhere. Leave it out of market share?
+
+## 2026-10-21: what `CBD_ID` would change in the `firm_2` opportunity
+
+Compared, per `firm_2` person, the current rule (A, as in `15`) with a `CBD_ID` rule (B): `MM_OPP` in
+`firm_2`'s products per (`ZIP_CODE`, `CBD_ID`), given to the `DIST_CH` that `firm_2` sells that
+distribution company through in that ZIP; where it does not sell it there, by that distribution
+company's national `DIST_CH` mix; where it never sells it, by the `CHANNEL` mix (as A). Query:
+`explore/cbd_vs_channel.sql`. Assumes Q1 is "yes".
+
+### Findings
+
+- How much of `firm_2`'s opportunity B can place by distribution company: 39.1% in cells where `firm_2`
+  sells that `CBD_ID` in that ZIP, 39.8% where it sells it elsewhere, 21.1% at distribution companies
+  `firm_2` never sells (still placed by the `CHANNEL` mix).
+- The 47 generalists (`D2_01`+`D2_02`+`D2_03`) barely move: median 4.4%, all between -10.5% and -0.3%,
+  because they hold all three `DIST_CH` in their ZIPs and the split among them stays with them.
+- The 12 `D2_04` holders move a lot: 2-5x more opportunity under B (median +273%, outside the vacant
+  ZIPs). A gives `D2_04` its national sales share of IFA and WH (under 1% of `firm_2` sales), so low
+  sales mean low opportunity and a flattering market share: the circularity recorded with `17`. B gives
+  them the opportunity of the distribution companies they actually cover.
+- Overall: correlation 0.963 between A and B per person; 4.8% of the opportunity changes hands; 18 of
+  72 people move more than 10%.
+- Vacant ZIPs (the `firm_2` block with no `CLEAN_ID`, Q5) hold 5.6% of `firm_2`'s opportunity. A hands
+  the IFA and WH part of it to whoever holds `D2_04` there (1.5% of the total) and drops the rest; B
+  drops most of it. Neither should assign it silently: vacant opportunity needs its own row in `15`.
+- `firm_1` is unchanged by B: its `DIST_CH` is already fixed per distribution company. The exception is
+  National (Q3), where `CBD_ID` would let opportunity follow the `DIST_CH` that sells that company.
+
+### Questions for the owner
+
+Q9. **Opportunity at distribution companies a firm has never sold to** (21% of `firm_2`'s): count it
+in that firm's territories (spread by `CHANNEL` mix, as now), or only where the firm already does
+business with that company?
+
+Q10. **Vacant territory:** report its opportunity and sales as unassigned (a "vacant" row per ZIP), rather
+than giving it to another holder in the same ZIP?
