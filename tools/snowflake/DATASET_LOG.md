@@ -519,7 +519,8 @@ counted as National by a rule on the firm, so that the IFA sales of those compan
 
 > **Answer (owner, 2026-10-21):** "It is set for that row's own dist_ch."
 
-The owner framed the reassignment as "That is precisely the open question..." (quote cut off). Q3 is closed: no
+The owner framed the reassignment: "That is precisely the open question. The ultimate goal of this analysis and
+this broader report and project is to define this exactly." Q3 is closed: no
 reassignment. Each row keeps its `MM_OPP` on its own `DIST_CH`. People's numbers are reported in both the current
 state (`DIST_CH`) and the new state (`CHANNEL`).
 
