@@ -9,6 +9,8 @@ force), **Open questions** (index), **Log** (dated findings, append-only).
   question leaves the Open questions index.
 - A definition is never edited in meaning: a revision is a new column (`_V2`) and a new row.
 
+**Purpose** (owner, 2026-10-21): "Firm 1 and firm 2 are large annuity carriers merging into a single company. I've been tasked ... to design the combined territory. Identifying who should be assigned to which channel and what the new territories should look like on the map." And: "For now we don't need to assign individuals to the new channels at the moment. But do want to see what their numbers look like in the current state with dist_ch as well as the new state with channel"
+
 Values are the codes from `20_synthetic_tables.sql`: `firm_1` / `firm_2` (`SOURCE`), `D1_01..` /
 `D2_01..` (`DIST_CH` and `territories.CHANNEL`), `N1_01..` (`NEW_DIST`), `PR01..` (`PRODUCT_V2`).
 Amounts appear only as percentages. No names, IDs or dollar amounts go in this file.
@@ -39,11 +41,23 @@ checks grid. One-off digging: `explore/<topic>.sql`.
 | rankings | `RANK_<within>_<by>` | `RANK_SOURCE_SALES`, `RANK_ALL_SHARE_SALES_OF_MM_OPP` |
 | checks | `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO` (as in `15`) | |
 
+**Codes.** The coded values in this file and in the coded extract (`20_synthetic_tables.sql:7-14`):
+
+- `firm_1` / `firm_2`: `SOURCE`.
+- `D1_xx` / `D2_xx`: `DIST_CH` and `territories.CHANNEL`; the digit is the `SOURCE`, the suffix is numbered largest first.
+- `N1_xx`: `NEW_DIST`.
+- `PRxx`: `PRODUCT_V2`.
+- `Cxxxxx`: `CBD_ID`.
+- `Pxxxxx`: `FIRM` and `PARENT` (one numbering).
+- `W` person IDs, `M` names, `A` address IDs.
+
 **Words.** Both firms are annuity carriers, so "carrier" never means a `SOURCE`. Say `firm_1` (the
 `SOURCE` whose rows hold `MM_OPP`) or `firm_2`. Log entries before 2026-10-21 use "carrier" for
 `firm_1`. "Sells" means positive net `ACTUAL_SALES_AMOUNT` over the scope named. `DIST_CH`, `NEW_DIST`
 and `CHANNEL` are all sales channels; call each by its column name or "sales channel", never "desk". Log
-entries of 2026-10-21 say "desk" for a sales channel.
+entries of 2026-10-21 say "desk" for a sales channel. A row is identified by its sales channel and distribution
+columns (`CHANNEL`, `DIST_CH`, `NEW_DIST`, `PARENT`, `FIRM`, ...); `MM_OPP` and `ACTUAL_SALES_AMOUNT` are amounts the row
+carries. Never say "`MM_OPP` row" (owner, 2026-10-21).
 
 ## Definitions
 
@@ -67,7 +81,7 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - A `SOURCE`'s product set is the `PRODUCT_V2` values where it has positive sales.
 - `firm_2` opportunity in `15`: `firm_1`'s `MM_OPP` per (`ZIP_CODE`, `CHANNEL`), own products, split over
   its held `DIST_CH` by national sales mix (`sales_mix_held`, chosen with `17`). Under review now that
-  `CBD_ID` joins the firms.
+  `CBD_ID` joins the firms; superseded for a `CBD_ID` the firm never sells to by Q9 (below).
 - A ZIP absent from the union table has zero opportunity; territories `DIST_CH` values absent from the
   union table are out of scope (owner, 2026-10-19).
 - `CBD_ID` is the same distribution company in both `SOURCE`s and joins them (owner, 2026-10-21, Q1).
@@ -81,23 +95,34 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
   this distribution company in this ZIP; **B, offered (strict)** (`DEF_CONTESTED_OFFERED_V2`), both firms
   sell this product to this distribution company in any ZIP.
 - Naming: see Conventions (owner, 2026-10-21).
+- `DIST_CH` is each firm's original sales channels; `NEW_DIST` breaks out distribution companies from the old ones;
+  those `NEW_DIST` values are merged into `CHANNEL` `National`, and WH and FI no longer hold the opportunity or
+  sales associated with them (owner, 2026-10-21; log entry of that day).
+- Q3 closed: no reassignment. Each row keeps its `MM_OPP` on its own `DIST_CH`; a person's numbers are reported in
+  the current state (`DIST_CH`) and the new state (`CHANNEL`) (owner, 2026-10-21).
+- Opportunity at distribution companies a firm never sells to is reported as uncovered opportunity, not spread
+  into territories (owner, 2026-10-21, Q9).
+- Territories rows whose `CHANNEL` is not a `DIST_CH` in the union for that `SOURCE` are out of scope (`D1_04`-`D1_07`)
+  (owner, 2026-10-21; Q4 stays open).
+- Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
+  (`21_name_match.sql`, owner, 2026-10-21).
 
 ## Open questions
 
 | Q | question | log entry |
 |---|---|---|
 | Q2 | What does `MM_OPP` measure: whole market or what `firm_1` can address? | 2026-10-20 |
-| Q3 | Who gets `firm_1`'s National `MM_OPP` that sits on a `DIST_CH` that does not sell there? | 2026-10-20 |
 | Q4 | What are `D1_04`-`D1_07`; rank their 34 people? | 2026-10-20 |
-| Q5 | Is the `firm_2` block with no `CLEAN_ID` a vacancy? | 2026-10-20 |
 | Q6 | Do real `NEW_DIST` values match across `SOURCE`s? | 2026-10-20 |
 | Q7 | Same period and same ZIP basis for `MM_OPP` and sales? | 2026-10-20 |
 | Q8 | What is `PR05`; leave it out of market share? | 2026-10-20 |
-| Q9 | Opportunity at distribution companies a firm never sells to | 2026-10-21 |
-| Q10 | Report vacant territory as its own rows? | 2026-10-21 |
+| Q10 | Is the `firm_2` TX/NY block with no `CLEAN_ID` W00155/W00171's territory? (check territories `NAME` at work; folds in Q5) | 2026-10-21 |
 | Q12 | `firm_2` `PR05`: contribution only? | 2026-10-21 |
 | Q13 | Compare National, WH, FI per distribution company rather than per ZIP? | 2026-10-21 |
 | Q14 | Is there a record of selling agreements per distribution company? | 2026-10-21 |
+| Q16 | `N1_06` has `D1_01` (IFA) rows: a firm-level override, IFA business of those companies counted as National? | 2026-10-21 |
+| Q17 | Sellers with no territory (2.8% of `firm_2` sales): whose numbers? | 2026-10-21 |
+| Q18 | Which union name column and which territories name column to match? | 2026-10-21 |
 
 ## Log
 
@@ -452,3 +477,123 @@ Owner, on removing the "V1 implies V2" checks and claim: "Yes". On the `CHANNEL`
 `DEF_CONTESTED_SOLD`, `DEF_CONTESTED_OFFERED` and the two V1-implies-V2 checks are gone from `30_cell.sql`. The
 line above, "Every `_V1` true row is `_V2` true", is withdrawn: `_V2` sums net sales over `CHANNEL`s, so a firm
 positive in one `CHANNEL` with larger returns in another is `_V1` true and `_V2` false. The extract passed by chance.
+
+### 2026-10-21: owner on purpose, rows and the `DIST_CH` -> `NEW_DIST` -> `CHANNEL` flow
+
+Owner statements, recorded in Conventions (Purpose, Codes, Words) and here.
+
+> **Owner, 2026-10-21:** "mm_opp is an opportunity number but is not how we think about rows. We think about rows from the channel, dist_ch, new_dist, parent, firm, etc. and each of those has an associated mm_opp or opportunity amount"
+
+`DIST_CH` is each firm's original sales channels (`firm_1`: `D1_01` IFA, `D1_02` banks, `D1_03` wirehouses).
+`NEW_DIST` breaks one distribution company out of banks, and a second split between wirehouses and banks.
+Those `NEW_DIST` values are merged into `CHANNEL` `National`.
+
+> **Owner, 2026-10-21:** "Wirehouses (WH) and Banks (FI) no longer holding the opportunity or sales associated with the items we merged into National."
+
+`firm_1`, rerun on the coded extract of 2026-10-20: distinct `CBD_ID`, share of all `MM_OPP`, share of `firm_1` sales.
+"none" = no `MM_OPP` / no positive sales on those rows.
+
+| `CHANNEL` | `NEW_DIST` | `DIST_CH` | `CBD_ID` | % of `MM_OPP` | % of `firm_1` sales |
+|---|---|---|---|---|---|
+| IFA | `N1_01` | `D1_01` | 350 | 59.8 | 26.4 |
+| FI | `N1_02` | `D1_02` | 30 | 14.1 | 20.0 |
+| WH | `N1_03` | `D1_03` | 15 | 10.2 | 12.7 |
+| National | `N1_04` | `D1_02` | 1 | 4.2 | 15.2 |
+| National | `N1_04` | `D1_03` | 1 | 3.8 | none |
+| National | `N1_04` | NULL | 1 | 0.0 | none |
+| National | `N1_05` | `D1_02` | 1 | 7.8 | 20.9 |
+| National | `N1_06` | `D1_01` | 1 | none | 2.1 |
+| National | `N1_06` | `D1_03` | 2 | 0.2 | 2.6 |
+
+- The National rows agree with the 2026-10-20 `DIST_CH` -> `CHANNEL` table (`D1_02` National 12.0 / 36.1, `D1_03`
+  National 4.0 / 2.6).
+- `N1_06` has rows from `D1_01` (IFA): 2.1% of `firm_1` sales and no `MM_OPP`.
+
+Q16. **Is the `N1_06` IFA business a firm-level override?** Are the IFA rows of these companies (`D1_01` -> `National`)
+counted as National by a rule on the firm, so that the IFA sales of those companies leave IFA?
+
+### 2026-10-21: owner answers, Q3, Q9 and the territories scope
+
+**Q3** (who gets `firm_1`'s National `MM_OPP` that sits on a `DIST_CH` that does not sell there). Asked whether the
+`DIST_CH` on such a row is assigned by a rule:
+
+> **Answer (owner, 2026-10-21):** "It is set for that row's own dist_ch."
+
+The owner framed the reassignment as "That is precisely the open question..." (quote cut off). Q3 is closed: no
+reassignment. Each row keeps its `MM_OPP` on its own `DIST_CH`. People's numbers are reported in both the current
+state (`DIST_CH`) and the new state (`CHANNEL`).
+
+**Q9** (opportunity at distribution companies a firm never sells to, 21% of `firm_2`'s; count it in that firm's
+territories or only where it does business):
+
+> **Answer (owner, 2026-10-21):** "Yes for Q9"
+
+Taken as: that opportunity is reported as uncovered opportunity, not spread into territories. It supersedes the
+`firm_2` split of `15` for a `CBD_ID` the firm never sells to (Settled).
+
+**Territories scope.**
+
+> **Owner, 2026-10-21:** "territories table contains additional channels out of scope at this stage."
+
+Territories rows whose `CHANNEL` is not a `DIST_CH` in the union for that `SOURCE` are out of scope (`D1_04`-`D1_07`).
+Q4 (what they are, and their 34 people) stays open.
+
+### 2026-10-21: Q10 reframed, the `firm_2` block with no `CLEAN_ID`
+
+Restricted to the in-scope `DIST_CH`, on the coded extract:
+
+- 4,281 `firm_2` territories rows, 1,689 ZIPs, in TX and NY, `D2_01`-`D2_03`, have no `CLEAN_ID`.
+- 430 union rows (118 ZIPs, 3.68% of `firm_2` sales) fall there. Every one names `W00155` or `W00171` as territory
+  wholesaler, and neither has any territories row.
+- So this is most likely a failed name match between the union and territories, not a vacancy. Q10 now asks whether
+  the block is their territory (check territories `NAME` at work); Q5 is folded into it.
+- 12 `firm_2` `ZIP_CODE` x `DIST_CH` have 2 holders.
+- 2.8% of `firm_2` sales (305 rows, `SALES_WHOLESALER_HAS_TERRITORY` = 0) have a NULL
+  `SALES_WHOLESALER_TERRITORY_ID`.
+
+Q17. **Sellers with no territory: whose numbers?** A sale by a seller with no territory has no holder to credit. Report
+it apart, give it to the territory holder of the cell, or something else?
+
+### 2026-10-21: name matching by geography, `21_name_match.sql`
+
+The owner's old method:
+
+> **Owner, 2026-10-21:** "I was using editdistance and running stages where we would successively cross join the firm specific union and territory datasets, takes the best match for each at any given step by lowest editdistance, then dropping the matches from the dataset and rerunning the step again on the unmatched names."
+
+Proposed: match each union territory-wholesaler name to the territories name that covers the same `ZIP_CODE` x
+`DIST_CH`, within `SOURCE`, with name similarity only as a check.
+
+> **Approval (owner, 2026-10-21):** "Yes"
+
+**Geography check** on the coded extract (union `TERRITORY_WHOLESALER_TERRITORY_ID` against the territories holder
+of the same `ZIP_CODE` x `DIST_CH`): 138 of 141 union territory-wholesaler IDs agree with the current match.
+`firm_1`: median cover 1.0, minimum 0.781; `firm_2`: all 1.0 for the 72 that agree. (`21_name_match.sql` counts
+only rows with a `ZIP_CODE` and `DIST_CH`: the `firm_1` minimum there is 0.784.) The 3 exceptions: `W00155` and
+`W00171` (all of their `ZIP_CODE` x `DIST_CH` sit in the block with no `CLEAN_ID`, Q10) and `W00035` in `firm_2`
+(best overlap 0.2 with `W00074`).
+
+**`21_name_match.sql` on the coded extract.** The extract has no territories `NAME` and its names are coded, so the
+test used `NAME` = `CLEAN_ID` (`'NULL_BLOCK'` where NULL), which also makes name scores meaningless there. The union
+names and `TERRITORY_WHOLESALER_TERRITORY_ID` are 1:1 within `SOURCE` (141 pairs); `W00035` carries the same name in
+both `SOURCE`s.
+
+| check | value |
+|---|---|
+| `NAME_MATCH` keys appearing twice (must be 0) | 0 |
+| union names missing from `NAME_MATCH` (must be 0) | 0 |
+| rows with `METHOD` geography / review | 138 / 3 |
+| geography rows where `AGREES_WITH_CURRENT` is false | 0 |
+| rows whose matched `CLEAN_ID` is NULL | 2 |
+| territories names matched by 2+ union names | 2 |
+
+- Review list (4 rows): `firm_1` `W00035` (cover 0.784, just under the 0.8 threshold, agrees with current);
+  `firm_2` `W00035` (cover 0.333 with `W00074`, 1 of 3 `ZIP_CODE` x `DIST_CH`; 0.2 once the 208 rows with ZIP
+  `00000` and NULL `DIST_CH` are counted); `W00171` (cover 1.0, the NULL block, mutual: METHOD geography, on the list for its
+  NULL `CLEAN_ID`); `W00155` (cover 1.0, the NULL block, not mutual because `W00171` takes the block: review).
+- The extract's NULL block is one fake name, so only one of `W00155` and `W00171` can be mutual; with real names in the block both may be.
+- The name normalization (swap "LAST, FIRST", strip punctuation, drop suffix tokens) was tested alone on made-up names:
+  scores 96-100, one pair lower (a middle initial, 96; "Tom Brown" vs "Tim Browne", 91).
+
+Q18. **Which name columns?** The file matches union `TERR_WHOLESALER_CLEAN_NAME` to territories `NAME`; confirm at
+work. The owner also mentioned an `updated_wholesaler2026` column in each firm's source dataset: should it be the
+name to match?
