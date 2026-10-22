@@ -1359,3 +1359,9 @@ Owner-approved (#112 comments): the band is the dollar window [L, U] (`band_lo`/
 - **Warm start** (exact window repair from each point's first drawing, glue, merge, gate; branch `m5-studio/warm-start` 53dac30): **3 passing main maps**: ne-48-bal (pass/pass, 48/48 in window, 8 split states), ne-50-filight (gap-width pass, strict fails on 2 necks; 50/50; 9 states), ne-cmp-tierP (pass/pass, 49/49; 8 states). Each holds 3,629-5,618 ZCTAs placed by the realizer heuristic and verified by the exact gate.
 - **Fails:** ne-50-bal and ne-52-filight (FI_19 NY in 4 pieces), ne-52-bal (FI_18 NY, FI_07 NJ), nw49-48/52 (a 9-ZIP NY piece in WIFI); nw34 x3 national never drew; w1 x3 never drew before the stop.
 - **Bug found:** `sealed.py`'s score stage reads $ rates from the merged extract (CONUS cells only): FI reads ~2% high. The index numbers use the full extract.
+
+## Stakeholder package: Snowflake dataset and owner pages, 2026-10-22
+
+Six WIFI-family maps (ne-48-bal, ne-48-bal-r2, ne-cmp-tierP, ne-50-filight, nw34-50, w1-52 balanced) and IFA K48-K54 in one long table, 1,232,100 rows, 13 scenarios, in the archived 12-column `all_scenarios_nationwide_zcta_long` schema; owner pages titled with the scenario names (`WIFI_K50_N16_WH11_FI20_WIFI3 · National: 16 districts`). Owner approved the PDFs and the dataset. Naming, sources, load and caveats: `results/snowflake_2026-10-22/README.md`.
+
+Regenerate: `tools/export/snowflake.py data|render <out_dir>` (scenario list in `SCENARIOS`).
