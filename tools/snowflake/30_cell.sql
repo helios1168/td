@@ -3,9 +3,8 @@
 -- column; the rules are written here and nowhere else, and described in DATASET_LOG.md, Definitions.
 -- FIRM_1 is the first SOURCE in sort order, FIRM_2 the second.  "Sells" = positive net
 -- ACTUAL_SALES_AMOUNT over the scope named.
--- DEF_CONTESTED_SOLD / DEF_CONTESTED_OFFERED keep CHANNEL in the cell they test; the _V2 columns drop it
--- (CHANNEL is each firm's own desk label, DATASET_LOG.md, 2026-10-21 Q15) and test ZIP_CODE x CBD_ID x
--- PRODUCT_V2 across all CHANNELs.  The V1 rule implies the V2 rule (checked in statement 2).
+-- The _V2 columns match on ZIP_CODE x CBD_ID x PRODUCT_V2 across all CHANNELs (CHANNEL is each firm's own
+-- desk label, DATASET_LOG.md, 2026-10-21 Q15).
 -- Run statement 1, then 2 (checks: every MUST_BE_ZERO row must be 0), then 3 (definition counts).
 
 -- Statement 1.  The table.
@@ -38,11 +37,6 @@ product_sold AS (    -- PRODUCT_V2 each firm sells, nationally
          SUM(CASE WHEN N = 1 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) > 0 AS SOLD_1,
          SUM(CASE WHEN N = 2 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) > 0 AS SOLD_2
   FROM u GROUP BY PRODUCT_V2),
-offer AS (           -- CBD_ID x CHANNEL x PRODUCT_V2 each firm sells, in any ZIP_CODE
-  SELECT CBD_ID, CHANNEL, PRODUCT_V2,
-         SUM(CASE WHEN N = 1 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) > 0 AS SOLD_1,
-         SUM(CASE WHEN N = 2 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) > 0 AS SOLD_2
-  FROM u GROUP BY CBD_ID, CHANNEL, PRODUCT_V2),
 offer_all AS (       -- CBD_ID x PRODUCT_V2 each firm sells, in any ZIP_CODE and any CHANNEL
   SELECT CBD_ID, PRODUCT_V2,
          SUM(CASE WHEN N = 1 THEN ACTUAL_SALES_AMOUNT ELSE 0 END) > 0 AS SOLD_1,
@@ -63,12 +57,6 @@ SELECT c.ZIP_CODE, c.CBD_ID, c.CHANNEL, c.PRODUCT_V2, c.STATE, c.FIRM, c.PARENT,
             WHEN p.SOLD_2 THEN 'firm_2 only'
             ELSE 'neither' END
          AS DEF_PRODUCT_SCOPE,
-       -- DEF_CONTESTED_SOLD (A): both firms sell in this cell
-       (c.ACTUAL_SALES_AMOUNT_FIRM_1 > 0 AND c.ACTUAL_SALES_AMOUNT_FIRM_2 > 0)
-         AS DEF_CONTESTED_SOLD,
-       -- DEF_CONTESTED_OFFERED (B): both firms sell this PRODUCT_V2 to this CBD_ID in this CHANNEL, in any ZIP_CODE
-       COALESCE(o.SOLD_1 AND o.SOLD_2, FALSE)
-         AS DEF_CONTESTED_OFFERED,
        -- DEF_CONTESTED_SOLD_V2 (A): both firms have positive net sales in this ZIP_CODE x CBD_ID x PRODUCT_V2,
        -- summed over all CHANNELs; set on every CHANNEL row of that cell
        COALESCE(ca.BOTH_SELL, FALSE)
@@ -79,8 +67,6 @@ SELECT c.ZIP_CODE, c.CBD_ID, c.CHANNEL, c.PRODUCT_V2, c.STATE, c.FIRM, c.PARENT,
          AS DEF_CONTESTED_OFFERED_V2
 FROM cell c
 LEFT JOIN product_sold p ON p.PRODUCT_V2 IS NOT DISTINCT FROM c.PRODUCT_V2
-LEFT JOIN offer o ON o.CBD_ID IS NOT DISTINCT FROM c.CBD_ID AND o.CHANNEL IS NOT DISTINCT FROM c.CHANNEL
-                 AND o.PRODUCT_V2 IS NOT DISTINCT FROM c.PRODUCT_V2
 LEFT JOIN cell_all ca ON ca.ZIP_CODE IS NOT DISTINCT FROM c.ZIP_CODE AND ca.CBD_ID IS NOT DISTINCT FROM c.CBD_ID
                      AND ca.PRODUCT_V2 IS NOT DISTINCT FROM c.PRODUCT_V2
 LEFT JOIN offer_all oa ON oa.CBD_ID IS NOT DISTINCT FROM c.CBD_ID AND oa.PRODUCT_V2 IS NOT DISTINCT FROM c.PRODUCT_V2;
@@ -104,10 +90,6 @@ UNION ALL SELECT 'ACTUAL_SALES_AMOUNT_FIRM_1: CELL total minus source total',
 UNION ALL SELECT 'ACTUAL_SALES_AMOUNT_FIRM_2: CELL total minus source total',
        ROUND((SELECT SUM(ACTUAL_SALES_AMOUNT_FIRM_2) FROM ssdb_integration.lr_strategy.CELL)
            - (SELECT COALESCE(SUM(ACTUAL_SALES_AMOUNT), 0) FROM u WHERE N = 2), 6), TRUE
-UNION ALL SELECT 'cells with DEF_CONTESTED_SOLD true and DEF_CONTESTED_SOLD_V2 false (V1 implies V2)',
-       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.CELL WHERE DEF_CONTESTED_SOLD AND NOT DEF_CONTESTED_SOLD_V2), TRUE
-UNION ALL SELECT 'cells with DEF_CONTESTED_OFFERED true and DEF_CONTESTED_OFFERED_V2 false (V1 implies V2)',
-       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.CELL WHERE DEF_CONTESTED_OFFERED AND NOT DEF_CONTESTED_OFFERED_V2), TRUE
 UNION ALL SELECT 'cells with CHANNEL outside IFA, National, WH, FI (DEF_CHANNEL_GROUP NULL)',
        (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.CELL WHERE DEF_CHANNEL_GROUP IS NULL), FALSE
 UNION ALL SELECT 'cells with an invalid ZIP_CODE (DEF_ZIP_VALID false)',
@@ -130,10 +112,6 @@ d AS (
   UNION ALL SELECT 'DEF_CHANNEL_GROUP', DEF_CHANNEL_GROUP, MM_OPP, ACTUAL_SALES_AMOUNT_FIRM_1, ACTUAL_SALES_AMOUNT_FIRM_2
   FROM ssdb_integration.lr_strategy.CELL
   UNION ALL SELECT 'DEF_PRODUCT_SCOPE', DEF_PRODUCT_SCOPE, MM_OPP, ACTUAL_SALES_AMOUNT_FIRM_1, ACTUAL_SALES_AMOUNT_FIRM_2
-  FROM ssdb_integration.lr_strategy.CELL
-  UNION ALL SELECT 'DEF_CONTESTED_SOLD', CAST(DEF_CONTESTED_SOLD AS VARCHAR), MM_OPP, ACTUAL_SALES_AMOUNT_FIRM_1, ACTUAL_SALES_AMOUNT_FIRM_2
-  FROM ssdb_integration.lr_strategy.CELL
-  UNION ALL SELECT 'DEF_CONTESTED_OFFERED', CAST(DEF_CONTESTED_OFFERED AS VARCHAR), MM_OPP, ACTUAL_SALES_AMOUNT_FIRM_1, ACTUAL_SALES_AMOUNT_FIRM_2
   FROM ssdb_integration.lr_strategy.CELL
   UNION ALL SELECT 'DEF_CONTESTED_SOLD_V2', CAST(DEF_CONTESTED_SOLD_V2 AS VARCHAR), MM_OPP, ACTUAL_SALES_AMOUNT_FIRM_1, ACTUAL_SALES_AMOUNT_FIRM_2
   FROM ssdb_integration.lr_strategy.CELL

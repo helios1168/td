@@ -52,12 +52,10 @@ Columns of `CELL` (`30_cell.sql`). Counts are on the coded extract of 2026-10-20
 | `DEF_ZIP_VALID` | BOOLEAN | `ZIP_CODE` is 5 digits and not `00000` | session, 2026-10-21 | false: 217 cells, 0.1% of `firm_1` sales |
 | `DEF_CHANNEL_GROUP` | text | `'IFA'` for IFA; `'National+WH+FI'` for the other three; NULL for any other `CHANNEL` | owner, 2026-10-21 | IFA: 52,077 cells, 59.8% of `MM_OPP`, 26.4% / 62.0% of `firm_1` / `firm_2` sales |
 | `DEF_PRODUCT_SCOPE` | text | which firms sell this `PRODUCT_V2` anywhere: `'both'`, `'firm_1 only'`, `'firm_2 only'`, `'neither'` | settled product-set rule | both: 48.8% of `MM_OPP`, 17.9% / 82.2% of sales |
-| `DEF_CONTESTED_SOLD` | BOOLEAN | A: both firms sell in this cell | owner, 2026-10-21, Q11 | true: 466 cells, 5.8% of `MM_OPP`, 7.4% / 12.8% of sales |
-| `DEF_CONTESTED_OFFERED` | BOOLEAN | B: both firms sell this `PRODUCT_V2` to this `CBD_ID` in this `CHANNEL`, in any ZIP | owner, 2026-10-21, Q11 (`CHANNEL` added by the cell key) | true: 15,629 cells, 30.4% of `MM_OPP`, 17.3% / 62.1% of sales |
 | `DEF_CONTESTED_SOLD_V2` | BOOLEAN | A without `CHANNEL`: both firms have positive net sales summed over all `CHANNEL`s of this `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`; set on every `CHANNEL` row of that cell | owner, 2026-10-21, Q15 | true: 568 cells (494 `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`), 6.0% of `MM_OPP`, 7.7% / 13.3% of sales |
 | `DEF_CONTESTED_OFFERED_V2` | BOOLEAN | B without `CHANNEL`: both firms sell this `PRODUCT_V2` to this `CBD_ID` in any ZIP and any `CHANNEL`; set on every `CHANNEL` row of that `CBD_ID` x `PRODUCT_V2` | owner, 2026-10-21, Q15 | true: 16,469 cells, 31.3% of `MM_OPP`, 17.4% / 63.7% of sales |
 
-Every A cell is a B cell, in both versions, and every `_V1` true is `_V2` true (checked in `30_cell.sql`). Combine definitions by grouping or filtering on several `DEF_` columns at once.
+Combine definitions by grouping or filtering on several `DEF_` columns at once.
 
 ## Settled
 
@@ -79,8 +77,7 @@ Every A cell is a B cell, in both versions, and every `_V1` true is `_V2` true (
 - Head-to-head is reported under two definitions side by side (owner, 2026-10-21, Q11), matched without
   `CHANNEL` (owner, 2026-10-21, Q15): **A, sold** (`DEF_CONTESTED_SOLD_V2`), both firms sell this product to
   this distribution company in this ZIP; **B, offered (strict)** (`DEF_CONTESTED_OFFERED_V2`), both firms
-  sell this product to this distribution company in any ZIP. The `CHANNEL`-keyed `DEF_CONTESTED_SOLD` and
-  `DEF_CONTESTED_OFFERED` stay as the earlier version.
+  sell this product to this distribution company in any ZIP.
 - Naming: see Conventions (owner, 2026-10-21).
 
 ## Open questions
@@ -446,3 +443,10 @@ The V2 columns move 102 cells into A (568 against 466 `CELL` rows; the 494 cells
   `PRODUCT_V2` (A 6.0 / 7.7 / 13.3, B 31.3 / 17.4 / 63.7), so that table was the right one for head-to-head;
   the `CHANNEL`-keyed figures differ from it only by splitting a company across its desks.
 - Every `_V1` true row is `_V2` true (two must-be-zero checks in `30_cell.sql`).
+
+### 2026-10-21: `CHANNEL`-keyed head-to-head columns removed
+
+Owner, on removing the "V1 implies V2" checks and claim: "Yes". On the `CHANNEL`-keyed head-to-head columns: "Old columns go".
+`DEF_CONTESTED_SOLD`, `DEF_CONTESTED_OFFERED` and the two V1-implies-V2 checks are gone from `30_cell.sql`. The
+line above, "Every `_V1` true row is `_V2` true", is withdrawn: `_V2` sums net sales over `CHANNEL`s, so a firm
+positive in one `CHANNEL` with larger returns in another is `_V1` true and `_V2` false. The extract passed by chance.
