@@ -24,6 +24,7 @@ from __future__ import annotations
 import collections
 import csv
 import gzip
+import io
 import json
 import os
 import subprocess
@@ -82,7 +83,8 @@ def named():
 def data(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     total = 0
-    with gzip.open(os.path.join(out_dir, LONG), "wt", newline="") as fl, \
+    # mtime=0: the gzip header carries no timestamp, so a rerun on the same sources is byte-identical
+    with io.TextIOWrapper(gzip.GzipFile(os.path.join(out_dir, LONG), "wb", mtime=0), newline="") as fl, \
             open(os.path.join(out_dir, DISTRICTS), "w", newline="") as fd:
         wl, wd = csv.writer(fl), csv.writer(fd)
         wl.writerow(COLUMNS)

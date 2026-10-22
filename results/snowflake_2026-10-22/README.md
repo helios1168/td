@@ -36,7 +36,7 @@ export TD_REPO=/Users/Shared/sv-ntlee/td
 "$TD_REPO/.venv/bin/python3" tools/export/snowflake.py render results/snowflake_<date>    # pages + WIFI_pages.pdf, IFA_pages.pdf, ~3 min
 ```
 
-The scenario list lives in `SCENARIOS` at the top of `tools/export/snowflake.py`; add a map there. Checked 2026-10-22: `data` reproduces this folder's two data files byte for byte. `render` titles IFA pages `IFA_K48 · IFA: 48 districts`, not the shipped `IFA 48 districts`.
+The scenario list lives in `SCENARIOS` at the top of `tools/export/snowflake.py`; add a map there. Checked 2026-10-22: `data` reproduces this folder's two data files byte for byte (the gzip header carries no timestamp). `render` titles IFA pages `IFA_K48 · IFA: 48 districts`, not the shipped `IFA 48 districts`.
 
 ## Column notes
 
