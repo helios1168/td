@@ -3,8 +3,8 @@
 -- column; the rules are written here and nowhere else, and described in DATASET_LOG.md, Definitions.
 -- FIRM_1 is the first SOURCE in sort order, FIRM_2 the second.  "Sells" = positive net
 -- ACTUAL_SALES_AMOUNT over the scope named.
--- The _V2 columns match on ZIP_CODE x CBD_ID x PRODUCT_V2 across all CHANNELs (CHANNEL is each firm's own
--- desk label, DATASET_LOG.md, 2026-10-21 Q15).
+-- The _V2 columns match on ZIP_CODE x CBD_ID x PRODUCT_V2 across all CHANNELs (CHANNEL is the sales channel
+-- each firm assigns, DATASET_LOG.md, 2026-10-21 Q15).
 -- Run statement 1, then 2 (checks: every MUST_BE_ZERO row must be 0), then 3 (definition counts).
 
 -- Statement 1.  The table.

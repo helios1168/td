@@ -41,7 +41,9 @@ checks grid. One-off digging: `explore/<topic>.sql`.
 
 **Words.** Both firms are annuity carriers, so "carrier" never means a `SOURCE`. Say `firm_1` (the
 `SOURCE` whose rows hold `MM_OPP`) or `firm_2`. Log entries before 2026-10-21 use "carrier" for
-`firm_1`. "Sells" means positive net `ACTUAL_SALES_AMOUNT` over the scope named.
+`firm_1`. "Sells" means positive net `ACTUAL_SALES_AMOUNT` over the scope named. `DIST_CH`, `NEW_DIST`
+and `CHANNEL` are all sales channels; call each by its column name or "sales channel", never "desk". Log
+entries of 2026-10-21 say "desk" for a sales channel.
 
 ## Definitions
 
@@ -71,8 +73,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - `CBD_ID` is the same distribution company in both `SOURCE`s and joins them (owner, 2026-10-21, Q1).
   This supersedes the earlier rejection of distribution company as a cross-firm key (`12`).
 - The unit of market is the cell `ZIP_CODE` x `CBD_ID` x `CHANNEL` x `PRODUCT_V2`. `CHANNEL` =
-  map(`DIST_CH`) with overrides per `FIRM`: a firm's desk label, not a property of the company. It stays
-  in the key for channel-group reporting, each firm under its own desk's channel; head-to-head matches
+  map(`DIST_CH`) with overrides per `FIRM`: the sales channel the firm assigns the row, not a property of the company. It stays
+  in the key for channel-group reporting, each firm under its own `CHANNEL`; head-to-head matches
   on `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2` (owner, 2026-10-21, Q15).
 - Head-to-head is reported under two definitions side by side (owner, 2026-10-21, Q11), matched without
   `CHANNEL` (owner, 2026-10-21, Q15): **A, sold** (`DEF_CONTESTED_SOLD_V2`), both firms sell this product to
