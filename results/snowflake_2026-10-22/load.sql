@@ -1,6 +1,7 @@
--- WIFI (main) and IFA territory scenarios in one long table: 1,065,600 rows, 12 scenarios.
+-- WIFI (main) and IFA territory scenarios in one long table: 1,232,100 rows, 13 scenarios.
 -- 12-column schema of archive/pre-support-2026-09:exports/database/all_scenarios_nationwide_zcta_long.csv.gz.
--- SCENARIO: WIFI_K<total>_<channel><k>... (channels in order N, WH, FI, WIFI; empty channels left out), IFA_K<k>.
+-- SCENARIO: WIFI_K<total>_<channel><k>... (N, WH, FI, WIFI order; empty channels left out), IFA_K<k>.
+-- Two maps share K48 counts: ne-48-bal is WIFI_K48_N14_WH10_FI21_WIFI3, ne-48-bal-r2 adds _R2.
 CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.ALL_SCENARIOS_NATIONWIDE_ZCTA_LONG (
   SCENARIO                   VARCHAR(64) NOT NULL,
   ZIP_CODE                   VARCHAR(5)  NOT NULL,  -- keep leading zeros
