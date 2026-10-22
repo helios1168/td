@@ -99,6 +99,7 @@ CORRIDOR = ("BOS–WAS corridor", (-77.6, 38.6, -70.0, 42.9))
 NORTHEAST = ("Northeast and Mid-Atlantic", (-80.6, 37.0, -66.8, 47.6))
 CHANNELS = ["national", "WH", "FI", "WIFI", "IFA"]   # the page order
 ABBR = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "W", "IFA": "IFA"}
+NAME = {"national": "National"}   # a channel as titles and legends print it
 COUNT_BINS = 6              # the summary's fill: 1, 2, ..., COUNT_BINS or more territories
 SPLIT_EDGE = "#7a0000"
 # `--palette clean`: the summary ramp, the split outline and the district colours
@@ -463,7 +464,7 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     m = list(dollars.values())
     mean = sum(m) / len(m)
     vs = f"target \\${t / 1e6:,.0f}M ±{100 * DOLLAR_BAND:.0f}%" if t else "no \\$ target"
-    fig.suptitle(title or f"{label}  ·  {ch}: {k} districts", fontsize=17, fontweight="bold", y=y(0.975))
+    fig.suptitle(title or f"{label}  ·  {NAME.get(ch, ch)}: {k} districts", fontsize=17, fontweight="bold", y=y(0.975))
     if footer:
         fig.text(0.01, 0.075, f"\\${min(m):,.0f}M to \\${max(m):,.0f}M per district, drawn mean \\${mean:,.0f}M ({vs})  ·  "
                  f"{extra['splits']}", fontsize=10.5)
@@ -672,7 +673,7 @@ def summary_page(run_dir, label, counts, k, st, metro, out_dir, title=None, foot
                          linewidth=CLEAN_SPLIT_LW if clean else 2.2,
                          label="Split: 2+ districts of one channel"))
     handles += [Patch(facecolor="none", edgecolor="none",
-                      label=f"{ABBR.get(c, c)} = {c}: {k[c]} districts") for c in order]
+                      label=f"{ABBR.get(c, c)} = {NAME.get(c, c)}: {k[c]} districts") for c in order]
     handles.append(METRO_HANDLE)
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.882, y(0.93)), fontsize=7.5, frameon=False,
                handlelength=1.4, borderaxespad=0)
