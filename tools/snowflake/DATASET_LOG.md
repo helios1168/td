@@ -54,8 +54,10 @@ Columns of `CELL` (`30_cell.sql`). Counts are on the coded extract of 2026-10-20
 | `DEF_PRODUCT_SCOPE` | text | which firms sell this `PRODUCT_V2` anywhere: `'both'`, `'firm_1 only'`, `'firm_2 only'`, `'neither'` | settled product-set rule | both: 48.8% of `MM_OPP`, 17.9% / 82.2% of sales |
 | `DEF_CONTESTED_SOLD` | BOOLEAN | A: both firms sell in this cell | owner, 2026-10-21, Q11 | true: 466 cells, 5.8% of `MM_OPP`, 7.4% / 12.8% of sales |
 | `DEF_CONTESTED_OFFERED` | BOOLEAN | B: both firms sell this `PRODUCT_V2` to this `CBD_ID` in this `CHANNEL`, in any ZIP | owner, 2026-10-21, Q11 (`CHANNEL` added by the cell key) | true: 15,629 cells, 30.4% of `MM_OPP`, 17.3% / 62.1% of sales |
+| `DEF_CONTESTED_SOLD_V2` | BOOLEAN | A without `CHANNEL`: both firms have positive net sales summed over all `CHANNEL`s of this `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`; set on every `CHANNEL` row of that cell | owner, 2026-10-21, Q15 | true: 568 cells (494 `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2`), 6.0% of `MM_OPP`, 7.7% / 13.3% of sales |
+| `DEF_CONTESTED_OFFERED_V2` | BOOLEAN | B without `CHANNEL`: both firms sell this `PRODUCT_V2` to this `CBD_ID` in any ZIP and any `CHANNEL`; set on every `CHANNEL` row of that `CBD_ID` x `PRODUCT_V2` | owner, 2026-10-21, Q15 | true: 16,469 cells, 31.3% of `MM_OPP`, 17.4% / 63.7% of sales |
 
-Every A cell is a B cell. Combine definitions by grouping or filtering on several `DEF_` columns at once.
+Every A cell is a B cell, in both versions, and every `_V1` true is `_V2` true (checked in `30_cell.sql`). Combine definitions by grouping or filtering on several `DEF_` columns at once.
 
 ## Settled
 
@@ -70,11 +72,15 @@ Every A cell is a B cell. Combine definitions by grouping or filtering on severa
   union table are out of scope (owner, 2026-10-19).
 - `CBD_ID` is the same distribution company in both `SOURCE`s and joins them (owner, 2026-10-21, Q1).
   This supersedes the earlier rejection of distribution company as a cross-firm key (`12`).
-- The unit of market is the cell `ZIP_CODE` x `CBD_ID` x `CHANNEL` x `PRODUCT_V2`. `CHANNEL` is in the
-  key because 18 distribution companies sell through several channels (log, 2026-10-21 correction).
-- Head-to-head is reported under two definitions side by side (owner, 2026-10-21, Q11): **A, sold**, both
-  firms sell this product to this distribution company in this cell; **B, offered (strict)**, both firms
-  sell this product to this distribution company in any ZIP.
+- The unit of market is the cell `ZIP_CODE` x `CBD_ID` x `CHANNEL` x `PRODUCT_V2`. `CHANNEL` =
+  map(`DIST_CH`) with overrides per `FIRM`: a firm's desk label, not a property of the company. It stays
+  in the key for channel-group reporting, each firm under its own desk's channel; head-to-head matches
+  on `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2` (owner, 2026-10-21, Q15).
+- Head-to-head is reported under two definitions side by side (owner, 2026-10-21, Q11), matched without
+  `CHANNEL` (owner, 2026-10-21, Q15): **A, sold** (`DEF_CONTESTED_SOLD_V2`), both firms sell this product to
+  this distribution company in this ZIP; **B, offered (strict)** (`DEF_CONTESTED_OFFERED_V2`), both firms
+  sell this product to this distribution company in any ZIP. The `CHANNEL`-keyed `DEF_CONTESTED_SOLD` and
+  `DEF_CONTESTED_OFFERED` stay as the earlier version.
 - Naming: see Conventions (owner, 2026-10-21).
 
 ## Open questions
@@ -93,7 +99,6 @@ Every A cell is a B cell. Combine definitions by grouping or filtering on severa
 | Q12 | `firm_2` `PR05`: contribution only? | 2026-10-21 |
 | Q13 | Compare National, WH, FI per distribution company rather than per ZIP? | 2026-10-21 |
 | Q14 | Is there a record of selling agreements per distribution company? | 2026-10-21 |
-| Q15 | For a distribution company in several channels, what decides a row's `CHANNEL`? | 2026-10-21 correction |
 
 ## Log
 
@@ -393,3 +398,51 @@ A and B by channel group, valid ZIPs, shares within the group:
 | National+WH+FI | no | no | 71.5 | 86.3 | 32.3 |
 | National+WH+FI | no | yes | 24.0 | 9.2 | 52.0 |
 | National+WH+FI | yes | yes | 4.6 | 4.5 | 15.7 |
+
+### 2026-10-21: Q15 answered, `CHANNEL` is a per-firm mapping
+
+Q15 (2026-10-21 correction entry) asked what sets a row's `CHANNEL` when a `CBD_ID` appears in several.
+
+> **Answer (owner, 2026-10-21):** "It is a mapping from dist_ch in combination with specific firm level
+> overrides"
+
+Proposed rule: keep `CHANNEL` in the `CELL` key (channel-group reporting stays, each firm under its own
+desk's channel), and match the firms head-to-head on `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2` without `CHANNEL`,
+through new columns `DEF_CONTESTED_SOLD_V2` and `DEF_CONTESTED_OFFERED_V2`.
+
+> **Approval (owner, 2026-10-21):** "Yes"
+
+Queries: `explore/channel_mapping.sql`, rerun on the coded extract of 2026-10-20.
+
+#### Evidence
+
+- `CHANNEL` is a function of `SOURCE` x `DIST_CH` x `FIRM`. By `SOURCE` x `DIST_CH`: 9 groups, 8 map to 2+
+  `CHANNEL`s. By `SOURCE` x `DIST_CH` x `FIRM`: 873 groups, 2 map to 2+ `CHANNEL`s. Those 2 are `firm_2`
+  groups with a NULL `DIST_CH` (2 rows each, no amounts, no `MM_OPP`); with NULL `DIST_CH` left out, 666
+  groups and none map to 2+ `CHANNEL`s. (The brief that set this check said the 2 were NULL-`FIRM` groups;
+  the extract shows NULL `DIST_CH`, `FIRM` is set.)
+- Of the 18 `CBD_ID`s in 2+ `CHANNEL`s, only 2 (`C00110`, `C00358`) have each `SOURCE` in one `CHANNEL`,
+  with the two `SOURCE`s in different ones. In the other 16, at least one `SOURCE` itself uses 2+
+  `CHANNEL`s for the company ("uses" = has a row, opportunity or sales).
+- Within one `ZIP_CODE` x `CBD_ID` of these 18 companies, `firm_1` uses 2+ `CHANNEL`s in 1,395 of 10,878
+  pairs (those pairs hold 39.0% of its positive sales at these companies), `firm_2` in 62 of 2,266 (4.7%).
+- At `ZIP_CODE` x `CBD_ID` x `PRODUCT_V2` with positive net sales by both firms (494 cells): 466 have both
+  firms selling in the same `CHANNEL`, 28 more have both selling but only in different `CHANNEL`s.
+
+#### Both definitions with and without `CHANNEL` in the match
+
+`30_cell.sql` statement 3 on the coded extract (cells are `CELL` rows, one per `CHANNEL`; checks all 0).
+The V2 columns move 102 cells into A (568 against 466 `CELL` rows; the 494 cells above) and 840 into B
+(16,469 against 15,629).
+
+| definition | true: cells | % `MM_OPP` | % `firm_1` sales | % `firm_2` sales |
+|---|---|---|---|---|
+| `DEF_CONTESTED_SOLD` (A, with `CHANNEL`) | 466 | 5.8 | 7.4 | 12.8 |
+| `DEF_CONTESTED_SOLD_V2` (A) | 568 | 6.0 | 7.7 | 13.3 |
+| `DEF_CONTESTED_OFFERED` (B, with `CHANNEL`) | 15,629 | 30.4 | 17.3 | 62.1 |
+| `DEF_CONTESTED_OFFERED_V2` (B) | 16,469 | 31.3 | 17.4 | 63.7 |
+
+- The `_V2` figures equal the 2026-10-21 head-to-head table that matched on `ZIP_CODE` x `CBD_ID` x
+  `PRODUCT_V2` (A 6.0 / 7.7 / 13.3, B 31.3 / 17.4 / 63.7), so that table was the right one for head-to-head;
+  the `CHANNEL`-keyed figures differ from it only by splitting a company across its desks.
+- Every `_V1` true row is `_V2` true (two must-be-zero checks in `30_cell.sql`).
