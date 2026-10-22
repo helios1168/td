@@ -9,7 +9,7 @@ Thirteen scenarios, six WIFI-family (main) maps and seven IFA maps. Owner signed
 | `all_scenarios_nationwide_zcta_long.csv.gz` | 1,232,100 rows, one per (scenario, ZCTA, fine channel), 12 columns |
 | `all_scenarios_districts.csv` | 654 rows, one per (scenario, district): name, states, planned and drawn $M |
 | `load.sql` | `CREATE TABLE IF NOT EXISTS`, `PUT`/`COPY`, row-count check (`ssdb_integration.lr_strategy`) |
-| [`../main_snowflake_2026-10-22/WIFI_6_pages.pdf`](https://github.com/helios1168/td/blob/m5-studio/ifa-snowflake-upload/results/main_snowflake_2026-10-22/WIFI_6_pages.pdf) | the six WIFI maps, 25 pages; per-scenario files in `../main_snowflake_2026-10-22/pages/<scenario>/` |
+| [`../main_snowflake_2026-10-22/WIFI_6_pages.pdf`](https://github.com/helios1168/td/blob/main/results/main_snowflake_2026-10-22/WIFI_6_pages.pdf) | the six WIFI maps, 25 pages; per-scenario files in `../main_snowflake_2026-10-22/pages/<scenario>/` |
 | [`IFA_K48-K54_pages.pdf`](https://github.com/helios1168/td/blob/m5-studio/ifa-pages-all/results/ifa_pages_2026-10-17/IFA_K48-K54_pages.pdf) | the seven IFA maps, 14 pages (branch `m5-studio/ifa-pages-all`, titles `IFA <K> districts`) |
 
 ## Scenarios
