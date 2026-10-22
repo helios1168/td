@@ -1,0 +1,298 @@
+scenario,channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_01,"national Atlanta-Sandy Springs-Roswell, GA",AL+FL+GA+NC+SC#1,AL+FL+GA+NC+SC,1362.1567413164867,1326.0316454757321,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_02,"national Houston-Pasadena-The Woodlands, TX",AR+LA+MS+TX#1,AR+LA+MS+TX,1051.5169386985513,1111.7102786432292,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_03,"national Phoenix-Mesa-Chandler, AZ",AZ+CO+UT#1,AZ+CO+UT,1084.7996829475198,1084.7996829475198,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_04,"national San Francisco-Oakland-Fremont, CA / San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,1147.1977130036462,1121.0019119954798,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_05,"national Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,1147.1977130036462,1125.6831055573923,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_06,"national Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA",CA#3,CA,1147.1977130036462,1125.7425073712136,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_07,"national San Francisco-Oakland-Fremont, CA / Sacramento-Roseville-Folsom, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,1051.5169386985513,1120.6825527854032,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_08,"national New York-Newark-Jersey City, NY-NJ / Baltimore-Columbia-Towson, MD",DC+DE+MD+NJ#1,DC+DE+MD+NJ,1332.7165335966604,1332.7165335966602,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_09,"national Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1201.1475533205835,1237.2726491613373,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_10,"national Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+MO+WI#1,IA+IL+MN+MO+WI,1192.4961465034155,1192.496146503416,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_11,"national Detroit-Warren-Dearborn, MI",IN+KY+MI+TN+VA#1,IN+KY+MI+TN+VA,1282.0495811661003,1282.0495811661008,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_12,"national New York-Newark-Jersey City, NY-NJ",NY#1,NY,1361.8480657457574,1410.1370190667947,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_13,"national Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NY+OH+PA+WV#1,NY+OH+PA+WV,1362.1567413164867,1313.8677879954487,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,national,national_14,"national Dallas-Fort Worth-Arlington, TX",TX#1,TX,1171.7176977842144,1111.5243578395366,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_01,"WH Miami-Fort Lauderdale-West Palm Beach, FL",AL+FL+MS#1,AL+FL+MS,1090.6610934698438,1090.661093469844,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_02,"WH Dallas-Fort Worth-Arlington, TX",AR+LA+MO+TX#1,AR+LA+MO+TX,1088.5855034035142,1088.5855034035146,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_03,"WH Los Angeles-Long Beach-Anaheim, CA",AZ+CA+CO+UT#1,AZ+CA+CO+UT,891.0622299069523,890.8305947398521,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_04,"WH San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,890.7950692572566,891.0267044243569,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_05,"WH Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+MD+VA+WV#1,DC+MD+VA+WV,935.8464807478822,935.8464807478828,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_06,"WH Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,1112.71739193056,1122.179631288568,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_07,"WH Atlanta-Sandy Springs-Roswell, GA",GA+NC+SC+TN#1,GA+NC+SC+TN,957.7092063980302,957.7092063980298,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_08,"WH Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+WI#1,IA+IL+MN+WI,954.2567264090492,954.2567264090487,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_09,"WH Detroit-Warren-Dearborn, MI",IN+KY+MI+OH#1,IN+KY+MI+OH,1080.2022897214795,1080.2022897214792,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WH,WH_10,"WH New York-Newark-Jersey City, NY-NJ",NJ+NY#1,NJ+NY,1136.9651612395714,1127.5029218815635,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_01,"FI Tampa-St. Petersburg-Clearwater, FL",AL+FL+MS#1,AL+FL+MS,969.9735738368604,869.2692598455933,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_02,"FI St. Louis, MO-IL",AR+LA+MO#1,AR+LA+MO,941.2802555666318,941.2802555666314,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_03,"FI Los Angeles-Long Beach-Anaheim, CA",AZ+CA#1,AZ+CA,924.2277212115181,952.8364801836872,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_04,"FI Denver-Aurora-Centennial, CO",CA+CO+NV+UT#1,CA+CO+NV+UT,969.9735738368606,920.9255553106649,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_05,"FI San Francisco-Oakland-Fremont, CA",CA+OR+WA#1,CA+OR+WA,969.9735738368605,990.4128333908869,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_06,"FI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DC+DE+MD+PA#1,DC+DE+MD+PA,792.3330646748774,825.3564128861724,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_07,"FI Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,792.3330646748773,895.0227365528136,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_08,"FI Atlanta-Sandy Springs-Roswell, GA",FL+GA#1,FL+GA,810.5829864230286,808.5976285363589,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_09,"FI Chicago-Naperville-Elgin, IL-IN",IA+IL+KY#1,IA+IL+KY,969.9622294878973,969.9622294878969,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_10,"FI Cincinnati, OH-KY-IN",IN+OH#1,IN+OH,792.3330646748775,883.1871356068809,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_11,"FI Detroit-Warren-Dearborn, MI",MI+OH#1,MI+OH,792.3330646748773,803.1570921679399,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_12,"FI Minneapolis-St. Paul-Bloomington, MN-WI",MN+WI#1,MN+WI,879.5484129768413,879.5484129768411,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_13,"FI Charlotte-Concord-Gastonia, NC-SC",NC+SC#1,NC+SC,858.2276453187658,821.1632875741681,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_14,"FI Washington-Arlington-Alexandria, DC-VA-MD-WV",NC+VA#1,NC+VA,792.3330646748773,829.3974224194747,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_15,"FI New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ+PA#1,NJ+PA,887.3724982258898,835.3504556270622,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_16,"FI New York-Newark-Jersey City, NY-NJ",NY#1,NY,937.148089349749,972.9726439195729,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_17,"FI Buffalo-Cheektowaga, NY",NY#2,NY,937.148089349749,901.3235347799251,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_18,"FI Pittsburgh, PA / Columbus, OH",OH+PA+WV#1,OH+PA+WV,896.6897951585104,780.895701926475,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_19,"FI Pittsburgh, PA / Harrisburg-Carlisle, PA",PA#1,PA,792.3330646748774,825.4477538693794,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_20,"FI Nashville-Davidson--Murfreesboro--Franklin, TN",TN#1,TN,898.6966937577123,898.6966937577121,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,FI,FI_21,"FI Dallas-Fort Worth-Arlington, TX",TX#1,TX,899.4161779871088,899.416177987109,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WIFI,WIFI_01,"WIFI Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,1072.7828896766011,1072.7828896766014,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WIFI,WIFI_02,"WIFI Kansas City, MO-KS",ID+KS+MT+ND+NE+NM+OK+SD+WY#1,ID+KS+MT+ND+NE+NM+OK+SD+WY,1066.5046063203874,1066.5046063203874,0
+48_ne-48-bal-r2_14n_10wh_21fi_3wifi_2026-10-13,WIFI,WIFI_03,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,1230.6926480688892,1230.6926480688892,0
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_01,"FI Orlando-Kissimmee-Sanford, FL",AL+FL#1,AL+FL,843.8726554281776,949.2380992044948,0,r2,FI_01
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_02,"FI Memphis, TN-MS-AR",AR+LA+TN#1,AR+LA+TN,764.9999999999998,779.8751051942098,0,r2,FI_02
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_03,"FI Denver-Aurora-Centennial, CO",AZ+CO+NV+UT#1,AZ+CO+NV+UT,798.7908606048854,798.7908606048852,0,r2,FI_03
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_04,"FI Los Angeles-Long Beach-Anaheim, CA",CA#1,CA,1030.384008280354,1030.8284623766822,0,r2,FI_04
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_05,"FI San Francisco-Oakland-Fremont, CA",CA+OR+WA#1,CA+OR+WA,1034.9999999999998,1034.5555459036718,0,r2,FI_05
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_06,"FI Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+PA+VA+WV#1,DC+PA+VA+WV,873.1712205104545,835.2499987476091,0,r2,FI_06
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_07,"FI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+MD+PA#1,DE+MD+PA,818.1123744339889,836.0815851740035,0,r2,FI_07
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_08,"FI Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1034.9999999999995,929.6345562236829,0,r2,FI_08
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_09,"FI Atlanta-Sandy Springs-Roswell, GA",GA+SC#1,GA+SC,926.7008363301054,926.7008363301053,0,r2,FI_09
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_10,"FI Minneapolis-St. Paul-Bloomington, MN-WI",IA+MN+WI#1,IA+MN+WI,995.3410253158969,995.3410253158966,0,r2,FI_10
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_11,"FI Chicago-Naperville-Elgin, IL-IN",IL+MO#1,IL+MO,995.283484062372,995.2834840623718,0,r2,FI_11
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_12,"FI Indianapolis-Carmel-Greenwood, IN",IN+KY#1,IN+KY,768.9221230381256,768.9221230381254,0,r2,FI_12
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_13,"FI Detroit-Warren-Dearborn, MI",MI+OH#1,MI+OH,764.9999999999999,783.6061174394326,0,r2,FI_13
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_14,"FI Nashville-Davidson--Murfreesboro--Franklin, TN",MS+TN#1,MS+TN,816.8096249940481,801.9345197998379,0,r2,FI_14
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_15,"FI Charlotte-Concord-Gastonia, NC-SC",NC#1,NC,767.8250265748026,767.8250265748027,0,r2,FI_15
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_16,"FI New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ+PA#1,NJ+PA,887.37249822589,836.3724759490979,0,r2,FI_16
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_17,"FI New York-Newark-Jersey City, NY-NJ",NY#1,NY,937.148089349749,980.8084950679032,0,r2,FI_17
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_18,"FI Buffalo-Cheektowaga, NY",NY#2,NY,937.148089349749,893.4876836315948,0,r2,FI_18
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_19,"FI Columbus, OH",OH#1,OH,842.9216098875407,824.3154924481082,0,r2,FI_19
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_20,"FI Pittsburgh, PA",PA#1,PA,764.9999999999999,835.9520332996232,0,r2,FI_20
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,FI,FI_21,"FI Dallas-Fort Worth-Arlington, TX",TX#1,TX,899.4161779871088,899.416177987109,0,r2,FI_21
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_01,"WH Miami-Fort Lauderdale-West Palm Beach, FL",AL+FL+MS#1,AL+FL+MS,1090.6610934698438,1090.661093469844,0,r2,WH_01
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_02,"WH Dallas-Fort Worth-Arlington, TX",AR+LA+MO+TX#1,AR+LA+MO+TX,1088.5855034035142,1088.5855034035146,0,r2,WH_02
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_03,"WH Los Angeles-Long Beach-Anaheim, CA",AZ+CA+CO+UT#1,AZ+CA+CO+UT,931.857299164209,927.1063294464582,0,r2,WH_03
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_04,"WH San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,849.9999999999999,854.7509697177509,0,r2,WH_04
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_05,"WH Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+MD+VA+WV#1,DC+MD+VA+WV,935.8464807478822,935.8464807478828,0,r2,WH_05
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_06,"WH Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,1099.6825531701315,1122.179631288568,0,r2,WH_06
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_07,"WH Atlanta-Sandy Springs-Roswell, GA",GA+NC+SC+TN#1,GA+NC+SC+TN,957.7092063980302,957.7092063980298,0,r2,WH_07
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_08,"WH Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+WI#1,IA+IL+MN+WI,954.2567264090492,954.2567264090487,0,r2,WH_08
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_09,"WH Detroit-Warren-Dearborn, MI",IN+KY+MI+OH#1,IN+KY+MI+OH,1080.2022897214795,1080.2022897214792,0,r2,WH_09
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WH,WH_10,"WH New York-Newark-Jersey City, NY-NJ",NJ+NY#1,NJ+NY,1150.0,1127.5029218815635,0,r2,WH_10
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WIFI,WIFI_01,"WIFI Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,1072.7828896766011,1072.7828896766016,0,r1,WIFI_01
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WIFI,WIFI_02,"WIFI Kansas City, MO-KS",ID+KS+MT+ND+NE+NM+OK+SD+WY#1,ID+KS+MT+ND+NE+NM+OK+SD+WY,1066.5046063203874,1066.5046063203874,0,r1,WIFI_02
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,WIFI,WIFI_03,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,1230.6926480688892,1230.6926480688885,0,r1,WIFI_03
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_01,"national Atlanta-Sandy Springs-Roswell, GA",AL+GA+NC+SC+TN#1,AL+GA+NC+SC+TN,1269.4346758734935,1269.4346758734926,0,r2,national_01
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_02,"national Dallas-Fort Worth-Arlington, TX",AR+LA+MS+TX#1,AR+LA+MS+TX,999.9999999999998,1005.2862701737959,0,r2,national_02
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_03,"national Phoenix-Mesa-Chandler, AZ",AZ+CO+UT#1,AZ+CO+UT,1084.7996829475198,1084.79968294752,0,r2,national_03
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_04,"national San Francisco-Oakland-Fremont, CA",CA#1,CA,1164.3700259031634,1071.8902706044403,0,r2,national_04
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_05,"national Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,1164.3700259031634,1384.5155351131173,0,r2,national_05
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_06,"national Los Angeles-Long Beach-Anaheim, CA / Oxnard-Thousand Oaks-Ventura, CA",CA#3,CA,1164.3700259031634,1035.3378405529934,0,r2,national_06
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_07,"national Sacramento-Roseville-Folsom, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,1000.0,1001.366431438939,0,r2,national_07
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_08,"national Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DC+DE+MD+PA+VA#1,DC+DE+MD+PA+VA,1260.553596448638,1260.5535964486378,0,r2,national_08
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_09,"national Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1370.3985006065052,1370.3985006065043,0,r2,national_09
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_10,"national Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+MO+WI#1,IA+IL+MN+MO+WI,1192.4961465034155,1192.4961465034155,0,r2,national_10
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_11,"national Detroit-Warren-Dearborn, MI",IN+KY+MI+OH+WV#1,IN+KY+MI+OH+WV,1229.1155794829,1229.1155794828999,0,r2,national_11
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_12,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ+NY#1,NJ+NY,1335.0728640505383,1398.6006092665366,0,r2,national_12
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_13,"national New York-Newark-Jersey City, NY-NJ / Kiryas Joel-Poughkeepsie-Newburgh, NY",NY#1,NY,1437.4999999999995,1373.972254784003,0,r2,national_13
+48_ne-48-bal_14n_10wh_21fi_3wifi_2026-10-14,national,national_14,"national Houston-Pasadena-The Woodlands, TX",TX#1,TX,1223.2346364827658,1217.9483663089698,0,r2,national_14
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_01,"FI Orlando-Kissimmee-Sanford, FL",AL+FL#1,AL+FL,843.8726554281772,949.2380992044948,0,r2,FI_01
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_02,"FI Memphis, TN-MS-AR",AR+LA+MS+TN#1,AR+LA+MS+TN,1035.0,836.9468902959765,0,r2,FI_02
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_03,"FI Denver-Aurora-Centennial, CO",AZ+CO+NV+UT#1,AZ+CO+NV+UT,798.7908606048854,798.7908606048852,0,r2,FI_03
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_04,"FI Los Angeles-Long Beach-Anaheim, CA",CA#1,CA,1030.3840082803538,1030.8284623766822,0,r2,FI_04
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_05,"FI San Francisco-Oakland-Fremont, CA",CA+OR+WA#1,CA+OR+WA,1035.0,1034.5555459036718,0,r2,FI_05
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_06,"FI Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+MD+VA#1,DC+MD+VA,932.959975350944,932.9599753509448,0,r2,FI_06
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_07,"FI New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,988.8290422662216,1006.2293355825907,0,r2,FI_07
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_08,"FI Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1035.0,929.6345562236829,0,r2,FI_08
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_09,"FI Atlanta-Sandy Springs-Roswell, GA",GA+SC#1,GA+SC,926.7008363301054,926.7008363301053,0,r2,FI_09
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_10,"FI Minneapolis-St. Paul-Bloomington, MN-WI",IA+MN+WI#1,IA+MN+WI,995.3410253158969,995.3410253158966,0,r2,FI_10
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_11,"FI Chicago-Naperville-Elgin, IL-IN",IL+MO#1,IL+MO,995.283484062372,995.2834840623718,0,r2,FI_11
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_12,"FI Detroit-Warren-Dearborn, MI",IN+MI#1,IN+MI,1020.0498002684179,1020.0498002684178,0,r2,FI_12
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_13,"FI Nashville-Davidson--Murfreesboro--Franklin, TN",KY+TN#1,KY+TN,827.4217216652455,1025.4748313692687,0,r2,FI_13
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_14,"FI Charlotte-Concord-Gastonia, NC-SC",NC#1,NC,767.8250265748026,767.8250265748027,0,r2,FI_14
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_15,"FI New York-Newark-Jersey City, NY-NJ",NY#1,NY,937.148089349749,980.8084950679032,0,r2,FI_15
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_16,"FI Buffalo-Cheektowaga, NY",NY#2,NY,937.148089349749,893.4876836315948,0,r2,FI_16
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_17,"FI Columbus, OH",OH#1,OH,764.9999999999997,820.0569463786607,0,r2,FI_17
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_18,"FI Pittsburgh, PA",OH+PA+WV#1,OH+PA+WV,968.048911539219,874.456155126664,0,r2,FI_18
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_19,"FI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,764.9999999999999,786.1355167175243,0,r2,FI_19
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,FI,FI_20,"FI Dallas-Fort Worth-Arlington, TX",TX#1,TX,899.4161779871088,899.416177987109,0,r2,FI_20
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_01,"WH Atlanta-Sandy Springs-Roswell, GA",AL+GA+NC+SC#1,AL+GA+NC+SC,875.1012288762238,875.1012288762238,0,r2,WH_01
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_02,"WH Dallas-Fort Worth-Arlington, TX",AR+LA+MS+TX#1,AR+LA+MS+TX,982.4209705771842,982.4209705771843,0,r2,WH_02
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_03,"WH Los Angeles-Long Beach-Anaheim, CA",AZ+CA+CO+UT#1,AZ+CA+CO+UT,931.8572991642089,927.1063294464582,0,r2,WH_03
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_04,"WH San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,850.0,854.7509697177509,0,r2,WH_04
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_05,"WH Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+KY+TN+VA#1,DC+KY+TN+VA,867.1558756026589,867.1558756026586,0,r2,WH_05
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_06,"WH Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,850.0000000000001,857.8915321214497,0,r2,WH_06
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_07,"WH Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,966.4035989852845,966.4035989852846,0,r2,WH_07
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_08,"WH Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+MO#1,IA+IL+MN+MO,901.2084093117899,901.2084093117895,0,r2,WH_08
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_09,"WH Detroit-Warren-Dearborn, MI",IN+MI+OH+WI#1,IN+MI+OH+WI,1093.3822816178454,1093.3822816178445,0,r2,WH_09
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_10,"WH Baltimore-Columbia-Towson, MD",MD+PA+WV#1,MD+PA+WV,850.0000000000001,866.0256156818159,0,r2,WH_10
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WH,WH_11,"WH New York-Newark-Jersey City, NY-NJ",NJ+NY#1,NJ+NY,971.2714883489439,947.3543405456783,0,r2,WH_11
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_01,"WIFI Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,1072.7828896766011,1072.7828896766016,0,r1,WIFI_01
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_02,"WIFI Kansas City, MO-KS",ID+KS+MT+ND+NE+NM+OK+SD+WY#1,ID+KS+MT+ND+NE+NM+OK+SD+WY,1066.5046063203874,1066.5046063203874,0,r1,WIFI_02
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_03,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,1230.6926480688892,1230.6926480688885,0,r1,WIFI_03
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_01,"national Atlanta-Sandy Springs-Roswell, GA",AL+FL+GA+SC#1,AL+FL+GA+SC,1018.0876049762728,1013.9936519236546,0,r2,national_01
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_02,"national Houston-Pasadena-The Woodlands, TX",AR+LA+MS+TX#1,AR+LA+MS+TX,999.9999999999997,1098.061078077464,0,r2,national_02
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_03,"national Phoenix-Mesa-Chandler, AZ",AZ+CO+UT#1,AZ+CO+UT,1084.7996829475198,1084.79968294752,0,r2,national_03
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_04,"national San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,1164.3700259031634,1123.141438713175,0,r2,national_04
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_05,"national Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,1164.3700259031634,1184.857479778936,0,r2,national_05
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_06,"national Los Angeles-Long Beach-Anaheim, CA",CA#3,CA,1164.3700259031634,1062.0946488436127,0,r2,national_06
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_07,"national San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,999.9999999999998,1123.016510373766,0,r2,national_07
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_08,"national Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DC+DE+MD+NY+PA#1,DC+DE+MD+NY+PA,1169.4079870354485,1207.6491364749158,0,r2,national_08
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_09,"national Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,999.9999999999998,1004.0939530526178,0,r2,national_09
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_10,"national Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+MO+WI#1,IA+IL+MN+MO+WI,1192.4961465034155,1192.4961465034155,0,r2,national_10
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_11,"national Detroit-Warren-Dearborn, MI",IN+MI+OH#1,IN+MI+OH,1067.8064241680538,1067.8064241680543,0,r2,national_11
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_12,"national Charlotte-Concord-Gastonia, NC-SC",KY+NC+TN+VA+WV#1,KY+NC+TN+VA+WV,1192.701403680785,1192.7014036807846,0,r2,national_12
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_13,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ#1,NJ,1016.571796601515,1016.5717966015156,0,r2,national_13
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_14,"national New York-Newark-Jersey City, NY-NJ",NY#1,NY,1437.4999999999998,1399.2588505605327,0,r2,national_14
+49_ne-cmp-tierP_15n_11wh_20fi_3wifi_2026-10-14,national,national_15,"national Dallas-Fort Worth-Arlington, TX",TX#1,TX,1223.234636482766,1125.1735584053015,0,r2,national_15
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_01,"FI Orlando-Kissimmee-Sanford, FL",AL+FL#1,AL+FL,843.8726554281772,949.2380992044948,0,r2,FI_01
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_02,"FI Memphis, TN-MS-AR",AR+LA+MS+TN#1,AR+LA+MS+TN,1035.0,836.9468902959765,0,r2,FI_02
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_03,"FI Denver-Aurora-Centennial, CO",AZ+CO+NV+UT#1,AZ+CO+NV+UT,798.7908606048854,798.7908606048852,0,r2,FI_03
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_04,"FI Los Angeles-Long Beach-Anaheim, CA",CA#1,CA,1030.3840082803538,1030.8284623766822,0,r2,FI_04
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_05,"FI San Francisco-Oakland-Fremont, CA",CA+OR+WA#1,CA+OR+WA,1035.0,1034.5555459036718,0,r2,FI_05
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_06,"FI Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+MD+VA#1,DC+MD+VA,932.959975350944,932.9599753509448,0,r2,FI_06
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_07,"FI New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,988.8290422662216,1006.2293355825907,0,r2,FI_07
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_08,"FI Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1035.0,929.6345562236829,0,r2,FI_08
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_09,"FI Atlanta-Sandy Springs-Roswell, GA",GA+SC#1,GA+SC,926.7008363301054,926.7008363301053,0,r2,FI_09
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_10,"FI Minneapolis-St. Paul-Bloomington, MN-WI",IA+MN+WI#1,IA+MN+WI,995.3410253158969,995.3410253158966,0,r2,FI_10
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_11,"FI Chicago-Naperville-Elgin, IL-IN",IL+MO#1,IL+MO,995.283484062372,995.2834840623718,0,r2,FI_11
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_12,"FI Detroit-Warren-Dearborn, MI",IN+MI#1,IN+MI,1020.0498002684179,1020.0498002684178,0,r2,FI_12
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_13,"FI Nashville-Davidson--Murfreesboro--Franklin, TN",KY+TN#1,KY+TN,827.4217216652455,1025.4748313692687,0,r2,FI_13
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_14,"FI Charlotte-Concord-Gastonia, NC-SC",NC#1,NC,767.8250265748026,767.8250265748027,0,r2,FI_14
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_15,"FI New York-Newark-Jersey City, NY-NJ",NY#1,NY,937.148089349749,980.8084950679032,0,r2,FI_15
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_16,"FI Buffalo-Cheektowaga, NY",NY#2,NY,937.148089349749,893.4876836315948,0,r2,FI_16
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_17,"FI Columbus, OH",OH#1,OH,764.9999999999997,820.0569463786607,0,r2,FI_17
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_18,"FI Pittsburgh, PA",OH+PA+WV#1,OH+PA+WV,968.048911539219,874.456155126664,0,r2,FI_18
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_19,"FI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,764.9999999999999,786.1355167175243,0,r2,FI_19
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,FI,FI_20,"FI Dallas-Fort Worth-Arlington, TX",TX#1,TX,899.4161779871088,899.416177987109,0,r2,FI_20
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_01,"WH Atlanta-Sandy Springs-Roswell, GA",AL+GA+NC+SC#1,AL+GA+NC+SC,875.1012288762238,875.1012288762238,0,r2,WH_01
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_02,"WH Dallas-Fort Worth-Arlington, TX",AR+LA+MS+TX#1,AR+LA+MS+TX,982.4209705771842,982.4209705771843,0,r2,WH_02
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_03,"WH Los Angeles-Long Beach-Anaheim, CA",AZ+CA+CO+UT#1,AZ+CA+CO+UT,931.8572991642089,927.1063294464582,0,r2,WH_03
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_04,"WH San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,850.0,854.7509697177509,0,r2,WH_04
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_05,"WH Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+KY+TN+VA#1,DC+KY+TN+VA,867.1558756026589,867.1558756026586,0,r2,WH_05
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_06,"WH Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ+PA#1,DE+NJ+PA,850.0000000000001,857.8915321214497,0,r2,WH_06
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_07,"WH Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,966.4035989852845,966.4035989852846,0,r2,WH_07
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_08,"WH Chicago-Naperville-Elgin, IL-IN",IA+IL+MN+MO#1,IA+IL+MN+MO,901.2084093117899,901.2084093117895,0,r2,WH_08
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_09,"WH Detroit-Warren-Dearborn, MI",IN+MI+OH+WI#1,IN+MI+OH+WI,1093.3822816178454,1093.3822816178445,0,r2,WH_09
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_10,"WH Baltimore-Columbia-Towson, MD",MD+PA+WV#1,MD+PA+WV,850.0000000000001,866.0256156818159,0,r2,WH_10
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WH,WH_11,"WH New York-Newark-Jersey City, NY-NJ",NJ+NY#1,NJ+NY,971.2714883489439,947.3543405456783,0,r2,WH_11
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_01,"WIFI Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,1072.7828896766011,1072.7828896766016,0,r1,WIFI_01
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_02,"WIFI Kansas City, MO-KS",ID+KS+MT+ND+NE+NM+OK+SD+WY#1,ID+KS+MT+ND+NE+NM+OK+SD+WY,1066.5046063203874,1066.5046063203874,0,r1,WIFI_02
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,WIFI,WIFI_03,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,1230.6926480688892,1230.6926480688885,0,r1,WIFI_03
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_01,"national Atlanta-Sandy Springs-Roswell, GA",AL+FL+GA+LA+MS#1,AL+FL+GA+LA+MS,1066.2139148936624,1062.119961841043,0,r2,national_01
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_02,"national Dallas-Fort Worth-Arlington, TX",AR+TX#1,AR+TX,999.9999999999997,1003.858660367251,0,r2,national_02
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_03,"national Phoenix-Mesa-Chandler, AZ",AZ+CO+UT#1,AZ+CO+UT,1084.7996829475198,1084.79968294752,0,r2,national_03
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_04,"national San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,1164.3700259031634,1123.141438713175,0,r2,national_04
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_05,"national Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,1164.3700259031634,1184.857479778936,0,r2,national_05
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_06,"national Los Angeles-Long Beach-Anaheim, CA",CA#3,CA,1164.3700259031634,1062.0946488436127,0,r2,national_06
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_07,"national San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,1000.0,1123.016510373766,0,r2,national_07
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_08,"national Columbus, OH",DC+MD+OH+PA+WV#1,DC+MD+OH+PA+WV,1040.14954405739,1002.8814833496048,0,r2,national_08
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_09,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (2)",DE+NY+PA#1,DE+NY+PA,999.9999999999998,1011.4746210863509,0,r2,national_09
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_10,"national Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,999.9999999999998,1004.0939530526178,0,r2,national_10
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_11,"national Detroit-Warren-Dearborn, MI",IA+IL+MI+MN+WI#1,IA+IL+MI+MN+WI,1064.8990508073034,1056.9501728707403,0,r2,national_11
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_12,"national Chicago-Naperville-Elgin, IL-IN",IL+IN+KY+MO+TN#1,IL+IN+KY+MO+TN,999.9999999999998,1007.948877936563,0,r2,national_12
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_13,"national Charlotte-Concord-Gastonia, NC-SC",NC+SC+VA#1,NC+SC+VA,1116.799425006334,1116.7994250063348,0,r2,national_13
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_14,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (1)",NJ#1,NJ,1016.571796601515,1016.5717966015156,0,r2,national_14
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_15,"national New York-Newark-Jersey City, NY-NJ / Kiryas Joel-Poughkeepsie-Newburgh, NY",NY#1,NY,999.9999999999997,1025.7934396214332,0,r2,national_15
+50_ne-50-filight_16n_11wh_20fi_3wifi_2026-10-14,national,national_16,"national Houston-Pasadena-The Woodlands, TX",TX#1,TX,1013.1722680820523,1009.3136077148006,0,r2,national_16
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_01,"WIFI Atlanta-Sandy Springs-Roswell, GA / Birmingham, AL",AL+GA+TN#1,AL+GA+TN,849.9999999999937,886.1389220840646,0,combined,rest-WIFI/WIFI_01
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_02,"WIFI Fayetteville-Springdale-Rogers, AR",AR+LA+MS#1,AR+LA+MS,958.1238832556772,958.1238832556769,0,combined,rest-WIFI/WIFI_02
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_03,"WIFI Denver-Aurora-Centennial, CO",AZ+CO+NM#1,AZ+CO+NM,961.9786731448855,961.9786731448859,0,combined,rest-WIFI/WIFI_03
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_04,"WIFI Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#1,CA,1120.064311282916,1113.0486680224635,0,combined,rest-WIFI/WIFI_04
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_05,"WIFI Los Angeles-Long Beach-Anaheim, CA / San Jose-Sunnyvale-Santa Clara, CA",CA#2,CA,1120.064311282916,1113.329777506815,0,combined,rest-WIFI/WIFI_05
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_06,"WIFI San Francisco-Oakland-Fremont, CA",CA+NV+OR#1,CA+NV+OR,849.9999999999999,863.7501770365528,0,combined,rest-WIFI/WIFI_06
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_07,"WIFI Providence-Warwick, RI-MA",CT+MA+RI#1,CT+MA+RI,849.9999999999999,862.5729612833062,0,combined,rest-WIFI/WIFI_07
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_08,"WIFI New York-Newark-Jersey City, NY-NJ / Bridgeport-Stamford-Danbury, CT",CT+NY#1,CT+NY,861.3640380767727,1055.5562583398457,0,combined,rest-WIFI/WIFI_08
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_09,"WIFI Washington-Arlington-Alexandria, DC-VA-MD-WV / Baltimore-Columbia-Towson, MD",DC+MD#1,DC+MD,849.9999999999998,856.5096833103065,0,combined,rest-WIFI/WIFI_09
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_10,"WIFI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / New York-Newark-Jersey City, NY-NJ",DE+MD+NJ#1,DE+MD+NJ,849.9999999999999,961.7215670329448,0,combined,rest-WIFI/WIFI_10
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_11,"WIFI Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,958.2102620218078,892.39297016996,0,combined,rest-WIFI/WIFI_11
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_12,"WIFI Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,958.2102620218078,853.7663884952619,0,combined,rest-WIFI/WIFI_12
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_13,"WIFI Orlando-Kissimmee-Sanford, FL",FL+GA#1,FL+GA,849.9999999999999,926.4263704274261,0,combined,rest-WIFI/WIFI_13
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_14,"WIFI Atlanta-Sandy Springs-Roswell, GA / Greenville-Anderson-Greer, SC",GA+SC#1,GA+SC,849.9999999999999,890.0050564625602,0,combined,rest-WIFI/WIFI_14
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_15,"WIFI Milwaukee-Waukesha, WI",IA+MN+WI#1,IA+MN+WI,906.2912398038972,877.9294998114627,0,combined,rest-WIFI/WIFI_15
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_16,"WIFI Seattle-Tacoma-Bellevue, WA",ID+MT+UT+WA+WY#1,ID+MT+UT+WA+WY,884.8409368825315,884.840936882532,0,combined,rest-WIFI/WIFI_16
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_17,"WIFI Chicago-Naperville-Elgin, IL-IN",IL#1,IL,1016.3175761372996,1016.3175761372997,0,combined,rest-WIFI/WIFI_17
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_18,"WIFI Indianapolis-Carmel-Greenwood, IN",IN+KY#1,IN+KY,849.9999999999998,851.0360829355624,0,combined,rest-WIFI/WIFI_18
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_19,"WIFI Cincinnati, OH-KY-IN",IN+OH#1,IN+OH,900.0539637645588,874.3928714757069,0,combined,rest-WIFI/WIFI_19
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_20,"WIFI St. Louis, MO-IL",KS+MO+NE#1,KS+MO+NE,903.1332965476847,903.1332965476848,0,combined,rest-WIFI/WIFI_20
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_21,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,849.9999999999999,888.8431631273049,0,combined,rest-WIFI/WIFI_21
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_22,"WIFI Lancaster, PA",MD+PA+WV#1,MD+PA+WV,850.0,861.0086222887354,0,combined,rest-WIFI/WIFI_22
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_23,"WIFI Detroit-Warren-Dearborn, MI",MI#1,MI,856.9920588825873,856.9920588825872,0,combined,rest-WIFI/WIFI_23
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_24,"WIFI Minneapolis-St. Paul-Bloomington, MN-WI",MN+ND+SD#1,MN+ND+SD,849.9999999999999,878.3617399924337,0,combined,rest-WIFI/WIFI_24
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_25,"WIFI Charlotte-Concord-Gastonia, NC-SC",NC#1,NC,849.9999999999999,951.5299557514586,0,combined,rest-WIFI/WIFI_25
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_26,"WIFI Washington-Arlington-Alexandria, DC-VA-MD-WV / Virginia Beach-Chesapeake-Norfolk, VA-NC",NC+VA#1,NC+VA,1053.0246694999082,951.4947137484493,0,combined,rest-WIFI/WIFI_26
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_27,"WIFI New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",NJ#1,NJ,849.9999999999999,851.1964519478595,0,combined,rest-WIFI/WIFI_27
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_28,"WIFI New York-Newark-Jersey City, NY-NJ",NY#1,NY,1150.0,1005.6634768706383,0,combined,rest-WIFI/WIFI_28
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_29,"WIFI Buffalo-Cheektowaga, NY",NY#2,NY,1150.0,914.0828153082601,0,combined,rest-WIFI/WIFI_29
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_30,"WIFI Cleveland, OH",OH#1,OH,849.9999999999999,874.6250093532888,0,combined,rest-WIFI/WIFI_30
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_31,"WIFI Dallas-Fort Worth-Arlington, TX",OK+TX#1,OK+TX,942.6253089785562,896.304947697773,0,combined,rest-WIFI/WIFI_31
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_32,"WIFI Pittsburgh, PA",PA#1,PA,855.8531046697329,855.6038596548786,0,combined,rest-WIFI/WIFI_32
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_33,"WIFI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Allentown-Bethlehem-Easton, PA-NJ",PA#2,PA,855.8531046697329,860.3113882521582,0,combined,rest-WIFI/WIFI_33
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_34,"WIFI Nashville-Davidson--Murfreesboro--Franklin, TN",TN#1,TN,850.0000000000036,867.6908164043392,0,combined,rest-WIFI/WIFI_34
+50_nw34-50_15n_35wifi_2026-10-15,WIFI,WIFI_35,"WIFI Houston-Pasadena-The Woodlands, TX",TX#1,TX,849.9999999999973,896.3203612807818,0,combined,rest-WIFI/WIFI_35
+50_nw34-50_15n_35wifi_2026-10-15,national,national_01,"national Atlanta-Sandy Springs-Roswell, GA",AL+GA+MS+NC+SC#1,AL+GA+MS+NC+SC,1211.7443854786688,1211.744385478668,0,combined,rest-national/national_01
+50_nw34-50_15n_35wifi_2026-10-15,national,national_02,"national Houston-Pasadena-The Woodlands, TX",AR+LA+TX#1,AR+LA+TX,999.9999999999997,1088.9181559496253,0,combined,rest-national/national_02
+50_nw34-50_15n_35wifi_2026-10-15,national,national_03,"national Phoenix-Mesa-Chandler, AZ",AZ+CO+UT#1,AZ+CO+UT,1084.7996829475198,1084.79968294752,0,combined,rest-national/national_03
+50_nw34-50_15n_35wifi_2026-10-15,national,national_04,"national San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,1164.3700259031634,1123.141438713175,0,combined,rest-national/national_04
+50_nw34-50_15n_35wifi_2026-10-15,national,national_05,"national Los Angeles-Long Beach-Anaheim, CA / San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,1164.3700259031634,1184.857479778936,0,combined,rest-national/national_05
+50_nw34-50_15n_35wifi_2026-10-15,national,national_06,"national Los Angeles-Long Beach-Anaheim, CA",CA#3,CA,1164.3700259031634,1062.0946488436127,0,combined,rest-national/national_06
+50_nw34-50_15n_35wifi_2026-10-15,national,national_07,"national San Francisco-Oakland-Fremont, CA",CA+NV+OR+WA#1,CA+NV+OR+WA,999.9999999999998,1123.016510373766,0,combined,rest-national/national_07
+50_nw34-50_15n_35wifi_2026-10-15,national,national_08,"national Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+MD+OH+VA+WV#1,DC+MD+OH+VA+WV,1130.9168539444174,1130.9168539444179,0,combined,rest-national/national_08
+50_nw34-50_15n_35wifi_2026-10-15,national,national_09,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (1)",DE+NY+PA#1,DE+NY+PA,999.9999999999998,1293.0859273537505,0,combined,rest-national/national_09
+50_nw34-50_15n_35wifi_2026-10-15,national,national_10,"national Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1370.3985006065052,1370.3985006065043,0,combined,rest-national/national_10
+50_nw34-50_15n_35wifi_2026-10-15,national,national_11,"national Detroit-Warren-Dearborn, MI",IA+IL+MI+MN+WI#1,IA+IL+MI+MN+WI,1064.8990508073034,1056.9501728707403,0,combined,rest-national/national_11
+50_nw34-50_15n_35wifi_2026-10-15,national,national_12,"national Chicago-Naperville-Elgin, IL-IN",IL+IN+KY+MO+TN#1,IL+IN+KY+MO+TN,999.9999999999998,1007.948877936563,0,combined,rest-national/national_12
+50_nw34-50_15n_35wifi_2026-10-15,national,national_13,"national New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD (2)",NJ#1,NJ,1016.571796601515,1016.5717966015156,0,combined,rest-national/national_13
+50_nw34-50_15n_35wifi_2026-10-15,national,national_14,"national New York-Newark-Jersey City, NY-NJ / Kiryas Joel-Poughkeepsie-Newburgh, NY",NY#1,NY,1318.8793669751847,1025.7934396214332,0,combined,rest-national/national_14
+50_nw34-50_15n_35wifi_2026-10-15,national,national_15,"national Dallas-Fort Worth-Arlington, TX",TX#1,TX,1204.396045034662,1115.477889085036,0,combined,rest-national/national_15
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_01,"WIFI Memphis, TN-MS-AR",AL+TN#1,AL+TN,887.772571009215,887.431175584567,0,bal33,WIFI_01,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_02,"WIFI St. Louis, MO-IL",AR+MO#1,AR+MO,1042.305420248426,1042.3054202484252,0,bal33,WIFI_02,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_03,"WIFI Phoenix-Mesa-Chandler, AZ",AZ#1,AZ,864.1004540764162,864.1004540764161,0,bal33,WIFI_03,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_04,"WIFI Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA",CA#1,CA,896.813982552504,895.2889746190723,0,bal33,WIFI_04,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_05,"WIFI San Jose-Sunnyvale-Santa Clara, CA",CA#2,CA,896.813982552504,888.8224014994673,0,bal33,WIFI_05,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_06,"WIFI Los Angeles-Long Beach-Anaheim, CA / Oxnard-Thousand Oaks-Ventura, CA",CA#3,CA,896.813982552504,886.570241053382,0,bal33,WIFI_06,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_07,"WIFI Los Angeles-Long Beach-Anaheim, CA / Fresno, CA",CA#4,CA,896.813982552504,917.6809441645266,0,bal33,WIFI_07,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_08,"WIFI San Francisco-Oakland-Fremont, CA",CA#5,CA,896.813982552504,882.2465426694528,0,bal33,WIFI_08,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_09,"WIFI Los Angeles-Long Beach-Anaheim, CA",CA#6,CA,896.813982552504,878.9506995900331,0,bal33,WIFI_09,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_10,"WIFI San Diego-Chula Vista-Carlsbad, CA",CA#7,CA,896.813982552504,895.3584266295348,0,bal33,WIFI_10,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_11,"WIFI Sacramento-Roseville-Folsom, CA",CA+NV#1,CA+NV,850.0,882.7796476420583,0,bal33,WIFI_11,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_12,"WIFI Denver-Aurora-Centennial, CO / Kansas City, MO-KS",CO+KS+NM+OK#1,CO+KS+NM+OK,1011.2180005445465,859.016751068442,0,bal33,WIFI_12,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_13,"WIFI Denver-Aurora-Centennial, CO / Salt Lake City-Murray, UT",CO+UT+WY#1,CO+UT+WY,850.0,1002.2012494761043,0,bal33,WIFI_13,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_14,"WIFI Providence-Warwick, RI-MA",CT+MA+RI#1,CT+MA+RI,1150.0,1048.2802360919277,0,bal33,WIFI_14,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_15,"WIFI New York-Newark-Jersey City, NY-NJ / New Haven, CT",CT+NY#1,CT+NY,850.0,930.6158058147696,0,bal33,WIFI_15,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_16,"WIFI Washington-Arlington-Alexandria, DC-VA-MD-WV / Roanoke, VA",DC+MD+VA+WV#1,DC+MD+VA+WV,880.0385339931878,968.2534896202939,0,bal33,WIFI_16,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_17,"WIFI New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE+NJ#1,DE+NJ,850.0,898.9511478787878,0,bal33,WIFI_17,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_18,"WIFI Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL#1,FL,956.4073018572197,956.3186814858097,0,bal33,WIFI_18,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_19,"WIFI Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,956.4073018572197,956.387864867185,0,bal33,WIFI_19,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_20,"WIFI Orlando-Kissimmee-Sanford, FL",FL#3,FL,956.4073018572197,956.4142118923621,0,bal33,WIFI_20,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_21,"WIFI Miami-Fort Lauderdale-West Palm Beach, FL / North Port-Bradenton-Sarasota, FL",FL#4,FL,956.4073018572197,956.5084491835224,0,bal33,WIFI_21,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_22,"WIFI Atlanta-Sandy Springs-Roswell, GA",GA#1,GA,997.6352324247198,881.4850004413164,0,bal33,WIFI_22,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_23,"WIFI Greenville-Anderson-Greer, SC",GA+SC#1,GA+SC,850.0,966.1502319834025,0,bal33,WIFI_23,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_24,"WIFI Milwaukee-Waukesha, WI",IA+MN+WI#1,IA+MN+WI,1098.736803431808,1125.8376414062957,0,bal33,WIFI_24,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_25,"WIFI Seattle-Tacoma-Bellevue, WA",ID+MT+OR+WA#1,ID+MT+OR+WA,1061.5575726880313,1061.5575726880322,0,bal33,WIFI_25,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_26,"WIFI Chicago-Naperville-Elgin, IL-IN / Rockford, IL",IL#1,IL,1149.9999999999986,1135.8112743827405,0,bal33,WIFI_26,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_27,"WIFI Chicago-Naperville-Elgin, IL-IN / Indianapolis-Carmel-Greenwood, IN",IL+IN+MI#1,IL+IN+MI,1149.999999999999,1136.0245590544528,0,bal33,WIFI_27,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_28,"WIFI Louisville/Jefferson County, KY-IN",IN+KY#1,IN+KY,973.5856025710085,998.9412442223417,0,bal33,WIFI_28,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_29,"WIFI New Orleans-Metairie, LA",LA+MS#1,LA+MS,893.5299653390753,893.5299653390754,0,bal33,WIFI_29,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_30,"WIFI Boston-Cambridge-Newton, MA-NH",MA+ME+NH+VT#1,MA+ME+NH+VT,850.0,975.1657067333028,0,bal33,WIFI_30,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_31,"WIFI Baltimore-Columbia-Towson, MD",MD#1,MD,990.4562858378954,880.8061968983799,0,bal33,WIFI_31,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_32,"WIFI Detroit-Warren-Dearborn, MI",MI#1,MI,1150.0000000000014,1139.7601517018124,0,bal33,WIFI_32,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_33,"WIFI Minneapolis-St. Paul-Bloomington, MN-WI",MN+ND+NE+SD#1,MN+ND+NE+SD,1149.9999999999998,1135.9475352351717,0,bal33,WIFI_33,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_34,"WIFI Raleigh-Cary, NC",NC#1,NC,857.1773815218037,857.4343064177285,0,bal33,WIFI_34,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_35,"WIFI Charlotte-Concord-Gastonia, NC-SC",NC#2,NC,857.1773815218037,856.920456625879,0,bal33,WIFI_35,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_36,"WIFI New York-Newark-Jersey City, NY-NJ (3)",NJ#1,NJ,879.8447810618096,851.8318621144036,0,bal33,WIFI_36,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_37,"WIFI New York-Newark-Jersey City, NY-NJ / Trenton-Princeton, NJ",NJ#2,NJ,879.8447810618096,858.906552130428,0,bal33,WIFI_37,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_38,"WIFI New York-Newark-Jersey City, NY-NJ (2)",NY#1,NY,941.8412763814487,878.9748915334943,0,bal33,WIFI_38,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_39,"WIFI New York-Newark-Jersey City, NY-NJ / Buffalo-Cheektowaga, NY",NY#2,NY,941.8412763814487,900.8190644300272,1,bal33,WIFI_39,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_40,"WIFI New York-Newark-Jersey City, NY-NJ (1)",NY#3,NY,941.8412763814487,956.8569069948966,0,bal33,WIFI_40,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_41,"WIFI New York-Newark-Jersey City, NY-NJ / Kiryas Joel-Poughkeepsie-Newburgh, NY",NY#4,NY,941.8412763814487,926.6524939273769,0,bal33,WIFI_41,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_42,"WIFI Columbus, OH",OH#1,OH,956.1922472510482,956.3572323414277,0,bal33,WIFI_42,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_43,"WIFI Cleveland, OH",OH#2,OH,956.1922472510482,956.0272621606688,0,bal33,WIFI_43,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_44,"WIFI Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,941.041720982724,942.2780730164333,0,bal33,WIFI_44,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_45,"WIFI Pittsburgh, PA",PA#2,PA,941.041720982724,938.430915010525,0,bal33,WIFI_45,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_46,"WIFI Allentown-Bethlehem-Easton, PA-NJ",PA#3,PA,941.041720982724,942.4161749212143,0,bal33,WIFI_46,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_47,"WIFI Nashville-Davidson--Murfreesboro--Franklin, TN",TN#1,TN,850.0000000000001,850.3413954246478,0,bal33,WIFI_47,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_48,"WIFI Dallas-Fort Worth-Arlington, TX / Tyler, TX",TX#1,TX,894.3835363561259,892.1346712382457,0,bal33,WIFI_48,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_49,"WIFI Houston-Pasadena-The Woodlands, TX / Beaumont-Port Arthur, TX",TX#2,TX,894.3835363561259,895.2357142221025,0,bal33,WIFI_49,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_50,"WIFI Dallas-Fort Worth-Arlington, TX / Austin-Round Rock-San Marcos, TX",TX#3,TX,894.3835363561259,895.8896296913381,0,bal33,WIFI_50,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_51,"WIFI Houston-Pasadena-The Woodlands, TX / San Antonio-New Braunfels, TX",TX#4,TX,894.3835363561259,894.2741302728168,0,bal33,WIFI_51,in
+52_w1-52_52wifi_2026-10-15,WIFI,WIFI_52,"WIFI Washington-Arlington-Alexandria, DC-VA-MD-WV / Virginia Beach-Chesapeake-Norfolk, VA-NC",VA#1,VA,850.0,871.4351333124112,0,bal33,WIFI_52,in
