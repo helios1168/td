@@ -119,6 +119,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
 - `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
+- Opportunity-file product to `PRODUCT_V2`: `L02` (indexed annuity) = `PR03`; `PR05` x `V01` / `V02` / `V03` =
+  `PR04` / `PR01` / `PR02` (owner, 2026-10-24, Q22; found by the equality test of that day).
 
 ## Open questions
 
@@ -139,7 +141,6 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q19 | Opportunity-file `DIST_CH` labels to the union's firm_2 `DIST_CH`: one-to-one? labels with none? is `CHANNEL_ADJUSTED` faithful? | 2026-10-24 |
 | Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? | 2026-10-24 |
 | Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) | 2026-10-24 |
-| Q22 | `PRODUCT_LINE` (+ `VA_PRODUCT_TYPE`; same column as `VA_PRODUCT_LINE`?) to `PRODUCT_V2`: many-to-one, unmapped, `PR05` | 2026-10-24 |
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
 
 ## Log
@@ -812,3 +813,13 @@ Asked what `L01` is (35.2% of the file's `OPP`, no `firm_1` counterpart):
 `L01` rows are dropped (Settled). That leaves 245,224 rows and `OPP` of 58,597.4 coded units, against `firm_1`'s
 `MM_OPP` of 55,404.3. The rest of the product map (`L02` = `PR03`; `PR05` x `V01` / `V02` / `V03` = `PR04` / `PR01` /
 `PR02`) comes from the equality test of the entry before; Q22 stays open until the owner confirms it against the key.
+
+### 2026-10-24: Q22 answered, the product map
+
+Asked to confirm the map from the equality test against the key (`L02` = `PR03`; `PR05` x `V01` / `V02` / `V03` =
+`PR04` / `PR01` / `PR02`):
+
+> **Answer (owner, 2026-10-24):** "l02 = IA which should map to product_v2 INDEX, and yes to the rest"
+
+`L02` is indexed annuity, and the test puts it on `PR03` (70.1% of cells exactly equal), so `PR03` is the union's
+index product. Q22 is closed (Settled); Q8 (what `firm_2`'s `PR05` sales are) stays open.
