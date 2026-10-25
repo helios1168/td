@@ -119,6 +119,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
 - `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
+- At work `opp_original` and `crd_cbd` are views over the real tables; the real table names stay out of this repo,
+  since one names the carrier (owner, 2026-10-25). The SQL files use the two view names.
 - Opportunity-file `DIST_CH` to union `DIST_CH`: `O2_01` = `D2_01`, `O2_02` = `D2_02`, `O2_03` = `D2_04`, `O2_04` =
   `D2_03`; `O2_05` is no channel and its rows are dropped (owner, 2026-10-25, Q19).
 - Opportunity-file product to `PRODUCT_V2`: `L02` (indexed annuity) = `PR03`; `PR05` x `V01` / `V02` / `V03` =

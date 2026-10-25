@@ -4,7 +4,8 @@
 -- opp_matched, and the owner's CRD-to-CBD_ID table crd_cbd) be compared with the union outside work?
 -- Their rows are the real rows with the coded columns replaced, same columns as their sources
 -- (opp_original without CHANNEL: all NULL, dropped).
--- Table and column names are placeholders: confirm at work.
+-- At work opp_original and crd_cbd are views over the real tables, whose names stay out of this repo (owner,
+-- 2026-10-25); every file from 22 on uses these two names.
 --   ssdb_integration.lr_strategy.opp_original  CHANNEL, DIST_CH, ZIP_CODE, FIRM_CRD, BROKER_NAME,
 --                                              PRODUCT_LINE, VA_PRODUCT_TYPE, OPP
 --   ssdb_integration.lr_strategy.opp_matched   FIRM_CRD, BROKER_NAME, PRODUCT_LINE, VA_PRODUCT_LINE, OPP,
