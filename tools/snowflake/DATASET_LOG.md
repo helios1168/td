@@ -901,9 +901,10 @@ cells, else `opp_matched` and `crd_cbd` when they agree or one has none, else `o
   The difference is the `O2_05` drop of the same day (Q19), which that count predates. Rerun with the `O2_05` rows
   kept, the file reproduces the entry exactly: 429 CRDs with cells, 335 at half or more (181 agree with both tables, 144
   with `opp_matched` where `crd_cbd` has none, 1 with `opp_matched` against `crd_cbd`, 9 differ from both), 26 weak
-  (38.5% of the comparable `OPP`), 68 with no equal cell. With the drop, the same 335 become 281 (177 / 97 / 1 / 6): 54
-  CRDs fall under half their cells equal. That points to `firm_1`'s `MM_OPP` including the opportunity of the `O2_05`
-  rows (Q23): the equality evidence is weaker after the drop and the tables decide those 54 CRDs.
+  (38.5% of the comparable `OPP`), 68 with no equal cell. With the drop, 281 (177 / 97 / 1 / 6). The 54 are not CRDs that
+  fell under half: the 120 CRDs with only `O2_05` rows leave `CRD_MATCH` (475 to 355), 54 of them equality matches and
+  66 not (140 under half or without cells before, 74 now; session check, 2026-10-25). So 54 "no channel" CRDs equal
+  `firm_1`'s `MM_OPP` at their company: dropping them removes only `firm_2`'s copy of that opportunity.
 - Weak CRDs whose two tables give one `CBD_ID`: 14 here, 15 in the entry of 2026-10-25.
 
 **`24`.** `UNION_OPP` is the union (97,361 rows, unchanged; an `EXCEPT` against the source is 0) plus 69,045 appended
@@ -923,9 +924,10 @@ rows, and four lineage columns. Left out: 61,306 fixed rows (31,833.9 coded unit
 | `N_HOLDERS` 1 | 67,094 | 96.6 |
 | `N_HOLDERS` 0 (the block of Q10) | 1,951 | 3.4 |
 
-- No row has `N_HOLDERS` 2: the extract has one `CLEAN_ID` per ZIP x `DIST_CH` (the 12 shared pairs of the entry of
-  2026-10-21 are not in it).
-- 6,002 appended rows (8.7%) have NULL `FIRM` and `PARENT`: their `CBD_ID` has no row in the union.
+- No appended row has `N_HOLDERS` 2: the 12 `firm_2` ZIP x `DIST_CH` pairs with two holders (entry of 2026-10-21) are
+  in territories, but no appended row falls in them (session check, 2026-10-25).
+- 6,002 appended rows (8.7%; 5.2% of appended `MM_OPP`) have NULL `FIRM` and `PARENT`: their `CBD_ID` has no row in
+  the union.
 - Appended `MM_OPP` against `firm_2`'s positive sales in the same cell, by `DIST_CH` x `NEW_DIST` x `CHANNEL`:
 
 | `DIST_CH` | `NEW_DIST` | `CHANNEL` | rows | `CBD_ID`s | % of appended `MM_OPP` | % of `firm_2` sales |

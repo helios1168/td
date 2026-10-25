@@ -24,8 +24,9 @@ dm AS (              -- opportunity-file DIST_CH -> union DIST_CH (owner, 2026-1
   LEFT JOIN k b ON b.KIND = 'DIST_CH' AND b.SOURCE = s2.V AND b.CODE = m.UNION_CODE),
 pm AS (              -- (PRODUCT_LINE, VA_PRODUCT_TYPE) -> PRODUCT_V2 (owner, 2026-10-24, Q22); GONE = fixed annuity, rows dropped
   SELECT pl.VALUE AS PL, va.VALUE AS VA, p.VALUE AS PRODUCT_V2, m.GONE
-  FROM (VALUES ('L02', NULL, 'PR03', FALSE), ('PR05', 'V01', 'PR04', FALSE), ('PR05', 'V02', 'PR01', FALSE),
-               ('PR05', 'V03', 'PR02', FALSE), ('L01', NULL, NULL, TRUE)) m(PL_CODE, VA_CODE, PRODUCT_CODE, GONE)
+  FROM (VALUES ('PR05', 'V01', 'PR04', FALSE), ('PR05', 'V02', 'PR01', FALSE), ('PR05', 'V03', 'PR02', FALSE),
+               ('L02', NULL, 'PR03', FALSE), ('L01', NULL, NULL, TRUE)) m(PL_CODE, VA_CODE, PRODUCT_CODE, GONE)
+       -- (a first row without NULLs, so VALUES types every column as text)
   JOIN k pl ON pl.KIND = 'PRODUCT_V2' AND pl.CODE = m.PL_CODE
   LEFT JOIN k va ON va.KIND = 'VA_TYPE' AND va.CODE = m.VA_CODE
   LEFT JOIN k p ON p.KIND = 'PRODUCT_V2' AND p.CODE = m.PRODUCT_CODE)
