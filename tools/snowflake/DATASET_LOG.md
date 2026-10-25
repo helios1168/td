@@ -1066,3 +1066,26 @@ at work.
 - `CBD_ID` '0' is a placeholder, most likely `C00409`: 54 CRDs in `opp_matched`, no union rows. `23` takes it as a
   match ('opp_matched only'): 16 CRDs, 0.12% of the kept `OPP`. A placeholder must count as no match.
 - Owner's direction: CRD becomes the main key; a CRD list comes as a new extract.
+
+### 2026-10-25: the extra firm_2 opportunity is already in the union at work
+
+`explore/opp_totals_check.sql` statement 1, run at work by the owner (coded units):
+
+| line | rows | coded units |
+|---|---|---|
+| A. source union, `firm_2` rows with `MM_OPP` | 70,532 | 56,913.6 |
+| B. source union, all rows | 152,246 | |
+| C. `opp_original` = `OPP_MAPPED` rows | 306,530 | 90,431.3 |
+| D. file after the drops | 234,760 | 56,993.5 |
+| E. `UNION_OPP` `firm_2` `MM_OPP`, `ROW_ORIGIN` union | 65,688 | 47,069.7 |
+| F. ... union + opp file | 4,844 | 10,374.2 |
+| G. ... opp file | 64,201 | 46,619.2 |
+| H. key codes used twice | 0 | |
+
+- The union at work is no longer the one exported on 2026-10-20 (97,361 rows, no `firm_2` `MM_OPP`): it has 152,246 rows
+  and already carries `firm_2` opportunity of 56,913.6 coded units, 0.14% from the file after the drops. An earlier
+  load of the same file, most likely the owner's first attempt (`opp_matched`, the source of `CBD_ID` '0').
+- `24` kept that opportunity on 65,688 rows (E) and replaced it on the 4,844 rows where it put the file's (9,843.9 of
+  A), so `firm_2` totals 104,063.1, the file counted about 1.8 times. E is the excess (the owner's "almost $100B").
+  C = C and H = 0: the mapping itself duplicates nothing.
+- The coded extract here predates that load; work beyond `24` needs a fresh export of the union.
