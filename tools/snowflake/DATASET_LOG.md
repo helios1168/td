@@ -1048,3 +1048,21 @@ So sales on a key that has `MM_OPP` somewhere: `firm_2` 76.6%, `firm_1` 82.9%. A
 the review list: `opp_matched` splits it over `C00130` (55 ZIPs) and `C00312` (1,313 ZIPs, 2.8% of the kept file
 `OPP`), `crd_cbd` says `C00130`, equality is weak (0.2); `CRD_MATCH` takes `opp_matched`'s `C00312` (METHOD 'review'),
 which has no union rows, while `firm_2` sells 4.17% of its sales at `C00130` (FI). Owner to decide (Q20).
+
+### 2026-10-25: firm_2 opportunity too high at work; `CBD_ID` '0'; CRD as the key
+
+> **Owner, 2026-10-25:** "using query # 24, we must be duplicating rows as the aggregate opportunity amount by firm is
+> almost $100B more than expected" ... "firm 2's opportunity amount is too high" ... "so some of the cbd_id is mapped
+> to '0' which I believe is off. I think the path forward is to instead use the crd_id as main key. but I will have to
+> get you the crd_id list as an additional extract"
+
+On the coded extract `24` adds nothing: `opp_original` 306,530 rows / 90,431.3 coded units; `OPP_MAPPED` kept rows
+234,760 / 56,993.5; `UNION_OPP` `firm_2` `MM_OPP` 69,045 rows / 56,993.5. `explore/opp_totals_check.sql` prints the same
+at work.
+
+- Repeated file rows are parts, not copies. Exact duplicate rows hold 3.5 coded units. In the 9,590 `CBD_ID` x ZIP x
+  product cells where `firm_2` has 2+ nonzero rows, `firm_1`'s `MM_OPP` equals their sum in 4,164 and their largest in
+  511. Taking the largest per CRD x ZIP x `DIST_CH` x product would cut `firm_2` to 53,024.9 (-7%), against the evidence.
+- `CBD_ID` '0' is a placeholder, most likely `C00409`: 54 CRDs in `opp_matched`, no union rows. `23` takes it as a
+  match ('opp_matched only'): 16 CRDs, 0.12% of the kept `OPP`. A placeholder must count as no match.
+- Owner's direction: CRD becomes the main key; a CRD list comes as a new extract.
