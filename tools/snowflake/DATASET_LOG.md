@@ -119,6 +119,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
 - `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
+- `23` and `24` read `union_base`, the union without `firm_2`'s opportunity; the current
+  `data_withnewchannel_union_w_joinkeys` already carries an earlier load of it (owner, 2026-10-25).
 - At work `opp_original` and `crd_cbd` are views over the real tables; the real table names stay out of this repo,
   since one names the carrier (owner, 2026-10-25). The SQL files use the two view names.
 - Opportunity-file `DIST_CH` to union `DIST_CH`: `O2_01` = `D2_01`, `O2_02` = `D2_02`, `O2_03` = `D2_04`, `O2_04` =
@@ -1089,3 +1091,10 @@ at work.
   A), so `firm_2` totals 104,063.1, the file counted about 1.8 times. E is the excess (the owner's "almost $100B").
   C = C and H = 0: the mapping itself duplicates nothing.
 - The coded extract here predates that load; work beyond `24` needs a fresh export of the union.
+
+Asked what `UNION_OPP` should be built on, the owner chose a union without the earlier load:
+
+> **Answer (owner, 2026-10-25):** "ok yes new table without firm 2 opp is call union_base"
+
+`23` and `24` now read `ssdb_integration.lr_strategy.union_base` (Settled); `explore/opp_totals_check.sql` line A must
+be 0 there. Rerun on the extract with `union_base` as a view over the 2026-10-20 union: every check 0, same numbers.

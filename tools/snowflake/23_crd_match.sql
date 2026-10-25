@@ -8,6 +8,7 @@
 -- Every map is written in codes and translated to real values through ssdb_integration.lr_strategy.synthetic_key
 -- (CODE -> VALUE; DIST_CH rows carry SOURCE = firm_2's real SOURCE), so this file runs on real values and on the
 -- coded extract alike.  CHANNEL values are clear.  Amount thresholds scale by the key's MM_OPP divisor.
+-- firm_1's MM_OPP is read from union_base, the union without firm_2's opportunity (owner, 2026-10-25).
 -- Run statements 1 and 2, then 3 (checks: every MUST_BE_ZERO row must be 0), then 4 (the review list).
 
 -- Statement 1.  OPP_MAPPED.
@@ -55,7 +56,7 @@ f2 AS (              -- firm_2: OPP per FIRM_CRD x ZIP_CODE x PRODUCT_V2, repeat
   GROUP BY FIRM_CRD, ZIP_CODE, PRODUCT_V2),
 f1 AS (              -- firm_1: MM_OPP per CBD_ID x ZIP_CODE x PRODUCT_V2
   SELECT u.CBD_ID, u.ZIP_CODE, u.PRODUCT_V2, SUM(u.MM_OPP) AS V
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  FROM ssdb_integration.lr_strategy.union_base u
   JOIN s1 ON u.SOURCE = s1.V
   WHERE u.CBD_ID IS NOT NULL
   GROUP BY u.CBD_ID, u.ZIP_CODE, u.PRODUCT_V2),

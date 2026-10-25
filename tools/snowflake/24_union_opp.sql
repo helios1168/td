@@ -1,7 +1,8 @@
 -- UNION_OPP: the union with firm_2's opportunity in MM_OPP, in firm_1's layout (owner, 2026-10-25: "no it needs
 -- to match the layout of firm 1's data. there needs to be a join so that mm_opp and sales exists for firm two on
--- the same rows so we can do analytics ar the wholesaler level"; data_withnewchannel_union_w_joinkeys itself is
--- never touched).  firm_1 puts MM_OPP on a sales row of its key when the seller is the holder, else on its own row.
+-- the same rows so we can do analytics ar the wholesaler level").  It reads union_base, the union without firm_2's
+-- opportunity (owner, 2026-10-25: the current data_withnewchannel_union_w_joinkeys already carries an earlier load
+-- of it, which would be counted twice); union_base itself is never touched.  firm_1 puts MM_OPP on a sales row of its key when the seller is the holder, else on its own row.
 -- UNION_OPP = the union's firm_1 rows unchanged + its firm_2 rows (every column unchanged except MM_OPP) + opp-only rows.
 -- Same columns as the union, in its order, plus lineage columns at the end:
 --   ROW_ORIGIN    'union' (row as in the source), 'union + opp file' (a firm_2 sales row now carrying MM_OPP),
@@ -36,7 +37,7 @@ ak AS (
   HAVING COALESCE(SUM(m.OPP), 0) <> 0),
 f2 AS (              -- firm_2's union rows: the company's own NEW_DIST and CHANNEL
   SELECT u.CBD_ID, u.DIST_CH, u.NEW_DIST, u.CHANNEL
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u JOIN s2 ON u.SOURCE = s2.V
+  FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V
   WHERE u.NEW_DIST IS NOT NULL AND u.CHANNEL IS NOT NULL),
 cx AS (              -- company x DIST_CH: the NEW_DIST / CHANNEL on most rows
   SELECT CBD_ID, DIST_CH, NEW_DIST, CHANNEL,
@@ -58,7 +59,7 @@ df AS (              -- proposed, Q21: CHANNEL by DIST_CH, NEW_DIST = firm_2's o
          ON nd.CHANNEL = m.CHANNEL AND nd.RK = 1),
 fp AS (              -- FIRM and PARENT of a company in each SOURCE
   SELECT u.CBD_ID, u.SOURCE, MAX(u.FIRM) AS FIRM, MAX(u.PARENT) AS PARENT
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u
+  FROM ssdb_integration.lr_strategy.union_base u
   WHERE u.CBD_ID IS NOT NULL GROUP BY u.CBD_ID, u.SOURCE),
 h AS (               -- holders of a ZIP_CODE x DIST_CH in territories
   SELECT t.ZIP_CODE, t.CHANNEL AS DIST_CH, MIN(t.CLEAN_ID) AS ID, COUNT(DISTINCT t.CLEAN_ID) AS N,
@@ -67,13 +68,13 @@ h AS (               -- holders of a ZIP_CODE x DIST_CH in territories
   WHERE t.CLEAN_ID IS NOT NULL GROUP BY t.ZIP_CODE, t.CHANNEL),
 nm AS (              -- the name the union already carries for that ID
   SELECT u.TERRITORY_WHOLESALER_TERRITORY_ID AS ID, MAX(u.TERR_WHOLESALER_CLEAN_NAME) AS NAME
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u JOIN s2 ON u.SOURCE = s2.V
+  FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 st AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.territories GROUP BY ZIP_CODE),
-us AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys GROUP BY ZIP_CODE),
+us AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.union_base GROUP BY ZIP_CODE),
 r0 AS (              -- the union with its seller = holder flag
   SELECT u.*, COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER
-  FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u),
+  FROM ssdb_integration.lr_strategy.union_base u),
 r AS (               -- PICK: the one firm_2 holder row per opportunity key that takes the key's MM_OPP
   SELECT r0.*, r0.SOURCE = s2.V AND r0.IS_HOLDER AND ROW_NUMBER() OVER (
            PARTITION BY r0.SOURCE, r0.ZIP_CODE, r0.DIST_CH, r0.CBD_ID, r0.PRODUCT_V2
@@ -134,7 +135,7 @@ s1 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_1'),
 s2 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_2'),
 d AS (SELECT NUM AS D FROM k WHERE KIND = 'divisor' AND VALUE = 'MM_OPP'),
 uo AS (SELECT * FROM ssdb_integration.lr_strategy.UNION_OPP),
-src AS (SELECT * FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
+src AS (SELECT * FROM ssdb_integration.lr_strategy.union_base),
 ap AS (SELECT uo.* FROM uo JOIN s2 ON uo.SOURCE = s2.V WHERE uo.ROW_ORIGIN <> 'union'),   -- firm_2 rows carrying file opportunity
 ot AS (SELECT SUM(MM_OPP) AS O FROM uo JOIN s2 ON uo.SOURCE = s2.V),
 g AS (               -- the rows carrying file opportunity by each lineage column
@@ -214,7 +215,7 @@ o AS (SELECT DIST_CH, NEW_DIST, CHANNEL,
              COUNT(DISTINCT CBD_ID) AS CBD_IDS, SUM(MM_OPP) AS MM_OPP
       FROM ssdb_integration.lr_strategy.UNION_OPP WHERE ROW_ORIGIN <> 'union' GROUP BY DIST_CH, NEW_DIST, CHANNEL),
 s AS (SELECT u.DIST_CH, u.NEW_DIST, u.CHANNEL, SUM(CASE WHEN u.ACTUAL_SALES_AMOUNT > 0 THEN u.ACTUAL_SALES_AMOUNT END) AS SALES
-      FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u JOIN s2 ON u.SOURCE = s2.V
+      FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V
       GROUP BY u.DIST_CH, u.NEW_DIST, u.CHANNEL)
 SELECT COALESCE(o.DIST_CH, s.DIST_CH) AS DIST_CH, COALESCE(o.NEW_DIST, s.NEW_DIST) AS NEW_DIST,
        COALESCE(o.CHANNEL, s.CHANNEL) AS CHANNEL,

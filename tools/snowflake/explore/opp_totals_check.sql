@@ -1,6 +1,6 @@
 -- Where firm_2's MM_OPP in UNION_OPP comes from, in coded units (/ the MM_OPP divisor): safe to send back.
--- 24 writes firm_2 MM_OPP from the file (D) onto rows, and keeps whatever MM_OPP firm_2's rows already carry in the
--- source union (A).  So E + F + G = A + D.  On the coded extract A is 0 and E + F + G = D = 56,993.5
+-- 24 writes firm_2 MM_OPP from the file (D) onto rows of union_base, and keeps whatever MM_OPP firm_2's rows already
+-- carry there (A, which must be 0: union_base is the union without firm_2's opportunity).  So E + F + G = A + D.  On the coded extract A is 0 and E + F + G = D = 56,993.5
 -- (DATASET_LOG.md, 2026-10-25).
 
 -- 1.  Reconciliation.
@@ -8,11 +8,11 @@ WITH
 d AS (SELECT NUM AS D FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'divisor' AND VALUE = 'MM_OPP'),
 s2 AS (SELECT VALUE AS V FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'SOURCE' AND CODE = 'firm_2'),
 uo AS (SELECT u.* FROM ssdb_integration.lr_strategy.UNION_OPP u JOIN s2 ON u.SOURCE = s2.V)
-SELECT 'A. source union: firm_2 rows with MM_OPP (extract 0)' AS STAGE, COUNT(u.MM_OPP) AS N_ROWS,
+SELECT 'A. union_base: firm_2 rows with MM_OPP (must be 0)' AS STAGE, COUNT(u.MM_OPP) AS N_ROWS,
        ROUND(SUM(u.MM_OPP) / MAX(d.D), 1) AS CODED_UNITS
-FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u JOIN s2 ON u.SOURCE = s2.V CROSS JOIN d
-UNION ALL SELECT 'B. source union: all rows (extract 97,361)', COUNT(*), NULL
-FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V CROSS JOIN d
+UNION ALL SELECT 'B. union_base: all rows (extract 97,361)', COUNT(*), NULL
+FROM ssdb_integration.lr_strategy.union_base
 UNION ALL SELECT 'C. opp_original rows; OPP_MAPPED must have the same (extract 306,530)', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
 FROM ssdb_integration.lr_strategy.opp_original CROSS JOIN d
 UNION ALL SELECT 'C. OPP_MAPPED rows', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
