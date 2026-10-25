@@ -985,8 +985,8 @@ sales on other rows. Other sellers' sales are always separate rows without `MM_O
   territories, `CHANNEL_RULE` as before). A `firm_2` union row that gets no key keeps its NULL `MM_OPP` (it is NULL on
   all 13,140 source rows).
 - Lineage: `OPP_FILE` is replaced by `ROW_ORIGIN` (`union`, `union + opp file`, `opp file`); `CHANNEL_RULE` is
-  `sales row` on `union + opp file` rows. Statement 2 compares every column except `MM_OPP` with `EXCEPT ALL` both
-  ways, checks `firm_1` unchanged, the sales cells, and one `MM_OPP` row per key.
+  `sales row` on `union + opp file` rows. Statement 2 compares every column except `MM_OPP` with `EXCEPT` both
+  ways plus a row count (Snowflake has no `EXCEPT ALL`), checks `firm_1` unchanged, the sales cells, and one `MM_OPP` row per key.
 
 Run on the coded extract (identity key, divisor 1, `23` then `24`): all `MUST_BE_ZERO` rows 0. Row counts against the
 first build: opp-only rows 64,197 (was 69,045 appended) + 4,848 `firm_2` sales rows now carrying `MM_OPP` = 69,045
@@ -1028,4 +1028,21 @@ Statement 3, `firm_2` file `MM_OPP` by `DIST_CH` x `NEW_DIST` x `CHANNEL`, next 
 The cell shares are the same as in the first build (the join moves `MM_OPP` between rows, not between cells, except
 that a key on a sales row takes that row's `NEW_DIST` / `CHANNEL`); the cells with sales and no `MM_OPP` are unchanged
 (`D2_03` `N2_06` 1.13, `D2_03` `N2_03` 0.10, `D2_02` `N2_04` 0.08, `D2_02` `N2_06` 0.04, `D2_01` `N2_02` 0.01, two
-more at 0.00). Q21 stays open: the `DIST_CH` default still applies to opp-only rows (9,429, 9.6% of `MM_OPP`).
+more at 0.00). Q21 stays open: the `DIST_CH` default still applies to opp-only rows.
+
+Why `firm_2` sales sit on fewer `MM_OPP` rows (session check, 2026-10-25). Sales on rows without `MM_OPP`:
+
+| reason | % of `firm_2` sales | % of `firm_1` sales |
+|---|---|---|
+| the key's `MM_OPP` is on another row (a second holder row, or seller not holder): the layout | 27.2 | 20.0 |
+| product `PR05`, no opportunity product (Q8) | 7.6 | |
+| company with no kept file opportunity under `CRD_MATCH` | 8.7 | 17.1 (key without `MM_OPP`) |
+| company x ZIP in the file under another `DIST_CH` only | 2.5 | |
+| company in the file, not in this ZIP | 2.2 | |
+| key in the file, sums to 0 | 1.7 | |
+| no `CBD_ID` on the sales row | 0.6 | |
+
+So sales on a key that has `MM_OPP` somewhere: `firm_2` 76.6%, `firm_1` 82.9%. About 4.2 points of the 8.7 are one CRD on
+the review list: `opp_matched` splits it over `C00130` (55 ZIPs) and `C00312` (1,313 ZIPs, 2.8% of the kept file
+`OPP`), `crd_cbd` says `C00130`, equality is weak (0.2); `CRD_MATCH` takes `opp_matched`'s `C00312` (METHOD 'review'),
+which has no union rows, while `firm_2` sells 4.17% of its sales at `C00130` (FI). Owner to decide (Q20).

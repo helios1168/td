@@ -149,22 +149,24 @@ sc AS (              -- ACTUAL_SALES_AMOUNT by SOURCE x CHANNEL x PRODUCT_V2: UN
   GROUP BY SOURCE, CHANNEL, PRODUCT_V2)
 SELECT 'source union rows missing from UNION_OPP (every column except MM_OPP)' AS CHECK_NAME,
        (SELECT COUNT(*) FROM (SELECT * EXCLUDE (MM_OPP) FROM src
-                              EXCEPT ALL
+                              EXCEPT
                               SELECT * EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
                               FROM uo WHERE ROW_ORIGIN <> 'opp file') x) AS VALUE, TRUE AS MUST_BE_ZERO
 UNION ALL SELECT 'UNION_OPP rows other than opp-only rows missing from the source (every column except MM_OPP)',
        (SELECT COUNT(*) FROM (SELECT * EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
                               FROM uo WHERE ROW_ORIGIN <> 'opp file'
-                              EXCEPT ALL
+                              EXCEPT
                               SELECT * EXCLUDE (MM_OPP) FROM src) x), TRUE
+UNION ALL SELECT 'rows other than opp-only rows minus source rows (with the two EXCEPT checks: no row lost or changed)',
+       (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN <> 'opp file') - (SELECT COUNT(*) FROM src), TRUE     -- Snowflake has no EXCEPT ALL
 UNION ALL SELECT 'firm_1 rows whose MM_OPP changed (either way)',
        (SELECT COUNT(*) FROM (SELECT * FROM src WHERE SOURCE IN (SELECT V FROM s1)
-                              EXCEPT ALL
+                              EXCEPT
                               SELECT * EXCLUDE (ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
                               FROM uo WHERE SOURCE IN (SELECT V FROM s1)) x)
      + (SELECT COUNT(*) FROM (SELECT * EXCLUDE (ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
                               FROM uo WHERE SOURCE IN (SELECT V FROM s1)
-                              EXCEPT ALL
+                              EXCEPT
                               SELECT * FROM src WHERE SOURCE IN (SELECT V FROM s1)) x), TRUE
 UNION ALL SELECT 'ACTUAL_SALES_AMOUNT cells (SOURCE x CHANNEL x PRODUCT_V2) different from the source',
        (SELECT COUNT(*) FROM sc WHERE ABS(COALESCE(DIFF, 0)) > 0.001), TRUE     -- ponytail: 0.001 absorbs float summation order
