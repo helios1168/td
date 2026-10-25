@@ -954,3 +954,78 @@ rows, and four lineage columns. Left out: 61,306 fixed rows (31,833.9 coded unit
   (Two more `D2_03` / `D2_01` National cells and four cells with NULL `DIST_CH` have no appended rows and 0.00 or
   no sales.) The default rule puts `D2_04` rows into IFA, 6.94% of appended `MM_OPP` against 0.43% of `firm_2` sales; the National cells
   `N2_05` under `D2_03` and `D2_01` come from the 'company' rule, not the default.
+
+### 2026-10-25: `24_union_opp.sql` rebuilt in `firm_1`'s layout
+
+> **Owner, 2026-10-25:** "no it needs to match the layout of firm 1's data. there needs to be a join so that mm_opp
+> and sales exists for firm two on the same rows so we can do analytics ar the wholesaler level"
+
+The first `24` appended every `firm_2` opportunity key as its own row (entry above), so `firm_2` `MM_OPP` and sales
+never shared a row. `firm_1` does (session check on the extract). Key = `ZIP_CODE` x `DIST_CH` x `CHANNEL` x
+`PRODUCT_V2` x `CBD_ID`; `MM_OPP` sits on one row per key:
+
+| `firm_1` rows | rows | % `MM_OPP` | % sales |
+|---|---|---|---|
+| `MM_OPP` + sales, seller = holder (`SALES_WHOLESALER_TERRITORY_ID` = `TERRITORY_WHOLESALER_TERRITORY_ID`) | 4,546 | 15.1 | 62.3 |
+| `MM_OPP` + sales, seller not holder | 23 | 0.2 | 0.6 |
+| `MM_OPP` only (holder IDs on it) | 74,303 | 84.8 | |
+| sales only, seller = holder | 3,597 | | 22.8 |
+| sales only, seller not holder | 1,752 | | 14.3 |
+
+4,510 keys have `MM_OPP` on a sales row (4,493 of those rows seller = holder); 993 have `MM_OPP` on its own row and
+sales on other rows. Other sellers' sales are always separate rows without `MM_OPP`.
+
+**New rule.** `UNION_OPP` = `firm_1` union rows unchanged + `firm_2` union rows (every column unchanged except
+`MM_OPP`) + opp-only rows.
+- `firm_2` opportunity key = `ZIP_CODE` x `DIST_CH` x `CBD_ID` x `PRODUCT_V2` (the file after the drops, `CBD_ID` from
+  `CRD_MATCH`, summed; zero sums left out, as before). `CHANNEL` is not in the join: a key that joins takes the
+  `CHANNEL` of the sales row it lands on.
+- A key goes on exactly one `firm_2` union row with that key whose seller is the holder: the one with the largest
+  `ACTUAL_SALES_AMOUNT` (ties on the remaining columns). No such row: an opp-only row, built as before (holder from
+  territories, `CHANNEL_RULE` as before). A `firm_2` union row that gets no key keeps its NULL `MM_OPP` (it is NULL on
+  all 13,140 source rows).
+- Lineage: `OPP_FILE` is replaced by `ROW_ORIGIN` (`union`, `union + opp file`, `opp file`); `CHANNEL_RULE` is
+  `sales row` on `union + opp file` rows. Statement 2 compares every column except `MM_OPP` with `EXCEPT ALL` both
+  ways, checks `firm_1` unchanged, the sales cells, and one `MM_OPP` row per key.
+
+Run on the coded extract (identity key, divisor 1, `23` then `24`): all `MUST_BE_ZERO` rows 0. Row counts against the
+first build: opp-only rows 64,197 (was 69,045 appended) + 4,848 `firm_2` sales rows now carrying `MM_OPP` = 69,045
+keys. `firm_2` `MM_OPP` is 56,993.5 coded units, equal to the file after drops: 18.2% on sales rows, 81.8% on
+opp-only rows. `firm_2` sales on rows that carry `MM_OPP`: 49.4% (`firm_1`: 62.9%).
+
+`firm_2` in `UNION_OPP`, the five `firm_1` row classes (sales = `ACTUAL_SALES_AMOUNT` not NULL):
+
+| `firm_2` rows | rows | % `MM_OPP` | % sales |
+|---|---|---|---|
+| `MM_OPP` + sales, seller = holder | 4,834 | 18.2 | 49.4 |
+| `MM_OPP` + sales, seller not holder | 0 | | |
+| `MM_OPP` only | 64,211 | 81.8 | |
+| sales only, seller = holder | 6,640 | | 39.2 |
+| sales only, seller not holder | 1,368 | | 11.4 |
+
+(The same query on `firm_1` reproduces the table above. The 14 rows between 4,848 and 4,834 are picked rows with NULL
+`ACTUAL_SALES_AMOUNT`: they are `union + opp file` but count as `MM_OPP` only here. 284 `firm_2` rows have neither.)
+
+Statement 3, `firm_2` file `MM_OPP` by `DIST_CH` x `NEW_DIST` x `CHANNEL`, next to positive sales (rows on sales rows
+/ opp-only rows):
+
+| `DIST_CH` | `NEW_DIST` | `CHANNEL` | rows on sales rows | rows opp-only | `CBD_ID`s | % of `MM_OPP` | % of `firm_2` sales |
+|---|---|---|---|---|---|---|---|
+| `D2_01` | `N2_01` | IFA | 2,665 | 31,008 | 281 | 49.59 | 58.77 |
+| `D2_02` | `N2_03` | FI | 768 | 10,993 | 26 | 15.50 | 13.04 |
+| `D2_03` | `N2_04` | WH | 124 | 3,832 | 6 | 7.92 | 3.36 |
+| `D2_02` | `N2_02` | National | 817 | 3,439 | 1 | 7.56 | 17.28 |
+| `D2_04` | `N2_01` | IFA | 11 | 6,606 | 6 | 6.94 | 0.43 |
+| `D2_02` | `N2_05` | National | 214 | 2,559 | 1 | 4.09 | 2.41 |
+| `D2_03` | `N2_05` | National | 0 | 1,153 | 1 | 2.41 | none |
+| `D2_03` | `N2_01` | IFA | 202 | 1,673 | 8 | 1.88 | 2.40 |
+| `D2_04` | `N2_04` | WH | 39 | 1,091 | 4 | 1.84 | 0.46 |
+| `D2_01` | `N2_05` | National | 0 | 843 | 1 | 1.23 | none |
+| `D2_02` | `N2_01` | IFA | 8 | 897 | 4 | 0.95 | 0.45 |
+| `D2_01` | `N2_03` | FI | 0 | 71 | 1 | 0.06 | 0.02 |
+| `D2_01` | `N2_04` | WH | 0 | 32 | 1 | 0.02 | 0.01 |
+
+The cell shares are the same as in the first build (the join moves `MM_OPP` between rows, not between cells, except
+that a key on a sales row takes that row's `NEW_DIST` / `CHANNEL`); the cells with sales and no `MM_OPP` are unchanged
+(`D2_03` `N2_06` 1.13, `D2_03` `N2_03` 0.10, `D2_02` `N2_04` 0.08, `D2_02` `N2_06` 0.04, `D2_01` `N2_02` 0.01, two
+more at 0.00). Q21 stays open: the `DIST_CH` default still applies to opp-only rows (9,429, 9.6% of `MM_OPP`).
