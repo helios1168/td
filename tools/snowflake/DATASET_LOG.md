@@ -140,8 +140,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q16 | `N1_06` has `D1_01` (IFA) rows: a firm-level override, IFA business of those companies counted as National? | 2026-10-21 |
 | Q17 | Sellers with no territory (2.8% of `firm_2` sales): whose numbers? | 2026-10-21 |
 | Q18 | Which union name column and which territories name column to match? | 2026-10-21 |
-| Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? | 2026-10-24 |
-| Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) | 2026-10-24 |
+| Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? Proposed rule in `23`. | 2026-10-24 |
+| Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) Proposed rule in `24`. | 2026-10-24 |
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
 
 ## Log
@@ -877,3 +877,78 @@ cells:
 Dropped: 10,464 non-fixed rows, `OPP` 1,603.9 coded units (2.7% of the non-fixed `OPP`), 123 CRDs, 120 of which have
 no other `DIST_CH`. Left after dropping fixed and `O2_05`: 234,760 rows, `OPP` 56,993.5 coded units. Q19 is closed
 (Settled: `O2_01`-`O2_04` as `CHANNEL_ADJUSTED` and the data give them).
+
+### 2026-10-25: `23_crd_match.sql` and `24_union_opp.sql` built
+
+Run on the coded extract (identity key, divisor 1; the files read every map in codes and translate through
+`synthetic_key`, so they run unchanged on real values). Checks all 0. Q20 and Q21 stay open: `23` and `24` hold
+proposed rules, for the owner to confirm.
+
+**`23`.** `OPP_MAPPED` (`opp_original` with the `DIST_CH` map, the product map and `ZIP_CODE` padded to 5, one
+row each, with the reason a row is dropped) and `CRD_MATCH` (one row per `FIRM_CRD` left after the drops: 355 of
+the 475 CRDs; the other 120 have only dropped rows). `CBD_ID` is the equality match where it equals in at least half of the
+cells, else `opp_matched` and `crd_cbd` when they agree or one has none, else `opp_matched` provisional ('review').
+
+| `METHOD` | CRDs | % of `OPP` |
+|---|---|---|
+| equality | 281 | 60.5 |
+| tables agree | 21 | 35.0 |
+| `opp_matched` only | 50 | 0.6 |
+| review | 3 | 3.9 |
+
+- No CRD has a NULL `CBD_ID`. `AGREES` is false for 10 CRDs (6.1% of `OPP`).
+- The entry of 2026-10-25 (`opp_matched` arrives) counted 335 CRDs with at least half the cells equal; this is 281.
+  The difference is the `O2_05` drop of the same day (Q19), which that count predates. Rerun with the `O2_05` rows
+  kept, the file reproduces the entry exactly: 429 CRDs with cells, 335 at half or more (181 agree with both tables, 144
+  with `opp_matched` where `crd_cbd` has none, 1 with `opp_matched` against `crd_cbd`, 9 differ from both), 26 weak
+  (38.5% of the comparable `OPP`), 68 with no equal cell. With the drop, the same 335 become 281 (177 / 97 / 1 / 6): 54
+  CRDs fall under half their cells equal. That points to `firm_1`'s `MM_OPP` including the opportunity of the `O2_05`
+  rows (Q23): the equality evidence is weaker after the drop and the tables decide those 54 CRDs.
+- Weak CRDs whose two tables give one `CBD_ID`: 14 here, 15 in the entry of 2026-10-25.
+
+**`24`.** `UNION_OPP` is the union (97,361 rows, unchanged; an `EXCEPT` against the source is 0) plus 69,045 appended
+rows, and four lineage columns. Left out: 61,306 fixed rows (31,833.9 coded units of `OPP`), 10,464 no-channel rows
+(1,603.9), 107,979 keys that sum to 0. Appended `MM_OPP` is 56,993.5 coded units, equal to the file after drops;
+`firm_1`'s is 55,404.3.
+
+| appended rows by | rows | % of `MM_OPP` |
+|---|---|---|
+| `CHANNEL_RULE` company x `DIST_CH` | 55,637 | 84.9 |
+| `CHANNEL_RULE` company | 3,979 | 5.5 |
+| `CHANNEL_RULE` `DIST_CH` default (proposed, Q21) | 9,429 | 9.6 |
+| `CBD_METHOD` equality | 39,734 | 60.5 |
+| `CBD_METHOD` tables agree | 25,532 | 35.0 |
+| `CBD_METHOD` review | 3,170 | 3.9 |
+| `CBD_METHOD` `opp_matched` only | 609 | 0.6 |
+| `N_HOLDERS` 1 | 67,094 | 96.6 |
+| `N_HOLDERS` 0 (the block of Q10) | 1,951 | 3.4 |
+
+- No row has `N_HOLDERS` 2: the extract has one `CLEAN_ID` per ZIP x `DIST_CH` (the 12 shared pairs of the entry of
+  2026-10-21 are not in it).
+- 6,002 appended rows (8.7%) have NULL `FIRM` and `PARENT`: their `CBD_ID` has no row in the union.
+- Appended `MM_OPP` against `firm_2`'s positive sales in the same cell, by `DIST_CH` x `NEW_DIST` x `CHANNEL`:
+
+| `DIST_CH` | `NEW_DIST` | `CHANNEL` | rows | `CBD_ID`s | % of appended `MM_OPP` | % of `firm_2` sales |
+|---|---|---|---|---|---|---|
+| `D2_01` | `N2_01` | IFA | 33,673 | 281 | 49.59 | 58.77 |
+| `D2_02` | `N2_03` | FI | 11,761 | 26 | 15.50 | 13.04 |
+| `D2_03` | `N2_04` | WH | 3,956 | 6 | 7.92 | 3.36 |
+| `D2_02` | `N2_02` | National | 4,256 | 1 | 7.56 | 17.28 |
+| `D2_04` | `N2_01` | IFA | 6,617 | 6 | 6.94 | 0.43 |
+| `D2_02` | `N2_05` | National | 2,773 | 1 | 4.09 | 2.41 |
+| `D2_03` | `N2_05` | National | 1,153 | 1 | 2.41 | none |
+| `D2_03` | `N2_01` | IFA | 1,875 | 8 | 1.88 | 2.40 |
+| `D2_04` | `N2_04` | WH | 1,130 | 4 | 1.84 | 0.46 |
+| `D2_01` | `N2_05` | National | 843 | 1 | 1.23 | none |
+| `D2_02` | `N2_01` | IFA | 905 | 4 | 0.95 | 0.45 |
+| `D2_01` | `N2_03` | FI | 71 | 1 | 0.06 | 0.02 |
+| `D2_01` | `N2_04` | WH | 32 | 1 | 0.02 | 0.01 |
+| `D2_03` | `N2_06` | National | none | none | none | 1.13 |
+| `D2_03` | `N2_03` | FI | none | none | none | 0.10 |
+| `D2_02` | `N2_04` | WH | none | none | none | 0.08 |
+| `D2_02` | `N2_06` | National | none | none | none | 0.04 |
+| `D2_01` | `N2_02` | National | none | none | none | 0.01 |
+
+  (Two more `D2_03` / `D2_01` National cells and four cells with NULL `DIST_CH` have no appended rows and 0.00 or
+  no sales.) The default rule puts `D2_04` rows into IFA, 6.94% of appended `MM_OPP` against 0.43% of `firm_2` sales; the National cells
+  `N2_05` under `D2_03` and `D2_01` come from the 'company' rule, not the default.
