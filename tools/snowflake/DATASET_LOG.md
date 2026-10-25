@@ -1098,3 +1098,11 @@ Asked what `UNION_OPP` should be built on, the owner chose a union without the e
 
 `23` and `24` now read `ssdb_integration.lr_strategy.union_base` (Settled); `explore/opp_totals_check.sql` line A must
 be 0 there. Rerun on the extract with `union_base` as a view over the 2026-10-20 union: every check 0, same numbers.
+
+### 2026-10-25: firm_2 rows with no `FIRM` / `PARENT` in `UNION_OPP`
+
+Owner asked why some `firm_2` rows have no `FIRM` / `PARENT`. Only opp-only rows: `24` copies `FIRM` and `PARENT` from
+`union_base` rows of the same `CBD_ID`, and 22 `CBD_ID`s of the opportunity file have no row there (neither firm sells
+there, `firm_1` has no `MM_OPP` there). On the extract: 6,022 rows, 5.25% of `firm_2` `MM_OPP`. `C00410` holds 3.91% and
+`C00447` 0.97%, one CRD each, both tables agree; `C00409` (most likely '0') 0.12% over 16 CRDs; 19 others 0.25%.
+`explore/null_firm.sql` lists them with their CRDs and broker names at work.
