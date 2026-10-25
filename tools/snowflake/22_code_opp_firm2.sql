@@ -25,7 +25,8 @@
 -- clear name beside a coded CBD_ID decodes the C and P codes outside work), FIRM_CRD (a public FINRA firm ID,
 -- so with the name clear coding it hides nothing), ZIP_CODE.
 -- The key never leaves work; it maps results from outside back to real values.
--- Run order: 1 (backup), 2, 3, 4-6, then 7: every MUST_BE_ZERO row of 7 must be 0.  Then download 8-10 as CSV.
+-- Run order: 1 (backup), 2, 3, 4-6, then 7: every MUST_BE_ZERO row of 7 must be 0.  Then 8-9 for each table:
+-- every file sent must be under 800 KB, so the tables go out in parts.
 
 -- Statement 1.  Backup of the key as it was.  IF NOT EXISTS: a re-run keeps the first backup.
 CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.synthetic_key_before_22 AS
@@ -101,7 +102,7 @@ SELECT dc.CODE AS DIST_CH,
        o.BROKER_NAME,
        pr.CODE AS PRODUCT_LINE,
        va.CODE AS VA_PRODUCT_TYPE,
-       o.OPP / dv.D_OPP AS OPP
+       ROUND(o.OPP / dv.D_OPP, 3) AS OPP      -- 3 decimals, as the 2026-10-20 export (integers x 1,000)
 FROM ssdb_integration.lr_strategy.opp_original o
 CROSS JOIN f2 CROSS JOIN dv
 LEFT JOIN k dc ON dc.KIND = 'DIST_CH'    AND dc.SOURCE = f2.SRC AND dc.VALUE = CAST(o.DIST_CH AS VARCHAR)
@@ -118,7 +119,7 @@ SELECT m.FIRM_CRD,
        m.BROKER_NAME,
        pl.CODE AS PRODUCT_LINE,
        va.CODE AS VA_PRODUCT_LINE,
-       m.OPP / dv.D_OPP AS OPP,
+       ROUND(m.OPP / dv.D_OPP, 3) AS OPP,     -- 3 decimals, as the 2026-10-20 export
        ca.CODE AS CHANNEL_ADJUSTED,
        p2.CODE AS PRODUCT_V2,
        cb.CODE AS CBD_ID,
@@ -210,11 +211,18 @@ UNION ALL SELECT 'opp_matched non-NULL ZIP_CODE not 5 characters',
        (SELECT COUNT_IF(LENGTH(CAST(ZIP_CODE AS VARCHAR)) <> 5) FROM ssdb_integration.lr_strategy.opp_matched), 0
 ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 
--- Statement 8.  Download as CSV with header: the synthetic opp_original.
-SELECT * FROM ssdb_integration.lr_strategy.synthetic_opp_original;
+-- Statement 8.  Rows per part.  N = number of parts: about 60,000 rows per gzipped part stays under 800 KB (the
+-- 2026-10-20 union was 7.8 bytes a row gzipped).  The parts must add up to the table's rows.  Repeat for
+-- synthetic_opp_matched and synthetic_crd_cbd (probably 1 part).
+SELECT MOD(ABS(HASH(*)), 3) AS PART, COUNT(*) AS N_ROWS        -- 3 = N
+FROM ssdb_integration.lr_strategy.synthetic_opp_original GROUP BY 1 ORDER BY 1;
 
--- Statement 9.  Download as CSV with header: the synthetic opp_matched.
-SELECT * FROM ssdb_integration.lr_strategy.synthetic_opp_matched;
-
--- Statement 10.  Download as CSV with header: the synthetic crd_cbd.
-SELECT * FROM ssdb_integration.lr_strategy.synthetic_crd_cbd;
+-- Statement 9.  One part per run, PART = 0 .. N-1: download as CSV with header and gzip it, or unload it
+-- gzipped to your user stage and check its size with LIST before GET:
+--   COPY INTO @~/td_opp/synthetic_opp_original_part0.csv.gz FROM (<the SELECT below>)
+--     FILE_FORMAT = (TYPE = CSV COMPRESSION = GZIP FIELD_OPTIONALLY_ENCLOSED_BY = '"') HEADER = TRUE SINGLE = TRUE;
+--   LIST @~/td_opp/;
+-- (BROKER_NAME can hold commas: keep the quoting.)  A row's PART depends only on its values, so the parts never
+-- overlap and never miss a row.
+SELECT * FROM ssdb_integration.lr_strategy.synthetic_opp_original
+WHERE MOD(ABS(HASH(*)), 3) = 0;                                 -- 3 = N, 0 = the part
