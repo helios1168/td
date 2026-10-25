@@ -118,6 +118,7 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
   (owner, 2026-10-21; Q4 stays open).
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
+- `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
 
 ## Open questions
 
@@ -800,3 +801,14 @@ has not arrived.
   13 under 50% (25.1%, `firm_2` higher, median ratio 1.45). Unequal cells are mostly `firm_2` higher.
 - The file's `PR05` is the union's `PR05` text (same key value), split by `VA_PRODUCT_TYPE` into `firm_1`'s `PR01`,
   `PR02`, `PR04`: a lead for Q8 (what `firm_2`'s `PR05` sales are).
+
+### 2026-10-24: `L01` is fixed annuity, out of scope
+
+Asked what `L01` is (35.2% of the file's `OPP`, no `firm_1` counterpart):
+
+> **Answer (owner, 2026-10-24):** "l01 is FA standing in for 'FIXED'. fixed annuity opportunity is excluded from this
+> analysis all together and is already reflected in the union table"
+
+`L01` rows are dropped (Settled). That leaves 245,224 rows and `OPP` of 58,597.4 coded units, against `firm_1`'s
+`MM_OPP` of 55,404.3. The rest of the product map (`L02` = `PR03`; `PR05` x `V01` / `V02` / `V03` = `PR04` / `PR01` /
+`PR02`) comes from the equality test of the entry before; Q22 stays open until the owner confirms it against the key.
