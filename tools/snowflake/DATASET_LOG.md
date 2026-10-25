@@ -48,6 +48,8 @@ checks grid. One-off digging: `explore/<topic>.sql`.
 - `N1_xx`: `NEW_DIST`.
 - `PRxx`: `PRODUCT_V2`.
 - `Cxxxxx`: `CBD_ID`.
+- From `22_code_opp_firm2.sql` (new values of firm_2's opportunity file): `O2_xx` (`DIST_CH` labels of firm_2's file),
+  `Lxx` (`PRODUCT_V2`), `Vxx` (`VA_TYPE`, a new kind), more `Cxxxxx`.
 - `Pxxxxx`: `FIRM` and `PARENT` (one numbering).
 - `W` person IDs, `M` names, `A` address IDs.
 
@@ -81,7 +83,16 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - A `SOURCE`'s product set is the `PRODUCT_V2` values where it has positive sales.
 - `firm_2` opportunity in `15`: `firm_1`'s `MM_OPP` per (`ZIP_CODE`, `CHANNEL`), own products, split over
   its held `DIST_CH` by national sales mix (`sales_mix_held`, chosen with `17`). Under review now that
-  `CBD_ID` joins the firms; superseded for a `CBD_ID` the firm never sells to by Q9 (below).
+  `CBD_ID` joins the firms; superseded for a `CBD_ID` the firm never sells to by Q9 (below);
+  superseded for firm_2 by its own opportunity file (owner, 2026-10-24).
+- firm_2's opportunity comes from its own file, not from `15`'s split (owner, 2026-10-24). Market
+  opportunity = the larger of the two firms' opportunity, compared within the same distribution firm,
+  `ZIP_CODE` and product: owner, 2026-10-24: "it will be the larger of the two"; "within the same firm,
+  zip_code, and product, the opporunity number should be the same for both firms" (opp-file questions 3, 4).
+- firm_2's opportunity goes in a new table; the source union is untouched (owner, 2026-10-24: "yes new
+  table"). `synthetic_key` is reused and extended insert-only by `22_code_opp_firm2.sql`, never rebuilt.
+- `BROKER_NAME` and `FIRM_CRD` are clear in the coded export of the opportunity file (owner, 2026-10-24 for
+  `BROKER_NAME`; session decision for `FIRM_CRD`, a public firm ID). Never in this repo, this log, notes or issues.
 - A ZIP absent from the union table has zero opportunity; territories `DIST_CH` values absent from the
   union table are out of scope (owner, 2026-10-19).
 - `CBD_ID` is the same distribution company in both `SOURCE`s and joins them (owner, 2026-10-21, Q1).
@@ -101,7 +112,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Q3 closed: no reassignment. Each row keeps its `MM_OPP` on its own `DIST_CH`; a person's numbers are reported in
   the current state (`DIST_CH`) and the new state (`CHANNEL`) (owner, 2026-10-21).
 - Opportunity at distribution companies a firm never sells to is reported as uncovered opportunity, not spread
-  into territories (owner, 2026-10-21, Q9).
+  into territories (owner, 2026-10-21, Q9). Likely moot for firm_2 once its own opportunity is in (owner,
+  2026-10-24, opp-file question 5); check.
 - Territories rows whose `CHANNEL` is not a `DIST_CH` in the union for that `SOURCE` are out of scope (`D1_04`-`D1_07`)
   (owner, 2026-10-21; Q4 stays open).
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
@@ -123,6 +135,11 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q16 | `N1_06` has `D1_01` (IFA) rows: a firm-level override, IFA business of those companies counted as National? | 2026-10-21 |
 | Q17 | Sellers with no territory (2.8% of `firm_2` sales): whose numbers? | 2026-10-21 |
 | Q18 | Which union name column and which territories name column to match? | 2026-10-21 |
+| Q19 | Opportunity-file `DIST_CH` labels to the union's firm_2 `DIST_CH`: one-to-one? labels with none? is `CHANNEL_ADJUSTED` faithful? | 2026-10-24 |
+| Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? | 2026-10-24 |
+| Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04` default?) | 2026-10-24 |
+| Q22 | `PRODUCT_LINE` (+ `VA_PRODUCT_TYPE`; same column as `VA_PRODUCT_LINE`?) to `PRODUCT_V2`: many-to-one, unmapped, `PR05` | 2026-10-24 |
+| Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
 
 ## Log
 
@@ -598,3 +615,134 @@ both `SOURCE`s.
 Q18. **Which name columns?** The file matches union `TERR_WHOLESALER_CLEAN_NAME` to territories `NAME`; confirm at
 work. The owner also mentioned an `updated_wholesaler2026` column in each firm's source dataset: should it be the
 name to match?
+
+### 2026-10-24: firm_2 opportunity file, owner answers
+
+The owner has a firm_2 opportunity file at work (`opp_original`), a first-attempt match of it (`opp_matched`) and
+the original CRD-to-`CBD_ID` table (`crd_cbd`). `22_code_opp_firm2.sql` codes all three with the key of
+2026-10-20, extended insert-only. Questions are numbered "opp-file question N" so they do not clash with Q1-Q18.
+For questions 7, 9 and 10 the question wording was not carried into this entry; the answer is recorded as given.
+
+**Opp-file question 1.** Is the key at work (`synthetic_key`) unchanged since the extract of 2026-10-20?
+
+> **Answer (owner, 2026-10-24):** "yes"
+
+**Opp-file question 2.** Is `BROKER_NAME` the firm name, and must it be masked?
+
+> **Answer (owner, 2026-10-24):** "broker_name is equivalent or should be firm name. we do not need to mask it"
+
+Flagged to the owner: a clear name beside a coded `CBD_ID` decodes the `C` and `P` codes outside work. The owner chose
+"Keep broker_name in clear". `FIRM_CRD` is also clear (session decision: a public firm ID, so with the name clear
+coding it hides nothing). Neither enters this repo, this log, notes or issues.
+
+**Opp-file question 3.** Is firm_2's opportunity the same measure as `MM_OPP` where both exist?
+
+> **Answer (owner, 2026-10-24):** "I am not entirely sure we will have to investigate this ourselves. but in theory, within the same firm, zip_code, and product, the opporunity number should be the same for both firms. but remember they both sell in separate places the other doesnt so aggregates won't align."
+
+Becomes Q23.
+
+**Opp-file question 4.** Where the two firms' opportunity differs for the same cell, which is the market opportunity?
+
+> **Answer (owner, 2026-10-24):** "it will be the larger of the two"
+
+**Opp-file question 5.** Does firm_2's own file cover the distribution companies it never sells to (21% of its split
+opportunity, Q9)?
+
+> **Answer (owner, 2026-10-24):** "yes it does, and likely render's q9's uncovered catgeory moot."
+
+Q9 stays in Settled with "likely moot for firm_2; check".
+
+**Opp-file question 6.** What columns does `opp_original` have?
+
+> **Answer (owner, 2026-10-24):** "channel (which is all null - disregard), dist_ch (which needs to be mapped to original union dist_ch), zip_code, firm_crd, broker_name, product_line (needs to be mapped to uni's product_line), va_product_type (i believe is used to distinguish VA from RILA-type of VA), and opp."
+
+`CHANNEL` is dropped from the coded copy. Becomes Q19 (`DIST_CH`) and Q22 (`PRODUCT_LINE`, `VA_PRODUCT_TYPE`).
+
+**Opp-file question 7.**
+
+> **Answer (owner, 2026-10-24):** "you will have to check this yourself"
+
+**Opp-file question 8.** How was `opp_matched`'s `FIRM_CRD` to `CBD_ID` match made, and is it trustworthy? Is there an
+original table, and should it be included in the coded export?
+
+> **Answer (owner, 2026-10-24):** "I believe much was matched by hand but I don't know if it is trustworth. But I can also give you are original crd_cbd mapping table, although I want us to craft our own. not sure about the other subquestions here. be sure we track and check them in the dataset"
+
+> **Answer (owner, 2026-10-24), to including `crd_cbd` in the export:** "Yes, include it"
+
+Becomes Q20.
+
+**Opp-file question 9.**
+
+> **Answer (owner, 2026-10-24):** "keep these open for investigation once I transfer the data"
+
+**Opp-file question 10.**
+
+> **Answer (owner, 2026-10-24):** "no clue you will have to check, keep these open"
+
+**Opp-file question 11.** Does firm_2's opportunity go in a new table, leaving the source union untouched?
+
+> **Answer (owner, 2026-10-24):** "yes new table"
+
+**Opp-file question 12.** What columns does `opp_matched` have?
+
+> **Answer (owner, 2026-10-24):** "opp_matched hsa firm_crd, broker_name, product_line, va_product_line, opp, channel_adjusted (which matches firm 2's original dist_ch but may not be faithful we will have to investigate), product_v2, cbd_id, dist_ch, and zip_code."
+
+#### Open questions raised
+
+Q19. **Opportunity-file `DIST_CH` labels to the union's firm_2 `DIST_CH`.** Is the map one-to-one? Which labels
+have no union value? Is `CHANNEL_ADJUSTED` faithful to the file's own `DIST_CH`? (`22` codes a label already in the
+key with its `D2_xx`, a new one `O2_xx`; the coded files show which are which.)
+
+Q20. **`FIRM_CRD` to `CBD_ID`, our own match.** Cardinality both ways; agreement with `opp_matched` and with
+`crd_cbd`; are the union's firm_2 `CBD_ID`s from the same crosswalk; which CRDs have no `CBD_ID`.
+
+Q21. **`NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several
+`CHANNEL`s.** Is `D2_04` the default? (Baseline below: 12 of 388 firm_2 `CBD_ID`s have several `CHANNEL`s; 144 firm_2
+rows have no `CBD_ID`.)
+
+Q22. **`PRODUCT_LINE` (+ `VA_PRODUCT_TYPE`) to `PRODUCT_V2`.** Many-to-one? Which values are unmapped? Where does `PR05`
+(Q8, Q12) land? Is `VA_PRODUCT_TYPE` the same column as `VA_PRODUCT_LINE` (new kind `VA_TYPE` in `22`)?
+
+Q23. **Is firm_2's `OPP` the same measure as `MM_OPP`?** Test equality within distribution firm x `ZIP_CODE` x product
+where both exist. `22` statement 7 prints the union's `MM_OPP` total in coded units, to compare outside work with the
+opportunity files' totals (settles whether the 2026-10-20 export divided by the same scale). Links Q2, Q7.
+
+#### Baseline on the extract of 2026-10-20, for the join
+
+Rerun on `data/safe/extract_2026-10-20/ssdb.duckdb`, firm_2 rows of the union. "% firm_2 sales" = positive
+`ACTUAL_SALES_AMOUNT` over firm_2's positive total (net sales differs by at most 0.01 on every line). "none" = no
+positive sales. Rows with NULL `DIST_CH` have no sales.
+
+| `DIST_CH` | `NEW_DIST` | `CHANNEL` | rows | `CBD_ID` | % firm_2 sales |
+|---|---|---|---|---|---|
+| `D2_01` | `N2_01` | IFA | 7,784 | 162 | 58.77 |
+| `D2_02` | `N2_02` | National | 1,726 | 1 | 17.28 |
+| `D2_02` | `N2_03` | FI | 1,621 | 23 | 13.04 |
+| `D2_03` | `N2_01` | IFA | 489 | 13 | 2.40 |
+| `D2_03` | `N2_04` | WH | 446 | 11 | 3.36 |
+| `D2_02` | `N2_05` | National | 412 | 1 | 2.41 |
+| NULL | `N2_01` | IFA | 194 | 194 | none |
+| `D2_03` | `N2_06` | National | 149 | 2 | 1.13 |
+| `D2_04` | `N2_01` | IFA | 147 | 7 | 0.43 |
+| `D2_04` | `N2_04` | WH | 70 | 4 | 0.46 |
+| `D2_02` | `N2_01` | IFA | 49 | 15 | 0.45 |
+| `D2_02` | `N2_04` | WH | 12 | 2 | 0.08 |
+| NULL | `N2_03` | FI | 10 | 10 | none |
+| `D2_01` | `N2_03` | FI | 7 | 3 | 0.02 |
+| `D2_02` | `N2_06` | National | 6 | 1 | 0.04 |
+| `D2_03` | `N2_03` | FI | 5 | 2 | 0.10 |
+| `D2_01` | `N2_02` | National | 3 | 1 | 0.01 |
+| NULL | `N2_04` | WH | 3 | 3 | none |
+| `D2_01` | `N2_04` | WH | 3 | 1 | 0.01 |
+| `D2_01` | `N2_06` | National | 2 | 1 | 0.00 |
+| `D2_03` | `N2_02` | National | 1 | 1 | 0.00 |
+| NULL | `N2_05` | National | 1 | 1 | none |
+
+- `CBD_ID` in both `SOURCE`s / firm_1 only / firm_2 only: 370 / 20 / 18.
+- firm_2 sales at the 18 `CBD_ID`s firm_1 has no row for: 1.55%. Add the 144 firm_2 rows with no `CBD_ID` (0.62% of
+  sales) and the share firm_1 cannot join is 2.17%.
+- firm_2 `CBD_ID`s with more than one `CHANNEL`: 12 of 388.
+- Shared `CBD_ID`s (370) whose set of `CHANNEL`s differs between the firms: 14. Of these, 2 have one `CHANNEL` in each
+  firm and no common one (`C00110`, `C00358`: FI in firm_1, IFA in firm_2); 12 have several `CHANNEL`s in at least one
+  firm and share one. 16 shared companies have several `CHANNEL`s in at least one firm; 4 of them have equal sets.
+- firm_2 rows with no `CBD_ID`: 144, 0.62% of sales.
