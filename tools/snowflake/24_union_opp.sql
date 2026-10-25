@@ -61,6 +61,10 @@ fp AS (              -- FIRM and PARENT of a company in each SOURCE
   SELECT u.CBD_ID, u.SOURCE, MAX(u.FIRM) AS FIRM, MAX(u.PARENT) AS PARENT
   FROM ssdb_integration.lr_strategy.union_base u
   WHERE u.CBD_ID IS NOT NULL GROUP BY u.CBD_ID, u.SOURCE),
+cn AS (              -- the firm name crd_cbd gives a CBD_ID: FIRM where union_base has none; PARENT stays blank (owner, 2026-10-25)
+  SELECT CAST(CBD_ID AS VARCHAR) AS CBD_ID, MAX(FIRM) AS FIRM
+  FROM ssdb_integration.lr_strategy.crd_cbd
+  WHERE CBD_ID IS NOT NULL AND CAST(CBD_ID AS VARCHAR) <> '0' GROUP BY 1),
 h AS (               -- holders of a ZIP_CODE x DIST_CH in territories
   SELECT t.ZIP_CODE, t.CHANNEL AS DIST_CH, MIN(t.CLEAN_ID) AS ID, COUNT(DISTINCT t.CLEAN_ID) AS N,
          MIN_BY(t.CLEAN_NAME, t.CLEAN_ID) AS NAME
@@ -97,7 +101,7 @@ b AS (
               ELSE df.NEW_DIST END AS NEW_DIST,
          CASE WHEN cx.CBD_ID IS NOT NULL THEN cx.CHANNEL WHEN co.CBD_ID IS NOT NULL THEN co.CHANNEL
               ELSE df.CHANNEL END AS CHANNEL,
-         COALESCE(p2.FIRM, p1.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
+         COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
          h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(h.N, 0) AS N_HOLDERS,
          COALESCE(st.STATE, us.STATE) AS STATE
   FROM a CROSS JOIN s1 CROSS JOIN s2
@@ -106,6 +110,7 @@ b AS (
   LEFT JOIN df ON df.DIST_CH = a.DIST_CH
   LEFT JOIN fp p2 ON p2.CBD_ID = a.CBD_ID AND p2.SOURCE = s2.V
   LEFT JOIN fp p1 ON p1.CBD_ID = a.CBD_ID AND p1.SOURCE = s1.V
+  LEFT JOIN cn ON cn.CBD_ID = a.CBD_ID
   LEFT JOIN h ON h.ZIP_CODE = a.ZIP_CODE AND h.DIST_CH = a.DIST_CH
   LEFT JOIN nm ON nm.ID = h.ID
   LEFT JOIN st ON st.ZIP_CODE = a.ZIP_CODE
@@ -183,6 +188,15 @@ UNION ALL SELECT 'opp-only rows with NULL DIST_CH, PRODUCT_V2, CHANNEL or NEW_DI
 UNION ALL SELECT 'CBD_IDs with 2+ FIRM in one SOURCE',
        (SELECT COUNT(*) FROM (SELECT CBD_ID, SOURCE FROM src
                               WHERE CBD_ID IS NOT NULL GROUP BY CBD_ID, SOURCE HAVING COUNT(DISTINCT FIRM) > 1) x), TRUE
+UNION ALL SELECT 'firm_2 rows carrying file opportunity with no FIRM',
+       (SELECT COUNT(*) FROM ap WHERE FIRM IS NULL), FALSE
+UNION ALL SELECT 'firm_2 percent of MM_OPP on rows with no FIRM',
+       (SELECT ROUND(100 * SUM(MM_OPP) / MAX(ot.O), 2) FROM ap CROSS JOIN ot WHERE FIRM IS NULL), FALSE
+UNION ALL SELECT 'CBD_IDs in union_base and crd_cbd: percent whose crd_cbd firm name equals the union FIRM',
+       (SELECT ROUND(100 * AVG(CASE WHEN c.FIRM = u.FIRM THEN 1 ELSE 0 END), 1)
+        FROM (SELECT CBD_ID, MAX(FIRM) AS FIRM FROM src WHERE CBD_ID IS NOT NULL GROUP BY CBD_ID) u
+        JOIN (SELECT CAST(CBD_ID AS VARCHAR) AS CBD_ID, MAX(FIRM) AS FIRM FROM ssdb_integration.lr_strategy.crd_cbd
+              WHERE CBD_ID IS NOT NULL GROUP BY 1) c ON c.CBD_ID = u.CBD_ID), FALSE
 UNION ALL SELECT 'dropped rows: ' || DROP_REASON, COUNT(*), FALSE
        FROM ssdb_integration.lr_strategy.OPP_MAPPED WHERE DROP_REASON IS NOT NULL GROUP BY DROP_REASON
 UNION ALL SELECT 'dropped OPP in coded units: ' || DROP_REASON, ROUND(SUM(OPP) / MAX(d.D), 1), FALSE

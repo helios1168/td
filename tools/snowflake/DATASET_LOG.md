@@ -121,6 +121,9 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
 - `23` and `24` read `union_base`, the union without `firm_2`'s opportunity; the current
   `data_withnewchannel_union_w_joinkeys` already carries an earlier load of it (owner, 2026-10-25).
+- `CBD_ID` '0' in `opp_matched` or `crd_cbd` is no company (`23` METHOD 'no company', `CBD_ID` blank). A `firm_2`
+  opp-only row whose company has no `union_base` row takes `FIRM` from `crd_cbd`'s `FIRM` column; `PARENT` stays blank
+  (owner, 2026-10-25).
 - At work `opp_original` and `crd_cbd` are views over the real tables; the real table names stay out of this repo,
   since one names the carrier (owner, 2026-10-25). The SQL files use the two view names.
 - Opportunity-file `DIST_CH` to union `DIST_CH`: `O2_01` = `D2_01`, `O2_02` = `D2_02`, `O2_03` = `D2_04`, `O2_04` =
@@ -1106,3 +1109,12 @@ Owner asked why some `firm_2` rows have no `FIRM` / `PARENT`. Only opp-only rows
 there, `firm_1` has no `MM_OPP` there). On the extract: 6,022 rows, 5.25% of `firm_2` `MM_OPP`. `C00410` holds 3.91% and
 `C00447` 0.97%, one CRD each, both tables agree; `C00409` (most likely '0') 0.12% over 16 CRDs; 19 others 0.25%.
 `explore/null_firm.sql` lists them with their CRDs and broker names at work.
+
+> **Owner, 2026-10-25:** "crd_to_cbd has firm name in it" ... "in crd_to_cbd it;s called "firm". and leave parent blank"
+
+Done in `23` and `24` (Settled). Rerun on the extract, with '0' put back in place of `C00409` in `opp_matched` and a
+`FIRM` column added to `crd_cbd` (harness only): every check 0, totals unchanged. `firm_2` rows with no `FIRM` fall from
+5.25% to 0.23% of `firm_2` `MM_OPP`: 16 CRDs of '0' now 'no company' with a blank `CBD_ID` (0.12%), and 16 companies
+only `opp_matched` names, absent from `crd_cbd` (0.11%). No row has `CBD_ID` '0'. `24`'s grid reports, for companies in
+both `union_base` and `crd_cbd`, the percent whose two firm names are equal (at work: whether the filled names follow
+the union's spelling).

@@ -77,12 +77,14 @@ om AS (              -- opp_matched: the CBD_ID on most rows of the CRD
   SELECT FIRM_CRD, CBD_ID, ROW_NUMBER() OVER (PARTITION BY FIRM_CRD ORDER BY R DESC, CBD_ID) AS RK,
          COUNT(*) OVER (PARTITION BY FIRM_CRD) AS N_CBD
   FROM (SELECT CAST(FIRM_CRD AS VARCHAR) AS FIRM_CRD, CAST(CBD_ID AS VARCHAR) AS CBD_ID, COUNT(*) AS R
-        FROM ssdb_integration.lr_strategy.opp_matched WHERE CBD_ID IS NOT NULL GROUP BY 1, 2) x),
+        FROM ssdb_integration.lr_strategy.opp_matched
+        WHERE CBD_ID IS NOT NULL AND CAST(CBD_ID AS VARCHAR) <> '0' GROUP BY 1, 2) x),   -- '0' = no company (owner, 2026-10-25)
 cc AS (              -- crd_cbd: same rule
   SELECT FIRM_CRD, CBD_ID, ROW_NUMBER() OVER (PARTITION BY FIRM_CRD ORDER BY R DESC, CBD_ID) AS RK,
          COUNT(*) OVER (PARTITION BY FIRM_CRD) AS N_CBD
   FROM (SELECT CAST(FIRM_CRD AS VARCHAR) AS FIRM_CRD, CAST(CBD_ID AS VARCHAR) AS CBD_ID, COUNT(*) AS R
-        FROM ssdb_integration.lr_strategy.crd_cbd WHERE CBD_ID IS NOT NULL GROUP BY 1, 2) x),
+        FROM ssdb_integration.lr_strategy.crd_cbd
+        WHERE CBD_ID IS NOT NULL AND CAST(CBD_ID AS VARCHAR) <> '0' GROUP BY 1, 2) x),
 j AS (
   SELECT crd.FIRM_CRD, crd.OPP, n.N AS N_CELLS,
          k1.CBD_ID AS EQ_CBD_ID,
@@ -108,6 +110,7 @@ SELECT FIRM_CRD, OPP, N_CELLS, EQ_CBD_ID, EQ_SHARE, RUNNER_UP_SHARE, OM_CBD_ID, 
             WHEN OM_CBD_ID = CC_CBD_ID THEN 'tables agree'
             WHEN CC_CBD_ID IS NULL AND OM_CBD_ID IS NOT NULL THEN 'opp_matched only'
             WHEN OM_CBD_ID IS NULL AND CC_CBD_ID IS NOT NULL THEN 'crd_cbd only'
+            WHEN OM_CBD_ID IS NULL AND CC_CBD_ID IS NULL THEN 'no company'
             ELSE 'review' END AS METHOD,
        -- every non-NULL of EQ (when used), OM and CC equal
        (EQ_USED IS NULL OR OM_CBD_ID IS NULL OR EQ_USED = OM_CBD_ID)
