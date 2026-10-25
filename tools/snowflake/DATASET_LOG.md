@@ -138,7 +138,7 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q16 | `N1_06` has `D1_01` (IFA) rows: a firm-level override, IFA business of those companies counted as National? | 2026-10-21 |
 | Q17 | Sellers with no territory (2.8% of `firm_2` sales): whose numbers? | 2026-10-21 |
 | Q18 | Which union name column and which territories name column to match? | 2026-10-21 |
-| Q19 | Opportunity-file `DIST_CH` labels to the union's firm_2 `DIST_CH`: one-to-one? labels with none? is `CHANNEL_ADJUSTED` faithful? | 2026-10-24 |
+| Q19 | Opportunity-file `DIST_CH`: `O2_01`-`O2_04` map to `D2_01`, `D2_02`, `D2_04`, `D2_03`; what is `O2_05`? | 2026-10-24 |
 | Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? | 2026-10-24 |
 | Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) | 2026-10-24 |
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
@@ -823,3 +823,48 @@ Asked to confirm the map from the equality test against the key (`L02` = `PR03`;
 
 `L02` is indexed annuity, and the test puts it on `PR03` (70.1% of cells exactly equal), so `PR03` is the union's
 index product. Q22 is closed (Settled); Q8 (what `firm_2`'s `PR05` sales are) stays open.
+
+### 2026-10-25: `opp_matched` arrives; its maps against ours and against the data
+
+Files `om0`-`om4` (hub root; `/om[0-9]*` added to the hub's local `.git/info/exclude`, since they hold firm names),
+loaded as `lr_strategy.opp_matched`: 306,530 rows, the same rows as `opp_original` on the shared columns (`OPP` to 3
+decimals), plus `CHANNEL_ADJUSTED`, `PRODUCT_V2` and `CBD_ID`.
+
+**Product map.** Same as Settled except `PR05` x `V03`: `opp_matched` says `PR05`, Settled says `PR02` (73.8% of cells
+exactly equal to `firm_1`'s `PR02`; `firm_1` has no `PR05` `MM_OPP`). `L01` (fixed, out of scope) is `L03` there.
+
+**`DIST_CH` map (`CHANNEL_ADJUSTED`).** Cells of the file matched to `firm_2`'s union rows at the same `CBD_ID` x
+`ZIP_CODE` (via `crd_cbd`):
+
+| file `DIST_CH` | `CHANNEL_ADJUSTED` | union `DIST_CH` at the same cells | CRDs | % of non-fixed `OPP` |
+|---|---|---|---|---|
+| `O2_01` | `D2_01` | `D2_01` 92.7% | 300 | 49.5 |
+| `O2_02` | `D2_02` | `D2_02` 76.8%, `D2_01` 21.7% | 33 | 27.3 |
+| `O2_03` | `D2_04` | `D2_04` 88.7% | 11 | 8.5 |
+| `O2_04` | `D2_03` | `D2_03` 93.8% | 15 | 11.9 |
+| `O2_05` | NULL | `D2_01` 60.9%, `D2_04` 27.8% | 123 | 2.7 |
+
+So the two agree on `O2_01`-`O2_04`; Q19 narrows to `O2_05`.
+
+**CRD to `CBD_ID`.** `opp_matched` maps all 475 CRDs (2 CRDs to 2 `CBD_ID`s; 4 `CBD_ID`s from several CRDs; 421
+`CBD_ID`s, 383 in the union). Our own match (Q20): for each CRD, the `CBD_ID` whose `firm_1` `MM_OPP` its `OPP`
+equals in the most `ZIP_CODE` x product cells (cells of at least 0.01, settled product map). Of 429 CRDs with such
+cells:
+
+| our match | CRDs | % of comparable `OPP` |
+|---|---|---|
+| clear: at least 80% of cells equal, runner-up under 20% | 310 | 50.7 |
+| likely: 50-80% | 25 | 10.2 |
+| weak: under 50% | 26 | 38.5 |
+| no equal cell | 68 | 0.5 |
+
+- Clear and likely (335 CRDs): all three agree on 181 (56.7% of comparable `OPP`); ours = `opp_matched` where
+  `crd_cbd` has no row on 144 (2.0%); ours = `opp_matched` against `crd_cbd` on 1 (0.9%); ours differs from both
+  on 9 (1.3%).
+- Weak (26 CRDs, 38.5%): on 15 of them (36.8%) both tables give the same `CBD_ID`, but only about a quarter of the
+  cells are equal. These are large companies where the match is right and the values differ.
+- Per company (`opp_matched`'s `CBD_ID`, its CRDs summed): 16 companies are under 50% equal, 23.9% of the compared
+  `MM_OPP` (IFA 12, FI 2, WH 1, National 1), with `firm_2` 1.4-1.9 times `firm_1` in total. About 30% of their cells
+  are equal, the rest mostly `firm_2` higher. Summing both firms to `FIRM` instead of `CBD_ID` raises the equal cells
+  from 72.1% to 79.8%: part of the gap is a company split into several `CBD_ID`s on one side only. Q23 stands: one
+  measure, with these companies to explain.
