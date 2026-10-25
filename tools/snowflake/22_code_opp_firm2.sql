@@ -214,8 +214,11 @@ ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 -- Statement 8.  Rows per part.  N = number of parts: about 60,000 rows per gzipped part stays under 800 KB (the
 -- 2026-10-20 union was 7.8 bytes a row gzipped).  The parts must add up to the table's rows.  Repeat for
 -- synthetic_opp_matched and synthetic_crd_cbd (probably 1 part).
-SELECT MOD(ABS(HASH(*)), 3) AS PART, COUNT(*) AS N_ROWS        -- 3 = N
-FROM ssdb_integration.lr_strategy.synthetic_opp_original GROUP BY 1 ORDER BY 1;
+-- (HASH(*) is allowed only in a SELECT list, so the part is computed in a subquery.)
+SELECT PART, COUNT(*) AS N_ROWS
+FROM (SELECT MOD(ABS(HASH(*)), 3) AS PART                       -- 3 = N
+      FROM ssdb_integration.lr_strategy.synthetic_opp_original)
+GROUP BY PART ORDER BY PART;
 
 -- Statement 9.  One part per run, PART = 0 .. N-1: download as CSV with header and gzip it, or unload it
 -- gzipped to your user stage and check its size with LIST before GET:
@@ -224,5 +227,7 @@ FROM ssdb_integration.lr_strategy.synthetic_opp_original GROUP BY 1 ORDER BY 1;
 --   LIST @~/td_opp/;
 -- (BROKER_NAME can hold commas: keep the quoting.)  A row's PART depends only on its values, so the parts never
 -- overlap and never miss a row.
-SELECT * FROM ssdb_integration.lr_strategy.synthetic_opp_original
-WHERE MOD(ABS(HASH(*)), 3) = 0;                                 -- 3 = N, 0 = the part
+SELECT * EXCLUDE PART
+FROM (SELECT *, MOD(ABS(HASH(*)), 3) AS PART                    -- 3 = N
+      FROM ssdb_integration.lr_strategy.synthetic_opp_original)
+WHERE PART = 0;                                                 -- 0 = the part
