@@ -25,8 +25,8 @@
 -- clear name beside a coded CBD_ID decodes the C and P codes outside work), FIRM_CRD (a public FINRA firm ID,
 -- so with the name clear coding it hides nothing), ZIP_CODE.
 -- The key never leaves work; it maps results from outside back to real values.
--- Run order: 1 (backup), 2, 3, 4-6, then 7: every MUST_BE_ZERO row of 7 must be 0.  Then 8-9 for each table:
--- every file sent must be under 800 KB, so the tables go out in parts.
+-- Run order: 1 (backup), 2, 3, 4-6, then 7: every MUST_BE_ZERO row of 7 must be 0.  Then 8 and the downloads
+-- 9-11: every file sent must be under 800 KB, so the opportunity tables go out in parts.
 
 -- Statement 1.  Backup of the key as it was.  IF NOT EXISTS: a re-run keeps the first backup.
 CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.synthetic_key_before_22 AS
@@ -211,23 +211,35 @@ UNION ALL SELECT 'opp_matched non-NULL ZIP_CODE not 5 characters',
        (SELECT COUNT_IF(LENGTH(CAST(ZIP_CODE AS VARCHAR)) <> 5) FROM ssdb_integration.lr_strategy.opp_matched), 0
 ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 
--- Statement 8.  Rows per part.  N = number of parts: about 60,000 rows per gzipped part stays under 800 KB (the
--- 2026-10-20 union was 7.8 bytes a row gzipped).  The parts must add up to the table's rows.  Repeat for
--- synthetic_opp_matched and synthetic_crd_cbd (probably 1 part).
--- (HASH(*) is allowed only in a SELECT list, so the part is computed in a subquery.)
-SELECT PART, COUNT(*) AS N_ROWS
-FROM (SELECT MOD(ABS(HASH(*)), 3) AS PART                       -- 3 = N
-      FROM ssdb_integration.lr_strategy.synthetic_opp_original)
-GROUP BY PART ORDER BY PART;
+-- Statement 8.  Rows per part: the parts of each table must add up to its rows; send this grid with the files.
+-- N = parts: opp_original 3 (about 965 KB a part on 2026-10-24, so 4 if 800 KB is a hard limit), opp_matched 5 (more
+-- columns).  HASH(*) is allowed only in a SELECT list, so the part is computed in a subquery.
+SELECT 'synthetic_opp_original' AS TBL, PART, COUNT(*) AS N_ROWS
+FROM (SELECT MOD(ABS(HASH(*)), 3) AS PART FROM ssdb_integration.lr_strategy.synthetic_opp_original) GROUP BY PART
+UNION ALL
+SELECT 'synthetic_opp_matched', PART, COUNT(*)
+FROM (SELECT MOD(ABS(HASH(*)), 5) AS PART FROM ssdb_integration.lr_strategy.synthetic_opp_matched) GROUP BY PART
+UNION ALL
+SELECT 'synthetic_crd_cbd', 0, COUNT(*) FROM ssdb_integration.lr_strategy.synthetic_crd_cbd
+ORDER BY TBL, PART;
 
--- Statement 9.  One part per run, PART = 0 .. N-1: download as CSV with header and gzip it, or unload it
--- gzipped to your user stage and check its size with LIST before GET:
---   COPY INTO @~/td_opp/synthetic_opp_original_part0.csv.gz FROM (<the SELECT below>)
+-- Downloads, one file per run: change only the part number (0 .. N-1) and name the file <table>_<part>.  Download
+-- as CSV with header and gzip it, or unload it gzipped to your user stage and check its size with LIST before GET:
+--   COPY INTO @~/td_opp/<table>_<part>.csv.gz FROM (<the SELECT>)
 --     FILE_FORMAT = (TYPE = CSV COMPRESSION = GZIP FIELD_OPTIONALLY_ENCLOSED_BY = '"') HEADER = TRUE SINGLE = TRUE;
 --   LIST @~/td_opp/;
--- (BROKER_NAME can hold commas: keep the quoting.)  A row's PART depends only on its values, so the parts never
+-- (BROKER_NAME can hold commas: keep the quoting.)  A row's part depends only on its values, so the parts never
 -- overlap and never miss a row.
+
+-- Statement 9.  synthetic_opp_original, 3 parts: 0, 1, 2.
 SELECT * EXCLUDE PART
-FROM (SELECT *, MOD(ABS(HASH(*)), 3) AS PART                    -- 3 = N
-      FROM ssdb_integration.lr_strategy.synthetic_opp_original)
-WHERE PART = 0;                                                 -- 0 = the part
+FROM (SELECT *, MOD(ABS(HASH(*)), 3) AS PART FROM ssdb_integration.lr_strategy.synthetic_opp_original)
+WHERE PART = 0;
+
+-- Statement 10.  synthetic_opp_matched, 5 parts: 0, 1, 2, 3, 4.
+SELECT * EXCLUDE PART
+FROM (SELECT *, MOD(ABS(HASH(*)), 5) AS PART FROM ssdb_integration.lr_strategy.synthetic_opp_matched)
+WHERE PART = 0;
+
+-- Statement 11.  synthetic_crd_cbd, one file.
+SELECT * FROM ssdb_integration.lr_strategy.synthetic_crd_cbd;
