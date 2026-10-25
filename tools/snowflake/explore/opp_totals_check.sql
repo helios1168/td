@@ -1,18 +1,34 @@
--- 1.  firm_2's opportunity at each stage of 23 and 24, in coded units (/ the MM_OPP divisor), safe to send back.  On the
--- coded extract: opp_original 306,530 rows / 90,431.3; OPP_MAPPED kept 234,760 / 56,993.5; UNION_OPP firm_2 69,045 /
--- 56,993.5; CBD_ID '0' about 0.1% (DATASET_LOG.md, 2026-10-25).  The same numbers at work = same data, no duplication.
+-- Where firm_2's MM_OPP in UNION_OPP comes from, in coded units (/ the MM_OPP divisor): safe to send back.
+-- 24 writes firm_2 MM_OPP from the file (D) onto rows, and keeps whatever MM_OPP firm_2's rows already carry in the
+-- source union (A).  So E + F + G = A + D.  On the coded extract A is 0 and E + F + G = D = 56,993.5
+-- (DATASET_LOG.md, 2026-10-25).
+
+-- 1.  Reconciliation.
 WITH
 d AS (SELECT NUM AS D FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'divisor' AND VALUE = 'MM_OPP'),
-s2 AS (SELECT VALUE AS V FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'SOURCE' AND CODE = 'firm_2')
-SELECT 'opp_original, all rows' AS STAGE, COUNT(*) AS N_ROWS, ROUND(SUM(OPP) / MAX(d.D), 1) AS CODED_UNITS
+s2 AS (SELECT VALUE AS V FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'SOURCE' AND CODE = 'firm_2'),
+uo AS (SELECT u.* FROM ssdb_integration.lr_strategy.UNION_OPP u JOIN s2 ON u.SOURCE = s2.V)
+SELECT 'A. source union: firm_2 rows with MM_OPP (extract 0)' AS STAGE, COUNT(u.MM_OPP) AS N_ROWS,
+       ROUND(SUM(u.MM_OPP) / MAX(d.D), 1) AS CODED_UNITS
+FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys u JOIN s2 ON u.SOURCE = s2.V CROSS JOIN d
+UNION ALL SELECT 'B. source union: all rows (extract 97,361)', COUNT(*), NULL
+FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+UNION ALL SELECT 'C. opp_original rows; OPP_MAPPED must have the same (extract 306,530)', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
 FROM ssdb_integration.lr_strategy.opp_original CROSS JOIN d
-UNION ALL SELECT 'OPP_MAPPED, kept rows', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
+UNION ALL SELECT 'C. OPP_MAPPED rows', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
+FROM ssdb_integration.lr_strategy.OPP_MAPPED CROSS JOIN d
+UNION ALL SELECT 'D. OPP_MAPPED kept rows: the file after the drops (extract 234,760 / 56,993.5)', COUNT(*), ROUND(SUM(OPP) / MAX(d.D), 1)
 FROM ssdb_integration.lr_strategy.OPP_MAPPED CROSS JOIN d WHERE DROP_REASON IS NULL
-UNION ALL SELECT 'UNION_OPP, firm_2 MM_OPP', COUNT(u.MM_OPP), ROUND(SUM(u.MM_OPP) / MAX(d.D), 1)
-FROM ssdb_integration.lr_strategy.UNION_OPP u JOIN s2 ON u.SOURCE = s2.V CROSS JOIN d
-UNION ALL SELECT 'UNION_OPP, firm_2 MM_OPP at CBD_ID 0', COUNT(u.MM_OPP), ROUND(SUM(u.MM_OPP) / MAX(d.D), 1)
-FROM ssdb_integration.lr_strategy.UNION_OPP u JOIN s2 ON u.SOURCE = s2.V CROSS JOIN d
-WHERE CAST(u.CBD_ID AS VARCHAR) = '0';
+UNION ALL SELECT 'E. UNION_OPP firm_2 MM_OPP, ROW_ORIGIN union (extract 0)', COUNT(uo.MM_OPP), ROUND(SUM(uo.MM_OPP) / MAX(d.D), 1)
+FROM uo CROSS JOIN d WHERE uo.ROW_ORIGIN = 'union'
+UNION ALL SELECT 'F. UNION_OPP firm_2 MM_OPP, ROW_ORIGIN union + opp file', COUNT(uo.MM_OPP), ROUND(SUM(uo.MM_OPP) / MAX(d.D), 1)
+FROM uo CROSS JOIN d WHERE uo.ROW_ORIGIN = 'union + opp file'
+UNION ALL SELECT 'G. UNION_OPP firm_2 MM_OPP, ROW_ORIGIN opp file', COUNT(uo.MM_OPP), ROUND(SUM(uo.MM_OPP) / MAX(d.D), 1)
+FROM uo CROSS JOIN d WHERE uo.ROW_ORIGIN = 'opp file'
+UNION ALL SELECT 'H. key: codes used twice within a kind (must be 0)', COUNT(*), NULL
+FROM (SELECT KIND, SOURCE, CODE FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND <> 'divisor'
+      GROUP BY KIND, SOURCE, CODE HAVING COUNT(*) > 1) x
+ORDER BY STAGE;
 
 -- 2.  Where firm_2's MM_OPP sits: CBD_ID '0', NULL or a company, by ROW_ORIGIN and CBD_METHOD (coded units).
 --     Note: a filter CBD_ID <> '0' also drops the NULL rows.
