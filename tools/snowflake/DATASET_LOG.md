@@ -766,3 +766,37 @@ amount in `ssdb.duckdb` was 10 times too small. Rescaled in place on 2026-10-24:
 `ssdb.pre-factor-1000.duckdb`). Shares, ratios and counts in this log are unchanged: both amounts moved by the same
 factor. Union `MM_OPP` total in coded units is now 55,404.3: `22` statement 7 must print the same at work, which also
 confirms the opportunity files are on the extract's scale.
+
+### 2026-10-24: `opp_original` and `crd_cbd` arrive; first checks
+
+Files from `22` (hub root, git-excluded): `synthetic_opp_original_0..2`, `synthetic_crd_to_cbd`, loaded into
+`ssdb.duckdb` as `lr_strategy.opp_original` (306,530 rows) and `lr_strategy.crd_cbd` (455 rows), all text but `OPP`.
+The three `synthetic_opp_matched_*` files are byte-identical to `synthetic_opp_original_*` (same md5): `opp_matched`
+has not arrived.
+
+- `ZIP_CODE` lost its leading zeros at work (30,915 rows of 3-4 digits): stored as a number. Joins pad it to 5.
+- Grain: each `DIST_CH` x `ZIP_CODE` x `FIRM_CRD` x `BROKER_NAME` comes with the same 5 product slots
+  (`PRODUCT_LINE` x `VA_PRODUCT_TYPE`: `L01`, `L02`, `PR05` x `V01`/`V02`/`V03`, 61,306 rows each); 64% of rows have
+  `OPP` 0, 178 negative. 46,435 keys repeat (43.6% of `OPP`); 32,527 rows are exact copies.
+- `DIST_CH`: 5 labels, `O2_01`-`O2_05`, none equal to a union `DIST_CH` (Q19).
+- `crd_cbd`: 227 of 455 rows have a CRD; 1 CRD has 2 `CBD_ID`s, 3 `CBD_ID`s have several CRDs. It maps 223 of the
+  file's 475 CRDs, 97.6% of its `OPP` (Q20).
+- Q23, first test. `OPP` summed per `CBD_ID` x `ZIP_CODE` x product (CRDs with one `CBD_ID` in `crd_cbd`) against
+  `firm_1`'s `MM_OPP`, nonzero cells, equal to 0.0015 coded units:
+
+| file product | equals `firm_1` | cells compared | % exactly equal | median ratio |
+|---|---|---|---|---|
+| `L02` | `PR03` | 13,280 | 70.1 | 1.0 |
+| `PR05` / `V01` | `PR04` | 2,985 | 85.1 | 1.0 |
+| `PR05` / `V02` | `PR01` | 17,311 | 72.3 | 1.0 |
+| `PR05` / `V03` | `PR02` | 14,944 | 73.8 | 1.0 |
+| `L01` | none | | 0.3-0.6 against each | 2.0-6.6 |
+
+- Every other product pair is under 1% equal. So the two files carry one opportunity measure, and the product map
+  is the table above. `L01` (35.2% of the file's `OPP`) has no `firm_1` counterpart.
+- Summing repeated keys matches more cells than taking the largest row (72.9% against 66.3% over the four pairs);
+  dropping exact copies changes nothing.
+- Per company: 112 `CBD_ID`s are at least 95% equal (19.9% of the compared `MM_OPP`), 68 are 50-95% (55.0%),
+  13 under 50% (25.1%, `firm_2` higher, median ratio 1.45). Unequal cells are mostly `firm_2` higher.
+- The file's `PR05` is the union's `PR05` text (same key value), split by `VA_PRODUCT_TYPE` into `firm_1`'s `PR01`,
+  `PR02`, `PR04`: a lead for Q8 (what `firm_2`'s `PR05` sales are).
