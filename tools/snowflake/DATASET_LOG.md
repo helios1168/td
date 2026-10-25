@@ -755,3 +755,14 @@ positive sales. Rows with NULL `DIST_CH` have no sales.
   firm and no common one (`C00110`, `C00358`: FI in firm_1, IFA in firm_2); 12 have several `CHANNEL`s in at least one
   firm and share one. 16 shared companies have several `CHANNEL`s in at least one firm; 4 of them have equal sets.
 - firm_2 rows with no `CBD_ID`: 144, 0.62% of sales.
+
+### 2026-10-24: correction, the 2026-10-20 export's amount factor was 1,000
+
+> **Owner, 2026-10-24:** "the old factor was 1000"
+
+The entry of 2026-10-20 loaded amounts as the exported integers / 10,000 (assumed). The factor was 1,000, so every
+amount in `ssdb.duckdb` was 10 times too small. Rescaled in place on 2026-10-24: `MM_OPP` and `ACTUAL_SALES_AMOUNT` =
+`ROUND(x * 10000) / 1000` (every loaded value was an exact integer / 10,000; the pre-fix file is kept beside it as
+`ssdb.pre-factor-1000.duckdb`). Shares, ratios and counts in this log are unchanged: both amounts moved by the same
+factor. Union `MM_OPP` total in coded units is now 55,404.3: `22` statement 7 must print the same at work, which also
+confirms the opportunity files are on the extract's scale.
