@@ -119,6 +119,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
 - `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
+- Opportunity-file `DIST_CH` to union `DIST_CH`: `O2_01` = `D2_01`, `O2_02` = `D2_02`, `O2_03` = `D2_04`, `O2_04` =
+  `D2_03`; `O2_05` is no channel and its rows are dropped (owner, 2026-10-25, Q19).
 - Opportunity-file product to `PRODUCT_V2`: `L02` (indexed annuity) = `PR03`; `PR05` x `V01` / `V02` / `V03` =
   `PR04` / `PR01` / `PR02` (owner, 2026-10-24, Q22; found by the equality test of that day).
 
@@ -138,7 +140,6 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q16 | `N1_06` has `D1_01` (IFA) rows: a firm-level override, IFA business of those companies counted as National? | 2026-10-21 |
 | Q17 | Sellers with no territory (2.8% of `firm_2` sales): whose numbers? | 2026-10-21 |
 | Q18 | Which union name column and which territories name column to match? | 2026-10-21 |
-| Q19 | Opportunity-file `DIST_CH`: `O2_01`-`O2_04` map to `D2_01`, `D2_02`, `D2_04`, `D2_03`; what is `O2_05`? | 2026-10-24 |
 | Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? | 2026-10-24 |
 | Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) | 2026-10-24 |
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
@@ -868,3 +869,11 @@ cells:
   are equal, the rest mostly `firm_2` higher. Summing both firms to `FIRM` instead of `CBD_ID` raises the equal cells
   from 72.1% to 79.8%: part of the gap is a company split into several `CBD_ID`s on one side only. Q23 stands: one
   measure, with these companies to explain.
+
+### 2026-10-25: Q19 answered, `O2_05` is no channel
+
+> **Answer (owner, 2026-10-25):** "it's no channel, we can drop those rows"
+
+Dropped: 10,464 non-fixed rows, `OPP` 1,603.9 coded units (2.7% of the non-fixed `OPP`), 123 CRDs, 120 of which have
+no other `DIST_CH`. Left after dropping fixed and `O2_05`: 234,760 rows, `OPP` 56,993.5 coded units. Q19 is closed
+(Settled: `O2_01`-`O2_04` as `CHANNEL_ADJUSTED` and the data give them).
