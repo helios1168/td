@@ -1540,3 +1540,27 @@ holder on the stand-in, whose territories carry other channel labels than its un
 Correction, same session, before any run at work: the list first shipped with `46` (`f1152b8`), carried over from the
 firm overrides; the owner named no company. It now ships empty (`VALUES ('')` filtered out), so it changes nothing until
 the owner lists a company.
+
+### 2026-10-26: union from scratch dropped; address IDs on opp-only rows
+
+> **Owner, 2026-10-26:** "now recall mm_query.sql, is there a way to produce the union dataset from scratch using the logic found in mm_query.sql? without having to rely on an existing union dataset?"
+
+The session's answer: the owner's query builds `firm_1`'s sales and opportunity rows up to `NEW_DIST`, and `25` builds
+`firm_2`'s opportunity rows; `firm_2`'s sales rows, `CHANNEL`, the wholesaler ID columns and the filters (fiscal year,
+FIXED, the channels outside `firm_1`'s three) come from steps not in hand, and `firm_2`'s sales source is unknown (Q24).
+
+> **Owner, 2026-10-26:** "ok forget that piece then. For our latest table produced in union_opp, how do we ensure we propogate the mapping ID's for the territory and address tables?"
+
+Rows copied from `union_base` (both firms, and `firm_2`'s sales rows that now carry `MM_OPP`) keep all four ID columns;
+the hash check compares every column but `MM_OPP` and the lineage columns, so a changed ID fails it. Opp-only rows took
+the holder's `CLEAN_ID` on both `TERRITORY_ID` columns but left both `ADDRESS_ID` columns NULL, a session assumption
+never checked: the coded extract has the two columns NULL on every row, so how the union fills them is not known here.
+Now both `ADDRESS_ID` columns of an opp-only row (`firm_2`'s, and `firm_1`'s 'added') carry the address ID `union_base`
+pairs with the holder's `CLEAN_ID` on its `TERRITORY_WHOLESALER_*` columns, same `SOURCE`, where it pairs exactly one;
+NULL where it pairs none or 2+ (no guess). For reading in the grid: opp-only rows with a holder and no address ID;
+territory IDs paired with 2+ address IDs; `firm_1`'s own opp-only rows in `union_base`: % with an address ID, and how
+many have the two address IDs different (whether its layout copies one ID to both, as `UNION_OPP` does).
+
+Tested on the stand-in with planted address IDs (one `firm_2` territory ID paired with two, one `firm_1` ID with none):
+every opp-only row with a holder gets its holder's address ID on both columns, the two planted cases get NULL and are
+counted; every other column of every row and every row copied from `union_base` is unchanged.
