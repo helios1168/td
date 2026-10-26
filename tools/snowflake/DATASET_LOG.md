@@ -1572,3 +1572,17 @@ Q26: whether the union's two `ADDRESS_ID` columns hold that `CLEAN_ID` (then an 
 holder's `CLEAN_ID`, no pairing from `union_base` needed). `explore/address_id.sql` answers it with counts; tested on the
 extract (address IDs NULL there) and on planted data (same ID and different ID both read right). `25` unchanged until
 the result.
+
+Q26, owner's run of `explore/address_id.sql` query 1 (2026-10-26), territory side (sales side within 0.3 points):
+
+| | `firm_1` | `firm_2` |
+|---|---|---|
+| `union_base` rows | 80,677 | 7,943 |
+| rows with an address ID | 96.12% | 90.80% |
+| of those, address ID = territory ID | 90.49% | 77.51% |
+| address ID differs | 7,371 rows | 1,622 rows |
+
+An address ID that is a territories `CLEAN_ID` is always the row's own territory ID (the two counts are equal in both
+`SOURCE`s); the ones that differ are no territories `CLEAN_ID`. `union_base` at work has 88,620 rows, not the extract's
+97,361: the stand-in tests run on older data. Query 2 (added, tested on planted data) splits the territory side by
+row type and by whether the territory ID is a territories `CLEAN_ID`, which every opp-only row of `UNION_OPP` has.
