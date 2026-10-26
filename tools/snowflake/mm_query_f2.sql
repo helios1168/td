@@ -2,14 +2,15 @@ use secondary roles all;
 
 --firm_2's opportunity file through the opportunity steps of the firm_1 query (mm_query.sql, opp_base .. opp_final).
 --The steps are copied as written; every change is marked --f2:.  Kept out of the repo, like mm_query.sql.
---firm_2's file has no company, client firm ID or state, and names its channels differently from the vendor table
---(2026-10-25 run: 3.58% of its OPP had firm_1's dist_ch).  So each firm_2 row takes them from firm_1's vendor rows
---of the same ZIP x CRD x broker name x product, else of the same ZIP x CRD x broker name, else crd_cbd_mm (company
---only), and then goes through the query's rules like a firm_1 row.  Its own channel stays in FILE_DIST_CH.
+--firm_2's file has no company, client firm ID or state: each firm_2 row takes them from firm_1's vendor rows of the
+--same ZIP x CRD x broker name x product, else of the same ZIP x CRD x broker name, else crd_cbd_mm (company only).
+--dist_ch: firm_2's file names its channels differently from the vendor table, so a firm_2 row takes the dist_ch the
+--query gives firm_1's rows of the same CRD, when they all carry one; otherwise DIST_REVIEW says why and dist_ch is
+--blank, for manual review (owner, 2026-10-25).  firm_2's own channel stays in FILE_DIST_CH.
 --Statement 1  ssdb_integration.lr_strategy.opp_base_both: both firms' rows through one opp_base.
 --Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final.
---Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch: firm_2's own, firm_1's, the rules'.
---Statement 5  firm_1 cells (ZIP x CRD x broker name x product) with 2+ company x dist_ch: what differs in them.
+--Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch by firm_2's own channel.
+--Statement 5  the CRDs for manual review.
 
 --Statement 1.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.opp_base_both AS (
@@ -37,35 +38,34 @@ product_map AS (   --f2: the query's product CASE once per product line x VA typ
 
 vendor_g AS (   --f2: firm_1's vendor rows (fiscal years of the query) by ZIP x CRD x broker name x product
     SELECT LPAD(TRIM(TO_CHAR(zip_code)), 5, '0') AS zip_code, TO_CHAR(v.firm_crd) AS firm_crd, v.broker_name, pm.product,
-        TO_CHAR(v.cbd_id) AS cbd_id, TO_CHAR(v.client_firm_id) AS client_firm_id, TO_CHAR(v.dist_ch) AS dist_ch,
-        SUM(v.global_sales) AS opp
+        TO_CHAR(v.cbd_id) AS cbd_id, TO_CHAR(v.client_firm_id) AS client_firm_id, SUM(v.global_sales) AS opp
     FROM life_prod.lif_murkylake.wc_market_metrics_opportunity v
     JOIN product_map pm ON pm.pl IS NOT DISTINCT FROM TO_CHAR(v.product_line)
                        AND pm.va IS NOT DISTINCT FROM TO_CHAR(v.va_product_type)
     WHERE TO_CHAR(v.fiscal_yr) IN ('2024', '2025')
-    GROUP BY LPAD(TRIM(TO_CHAR(zip_code)), 5, '0'), TO_CHAR(v.firm_crd), v.broker_name, pm.product, TO_CHAR(v.cbd_id), TO_CHAR(v.client_firm_id), TO_CHAR(v.dist_ch)
+    GROUP BY LPAD(TRIM(TO_CHAR(zip_code)), 5, '0'), TO_CHAR(v.firm_crd), v.broker_name, pm.product, TO_CHAR(v.cbd_id), TO_CHAR(v.client_firm_id)
 ),
 
-vendor_cell AS (   --f2: per ZIP x CRD x broker name x product, the company and dist_ch carrying most opportunity; N_CO = how many
-    SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, dist_ch, n_co
+vendor_cell AS (   --f2: per ZIP x CRD x broker name x product, the company carrying most opportunity; N_CO = how many companies
+    SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, n_co
     FROM (
-        SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, dist_ch
+        SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id
             , COUNT(*) OVER (PARTITION BY zip_code, firm_crd, broker_name, product) AS n_co
-            , ROW_NUMBER() OVER (PARTITION BY zip_code, firm_crd, broker_name, product ORDER BY opp DESC, cbd_id, client_firm_id, dist_ch) AS rk
-        FROM (SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, dist_ch, SUM(opp) AS opp
-              FROM vendor_g GROUP BY zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, dist_ch)
+            , ROW_NUMBER() OVER (PARTITION BY zip_code, firm_crd, broker_name, product ORDER BY opp DESC, cbd_id, client_firm_id) AS rk
+        FROM (SELECT zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id, SUM(opp) AS opp
+              FROM vendor_g GROUP BY zip_code, firm_crd, broker_name, product, cbd_id, client_firm_id)
     )
     WHERE rk = 1
 ),
 
 vendor_key AS (   --f2: the same per ZIP x CRD x broker name, for a product firm_1 has no row of there
-    SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id, dist_ch, n_co
+    SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id, n_co
     FROM (
-        SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id, dist_ch
+        SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id
             , COUNT(*) OVER (PARTITION BY zip_code, firm_crd, broker_name) AS n_co
-            , ROW_NUMBER() OVER (PARTITION BY zip_code, firm_crd, broker_name ORDER BY opp DESC, cbd_id, client_firm_id, dist_ch) AS rk
-        FROM (SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id, dist_ch, SUM(opp) AS opp
-              FROM vendor_g GROUP BY zip_code, firm_crd, broker_name, cbd_id, client_firm_id, dist_ch)
+            , ROW_NUMBER() OVER (PARTITION BY zip_code, firm_crd, broker_name ORDER BY opp DESC, cbd_id, client_firm_id) AS rk
+        FROM (SELECT zip_code, firm_crd, broker_name, cbd_id, client_firm_id, SUM(opp) AS opp
+              FROM vendor_g GROUP BY zip_code, firm_crd, broker_name, cbd_id, client_firm_id)
     )
     WHERE rk = 1
 ),
@@ -92,7 +92,7 @@ opp_source AS (   --f2: both firms' rows in the vendor table's columns, all text
         TO_CHAR(cbd_id) AS cbd_id, TO_CHAR(client_firm_id) AS client_firm_id, TO_CHAR(firm_crd) AS firm_crd,
         broker_name, TO_CHAR(dist_ch) AS dist_ch, TO_CHAR(fiscal_yr) AS fiscal_yr, TO_CHAR(zip_code) AS zip_code,
         TO_CHAR(state) AS state, global_sales, TO_CHAR(territory) AS territory,
-        TO_CHAR(dist_ch) AS in_dist_ch, TO_CHAR(dist_ch) AS file_dist_ch, TO_CHAR(product_line) AS file_product_line,
+        TO_CHAR(dist_ch) AS file_dist_ch, TO_CHAR(product_line) AS file_product_line,
         TO_CHAR(va_product_type) AS file_va_type, 'vendor' AS cbd_method, 1 AS n_co
     FROM life_prod.lif_murkylake.wc_market_metrics_opportunity
     UNION ALL
@@ -101,9 +101,8 @@ opp_source AS (   --f2: both firms' rows in the vendor table's columns, all text
         CASE WHEN c.zip_code IS NOT NULL THEN c.cbd_id WHEN k.zip_code IS NOT NULL THEN k.cbd_id ELSE m.cbd_id END,
         CASE WHEN c.zip_code IS NOT NULL THEN c.client_firm_id WHEN k.zip_code IS NOT NULL THEN k.client_firm_id END,
         TO_CHAR(f.firm_crd), f.broker_name,
-        CASE WHEN c.zip_code IS NOT NULL THEN c.dist_ch WHEN k.zip_code IS NOT NULL THEN k.dist_ch END,   --NULL: no firm_1 row
+        TO_CHAR(f.dist_ch),   --replaced after opp_base by firm_1's dist_ch of the CRD
         '2025', f.zip5, st.state, f.opp, CAST(NULL AS VARCHAR),
-        CASE WHEN c.zip_code IS NOT NULL THEN c.dist_ch WHEN k.zip_code IS NOT NULL THEN k.dist_ch END,
         TO_CHAR(f.dist_ch), TO_CHAR(f.product_line), TO_CHAR(f.va_product_type),
         CASE WHEN c.zip_code IS NOT NULL THEN 'vendor cell' WHEN k.zip_code IS NOT NULL THEN 'vendor ZIP x CRD x broker'
              WHEN m.cbd_id IS NOT NULL THEN 'crd_cbd_mm' END,
@@ -149,12 +148,26 @@ opp_base AS (
             ELSE TO_CHAR(cbd_id)
         END AS original_cbd_id,
         territory,
-        src, in_dist_ch, file_dist_ch, file_product_line, file_va_type, cbd_method, n_co   --f2: carried for the checks
+        src, file_dist_ch, file_product_line, file_va_type, cbd_method, n_co   --f2: carried for the checks
     FROM opp_source
     WHERE TO_CHAR(fiscal_yr) IN ('2024', '2025')
+),
+
+crd_dist AS (   --f2: the dist_ch the query gives firm_1's rows of each CRD; N_DIST = how many (a blank counts as one)
+    SELECT firm_crd AS crd, MAX(dist_ch) AS f1_dist_ch, COUNT(DISTINCT COALESCE(dist_ch, '~')) AS n_dist
+    FROM opp_base
+    WHERE src = 'firm_1'
+    GROUP BY firm_crd
 )
 
-SELECT * FROM opp_base
+SELECT b.* EXCLUDE (dist_ch),
+    CASE WHEN b.src = 'firm_1' THEN b.dist_ch WHEN c.n_dist = 1 THEN c.f1_dist_ch END AS dist_ch,   --f2: firm_1's, by CRD
+    CASE WHEN b.src = 'firm_1' THEN NULL
+         WHEN c.crd IS NULL THEN 'no firm_1 rows for the CRD'
+         WHEN c.n_dist > 1 THEN 'firm_1 rows of the CRD carry 2+ dist_ch'
+         WHEN c.f1_dist_ch IS NULL THEN 'firm_1 rows of the CRD have a blank dist_ch' END AS dist_review
+FROM opp_base b
+LEFT JOIN crd_dist c ON c.crd = b.firm_crd AND b.src = 'firm_2'
 );
 
 --Statement 2.
@@ -351,12 +364,16 @@ UNION ALL SELECT 'firm_2 OPP: opp_base with a company minus opp_f2_final',
            - (SELECT SUM(mm_opp) FROM ssdb_integration.lr_strategy.opp_f2_final), 2), 1
 UNION ALL SELECT 'firm_2 % of OPP: from firm_1''s vendor rows of the same ZIP x CRD x broker name x product', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE cbd_method = 'vendor cell'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP: from firm_1''s vendor rows of the same ZIP x CRD x broker name, other product', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE cbd_method = 'vendor ZIP x CRD x broker'), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP: company from crd_cbd_mm, no dist_ch (no firm_1 row there)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE cbd_method = 'crd_cbd_mm'), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 rows with neither a dist_ch nor a review reason',
+       (SELECT COUNT(*) FROM b2 WHERE dist_ch IS NULL AND dist_review IS NULL), 1
+UNION ALL SELECT 'firm_2 % of OPP: company from crd_cbd_mm (no vendor row there)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE cbd_method = 'crd_cbd_mm'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP: no company, dropped by opp_grouped (as firm_1''s)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE original_cbd_id IS NULL), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP whose firm_1 rows carry 2+ company x dist_ch (the largest taken)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE n_co > 1), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP whose firm_1 cell carries 2+ companies (the largest taken)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE n_co > 1), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP with a | list of companies', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE original_cbd_id LIKE '%|%'), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP whose dist_ch the query''s rules changed', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS DISTINCT FROM in_dist_ch), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP with no dist_ch after the rules', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS NULL), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP: dist_ch from firm_1, one for the CRD', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS NOT NULL), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP for review: no firm_1 rows for the CRD', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'no firm_1 rows for the CRD'), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP for review: firm_1 rows of the CRD carry 2+ dist_ch', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'firm_1 rows of the CRD carry 2+ dist_ch'), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP for review: firm_1 rows of the CRD have a blank dist_ch', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'firm_1 rows of the CRD have a blank dist_ch'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP with a firm_1 cell (ZIP x CRD x broker name x product): OPP equal to firm_1''s to 3 decimals of coded units',
        (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN ROUND(f2p.opp / d.D_OPP, 3) = ROUND(f1p.opp / d.D_OPP, 3) THEN f2p.opp END), 0)
                      / SUM(f2p.opp), 2)
@@ -365,62 +382,36 @@ UNION ALL SELECT 'firm_2 % of OPP with a firm_1 cell (ZIP x CRD x broker name x 
                          AND f1p.product_line = f2p.product_line), 0
 ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 
---Statement 4.  dist_ch: firm_2's own label, firm_1's at the same cell, and the query's rules' result; share of firm_2's OPP.
+--Statement 4.  dist_ch by firm_2's own channel; share of firm_2's OPP.
 WITH
 b2 AS (SELECT * FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'),
 t AS (SELECT SUM(global_sales) AS opp FROM b2)
-SELECT b2.file_dist_ch AS firm_2_dist_ch,
-       COALESCE(b2.in_dist_ch, CASE WHEN b2.cbd_method LIKE 'vendor%' THEN '(firm_1 blank)' ELSE '(no firm_1 row)' END) AS firm_1_dist_ch,
-       b2.dist_ch AS query_dist_ch, COUNT(DISTINCT b2.firm_crd) AS crds,
-       ROUND(100 * SUM(b2.global_sales) / MAX(t.opp), 2) AS pct_firm_2_opp
+SELECT b2.file_dist_ch AS firm_2_dist_ch, COALESCE(b2.dist_ch, 'REVIEW: ' || b2.dist_review) AS dist_ch,
+       COUNT(DISTINCT b2.firm_crd) AS crds, ROUND(100 * SUM(b2.global_sales) / MAX(t.opp), 2) AS pct_firm_2_opp
 FROM b2
 CROSS JOIN t
-GROUP BY b2.file_dist_ch,
-         COALESCE(b2.in_dist_ch, CASE WHEN b2.cbd_method LIKE 'vendor%' THEN '(firm_1 blank)' ELSE '(no firm_1 row)' END), b2.dist_ch
+GROUP BY b2.file_dist_ch, COALESCE(b2.dist_ch, 'REVIEW: ' || b2.dist_review)
 ORDER BY pct_firm_2_opp DESC;
 
---Statement 5.  firm_1's rows of one cell (ZIP x CRD x broker name x product) can carry 2+ company x dist_ch, and the
---firm_2 row takes the largest.  What differs (company after the query's rules, firm_1's dist_ch, territory), the
---share of firm_2's OPP in such cells, and how much of firm_1's cell OPP is outside its largest company x dist_ch.
+--Statement 5.  For manual review: each CRD whose firm_2 rows have no dist_ch, with firm_1's dist_ch of the CRD and
+--their shares of firm_1's OPP there.
 WITH
-f1 AS (
-    SELECT LPAD(TRIM(zip_code), 5, '0') AS zip, firm_crd, broker_name, product_line,
-           COALESCE(original_cbd_id, '~') AS co, COALESCE(in_dist_ch, '~') AS dc, COALESCE(territory, '~') AS terr,
-           global_sales AS opp
-    FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_1'
-),
-cell AS (
-    SELECT zip, firm_crd, broker_name, product_line,
-           COUNT(DISTINCT co) AS n_co, COUNT(DISTINCT dc) AS n_dc, COUNT(DISTINCT terr) AS n_terr, SUM(opp) AS opp
-    FROM f1 GROUP BY zip, firm_crd, broker_name, product_line
-),
-top AS (
-    SELECT zip, firm_crd, broker_name, product_line, MAX(opp) AS top_opp
-    FROM (SELECT zip, firm_crd, broker_name, product_line, co, dc, SUM(opp) AS opp
-          FROM f1 GROUP BY zip, firm_crd, broker_name, product_line, co, dc)
-    GROUP BY zip, firm_crd, broker_name, product_line
-),
-f2 AS (
-    SELECT zip_code AS zip, firm_crd, broker_name, product_line, SUM(global_sales) AS opp
-    FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'
-    GROUP BY zip_code, firm_crd, broker_name, product_line
-),
-x AS (
-    SELECT CASE WHEN c.n_co = 1 AND c.n_dc = 1 THEN 'one company, one dist_ch'
-                WHEN c.n_co = 1 THEN 'one company, 2+ dist_ch'
-                WHEN c.n_dc = 1 THEN '2+ companies, one dist_ch'
-                ELSE '2+ companies, 2+ dist_ch' END AS firm_1_cell,
-           CASE WHEN c.n_terr > 1 THEN '2+ territories' ELSE 'one territory' END AS territories,
-           f2.opp AS f2_opp, c.opp AS f1_opp, tp.top_opp
-    FROM f2
-    JOIN cell c ON c.zip = f2.zip AND c.firm_crd = f2.firm_crd AND c.broker_name = f2.broker_name
-               AND c.product_line = f2.product_line
-    JOIN top tp ON tp.zip = f2.zip AND tp.firm_crd = f2.firm_crd AND tp.broker_name = f2.broker_name
-               AND tp.product_line = f2.product_line
-)
-SELECT firm_1_cell, territories, COUNT(*) AS cells,
-       ROUND(100 * SUM(f2_opp) / (SELECT SUM(global_sales) FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'), 2) AS pct_firm_2_opp,
-       ROUND(100 * (1 - SUM(top_opp) / NULLIF(SUM(f1_opp), 0)), 2) AS pct_firm_1_cell_opp_outside_largest
-FROM x
-GROUP BY firm_1_cell, territories
-ORDER BY pct_firm_2_opp DESC;
+b AS (SELECT * FROM ssdb_integration.lr_strategy.opp_base_both),
+t AS (SELECT SUM(global_sales) AS opp FROM b WHERE src = 'firm_2'),
+f1 AS (SELECT firm_crd, COALESCE(dist_ch, '(blank)') AS dist_ch, SUM(global_sales) AS opp
+       FROM b WHERE src = 'firm_1' GROUP BY firm_crd, COALESCE(dist_ch, '(blank)')),
+f1s AS (SELECT firm_crd,
+               LISTAGG(dist_ch || ' ' || TO_CHAR(ROUND(100 * opp / NULLIF(tot, 0), 1)) || '%', ', ')
+                   WITHIN GROUP (ORDER BY opp DESC) AS firm_1_dist_ch
+        FROM (SELECT f1.*, SUM(opp) OVER (PARTITION BY firm_crd) AS tot FROM f1)
+        GROUP BY firm_crd),
+r AS (SELECT firm_crd, dist_review, LISTAGG(DISTINCT broker_name, ' | ') AS broker_names,
+             LISTAGG(DISTINCT file_dist_ch, ', ') AS firm_2_dist_ch, SUM(global_sales) AS opp
+      FROM b WHERE src = 'firm_2' AND dist_review IS NOT NULL
+      GROUP BY firm_crd, dist_review)
+SELECT r.firm_crd, r.broker_names, r.firm_2_dist_ch, f1s.firm_1_dist_ch, r.dist_review,
+       ROUND(100 * r.opp / t.opp, 3) AS pct_firm_2_opp
+FROM r
+LEFT JOIN f1s ON f1s.firm_crd = r.firm_crd
+CROSS JOIN t
+ORDER BY r.opp DESC;

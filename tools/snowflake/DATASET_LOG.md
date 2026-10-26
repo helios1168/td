@@ -1323,3 +1323,18 @@ Changed in `mm_query_f2.sql`: statement 3 compares `OPP` to `firm_1`'s at the co
 coded units, as Q23) instead of within 1; statement 5 is new: for the cells whose `firm_1` rows carry 2+ company x
 `dist_ch`, whether company, `dist_ch` or territory differs, and how much of `firm_1`'s cell `OPP` lies outside the
 largest. Tested on a stand-in with a 70/30 split over two territories: statement 5 reports it (30.0 outside).
+
+### 2026-10-25: `firm_2`'s `dist_ch` by CRD, as `firm_1`'s; the rest for manual review
+
+> **Owner, 2026-10-25:** "no, we need to match firm 2 dist_ch based on crd, in perfect alignment with what is done for firm 1, the rest should be flagged for manual review"
+
+Settled. In `mm_query_f2.sql`, a `firm_2` row's `dist_ch` is the one the query gives `firm_1`'s rows of the same CRD,
+when they all carry one (a blank counts as a value). Otherwise `dist_ch` is blank and `DIST_REVIEW` says why: no
+`firm_1` rows for the CRD, 2+ `dist_ch`, or only blank. No largest-share choice. The company still comes from
+`firm_1`'s vendor rows of the same ZIP x CRD x broker name x product (its own question). Statement 4 now lists
+`dist_ch` by `firm_2`'s own channel; statement 5 is the review list, one row per CRD and reason, with `firm_1`'s
+`dist_ch` of the CRD and their shares (it shows broker names: read at work, never copied here). The cell-split
+statement of the previous entry is gone. New must-be-zero check: no `firm_2` row without a `dist_ch` and without a
+reason. Tested on the stand-in: all must-be-zero rows 0; CRDs whose `firm_1` rows were split FI/IFA on purpose land in
+review. In the extract, a few multi-channel CRDs carry the channel in the broker name ("... - BANK"), so they will be
+in the review list.
