@@ -1,0 +1,15 @@
+-- Is the union's ADDRESS_ID the person's CLEAN_ID (the address table is keyed by CLEAN_ID, like territories; owner,
+-- 2026-10-26)?  If yes, UNION_OPP's opp-only rows can carry the holder's CLEAN_ID as their ADDRESS_ID directly.
+-- Safe to send back: counts only.  Read: *_EQ_* = *_FILLED means the same ID; 0 or low means the address table has
+-- its own CLEAN_ID.
+WITH t AS (SELECT DISTINCT SOURCE, TO_CHAR(CLEAN_ID) AS CLEAN_ID FROM ssdb_integration.lr_strategy.territories WHERE CLEAN_ID IS NOT NULL)
+SELECT u.SOURCE, COUNT(*) AS N_ROWS,
+       COUNT(u.TERRITORY_WHOLESALER_ADDRESS_ID) AS TERR_ADDR_FILLED,
+       COUNT_IF(TO_CHAR(u.TERRITORY_WHOLESALER_ADDRESS_ID) = TO_CHAR(u.TERRITORY_WHOLESALER_TERRITORY_ID)) AS TERR_ADDR_EQ_TERR_ID,
+       COUNT(u.SALES_WHOLESALER_ADDRESS_ID) AS SALES_ADDR_FILLED,
+       COUNT_IF(TO_CHAR(u.SALES_WHOLESALER_ADDRESS_ID) = TO_CHAR(u.SALES_WHOLESALER_TERRITORY_ID)) AS SALES_ADDR_EQ_SALES_ID,
+       COUNT(t.CLEAN_ID) AS TERR_ADDR_IS_A_TERRITORIES_CLEAN_ID
+FROM ssdb_integration.lr_strategy.union_base u
+LEFT JOIN t ON t.SOURCE = u.SOURCE AND t.CLEAN_ID = TO_CHAR(u.TERRITORY_WHOLESALER_ADDRESS_ID)
+GROUP BY u.SOURCE
+ORDER BY u.SOURCE;

@@ -165,6 +165,7 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
 | Q24 | Where do `firm_2`'s union `CBD_ID`s come from? (owner: unknown) | 2026-10-25 |
 | Q25 | Does `opp_matched` have `VA_PRODUCT_TYPE` (its export header) rather than `VA_PRODUCT_LINE` (`22`)? | 2026-10-25 |
+| Q26 | Is the union's `ADDRESS_ID` the person's `CLEAN_ID`? `explore/address_id.sql` | 2026-10-26 |
 
 ## Log
 
@@ -1564,3 +1565,10 @@ many have the two address IDs different (whether its layout copies one ID to bot
 Tested on the stand-in with planted address IDs (one `firm_2` territory ID paired with two, one `firm_1` ID with none):
 every opp-only row with a holder gets its holder's address ID on both columns, the two planted cases get NULL and are
 counted; every other column of every row and every row copied from `union_base` is unchanged.
+
+> **Owner, 2026-10-26:** "it is keyed by clean_id, similar to territory table" (the address table).
+
+Q26: whether the union's two `ADDRESS_ID` columns hold that `CLEAN_ID` (then an opp-only row's address ID is its
+holder's `CLEAN_ID`, no pairing from `union_base` needed). `explore/address_id.sql` answers it with counts; tested on the
+extract (address IDs NULL there) and on planted data (same ID and different ID both read right). `25` unchanged until
+the result.
