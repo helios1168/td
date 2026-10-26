@@ -41,10 +41,12 @@ FROM (VALUES ('46', 'FI', 'FI')) v(CBD_ID, DIST_CH, NEW_DIST);
 --firm_2's, per ZIP_CODE x PRODUCT_V2.  Where both have it, every firm_1 row there is scaled by firm_2 / firm_1 (firm_1's
 --split over channels and wholesalers kept); where only firm_1 has it, it is removed; where only firm_2 has it, new
 --firm_1 opp-only rows carry it, in the firm_1 channel each firm_2 row was given (statement 5).  firm_2's is what
---UNION_OPP carries for it (no FIXED, no NO CHANNEL).  One line per CBD_ID; an empty list changes nothing.
+--UNION_OPP carries for it (no FIXED, no NO CHANNEL).  Put the CBD_IDs in VALUES, e.g. VALUES ('46'), ('123');
+--as it stands, ('') lists none and changes nothing.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_override AS
 SELECT CBD_ID
-FROM (VALUES ('46')) v(CBD_ID);
+FROM (VALUES ('')) v(CBD_ID)
+WHERE CBD_ID <> '';
 
 --Statement 4.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_base_both AS (

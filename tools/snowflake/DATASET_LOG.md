@@ -1520,7 +1520,7 @@ permanent table.
 
 Session decision: `firm_2`'s values are the ones `UNION_OPP` carries for it (no FIXED, no NO CHANNEL), so the two firms
 come out equal in the alignment report. `25_union_opp_one.sql` statement 3 is the list (`tmp_opp_override`, temporary,
-`VALUES`, initially `46`); statements after it move up one (checks are 15). In the `UNION_OPP` build, per listed company
+`VALUES`; empty as shipped, see the next entry); statements after it move up one (checks are 15). In the `UNION_OPP` build, per listed company
 and ZIP x `PRODUCT_V2`: both firms have `MM_OPP`: each `firm_1` row x `firm_2` total / `firm_1` total ('scaled'); only
 `firm_1`: its `MM_OPP` blank ('removed'); only `firm_2`: new `firm_1` opp-only rows in the `firm_1` channel each
 `firm_2` row was given, holder from `firm_1`'s territories ('added'). Lineage column `OPP_OVERRIDE`. Docs read
@@ -1536,3 +1536,7 @@ Tested on the stand-in: a list naming no company in the data changes nothing (16
 other row and every `firm_2` row unchanged); with the same company in the firm overrides, every row, added ones too,
 takes the firm override; a doubled scaled row and a change to an unlisted company are each caught. Added rows had no
 holder on the stand-in, whose territories carry other channel labels than its union.
+
+Correction, same session, before any run at work: the list first shipped with `46` (`f1152b8`), carried over from the
+firm overrides; the owner named no company. It now ships empty (`VALUES ('')` filtered out), so it changes nothing until
+the owner lists a company.
