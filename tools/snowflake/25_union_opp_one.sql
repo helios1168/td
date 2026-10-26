@@ -41,7 +41,7 @@ FROM (VALUES ('46', 'FI', 'FI')) v(CBD_ID, DIST_CH, NEW_DIST);
 --firm_2's, per ZIP_CODE x PRODUCT_V2.  Where both have it, every firm_1 row there is scaled by firm_2 / firm_1 (firm_1's
 --split over channels and wholesalers kept); where only firm_1 has it, it is removed; where only firm_2 has it, new
 --firm_1 opp-only rows carry it, in the firm_1 channel each firm_2 row was given (statement 5).  firm_2's is what
---UNION_OPP carries for it (no FIXED, no NO CHANNEL).  Put the CBD_IDs in VALUES, e.g. VALUES ('46'), ('123');
+--UNION_OPP carries for it (no NO CHANNEL).  Put the CBD_IDs in VALUES, e.g. VALUES ('46'), ('123');
 --as it stands, ('') lists none and changes nothing.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_override AS
 SELECT CBD_ID
@@ -469,8 +469,8 @@ FROM cr JOIN kl ON kl.grp = cr.grp JOIN n ON n.grp = cr.grp LEFT JOIN nc ON nc.g
 --opportunity (owner, 2026-10-25: the current data_withnewchannel_union_w_joinkeys already carries an earlier load
 --of it, which would be counted twice); union_base itself is never touched.  firm_1 puts MM_OPP on a sales row of its key when the seller is the holder, else on its own row.
 --firm_2's opportunity is tmp_opp_f2_final: its file through the opportunity steps of the owner's firm_1 query
---(statements 4-5: company, dist_ch and new_dist as firm_1's), without FIXED (out of scope, owner, 2026-10-24, Q22)
---and NO CHANNEL (owner, 2026-10-25).
+--(statements 4-5: company, dist_ch and new_dist as firm_1's), without NO CHANNEL (owner, 2026-10-25).  FIXED is in
+--(owner, 2026-10-26: union_base rebuilt with FIXED, both firms' sales and firm_1's MM_OPP; same holders).
 --UNION_OPP = the union's firm_1 rows unchanged + its firm_2 rows (every column unchanged except MM_OPP, and
 --PRODUCT_V2: firm_2's VA counted as VARIABLE, owner, 2026-10-26, Q8) + opp-only rows; except the firm overrides
 --(tmp_firm_override, statement 2; owner, 2026-10-26): every row of an overridden CBD_ID, both firms,
@@ -525,8 +525,7 @@ fo AS (              -- tmp_opp_f2_final without its dropped rows; a FILE_DIST_C
          TO_CHAR(f.FIRM_CRD) AS FIRM_CRD, f.MM_OPP, f.DIST_CH AS F1_DIST_CH
   FROM ssdb_integration.lr_strategy.tmp_opp_f2_final f
   LEFT JOIN dm ON dm.FILE_DIST_CH = f.FILE_DIST_CH
-  WHERE dm.GONE IS DISTINCT FROM TRUE
-    AND f.PRODUCT_LINE IS DISTINCT FROM 'FIXED'),   -- FIXED: the query's own label for fixed annuity
+  WHERE dm.GONE IS DISTINCT FROM TRUE),
 ak AS (              -- the opportunity keys
   SELECT ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2, SUM(MM_OPP) AS MM_OPP,
          CASE WHEN COUNT(DISTINCT COALESCE(NEW_DIST, '~')) = 1 THEN MAX(NEW_DIST) END AS FILE_NEW_DIST
@@ -930,8 +929,7 @@ src AS (             -- union_base as UNION_OPP should carry it: firm_2's VA as 
   LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(u.CBD_ID)
   LEFT JOIN ch1 fc ON fc.NEW_DIST = fv.NEW_DIST),
 fo AS (              -- tmp_opp_f2_final with its drop reason
-  SELECT f.*, CASE WHEN dm.GONE IS NULL THEN 'FILE_DIST_CH in no map' WHEN dm.GONE THEN 'NO CHANNEL'
-                   WHEN f.PRODUCT_LINE = 'FIXED' THEN 'FIXED' END AS DROP_REASON
+  SELECT f.*, CASE WHEN dm.GONE IS NULL THEN 'FILE_DIST_CH in no map' WHEN dm.GONE THEN 'NO CHANNEL' END AS DROP_REASON
   FROM ssdb_integration.lr_strategy.tmp_opp_f2_final f LEFT JOIN dm ON dm.FILE_DIST_CH = f.FILE_DIST_CH),
 ap AS (SELECT uo.* FROM uo JOIN s2 ON uo.SOURCE = s2.V WHERE uo.ROW_ORIGIN <> 'union'),   -- firm_2 rows carrying file opportunity
 ot AS (SELECT SUM(MM_OPP) AS O FROM uo JOIN s2 ON uo.SOURCE = s2.V),
@@ -1056,6 +1054,12 @@ chk_union AS (
            (SELECT COUNT(*) FROM uo WHERE CBD_ID IS NOT NULL AND FIRM_KEY IS NULL), TRUE
     UNION ALL SELECT 'tmp_opp_f2_final rows whose FILE_DIST_CH is in no map',
            (SELECT COUNT(*) FROM fo WHERE DROP_REASON = 'FILE_DIST_CH in no map'), TRUE
+    UNION ALL SELECT 'SOURCEs with no FIXED row in union_base (not rebuilt with FIXED, or its label is not ''FIXED'')',
+           (SELECT COUNT(*) FROM (SELECT V FROM s1 UNION ALL SELECT V FROM s2) s
+            WHERE NOT EXISTS (SELECT 1 FROM src WHERE src.SOURCE = s.V AND src.PRODUCT_V2 = 'FIXED')), TRUE
+    UNION ALL SELECT 'union_base PRODUCT_V2 labels, ' || SOURCE || ': ' || LISTAGG(DISTINCT PRODUCT_V2, ', ') WITHIN GROUP (ORDER BY PRODUCT_V2),
+           COUNT(DISTINCT PRODUCT_V2), FALSE
+           FROM src GROUP BY SOURCE
     UNION ALL SELECT 'opp-only rows with a holder and no TERR_WHOLESALER or SALES_WHOLESALER',
            (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN = 'opp file' AND N_HOLDERS > 0
               AND (TERR_WHOLESALER IS NULL OR SALES_WHOLESALER IS NULL)), TRUE

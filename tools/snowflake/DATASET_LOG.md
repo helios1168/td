@@ -122,7 +122,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
   (owner, 2026-10-21; Q4 stays open).
 - Names are matched within `SOURCE` by the `ZIP_CODE` x `DIST_CH` a name covers, not by edit distance
   (`21_name_match.sql`, owner, 2026-10-21).
-- `L01` in the opportunity file is fixed annuity, out of scope: its rows are dropped (owner, 2026-10-24).
+- `L01` in the opportunity file is fixed annuity ('FIXED'). Out of scope 2026-10-24; in scope since 2026-10-26: `union_base`
+  is rebuilt with FIXED (both firms' sales, `firm_1`'s `MM_OPP`), `25` keeps `firm_2`'s FIXED, same holders (owner).
 - `23` and `24` read `union_base`, the union without `firm_2`'s opportunity; the current
   `data_withnewchannel_union_w_joinkeys` already carries an earlier load of it (owner, 2026-10-25).
 - `CBD_ID` '0' in `opp_matched` or `crd_cbd` is no company (`23` METHOD 'no company', `CBD_ID` blank). A `firm_2`
@@ -1615,3 +1616,19 @@ one spelling where it has 2+), else territories `NAME` of the holder; NULL only 
 (must be 0); rows named from territories `NAME`; territory IDs spelled 2+ ways. Tested on the stand-in with planted
 names: every case read right (`union_base` spelling, territories `NAME`, two spellings, no holder; `firm_1` 'added'
 rows too), every other column of every row and every row copied from `union_base` unchanged.
+
+### 2026-10-26: FIXED in scope
+
+> **Owner, 2026-10-26:** "ok now we want to expand this to the fixed products. how can we do so"
+
+Reverses the entry of 2026-10-24 ("fixed annuity opportunity is excluded from this analysis all together"). Owner's
+answers (asked): `firm_1`'s FIXED rows "You rebuild union_base with FIXED in (Recommended)"; `firm_2`'s FIXED sales
+"it will be in the union_base table once I drop the "fixed" filter"; holders "Same holders as other products".
+
+`25`: `firm_2`'s FIXED opportunity is no longer dropped at the `UNION_OPP` join (it went through statements 4-5 already),
+so it lands on `firm_2`'s FIXED sales rows like the other products, else opp-only rows. New must-be-zero check: a
+`SOURCE` with no 'FIXED' row in `union_base` (not rebuilt, or a label other than 'FIXED', the owner's query's own
+label); a reading row lists each `SOURCE`'s `PRODUCT_V2` labels. Tested on the stand-in: without FIXED in `union_base`
+the check fails (2) and FIXED is opp-only; with FIXED rows planted for both firms it passes and 300 `firm_2` FIXED sales
+rows take `MM_OPP`; in both, every non-FIXED row equals the previous version and `firm_2`'s `MM_OPP` total equals the
+file after drops. Until the `CHANNEL` step is in, FIXED opp-only rows add to the expected "no CHANNEL" failure.
