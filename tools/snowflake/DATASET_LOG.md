@@ -1211,3 +1211,23 @@ builds `synthetic_crd_cbd_mm` (`CBD_ID` coded, `MM_OPP` / the divisor, CRD and b
 rerun of 7, 15 is the one download. Every construct in them already ran at work in `22` statements 2, 3 and 7. Tested
 on the extract with a stand-in `crd_cbd_mm` (real values made different from codes, two new `CBD_ID`s): the new codes
 follow the largest, a second run of 12 adds nothing, every check is 0, a `CBD_ID` left out of the key is caught.
+
+### 2026-10-25: can the owner's query give `firm_2`'s opportunity rows their `NEW_DIST`?
+
+> **Owner, 2026-10-25:** "can we use the mm_query_crosswalk.sql to also get the correct new_dist channels while we're at it?"
+
+What the owner's `firm_1` query sets: `new_dist` = the row's `dist_ch`, except five named `cbd_id`s broken out by a
+`CASE`; `dist_ch` on opportunity rows = the vendor's, with overrides by `cbd_id` and broker name. It sets no `CHANNEL`
+(a later step does). Its result is already in `union_base`'s `firm_1` rows, so the query needs no change for this.
+
+On the coded extract (union, and `UNION_OPP` rebuilt from `23` and `24` statement 1):
+- The four companies broken out into `National` are the same in both `SOURCE`s: `N1_04` = `N2_05` (`C00143`), `N1_05` =
+  `N2_02` (`C00094`), `N1_06` = `N2_06` (`C00141`, `C00191`). Bears on Q6.
+- Companies in both `SOURCE`s, main `CHANNEL` by rows: the same for 363 of 370; 7 differ (`firm_1` / `firm_2`: FI / IFA 3,
+  WH / IFA 2, National / IFA 1, IFA / FI 1).
+- `firm_2` file `MM_OPP` that `24` places by the `DIST_CH` default (9.6%, Q21), against `firm_1`'s main `CHANNEL` for
+  the company: same `CHANNEL` 4.30%; different 0.06% (one company, `firm_1` IFA, default FI); no `firm_1` rows for the
+  company 5.13% (21 companies); no company 0.12%.
+
+So `firm_1`'s channel would change 0.06% of the file's `MM_OPP`. The 5.13% at companies with no `firm_1` rows is what
+the default really decides; the CRD-keyed `23` (from `crd_cbd_mm`) may move those CRDs to other companies.
