@@ -1338,3 +1338,17 @@ statement of the previous entry is gone. New must-be-zero check: no `firm_2` row
 reason. Tested on the stand-in: all must-be-zero rows 0; CRDs whose `firm_1` rows were split FI/IFA on purpose land in
 review. In the extract, a few multi-channel CRDs carry the channel in the broker name ("... - BANK"), so they will be
 in the review list.
+
+### 2026-10-25: the owner's manual `dist_ch` for CRDs whose `firm_1` rows carry 2+
+
+> **Owner, 2026-10-25:** "ok I have the manually mapped dist_ch overrides for the cases where firm_1 rows of the CRD carry 2+ dist_ch. how can we integrate them"
+
+The overrides stay at work, in `ssdb_integration.lr_strategy.crd_dist_override` (`FIRM_CRD`, `BROKER_NAME`, `DIST_CH`;
+created by `mm_query_f2.sql` statement 0; CRDs never in the repo). A row with a blank `BROKER_NAME` covers every broker
+name of the CRD; a row with one wins over it. An override fills only `firm_2` rows the CRD rule leaves for review,
+never a CRD `firm_1` gives one `dist_ch`; `DIST_SOURCE` says 'firm_1 CRD' or 'manual override'. New checks, must be
+zero: the same CRD x broker name twice; an override that sets no `firm_2` row. For reading: overrides whose `DIST_CH`
+is none of `firm_1`'s for the CRD (a typo or a deliberate choice), and the share set by overrides. Tested on the
+stand-in: overrides fill their rows; a planted override on a CRD `firm_1` gives one `dist_ch` is flagged by both; a
+repeated override row is flagged and also breaks the row count. A missing comma between two CTEs was caught by the
+test before any run at work.

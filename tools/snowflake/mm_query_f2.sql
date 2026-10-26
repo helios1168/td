@@ -6,11 +6,19 @@ use secondary roles all;
 --same ZIP x CRD x broker name x product, else of the same ZIP x CRD x broker name, else crd_cbd_mm (company only).
 --dist_ch: firm_2's file names its channels differently from the vendor table, so a firm_2 row takes the dist_ch the
 --query gives firm_1's rows of the same CRD, when they all carry one; otherwise DIST_REVIEW says why and dist_ch is
---blank, for manual review (owner, 2026-10-25).  firm_2's own channel stays in FILE_DIST_CH.
+--blank, for manual review (owner, 2026-10-25).  The owner's manual dist_ch (crd_dist_override, statement 0) fills
+--those rows; it never overrules a CRD firm_1 gives one dist_ch.  DIST_SOURCE says which.  firm_2's own channel stays
+--in FILE_DIST_CH.
+--Statement 0  (once) the table of manual dist_ch.
 --Statement 1  ssdb_integration.lr_strategy.opp_base_both: both firms' rows through one opp_base.
 --Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final.
 --Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch by firm_2's own channel.
 --Statement 5  the CRDs for manual review.
+
+--Statement 0.  Once, then fill it (Snowsight "Load data" from a CSV with these three headers, or INSERT ... VALUES).
+--One row per CRD (BROKER_NAME blank: every broker name of the CRD) or per CRD x broker name (wins over the blank
+--row).  DIST_CH as the query writes firm_1's (the labels in statement 5).
+CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.crd_dist_override (FIRM_CRD VARCHAR, BROKER_NAME VARCHAR, DIST_CH VARCHAR);
 
 --Statement 1.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.opp_base_both AS (
@@ -158,16 +166,29 @@ crd_dist AS (   --f2: the dist_ch the query gives firm_1's rows of each CRD; N_D
     FROM opp_base
     WHERE src = 'firm_1'
     GROUP BY firm_crd
+),
+
+ov AS (   --f2: the owner's manual dist_ch (statement 0)
+    SELECT TO_CHAR(firm_crd) AS ov_crd, broker_name AS ov_broker, TO_CHAR(dist_ch) AS ov_dist_ch
+    FROM ssdb_integration.lr_strategy.crd_dist_override
 )
 
 SELECT b.* EXCLUDE (dist_ch),
-    CASE WHEN b.src = 'firm_1' THEN b.dist_ch WHEN c.n_dist = 1 THEN c.f1_dist_ch END AS dist_ch,   --f2: firm_1's, by CRD
+    CASE WHEN b.src = 'firm_1' THEN b.dist_ch
+         WHEN c.n_dist = 1 AND c.f1_dist_ch IS NOT NULL THEN c.f1_dist_ch
+         ELSE COALESCE(ob.ov_dist_ch, oc.ov_dist_ch) END AS dist_ch,   --f2: firm_1's by CRD, else the manual one
     CASE WHEN b.src = 'firm_1' THEN NULL
+         WHEN c.n_dist = 1 AND c.f1_dist_ch IS NOT NULL THEN 'firm_1 CRD'
+         WHEN COALESCE(ob.ov_dist_ch, oc.ov_dist_ch) IS NOT NULL THEN 'manual override' END AS dist_source,
+    CASE WHEN b.src = 'firm_1' OR (c.n_dist = 1 AND c.f1_dist_ch IS NOT NULL)
+              OR COALESCE(ob.ov_dist_ch, oc.ov_dist_ch) IS NOT NULL THEN NULL
          WHEN c.crd IS NULL THEN 'no firm_1 rows for the CRD'
          WHEN c.n_dist > 1 THEN 'firm_1 rows of the CRD carry 2+ dist_ch'
-         WHEN c.f1_dist_ch IS NULL THEN 'firm_1 rows of the CRD have a blank dist_ch' END AS dist_review
+         ELSE 'firm_1 rows of the CRD have a blank dist_ch' END AS dist_review
 FROM opp_base b
 LEFT JOIN crd_dist c ON c.crd = b.firm_crd AND b.src = 'firm_2'
+LEFT JOIN ov ob ON ob.ov_crd = b.firm_crd AND ob.ov_broker = b.broker_name AND b.src = 'firm_2'
+LEFT JOIN ov oc ON oc.ov_crd = b.firm_crd AND oc.ov_broker IS NULL AND b.src = 'firm_2'
 );
 
 --Statement 2.
@@ -370,7 +391,19 @@ UNION ALL SELECT 'firm_2 % of OPP: company from crd_cbd_mm (no vendor row there)
 UNION ALL SELECT 'firm_2 % of OPP: no company, dropped by opp_grouped (as firm_1''s)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE original_cbd_id IS NULL), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP whose firm_1 cell carries 2+ companies (the largest taken)', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE n_co > 1), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP with a | list of companies', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE original_cbd_id LIKE '%|%'), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP: dist_ch from firm_1, one for the CRD', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS NOT NULL), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'override rows: the same CRD x broker name twice',
+       (SELECT COUNT(*) FROM (SELECT firm_crd, broker_name FROM ssdb_integration.lr_strategy.crd_dist_override
+                              GROUP BY firm_crd, broker_name HAVING COUNT(*) > 1) x), 1
+UNION ALL SELECT 'override rows that set no firm_2 row (CRD given one dist_ch by firm_1, or not in firm_2''s file)',
+       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.crd_dist_override o
+        WHERE NOT EXISTS (SELECT 1 FROM b2 WHERE b2.firm_crd = TO_CHAR(o.firm_crd) AND b2.dist_source = 'manual override'
+                          AND (o.broker_name IS NULL OR b2.broker_name = o.broker_name))), 1
+UNION ALL SELECT 'override rows whose dist_ch is none of firm_1''s for the CRD',
+       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.crd_dist_override o
+        WHERE NOT EXISTS (SELECT 1 FROM b WHERE b.src = 'firm_1' AND b.firm_crd = TO_CHAR(o.firm_crd)
+                          AND b.dist_ch = TO_CHAR(o.dist_ch))), 0
+UNION ALL SELECT 'firm_2 % of OPP: dist_ch from firm_1, one for the CRD', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_source = 'firm_1 CRD'), 0) / (SELECT opp FROM t), 2), 0
+UNION ALL SELECT 'firm_2 % of OPP: dist_ch from the manual override', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_source = 'manual override'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP for review: no firm_1 rows for the CRD', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'no firm_1 rows for the CRD'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP for review: firm_1 rows of the CRD carry 2+ dist_ch', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'firm_1 rows of the CRD carry 2+ dist_ch'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP for review: firm_1 rows of the CRD have a blank dist_ch', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_review = 'firm_1 rows of the CRD have a blank dist_ch'), 0) / (SELECT opp FROM t), 2), 0
@@ -387,10 +420,10 @@ WITH
 b2 AS (SELECT * FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'),
 t AS (SELECT SUM(global_sales) AS opp FROM b2)
 SELECT b2.file_dist_ch AS firm_2_dist_ch, COALESCE(b2.dist_ch, 'REVIEW: ' || b2.dist_review) AS dist_ch,
-       COUNT(DISTINCT b2.firm_crd) AS crds, ROUND(100 * SUM(b2.global_sales) / MAX(t.opp), 2) AS pct_firm_2_opp
+       b2.dist_source, COUNT(DISTINCT b2.firm_crd) AS crds, ROUND(100 * SUM(b2.global_sales) / MAX(t.opp), 2) AS pct_firm_2_opp
 FROM b2
 CROSS JOIN t
-GROUP BY b2.file_dist_ch, COALESCE(b2.dist_ch, 'REVIEW: ' || b2.dist_review)
+GROUP BY b2.file_dist_ch, COALESCE(b2.dist_ch, 'REVIEW: ' || b2.dist_review), b2.dist_source
 ORDER BY pct_firm_2_opp DESC;
 
 --Statement 5.  For manual review: each CRD whose firm_2 rows have no dist_ch, with firm_1's dist_ch of the CRD and
