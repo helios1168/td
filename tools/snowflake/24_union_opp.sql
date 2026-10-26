@@ -25,6 +25,7 @@
 -- no such row becomes opp-only rows, one per the file's new_dist (NEW_DIST = it): FISCAL_YR, the sales amounts and the address IDs NULL; like firm_1's, TERR_WHOLESALER
 -- and SALES_WHOLESALER are NULL, both CLEAN_NAME columns carry the holder's name, both TERRITORY_ID columns the
 -- holder's CLEAN_ID, both HAS_TERRITORY flags are 1 (0 with no holder).  A firm_2 union row that gets no key keeps its NULL MM_OPP.
+-- 25_union_opp_one.sql builds the same table in one CREATE (generated from this file and mm_query_f2.sql).
 -- Run mm_query_f2.sql statements 1-2 and 7 first.  Run statement 1, then 2 (checks: every MUST_BE_ZERO row must be 0), then 3.
 
 -- Statement 1.  The table.
@@ -55,7 +56,7 @@ ak AS (              -- the opportunity keys
          CASE WHEN COUNT(DISTINCT COALESCE(NEW_DIST, '~')) = 1 THEN MAX(NEW_DIST) END AS FILE_NEW_DIST
   FROM fo GROUP BY ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2
   HAVING COALESCE(SUM(MM_OPP), 0) <> 0),
-c1 AS (              -- the CHANNEL firm_1's union rows carry for a NEW_DIST, where they carry one
+ch1 AS (             -- the CHANNEL firm_1's union rows carry for a NEW_DIST, where they carry one
   SELECT u.NEW_DIST, MAX(u.CHANNEL) AS CHANNEL
   FROM ssdb_integration.lr_strategy.union_base u JOIN s1 ON u.SOURCE = s1.V
   WHERE u.NEW_DIST IS NOT NULL
@@ -103,12 +104,12 @@ a AS (               -- the keys with no holder row: their opportunity becomes o
   HAVING COALESCE(SUM(fo.MM_OPP), 0) <> 0),
 b AS (
   SELECT a.*, s2.V AS SRC,
-         CASE WHEN c1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, c1.CHANNEL,
+         CASE WHEN ch1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, ch1.CHANNEL,
          COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
          h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(h.N, 0) AS N_HOLDERS,
          COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY
   FROM a CROSS JOIN s1 CROSS JOIN s2
-  LEFT JOIN c1 ON c1.NEW_DIST = a.NEW_DIST
+  LEFT JOIN ch1 ON ch1.NEW_DIST = a.NEW_DIST
   LEFT JOIN fp p2 ON p2.CBD_ID = a.CBD_ID AND p2.SOURCE = s2.V
   LEFT JOIN fp p1 ON p1.CBD_ID = a.CBD_ID AND p1.SOURCE = s1.V
   LEFT JOIN cn ON cn.CBD_ID = a.CBD_ID

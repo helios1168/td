@@ -1430,3 +1430,15 @@ Tested on the stand-in: every must-be-zero row of statement 8 is 0; a company pl
 `CBD_ID`s into one key and is flagged for review; a nine-step chain (more than six passes reach) fails both convergence
 checks. On the stand-in, `firm_1`-only / `firm_2`-only `MM_OPP` falls from 35.4% / 26.5% at `CBD_ID` to 19.7% / 7.6% at
 `FIRM_KEY` (stand-in numbers, not work data).
+
+### 2026-10-26: the whole pipeline in one `CREATE`
+
+> **Owner, 2026-10-26:** "put everything in a single query for this" (then chose: "Whole pipeline, one CREATE")
+
+`25_union_opp_one.sql` is one `CREATE OR REPLACE TABLE ... UNION_OPP AS WITH ...`: `mm_query_f2.sql` statements 1, 2 and 7
+and `24` statement 1, each step's table a CTE. `one_create.py` writes it from those files (never edited by hand;
+`--check` says if it is stale), so the step files stay the one source and the checks keep reading the step tables.
+`24`'s CTE `c1` is now `ch1` (it clashed with a pass of the firm key). Tested on the stand-in: the one query, run with
+the step tables dropped, gives the same `UNION_OPP` as the steps (159,378 rows; 0 rows differ with `MM_OPP` to 6
+decimals; equal totals). Two runs of the step build differ in the last float digits of `MM_OPP` on 49 rows, so parallel
+`SUM` order, not the query, is the source of differences beyond 6 decimals.
