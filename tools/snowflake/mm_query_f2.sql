@@ -9,6 +9,7 @@ use secondary roles all;
 --Statement 1  ssdb_integration.lr_strategy.opp_base_both: both firms' rows through one opp_base.
 --Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final.
 --Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch: firm_2's own, firm_1's, the rules'.
+--Statement 5  firm_1 cells (ZIP x CRD x broker name x product) with 2+ company x dist_ch: what differs in them.
 
 --Statement 1.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.opp_base_both AS (
@@ -356,9 +357,11 @@ UNION ALL SELECT 'firm_2 % of OPP whose firm_1 rows carry 2+ company x dist_ch (
 UNION ALL SELECT 'firm_2 % of OPP with a | list of companies', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE original_cbd_id LIKE '%|%'), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP whose dist_ch the query''s rules changed', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS DISTINCT FROM in_dist_ch), 0) / (SELECT opp FROM t), 2), 0
 UNION ALL SELECT 'firm_2 % of OPP with no dist_ch after the rules', ROUND(100 * COALESCE((SELECT SUM(global_sales) FROM b2 WHERE dist_ch IS NULL), 0) / (SELECT opp FROM t), 2), 0
-UNION ALL SELECT 'firm_2 % of OPP with a firm_1 cell (ZIP x CRD x broker name x product): OPP equal to firm_1''s within 1',
-       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN ABS(f2p.opp - f1p.opp) < 1 THEN f2p.opp END), 0) / SUM(f2p.opp), 2)
-        FROM f2p JOIN f1p ON f1p.zip = f2p.zip AND f1p.firm_crd = f2p.firm_crd AND f1p.broker_name = f2p.broker_name
+UNION ALL SELECT 'firm_2 % of OPP with a firm_1 cell (ZIP x CRD x broker name x product): OPP equal to firm_1''s to 3 decimals of coded units',
+       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN ROUND(f2p.opp / d.D_OPP, 3) = ROUND(f1p.opp / d.D_OPP, 3) THEN f2p.opp END), 0)
+                     / SUM(f2p.opp), 2)
+        FROM f2p CROSS JOIN (SELECT NUM AS D_OPP FROM k WHERE KIND = 'divisor' AND VALUE = 'MM_OPP') d
+        JOIN f1p ON f1p.zip = f2p.zip AND f1p.firm_crd = f2p.firm_crd AND f1p.broker_name = f2p.broker_name
                          AND f1p.product_line = f2p.product_line), 0
 ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 
@@ -366,10 +369,58 @@ ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
 WITH
 b2 AS (SELECT * FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'),
 t AS (SELECT SUM(global_sales) AS opp FROM b2)
-SELECT b2.file_dist_ch AS firm_2_dist_ch, COALESCE(b2.in_dist_ch, '(no firm_1 row)') AS firm_1_dist_ch,
+SELECT b2.file_dist_ch AS firm_2_dist_ch,
+       COALESCE(b2.in_dist_ch, CASE WHEN b2.cbd_method LIKE 'vendor%' THEN '(firm_1 blank)' ELSE '(no firm_1 row)' END) AS firm_1_dist_ch,
        b2.dist_ch AS query_dist_ch, COUNT(DISTINCT b2.firm_crd) AS crds,
        ROUND(100 * SUM(b2.global_sales) / MAX(t.opp), 2) AS pct_firm_2_opp
 FROM b2
 CROSS JOIN t
-GROUP BY b2.file_dist_ch, COALESCE(b2.in_dist_ch, '(no firm_1 row)'), b2.dist_ch
+GROUP BY b2.file_dist_ch,
+         COALESCE(b2.in_dist_ch, CASE WHEN b2.cbd_method LIKE 'vendor%' THEN '(firm_1 blank)' ELSE '(no firm_1 row)' END), b2.dist_ch
+ORDER BY pct_firm_2_opp DESC;
+
+--Statement 5.  firm_1's rows of one cell (ZIP x CRD x broker name x product) can carry 2+ company x dist_ch, and the
+--firm_2 row takes the largest.  What differs (company after the query's rules, firm_1's dist_ch, territory), the
+--share of firm_2's OPP in such cells, and how much of firm_1's cell OPP is outside its largest company x dist_ch.
+WITH
+f1 AS (
+    SELECT LPAD(TRIM(zip_code), 5, '0') AS zip, firm_crd, broker_name, product_line,
+           COALESCE(original_cbd_id, '~') AS co, COALESCE(in_dist_ch, '~') AS dc, COALESCE(territory, '~') AS terr,
+           global_sales AS opp
+    FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_1'
+),
+cell AS (
+    SELECT zip, firm_crd, broker_name, product_line,
+           COUNT(DISTINCT co) AS n_co, COUNT(DISTINCT dc) AS n_dc, COUNT(DISTINCT terr) AS n_terr, SUM(opp) AS opp
+    FROM f1 GROUP BY zip, firm_crd, broker_name, product_line
+),
+top AS (
+    SELECT zip, firm_crd, broker_name, product_line, MAX(opp) AS top_opp
+    FROM (SELECT zip, firm_crd, broker_name, product_line, co, dc, SUM(opp) AS opp
+          FROM f1 GROUP BY zip, firm_crd, broker_name, product_line, co, dc)
+    GROUP BY zip, firm_crd, broker_name, product_line
+),
+f2 AS (
+    SELECT zip_code AS zip, firm_crd, broker_name, product_line, SUM(global_sales) AS opp
+    FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'
+    GROUP BY zip_code, firm_crd, broker_name, product_line
+),
+x AS (
+    SELECT CASE WHEN c.n_co = 1 AND c.n_dc = 1 THEN 'one company, one dist_ch'
+                WHEN c.n_co = 1 THEN 'one company, 2+ dist_ch'
+                WHEN c.n_dc = 1 THEN '2+ companies, one dist_ch'
+                ELSE '2+ companies, 2+ dist_ch' END AS firm_1_cell,
+           CASE WHEN c.n_terr > 1 THEN '2+ territories' ELSE 'one territory' END AS territories,
+           f2.opp AS f2_opp, c.opp AS f1_opp, tp.top_opp
+    FROM f2
+    JOIN cell c ON c.zip = f2.zip AND c.firm_crd = f2.firm_crd AND c.broker_name = f2.broker_name
+               AND c.product_line = f2.product_line
+    JOIN top tp ON tp.zip = f2.zip AND tp.firm_crd = f2.firm_crd AND tp.broker_name = f2.broker_name
+               AND tp.product_line = f2.product_line
+)
+SELECT firm_1_cell, territories, COUNT(*) AS cells,
+       ROUND(100 * SUM(f2_opp) / (SELECT SUM(global_sales) FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'), 2) AS pct_firm_2_opp,
+       ROUND(100 * (1 - SUM(top_opp) / NULLIF(SUM(f1_opp), 0)), 2) AS pct_firm_1_cell_opp_outside_largest
+FROM x
+GROUP BY firm_1_cell, territories
 ORDER BY pct_firm_2_opp DESC;

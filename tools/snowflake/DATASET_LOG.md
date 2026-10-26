@@ -1293,3 +1293,33 @@ by the three sources as built; the product key brings the 2+ companies share to 
 `tools/snowflake/mm_query_f2.sql` is that copy. It holds what the owner's query holds in the steps it copies: firm
 names in the override lists, company IDs, and the internal table paths. Exception to the masking convention for this
 file only, by the owner's words above; every other file and this log stay as before.
+
+### 2026-10-25: second run of the `firm_2` copy: `dist_ch` from `firm_1`'s vendor rows
+
+Owner's run, statements 3 and 4 (files `td/Untitled 14_2026-10-25-2103*.csv`). Every must-be-zero row 0. By source:
+99.72% of `firm_2`'s `OPP` from `firm_1`'s vendor rows of the same ZIP x CRD x broker name x product, 0.15% of the same
+ZIP x CRD x broker name (other product), 0.13% company only from `crd_cbd_mm`; 1.03% dropped for no company (as
+`firm_1`'s); 0.37% with no `dist_ch` after the rules; 3.59% changed by the rules; 9.03% with a `|` list; 50.61% in cells
+whose `firm_1` rows carry 2+ company x `dist_ch` (the largest taken).
+
+`dist_ch` after the rules, by `firm_2`'s own label (% of `firm_2`'s `OPP`, fixed included; the file labels matched to
+codes by their totals in the extract, each within 0.01):
+
+| `firm_2` label | IFA | FI | WH | special channel (rules, by company ID) | blank | total |
+|---|---|---|---|---|---|---|
+| `O2_02` | 3.50 | 41.17 | 0.05 | | 0.07 | 44.79 |
+| `O2_01` | 33.86 | 0.17 | 1.31 | | 0.14 | 35.48 |
+| `O2_04` | 1.60 | | 9.70 | | 0.02 | 11.32 |
+| `O2_03` | 1.94 | | 1.42 | 2.58 | 0.01 | 5.95 |
+| `O2_05` (no channel) | 1.64 | 0.46 | 0.23 | | 0.14 | 2.47 |
+| all | 40.54 | 41.80 | 12.71 | 2.58 | 0.38 | 100 |
+
+- Each `firm_2` label has a main `firm_1` channel, but 8.6% of the `OPP` (outside the main channel of its label) gets
+  another. `O2_05`, dropped until now (Q19), gets a channel on all but 0.14%.
+- "(no firm_1 row)" in statement 4 also counted `firm_1` rows with a blank `dist_ch`; statement 4 now says
+  "(firm_1 blank)" for those (3.84% of `OPP`, most of it set by the rules).
+
+Changed in `mm_query_f2.sql`: statement 3 compares `OPP` to `firm_1`'s at the coded extract's precision (3 decimals of
+coded units, as Q23) instead of within 1; statement 5 is new: for the cells whose `firm_1` rows carry 2+ company x
+`dist_ch`, whether company, `dist_ch` or territory differs, and how much of `firm_1`'s cell `OPP` lies outside the
+largest. Tested on a stand-in with a 70/30 split over two territories: statement 5 reports it (30.0 outside).
