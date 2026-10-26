@@ -3,23 +3,28 @@
 -- the same rows so we can do analytics ar the wholesaler level").  It reads union_base, the union without firm_2's
 -- opportunity (owner, 2026-10-25: the current data_withnewchannel_union_w_joinkeys already carries an earlier load
 -- of it, which would be counted twice); union_base itself is never touched.  firm_1 puts MM_OPP on a sales row of its key when the seller is the holder, else on its own row.
--- UNION_OPP = the union's firm_1 rows unchanged + its firm_2 rows (every column unchanged except MM_OPP) + opp-only rows.
+-- firm_2's opportunity is opp_f2_final: its file through the opportunity steps of the owner's firm_1 query
+-- (mm_query_f2.sql: company, dist_ch and new_dist as firm_1's), without FIXED (out of scope, owner, 2026-10-24, Q22)
+-- and NO CHANNEL (owner, 2026-10-25).
+-- UNION_OPP = the union's firm_1 rows unchanged + its firm_2 rows (every column unchanged except MM_OPP, and
+-- PRODUCT_V2: firm_2's VA counted as VARIABLE, owner, 2026-10-26, Q8) + opp-only rows.
 -- Same columns as the union, in its order, plus lineage columns at the end:
 --   ROW_ORIGIN    'union' (row as in the source), 'union + opp file' (a firm_2 sales row now carrying MM_OPP),
 --                 'opp file' (a new opp-only row)
---   CBD_METHOD    METHOD of CRD_MATCH (23), taken from the CRD with the largest single OPP row in the key
---   CHANNEL_RULE  which rule gave NEW_DIST and CHANNEL on an opp-only row: 'company x DIST_CH', 'company',
---                 'DIST_CH default'; 'sales row' where the row is a sales row
+--   FILE_NEW_DIST the new_dist mm_query_f2.sql gives the opportunity (on a sales row: NULL if its key has 2+; the
+--                 sales row keeps its own NEW_DIST)
+--   CHANNEL_RULE  'sales row'; on an opp-only row 'firm_1 NEW_DIST': the CHANNEL firm_1's union rows carry for that
+--                 NEW_DIST, until the owner's CHANNEL step is in; NULL where they carry none or 2+ (checks fail on it)
 --   N_HOLDERS     distinct CLEAN_IDs holding the ZIP_CODE x DIST_CH in territories (0 = the TX/NY block, Q10; 2 = shared)
--- The file's opportunity is OPP_MAPPED (23) without its dropped rows, with the CRD's CBD_ID from CRD_MATCH, summed
--- to the key ZIP_CODE x DIST_CH x CBD_ID x PRODUCT_V2 (CHANNEL is not in it); MM_OPP = SUM(OPP); a key that sums
+-- The key is ZIP_CODE x DIST_CH x CBD_ID x PRODUCT_V2, as firm_1's (CHANNEL is not in it), DIST_CH = firm_2's own
+-- channel: the file's (FILE_DIST_CH) through the settled map (owner, 2026-10-25, Q19); MM_OPP = SUM; a key that sums
 -- to 0 is left out.  A key goes on exactly one firm_2 union row with that ZIP_CODE, DIST_CH, CBD_ID and PRODUCT_V2
 -- whose seller is the holder (SALES_WHOLESALER_TERRITORY_ID = TERRITORY_WHOLESALER_TERRITORY_ID): the one with the
 -- largest ACTUAL_SALES_AMOUNT, ties on the other columns.  It takes that row's NEW_DIST and CHANNEL.  A key with
--- no such row is an opp-only row: FISCAL_YR, the sales amounts and the address IDs NULL; like firm_1's, TERR_WHOLESALER
+-- no such row becomes opp-only rows, one per the file's new_dist (NEW_DIST = it): FISCAL_YR, the sales amounts and the address IDs NULL; like firm_1's, TERR_WHOLESALER
 -- and SALES_WHOLESALER are NULL, both CLEAN_NAME columns carry the holder's name, both TERRITORY_ID columns the
 -- holder's CLEAN_ID, both HAS_TERRITORY flags are 1 (0 with no holder).  A firm_2 union row that gets no key keeps its NULL MM_OPP.
--- Run 23 first.  Run statement 1, then 2 (checks: every MUST_BE_ZERO row must be 0), then 3.
+-- Run mm_query_f2.sql statements 1-2 first.  Run statement 1, then 2 (checks: every MUST_BE_ZERO row must be 0), then 3.
 
 -- Statement 1.  The table.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.UNION_OPP AS
@@ -27,36 +32,33 @@ WITH
 k AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_key),
 s1 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_1'),
 s2 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_2'),
-ak AS (
-  SELECT m.ZIP_CODE, m.DIST_CH, c.CBD_ID, m.PRODUCT_V2, SUM(m.OPP) AS MM_OPP,
-         MAX_BY(c.METHOD, ABS(m.OPP)) AS CBD_METHOD
-  FROM ssdb_integration.lr_strategy.OPP_MAPPED m
-  JOIN ssdb_integration.lr_strategy.CRD_MATCH c ON c.FIRM_CRD = m.FIRM_CRD
-  WHERE m.DROP_REASON IS NULL
-  GROUP BY m.ZIP_CODE, m.DIST_CH, c.CBD_ID, m.PRODUCT_V2
-  HAVING COALESCE(SUM(m.OPP), 0) <> 0),
-f2 AS (              -- firm_2's union rows: the company's own NEW_DIST and CHANNEL
-  SELECT u.CBD_ID, u.DIST_CH, u.NEW_DIST, u.CHANNEL
-  FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V
-  WHERE u.NEW_DIST IS NOT NULL AND u.CHANNEL IS NOT NULL),
-cx AS (              -- company x DIST_CH: the NEW_DIST / CHANNEL on most rows
-  SELECT CBD_ID, DIST_CH, NEW_DIST, CHANNEL,
-         ROW_NUMBER() OVER (PARTITION BY CBD_ID, DIST_CH ORDER BY N DESC, NEW_DIST, CHANNEL) AS RK
-  FROM (SELECT CBD_ID, DIST_CH, NEW_DIST, CHANNEL, COUNT(*) AS N FROM f2
-        WHERE CBD_ID IS NOT NULL AND DIST_CH IS NOT NULL GROUP BY CBD_ID, DIST_CH, NEW_DIST, CHANNEL) x),
-co AS (              -- company, any DIST_CH
-  SELECT CBD_ID, NEW_DIST, CHANNEL,
-         ROW_NUMBER() OVER (PARTITION BY CBD_ID ORDER BY N DESC, NEW_DIST, CHANNEL) AS RK
-  FROM (SELECT CBD_ID, NEW_DIST, CHANNEL, COUNT(*) AS N FROM f2
-        WHERE CBD_ID IS NOT NULL GROUP BY CBD_ID, NEW_DIST, CHANNEL) x),
-df AS (              -- proposed, Q21: CHANNEL by DIST_CH, NEW_DIST = firm_2's on most rows of that CHANNEL
-  SELECT b.VALUE AS DIST_CH, m.CHANNEL, nd.NEW_DIST
-  FROM (VALUES ('D2_01', 'IFA'), ('D2_02', 'FI'), ('D2_03', 'WH'), ('D2_04', 'IFA')) m(DIST_CODE, CHANNEL)
+dm AS (              -- the file's channel -> firm_2's union DIST_CH (owner, 2026-10-25, Q19); GONE = NO CHANNEL, dropped
+  SELECT a.VALUE AS FILE_DIST_CH, b.VALUE AS DIST_CH, m.GONE
+  FROM (VALUES ('O2_01', 'D2_01', FALSE), ('O2_02', 'D2_02', FALSE), ('O2_03', 'D2_04', FALSE),
+               ('O2_04', 'D2_03', FALSE), ('O2_05', NULL, TRUE)) m(FILE_CODE, UNION_CODE, GONE)
   CROSS JOIN s2
-  JOIN k b ON b.KIND = 'DIST_CH' AND b.SOURCE = s2.V AND b.CODE = m.DIST_CODE
-  LEFT JOIN (SELECT CHANNEL, NEW_DIST, ROW_NUMBER() OVER (PARTITION BY CHANNEL ORDER BY N DESC, NEW_DIST) AS RK
-             FROM (SELECT CHANNEL, NEW_DIST, COUNT(*) AS N FROM f2 GROUP BY CHANNEL, NEW_DIST) x) nd
-         ON nd.CHANNEL = m.CHANNEL AND nd.RK = 1),
+  JOIN k a ON a.KIND = 'DIST_CH' AND a.SOURCE = s2.V AND a.CODE = m.FILE_CODE
+  LEFT JOIN k b ON b.KIND = 'DIST_CH' AND b.SOURCE = s2.V AND b.CODE = m.UNION_CODE),
+pv AS (              -- firm_2's VA is VARIABLE (owner, 2026-10-26, Q8)
+  SELECT a.VALUE AS VA, b.VALUE AS VARIABLE
+  FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02'
+  WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
+fo AS (              -- opp_f2_final without its dropped rows; a FILE_DIST_CH in no map is kept, with a NULL DIST_CH (checks fail)
+  SELECT f.ZIP_CODE, dm.DIST_CH, TO_CHAR(f.CBD_ID) AS CBD_ID, f.PRODUCT_LINE AS PRODUCT_V2, f.NEW_DIST, f.MM_OPP
+  FROM ssdb_integration.lr_strategy.opp_f2_final f
+  LEFT JOIN dm ON dm.FILE_DIST_CH = f.FILE_DIST_CH
+  WHERE dm.GONE IS DISTINCT FROM TRUE
+    AND f.PRODUCT_LINE IS DISTINCT FROM 'FIXED'),   -- FIXED: the query's own label for fixed annuity
+ak AS (              -- the opportunity keys
+  SELECT ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2, SUM(MM_OPP) AS MM_OPP,
+         CASE WHEN COUNT(DISTINCT COALESCE(NEW_DIST, '~')) = 1 THEN MAX(NEW_DIST) END AS FILE_NEW_DIST
+  FROM fo GROUP BY ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2
+  HAVING COALESCE(SUM(MM_OPP), 0) <> 0),
+c1 AS (              -- the CHANNEL firm_1's union rows carry for a NEW_DIST, where they carry one
+  SELECT u.NEW_DIST, MAX(u.CHANNEL) AS CHANNEL
+  FROM ssdb_integration.lr_strategy.union_base u JOIN s1 ON u.SOURCE = s1.V
+  WHERE u.NEW_DIST IS NOT NULL
+  GROUP BY u.NEW_DIST HAVING COUNT(DISTINCT COALESCE(u.CHANNEL, '~')) = 1),
 fp AS (              -- FIRM and PARENT of a company in each SOURCE
   SELECT u.CBD_ID, u.SOURCE, MAX(u.FIRM) AS FIRM, MAX(u.PARENT) AS PARENT
   FROM ssdb_integration.lr_strategy.union_base u
@@ -76,9 +78,10 @@ nm AS (              -- the name the union already carries for that ID
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 st AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.territories GROUP BY ZIP_CODE),
 us AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.union_base GROUP BY ZIP_CODE),
-r0 AS (              -- the union with its seller = holder flag
-  SELECT u.*, COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER
-  FROM ssdb_integration.lr_strategy.union_base u),
+r0 AS (              -- the union with its seller = holder flag; firm_2's VA as VARIABLE (Q8)
+  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2),
+         COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER
+  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s2 CROSS JOIN pv),
 r AS (               -- PICK: the one firm_2 holder row per opportunity key that takes the key's MM_OPP
   SELECT r0.*, r0.SOURCE = s2.V AND r0.IS_HOLDER AND ROW_NUMBER() OVER (
            PARTITION BY r0.SOURCE, r0.ZIP_CODE, r0.DIST_CH, r0.CBD_ID, r0.PRODUCT_V2
@@ -89,25 +92,22 @@ r AS (               -- PICK: the one firm_2 holder row per opportunity key that
                     r0.TERRITORY_WHOLESALER_ADDRESS_ID, r0.SALES_WHOLESALER_HAS_TERRITORY,
                     r0.TERRITORY_WHOLESALER_HAS_TERRITORY) = 1 AS PICK
   FROM r0 CROSS JOIN s2),
-a AS (               -- the keys with no holder row: they become opp-only rows
-  SELECT ak.* FROM ak
+a AS (               -- the keys with no holder row: their opportunity becomes opp-only rows, one per the file's new_dist
+  SELECT fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST, SUM(fo.MM_OPP) AS MM_OPP
+  FROM fo
+  JOIN ak ON ak.ZIP_CODE = fo.ZIP_CODE AND ak.DIST_CH = fo.DIST_CH AND ak.CBD_ID = fo.CBD_ID AND ak.PRODUCT_V2 = fo.PRODUCT_V2
   WHERE NOT EXISTS (SELECT 1 FROM r WHERE r.PICK AND r.ZIP_CODE = ak.ZIP_CODE AND r.DIST_CH = ak.DIST_CH
-                    AND r.CBD_ID = ak.CBD_ID AND r.PRODUCT_V2 = ak.PRODUCT_V2)),
+                    AND r.CBD_ID = ak.CBD_ID AND r.PRODUCT_V2 = ak.PRODUCT_V2)
+  GROUP BY fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST
+  HAVING COALESCE(SUM(fo.MM_OPP), 0) <> 0),
 b AS (
   SELECT a.*, s2.V AS SRC,
-         CASE WHEN cx.CBD_ID IS NOT NULL THEN 'company x DIST_CH' WHEN co.CBD_ID IS NOT NULL THEN 'company'
-              ELSE 'DIST_CH default' END AS CHANNEL_RULE,
-         CASE WHEN cx.CBD_ID IS NOT NULL THEN cx.NEW_DIST WHEN co.CBD_ID IS NOT NULL THEN co.NEW_DIST
-              ELSE df.NEW_DIST END AS NEW_DIST,
-         CASE WHEN cx.CBD_ID IS NOT NULL THEN cx.CHANNEL WHEN co.CBD_ID IS NOT NULL THEN co.CHANNEL
-              ELSE df.CHANNEL END AS CHANNEL,
+         CASE WHEN c1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, c1.CHANNEL,
          COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
          h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(h.N, 0) AS N_HOLDERS,
          COALESCE(st.STATE, us.STATE) AS STATE
   FROM a CROSS JOIN s1 CROSS JOIN s2
-  LEFT JOIN cx ON cx.CBD_ID = a.CBD_ID AND cx.DIST_CH = a.DIST_CH AND cx.RK = 1
-  LEFT JOIN co ON co.CBD_ID = a.CBD_ID AND co.RK = 1
-  LEFT JOIN df ON df.DIST_CH = a.DIST_CH
+  LEFT JOIN c1 ON c1.NEW_DIST = a.NEW_DIST
   LEFT JOIN fp p2 ON p2.CBD_ID = a.CBD_ID AND p2.SOURCE = s2.V
   LEFT JOIN fp p1 ON p1.CBD_ID = a.CBD_ID AND p1.SOURCE = s1.V
   LEFT JOIN cn ON cn.CBD_ID = a.CBD_ID
@@ -117,7 +117,7 @@ b AS (
   LEFT JOIN us ON us.ZIP_CODE = a.ZIP_CODE)
 SELECT r.* EXCLUDE (IS_HOLDER, PICK) REPLACE (COALESCE(ak.MM_OPP, r.MM_OPP) AS MM_OPP),
        CASE WHEN ak.CBD_ID IS NOT NULL THEN 'union + opp file' ELSE 'union' END AS ROW_ORIGIN,
-       ak.CBD_METHOD, CASE WHEN ak.CBD_ID IS NOT NULL THEN 'sales row' END AS CHANNEL_RULE,
+       ak.FILE_NEW_DIST, CASE WHEN ak.CBD_ID IS NOT NULL THEN 'sales row' END AS CHANNEL_RULE,
        CASE WHEN ak.CBD_ID IS NOT NULL THEN COALESCE(h.N, 0) END AS N_HOLDERS
 FROM r
 LEFT JOIN ak ON r.PICK AND ak.ZIP_CODE = r.ZIP_CODE AND ak.DIST_CH = r.DIST_CH
@@ -130,7 +130,7 @@ SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHA
        b.HOLDER_ID AS SALES_WHOLESALER_TERRITORY_ID, b.HOLDER_ID AS TERRITORY_WHOLESALER_TERRITORY_ID,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS SALES_WHOLESALER_HAS_TERRITORY,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS TERRITORY_WHOLESALER_HAS_TERRITORY,
-       'opp file' AS ROW_ORIGIN, b.CBD_METHOD, b.CHANNEL_RULE, b.N_HOLDERS
+       'opp file' AS ROW_ORIGIN, b.NEW_DIST AS FILE_NEW_DIST, b.CHANNEL_RULE, b.N_HOLDERS
 FROM b;
 
 -- Statement 2.  Checks.
@@ -139,14 +139,27 @@ k AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_key),
 s1 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_1'),
 s2 AS (SELECT VALUE AS V FROM k WHERE KIND = 'SOURCE' AND CODE = 'firm_2'),
 d AS (SELECT NUM AS D FROM k WHERE KIND = 'divisor' AND VALUE = 'MM_OPP'),
+dm AS (              -- as statement 1
+  SELECT a.VALUE AS FILE_DIST_CH, m.GONE
+  FROM (VALUES ('O2_01', FALSE), ('O2_02', FALSE), ('O2_03', FALSE), ('O2_04', FALSE), ('O2_05', TRUE)) m(FILE_CODE, GONE)
+  CROSS JOIN s2
+  JOIN k a ON a.KIND = 'DIST_CH' AND a.SOURCE = s2.V AND a.CODE = m.FILE_CODE),
+pv AS (SELECT a.VALUE AS VA, b.VALUE AS VARIABLE
+       FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02' WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
 uo AS (SELECT * FROM ssdb_integration.lr_strategy.UNION_OPP),
-src AS (SELECT * FROM ssdb_integration.lr_strategy.union_base),
+src AS (             -- union_base as UNION_OPP should carry it: firm_2's VA as VARIABLE (Q8)
+  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2)
+  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s2 CROSS JOIN pv),
+fo AS (              -- opp_f2_final with its drop reason
+  SELECT f.*, CASE WHEN dm.GONE IS NULL THEN 'FILE_DIST_CH in no map' WHEN dm.GONE THEN 'NO CHANNEL'
+                   WHEN f.PRODUCT_LINE = 'FIXED' THEN 'FIXED' END AS DROP_REASON
+  FROM ssdb_integration.lr_strategy.opp_f2_final f LEFT JOIN dm ON dm.FILE_DIST_CH = f.FILE_DIST_CH),
 ap AS (SELECT uo.* FROM uo JOIN s2 ON uo.SOURCE = s2.V WHERE uo.ROW_ORIGIN <> 'union'),   -- firm_2 rows carrying file opportunity
 ot AS (SELECT SUM(MM_OPP) AS O FROM uo JOIN s2 ON uo.SOURCE = s2.V),
 g AS (               -- the rows carrying file opportunity by each lineage column
   SELECT 'ROW_ORIGIN' AS DIM, ROW_ORIGIN AS V, MM_OPP FROM ap
   UNION ALL SELECT 'CHANNEL_RULE', CHANNEL_RULE, MM_OPP FROM ap
-  UNION ALL SELECT 'CBD_METHOD', CBD_METHOD, MM_OPP FROM ap
+  UNION ALL SELECT 'FILE_NEW_DIST', FILE_NEW_DIST, MM_OPP FROM ap
   UNION ALL SELECT 'N_HOLDERS', CAST(N_HOLDERS AS VARCHAR), MM_OPP FROM ap),
 sc AS (              -- ACTUAL_SALES_AMOUNT by SOURCE x CHANNEL x PRODUCT_V2: UNION_OPP minus the source
   SELECT SOURCE, CHANNEL, PRODUCT_V2, SUM(S) AS DIFF
@@ -160,7 +173,7 @@ sc AS (              -- ACTUAL_SALES_AMOUNT by SOURCE x CHANNEL x PRODUCT_V2: UN
 hs AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
        FROM (SELECT HASH(* EXCLUDE (MM_OPP)) AS H, SOURCE, MM_OPP FROM src) x GROUP BY H),
 hu AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
-       FROM (SELECT HASH(* EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)) AS H, SOURCE, MM_OPP
+       FROM (SELECT HASH(* EXCLUDE (MM_OPP, ROW_ORIGIN, FILE_NEW_DIST, CHANNEL_RULE, N_HOLDERS)) AS H, SOURCE, MM_OPP
              FROM uo WHERE ROW_ORIGIN <> 'opp file') x GROUP BY H),
 hd AS (SELECT COALESCE(hs.SOURCE, hu.SOURCE) AS SOURCE, COALESCE(hs.N, 0) AS NS, COALESCE(hu.N, 0) AS NU,
               COALESCE(hs.NM, 0) AS NMS, COALESCE(hu.NM, 0) AS NMU, COALESCE(hs.S, 0) AS SS, COALESCE(hu.S, 0) AS SU
@@ -175,15 +188,34 @@ UNION ALL SELECT 'firm_2 rows of union_base carrying MM_OPP (union_base is the u
        (SELECT COUNT(*) FROM src JOIN s2 ON src.SOURCE = s2.V WHERE src.MM_OPP IS NOT NULL), TRUE
 UNION ALL SELECT 'ACTUAL_SALES_AMOUNT cells (SOURCE x CHANNEL x PRODUCT_V2) different from the source',
        (SELECT COUNT(*) FROM sc WHERE ABS(COALESCE(DIFF, 0)) > 0.001), TRUE     -- ponytail: 0.001 absorbs float summation order
-UNION ALL SELECT 'firm_2 OPP after drops differs from firm_2 MM_OPP in UNION_OPP by more than 0.001 x divisor (1 = yes)',
-       (SELECT CASE WHEN ABS(COALESCE((SELECT SUM(OPP) FROM ssdb_integration.lr_strategy.OPP_MAPPED WHERE DROP_REASON IS NULL), 0)
+UNION ALL SELECT 'firm_2 MM_OPP of opp_f2_final after drops differs from firm_2 MM_OPP in UNION_OPP by more than 0.001 x divisor (1 = yes)',
+       (SELECT CASE WHEN ABS(COALESCE((SELECT SUM(MM_OPP) FROM fo WHERE DROP_REASON IS NULL), 0)
                            - COALESCE((SELECT O FROM ot), 0)) > 0.001 * d.D THEN 1 ELSE 0 END FROM d), TRUE
-UNION ALL SELECT 'firm_2 opportunity keys carrying MM_OPP on more than one row',
+UNION ALL SELECT 'opp_f2_final rows whose FILE_DIST_CH is in no map',
+       (SELECT COUNT(*) FROM fo WHERE DROP_REASON = 'FILE_DIST_CH in no map'), TRUE
+UNION ALL SELECT 'firm_2 opportunity keys carrying MM_OPP on more than one row (opp-only rows: key x NEW_DIST)',
        (SELECT COUNT(*) FROM (SELECT 1 FROM ap WHERE MM_OPP IS NOT NULL
-                              GROUP BY ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2 HAVING COUNT(*) > 1) x), TRUE
-UNION ALL SELECT 'opp-only rows with NULL DIST_CH, PRODUCT_V2, CHANNEL or NEW_DIST',
+                              GROUP BY ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2, CASE WHEN ROW_ORIGIN = 'opp file' THEN NEW_DIST END
+                              HAVING COUNT(*) > 1) x), TRUE
+UNION ALL SELECT 'opp-only rows with NULL DIST_CH, PRODUCT_V2 or NEW_DIST',
        (SELECT COUNT(*) FROM ap WHERE ROW_ORIGIN = 'opp file'
-          AND (DIST_CH IS NULL OR PRODUCT_V2 IS NULL OR CHANNEL IS NULL OR NEW_DIST IS NULL)), TRUE
+          AND (DIST_CH IS NULL OR PRODUCT_V2 IS NULL OR NEW_DIST IS NULL)), TRUE
+UNION ALL SELECT 'opp-only rows with no CHANNEL: firm_1''s union rows carry no single CHANNEL for their NEW_DIST (pending the CHANNEL step)',
+       (SELECT COUNT(*) FROM ap WHERE ROW_ORIGIN = 'opp file' AND CHANNEL IS NULL), TRUE
+UNION ALL SELECT 'firm_2 rows of UNION_OPP still with firm_2''s VA product (Q8: counted as VARIABLE)',
+       (SELECT COUNT(*) FROM uo CROSS JOIN pv JOIN s2 ON uo.SOURCE = s2.V WHERE uo.PRODUCT_V2 = pv.VA), TRUE
+UNION ALL SELECT 'firm_2 union rows with VA, counted as VARIABLE (Q8)',
+       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN pv JOIN s2 ON u.SOURCE = s2.V
+        WHERE u.PRODUCT_V2 = pv.VA), FALSE
+UNION ALL SELECT 'firm_2 percent of MM_OPP on opp-only rows with no CHANNEL, NEW_DIST ' || COALESCE(NEW_DIST, 'NULL'),
+       ROUND(100 * SUM(MM_OPP) / MAX(ot.O), 2), FALSE
+       FROM ap CROSS JOIN ot WHERE ROW_ORIGIN = 'opp file' AND CHANNEL IS NULL GROUP BY NEW_DIST
+UNION ALL SELECT 'firm_2 percent of MM_OPP on sales rows whose NEW_DIST differs from the file''s new_dist',
+       (SELECT ROUND(100 * COALESCE(SUM(MM_OPP), 0) / MAX(ot.O), 2) FROM ap CROSS JOIN ot
+        WHERE ROW_ORIGIN = 'union + opp file' AND FILE_NEW_DIST IS NOT NULL AND NEW_DIST IS DISTINCT FROM FILE_NEW_DIST), FALSE
+UNION ALL SELECT 'firm_2 percent of MM_OPP on sales rows whose key carries 2+ new_dist in the file',
+       (SELECT ROUND(100 * COALESCE(SUM(MM_OPP), 0) / MAX(ot.O), 2) FROM ap CROSS JOIN ot
+        WHERE ROW_ORIGIN = 'union + opp file' AND FILE_NEW_DIST IS NULL), FALSE
 UNION ALL SELECT 'CBD_IDs with 2+ FIRM in one SOURCE',
        (SELECT COUNT(*) FROM (SELECT CBD_ID, SOURCE FROM src
                               WHERE CBD_ID IS NOT NULL GROUP BY CBD_ID, SOURCE HAVING COUNT(DISTINCT FIRM) > 1) x), TRUE
@@ -196,16 +228,10 @@ UNION ALL SELECT 'CBD_IDs in union_base and crd_cbd: percent whose crd_cbd firm 
         FROM (SELECT CBD_ID, MAX(FIRM) AS FIRM FROM src WHERE CBD_ID IS NOT NULL GROUP BY CBD_ID) u
         JOIN (SELECT CAST(CBD_ID AS VARCHAR) AS CBD_ID, MAX(FIRM) AS FIRM FROM ssdb_integration.lr_strategy.crd_cbd
               WHERE CBD_ID IS NOT NULL GROUP BY 1) c ON c.CBD_ID = u.CBD_ID), FALSE
-UNION ALL SELECT 'dropped rows: ' || DROP_REASON, COUNT(*), FALSE
-       FROM ssdb_integration.lr_strategy.OPP_MAPPED WHERE DROP_REASON IS NOT NULL GROUP BY DROP_REASON
-UNION ALL SELECT 'dropped OPP in coded units: ' || DROP_REASON, ROUND(SUM(OPP) / MAX(d.D), 1), FALSE
-       FROM ssdb_integration.lr_strategy.OPP_MAPPED CROSS JOIN d WHERE DROP_REASON IS NOT NULL GROUP BY DROP_REASON
-UNION ALL SELECT 'zero-sum keys left out (ZIP_CODE x DIST_CH x CBD_ID x PRODUCT_V2)',
-       (SELECT COUNT(*) FROM (SELECT 1 FROM ssdb_integration.lr_strategy.OPP_MAPPED m
-                              JOIN ssdb_integration.lr_strategy.CRD_MATCH c ON c.FIRM_CRD = m.FIRM_CRD
-                              WHERE m.DROP_REASON IS NULL
-                              GROUP BY m.ZIP_CODE, m.DIST_CH, c.CBD_ID, m.PRODUCT_V2
-                              HAVING COALESCE(SUM(m.OPP), 0) = 0) x), FALSE
+UNION ALL SELECT 'dropped opp_f2_final rows: ' || DROP_REASON, COUNT(*), FALSE
+       FROM fo WHERE DROP_REASON IS NOT NULL GROUP BY DROP_REASON
+UNION ALL SELECT 'dropped MM_OPP in coded units: ' || DROP_REASON, ROUND(SUM(MM_OPP) / MAX(d.D), 1), FALSE
+       FROM fo CROSS JOIN d WHERE DROP_REASON IS NOT NULL GROUP BY DROP_REASON
 UNION ALL SELECT 'firm_2 rows by ' || DIM || ': ' || COALESCE(V, 'NULL'), COUNT(*), FALSE FROM g GROUP BY DIM, V
 UNION ALL SELECT 'firm_2 percent of MM_OPP by ' || DIM || ': ' || COALESCE(V, 'NULL'),
        ROUND(100 * SUM(MM_OPP) / MAX(ot.O), 1), FALSE FROM g CROSS JOIN ot GROUP BY DIM, V

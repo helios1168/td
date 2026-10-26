@@ -196,15 +196,17 @@ CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.opp_f2_final AS (
 WITH
 opp_base AS (SELECT * FROM ssdb_integration.lr_strategy.opp_base_both WHERE src = 'firm_2'),
 
-sales_keys AS (   --f2: firm_2's sales, from union_base (firm_1's come from its sales table)
+sales_keys AS (   --f2: firm_2's sales, from union_base (firm_1's come from its sales table); its VA as VARIABLE (owner, 2026-10-26, Q8)
     SELECT DISTINCT
         TO_CHAR(u.fiscal_yr) AS fiscal_yr,
         LPAD(TRIM(TO_CHAR(u.zip_code)), 5, '0') AS zip_code,
         TO_CHAR(u.cbd_id) AS cbd_id,
-        u.product_v2,
+        CASE WHEN u.product_v2 = va.VALUE THEN vr.VALUE ELSE u.product_v2 END AS product_v2,
         u.state
     FROM ssdb_integration.lr_strategy.union_base u
     JOIN ssdb_integration.lr_strategy.synthetic_key s ON s.KIND = 'SOURCE' AND s.CODE = 'firm_2' AND s.VALUE = u.source
+    CROSS JOIN (SELECT VALUE FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'PRODUCT_V2' AND CODE = 'PR05') va
+    CROSS JOIN (SELECT VALUE FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'PRODUCT_V2' AND CODE = 'PR02') vr
 ),
 
 opp_grouped AS (

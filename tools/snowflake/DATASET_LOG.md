@@ -1378,3 +1378,27 @@ must-be-zero rows 0 (`OPP` unchanged through `opp_final` with the new key); the 
 `new_dist` is in `opp_f2_final` (statement 2), not `opp_base_both`: the query sets it after `|` lists resolve to one
 company. `opp_final` in `mm_query_f2.sql` now also groups by `FIRM_CRD` and `BROKER_NAME`, so every row of
 `opp_f2_final` has its CRD. Tested on the stand-in: `OPP` the same through `opp_final`; every row has a CRD.
+
+### 2026-10-26: `24` builds `UNION_OPP` from `opp_f2_final`
+
+> **Owner, 2026-10-26:** "so then can we now use this opportunity file data and just join firm 1 and firm 2's sales and other components from union table to it and be done?"
+
+> **Owner, 2026-10-26:** "ok yes let's try it with your recommendations"
+
+Settled, as recommended: (1) the key is ZIP x `DIST_CH` x `CBD_ID` x product with `DIST_CH` = `firm_2`'s own channel
+(the file's, through the Q19 map); a sales row keeps its own `NEW_DIST` and `CHANNEL`; (2) FIXED and NO CHANNEL are
+dropped at this join; (3) Q8: `firm_2`'s VA (`PR05`) counts as VARIABLE (`PR02`), in the join and in the `PRODUCT_V2`
+`UNION_OPP` carries (also in `mm_query_f2.sql`'s `|` resolution); (4) special channels are kept and flagged. `firm_1`'s
+rows stay as `union_base` has them (its opportunity came from the same vendor table).
+
+`24` now reads `opp_f2_final` instead of `23`'s two tables (`23` stays as a cross-check). Opp-only rows: one per key x
+the file's `new_dist`; `NEW_DIST` = it (Q21's default is gone); `CHANNEL` = the one `firm_1`'s union rows carry for that
+`NEW_DIST`, until the owner's `CHANNEL` step is in. Lineage: `CBD_METHOD` is replaced by `FILE_NEW_DIST`; `CHANNEL_RULE`
+is 'sales row' or 'firm_1 NEW_DIST'. New must-be-zero checks: a file channel in no map; `firm_2` rows still on VA;
+opp-only rows with no `CHANNEL` (fails until the special channels have one: by design). For reading: dropped `MM_OPP` by
+reason; `MM_OPP` on sales rows whose `NEW_DIST` differs from the file's (bears on Q6).
+
+Tested on the stand-in (`mm_query_f2.sql` then `24`): `firm_1` rows and all sales unchanged; `firm_2` `MM_OPP` equals
+`opp_f2_final` after drops; one key per row; no VA left (1,275 rows counted as VARIABLE). The two failing rows are
+stand-in gaps (review rows with no override; a `NEW_DIST` absent from `firm_1`'s union on purpose). A file channel in
+no map is caught.
