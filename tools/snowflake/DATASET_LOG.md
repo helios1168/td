@@ -1601,3 +1601,17 @@ where 74,303 `firm_1` rows had `MM_OPP` only: query 3 (added) shows how the two 
 2026-10-26 that read `firm_1`'s opp-only rows as "`MM_OPP`, NULL sales" depend on it. Query 4 (added) classes each
 person (territory ID) by the address IDs the union gives them: always their own, always one other, 2+ others, mixed,
 none. Both tested on planted data (each category read right).
+
+### 2026-10-26: wholesaler names on opp-only rows
+
+> **Owner, 2026-10-26:** "note that sales_wholesaler, and terr_wholesaler is missing from many rows in union_opp. how do we ensure these are properly populated? if i have that I can do the territory and address id mappings myself"
+
+`25` left both NULL on opp-only rows, "like firm_1's": a session assumption never checked, since the coded extract has
+both columns NULL on every row (not exported). Owner's answers (asked): source "union_base spelling, else territories
+NAME (Recommended)"; rows "Only the new opp-only rows". Now both columns of an opp-only row (`firm_2`'s, and `firm_1`'s
+'added') carry the holder's name as `union_base` spells it in `TERR_WHOLESALER` for that `CLEAN_ID` (same `SOURCE`;
+one spelling where it has 2+), else territories `NAME` of the holder; NULL only with no holder (Q10). `SALES_WHOLESALER`
+= `TERR_WHOLESALER`, as the two `TERRITORY_ID`s are on opp-only rows. Grid: opp-only rows with a holder and no name
+(must be 0); rows named from territories `NAME`; territory IDs spelled 2+ ways. Tested on the stand-in with planted
+names: every case read right (`union_base` spelling, territories `NAME`, two spellings, no holder; `firm_1` 'added'
+rows too), every other column of every row and every row copied from `union_base` unchanged.

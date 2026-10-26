@@ -498,8 +498,9 @@ FROM cr JOIN kl ON kl.grp = cr.grp JOIN n ON n.grp = cr.grp LEFT JOIN nc ON nc.g
 --to 0 is left out.  A key goes on exactly one firm_2 union row with that ZIP_CODE, DIST_CH, CBD_ID and PRODUCT_V2
 --whose seller is the holder (SALES_WHOLESALER_TERRITORY_ID = TERRITORY_WHOLESALER_TERRITORY_ID): the one with the
 --largest ACTUAL_SALES_AMOUNT, ties on the other columns.  It takes that row's NEW_DIST and CHANNEL.  A key with
---no such row becomes opp-only rows, one per the file's new_dist and CRD (NEW_DIST = it): FISCAL_YR and the sales amounts NULL; like firm_1's, TERR_WHOLESALER
---and SALES_WHOLESALER are NULL, both CLEAN_NAME columns carry the holder's name, both TERRITORY_ID columns the
+--no such row becomes opp-only rows, one per the file's new_dist and CRD (NEW_DIST = it): FISCAL_YR and the sales amounts NULL;
+--TERR_WHOLESALER and SALES_WHOLESALER the holder's name as union_base spells it for that CLEAN_ID (TERR_WHOLESALER, same
+--SOURCE), else territories NAME (owner, 2026-10-26); both CLEAN_NAME columns the holder's clean name, both TERRITORY_ID columns the
 --holder's CLEAN_ID, both ADDRESS_ID columns the address ID union_base pairs with that CLEAN_ID (TERRITORY_WHOLESALER_*,
 --same SOURCE; NULL where it pairs none or 2+), both HAS_TERRITORY flags are 1 (0 with no holder).  A firm_2 union row that gets no key keeps its NULL MM_OPP.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.UNION_OPP AS
@@ -552,11 +553,11 @@ cn AS (              -- the firm name crd_cbd gives a CBD_ID: FIRM where union_b
   WHERE CBD_ID IS NOT NULL AND CAST(CBD_ID AS VARCHAR) <> '0' GROUP BY 1),
 h AS (               -- holders of a ZIP_CODE x DIST_CH in territories
   SELECT t.ZIP_CODE, t.CHANNEL AS DIST_CH, MIN(t.CLEAN_ID) AS ID, COUNT(DISTINCT t.CLEAN_ID) AS N,
-         MIN_BY(t.CLEAN_NAME, t.CLEAN_ID) AS NAME
+         MIN_BY(t.CLEAN_NAME, t.CLEAN_ID) AS NAME, MIN_BY(t.NAME, t.CLEAN_ID) AS RAW
   FROM ssdb_integration.lr_strategy.territories t JOIN s2 ON t.SOURCE = s2.V
   WHERE t.CLEAN_ID IS NOT NULL GROUP BY t.ZIP_CODE, t.CHANNEL),
-nm AS (              -- the name the union already carries for that ID
-  SELECT u.TERRITORY_WHOLESALER_TERRITORY_ID AS ID, MAX(u.TERR_WHOLESALER_CLEAN_NAME) AS NAME
+nm AS (              -- the names the union already carries for that ID
+  SELECT u.TERRITORY_WHOLESALER_TERRITORY_ID AS ID, MAX(u.TERR_WHOLESALER_CLEAN_NAME) AS NAME, MAX(u.TERR_WHOLESALER) AS RAW
   FROM ssdb_integration.lr_strategy.union_base u JOIN s2 ON u.SOURCE = s2.V
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 ad AS (              -- the address ID union_base pairs with a territory ID, where it pairs exactly one
@@ -599,7 +600,7 @@ b AS (
   SELECT a.*, s2.V AS SRC,
          CASE WHEN ch1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, ch1.CHANNEL,
          COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
-         h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, ad.ADDR AS HOLDER_ADDR, COALESCE(h.N, 0) AS N_HOLDERS,
+         h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(nm.RAW, h.RAW) AS HOLDER_RAW, ad.ADDR AS HOLDER_ADDR, COALESCE(h.N, 0) AS N_HOLDERS,
          COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY,
          CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
   FROM a CROSS JOIN s1 CROSS JOIN s2
@@ -631,6 +632,7 @@ LEFT JOIN cc ON cc.CBD = TO_CHAR(r.CBD_ID)
 UNION ALL BY NAME     -- the columns not named below are NULL on opp-only rows
 SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHANNEL, b.STATE,
        b.ZIP_CODE, b.PRODUCT_V2, b.MM_OPP,
+       b.HOLDER_RAW AS TERR_WHOLESALER, b.HOLDER_RAW AS SALES_WHOLESALER,
        b.HOLDER_NAME AS TERR_WHOLESALER_CLEAN_NAME, b.HOLDER_NAME AS SALES_WHOLESALER_CLEAN_NAME,
        b.HOLDER_ID AS SALES_WHOLESALER_TERRITORY_ID, b.HOLDER_ID AS TERRITORY_WHOLESALER_TERRITORY_ID,
        b.HOLDER_ADDR AS SALES_WHOLESALER_ADDRESS_ID, b.HOLDER_ADDR AS TERRITORY_WHOLESALER_ADDRESS_ID,
@@ -657,18 +659,18 @@ na AS (              -- cells firm_1 has no MM_OPP in: firm_2's, in the firm_1 c
   HAVING COALESCE(SUM(fo.MM_OPP), 0) <> 0),
 h1 AS (              -- holders of a ZIP_CODE x DIST_CH in firm_1's territories
   SELECT t.ZIP_CODE, t.CHANNEL AS DIST_CH, MIN(t.CLEAN_ID) AS ID, COUNT(DISTINCT t.CLEAN_ID) AS N,
-         MIN_BY(t.CLEAN_NAME, t.CLEAN_ID) AS NAME
+         MIN_BY(t.CLEAN_NAME, t.CLEAN_ID) AS NAME, MIN_BY(t.NAME, t.CLEAN_ID) AS RAW
   FROM ssdb_integration.lr_strategy.territories t JOIN s1 ON t.SOURCE = s1.V
   WHERE t.CLEAN_ID IS NOT NULL GROUP BY t.ZIP_CODE, t.CHANNEL),
-nm1 AS (             -- the name firm_1's union rows carry for that ID
-  SELECT u.TERRITORY_WHOLESALER_TERRITORY_ID AS ID, MAX(u.TERR_WHOLESALER_CLEAN_NAME) AS NAME
+nm1 AS (             -- the names firm_1's union rows carry for that ID
+  SELECT u.TERRITORY_WHOLESALER_TERRITORY_ID AS ID, MAX(u.TERR_WHOLESALER_CLEAN_NAME) AS NAME, MAX(u.TERR_WHOLESALER) AS RAW
   FROM ssdb_integration.lr_strategy.union_base u JOIN s1 ON u.SOURCE = s1.V
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 nb AS (
   SELECT na.*, s1.V AS SRC,
          CASE WHEN ch1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, ch1.CHANNEL,
          COALESCE(p1.FIRM, p2.FIRM, cn.FIRM) AS FIRM, COALESCE(p1.PARENT, p2.PARENT) AS PARENT,
-         h1.ID AS HOLDER_ID, COALESCE(nm1.NAME, h1.NAME) AS HOLDER_NAME, ad.ADDR AS HOLDER_ADDR, COALESCE(h1.N, 0) AS N_HOLDERS,
+         h1.ID AS HOLDER_ID, COALESCE(nm1.NAME, h1.NAME) AS HOLDER_NAME, COALESCE(nm1.RAW, h1.RAW) AS HOLDER_RAW, ad.ADDR AS HOLDER_ADDR, COALESCE(h1.N, 0) AS N_HOLDERS,
          COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY,
          CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
   FROM na CROSS JOIN s1 CROSS JOIN s2
@@ -697,6 +699,7 @@ LEFT JOIN t2 ON t2.ZIP_CODE = p.ZIP_CODE AND t2.CBD_ID = TO_CHAR(p.CBD_ID) AND t
 UNION ALL BY NAME     -- new firm_1 opp-only rows, as firm_2's are built
 SELECT nb.SRC AS SOURCE, nb.CBD_ID, nb.FIRM, nb.PARENT, nb.DIST_CH, nb.NEW_DIST, nb.CHANNEL, nb.STATE,
        nb.ZIP_CODE, nb.PRODUCT_V2, nb.MM_OPP,
+       nb.HOLDER_RAW AS TERR_WHOLESALER, nb.HOLDER_RAW AS SALES_WHOLESALER,
        nb.HOLDER_NAME AS TERR_WHOLESALER_CLEAN_NAME, nb.HOLDER_NAME AS SALES_WHOLESALER_CLEAN_NAME,
        nb.HOLDER_ID AS SALES_WHOLESALER_TERRITORY_ID, nb.HOLDER_ID AS TERRITORY_WHOLESALER_TERRITORY_ID,
        nb.HOLDER_ADDR AS SALES_WHOLESALER_ADDRESS_ID, nb.HOLDER_ADDR AS TERRITORY_WHOLESALER_ADDRESS_ID,
@@ -1053,6 +1056,18 @@ chk_union AS (
            (SELECT COUNT(*) FROM uo WHERE CBD_ID IS NOT NULL AND FIRM_KEY IS NULL), TRUE
     UNION ALL SELECT 'tmp_opp_f2_final rows whose FILE_DIST_CH is in no map',
            (SELECT COUNT(*) FROM fo WHERE DROP_REASON = 'FILE_DIST_CH in no map'), TRUE
+    UNION ALL SELECT 'opp-only rows with a holder and no TERR_WHOLESALER or SALES_WHOLESALER',
+           (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN = 'opp file' AND N_HOLDERS > 0
+              AND (TERR_WHOLESALER IS NULL OR SALES_WHOLESALER IS NULL)), TRUE
+    UNION ALL SELECT 'opp-only rows named from territories NAME (union_base has no TERR_WHOLESALER for the holder)',
+           (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN = 'opp file' AND N_HOLDERS > 0
+              AND NOT EXISTS (SELECT 1 FROM src WHERE src.SOURCE = uo.SOURCE AND src.TERR_WHOLESALER IS NOT NULL
+                              AND src.TERRITORY_WHOLESALER_TERRITORY_ID = uo.TERRITORY_WHOLESALER_TERRITORY_ID)), FALSE
+    UNION ALL SELECT 'territory IDs union_base spells 2+ ways in TERR_WHOLESALER (opp-only rows take one)',
+           (SELECT COUNT(*) FROM (SELECT SOURCE, TERRITORY_WHOLESALER_TERRITORY_ID FROM src
+                                  WHERE TERRITORY_WHOLESALER_TERRITORY_ID IS NOT NULL AND TERR_WHOLESALER IS NOT NULL
+                                  GROUP BY SOURCE, TERRITORY_WHOLESALER_TERRITORY_ID
+                                  HAVING COUNT(DISTINCT TERR_WHOLESALER) > 1) x), FALSE
     UNION ALL SELECT 'opp-only rows with a holder and no address ID (union_base pairs its CLEAN_ID with none or 2+)',
            (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN = 'opp file' AND N_HOLDERS > 0 AND TERRITORY_WHOLESALER_ADDRESS_ID IS NULL), FALSE
     UNION ALL SELECT 'territory IDs union_base pairs with 2+ address IDs (TERRITORY_WHOLESALER_*)',
