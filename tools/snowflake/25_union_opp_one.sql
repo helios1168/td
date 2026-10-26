@@ -3,7 +3,7 @@ use secondary roles all;
 --Made from mm_query_f2.sql (statements 1, 2, 7) and 24_union_opp.sql (statement 1): a change goes in those files, not
 --here.  The whole pipeline in one CREATE (owner, 2026-10-26): firm_2's
 --opportunity file through the owner's firm_1 query steps (opp_base_both, opp_f2_final), the firm key (firm_key), and
---the join onto the union (UNION_OPP).  Needs at work: union_base, opp_original, crd_cbd_mm, crd_dist_override,
+--the join onto the union (UNION_OPP).  Needs at work: union_base, opp_original, crd_cbd_mm, crd_dist_override, firm_override,
 --crd_cbd, territories, synthetic_key and the vendor table.  The checks (mm_query_f2.sql 3-9, 24 statements 2-5) read
 --the step tables: to check, run the step files instead.
 
@@ -345,15 +345,18 @@ opp_final AS (
 ),
 
 opp_f2_final AS (
-SELECT opp_final.*,
-    --f2: new_dist as the query sets it (outputfornick), on firm_2's resolved cbd_id and dist_ch
-    case when cbd_id in ('57', '1967') then 'National (Chase)'
+SELECT opp_final.* REPLACE (COALESCE(ovr.ov_dist_ch, opp_final.dist_ch) AS dist_ch),   --f2: the firm overrides (statement 0b)
+    --f2: new_dist as the query sets it (outputfornick), on firm_2's resolved cbd_id and dist_ch; a firm override first
+    case when ovr.ov_cbd IS NOT NULL then ovr.ov_new_dist
+        when cbd_id in ('57', '1967') then 'National (Chase)'
         when cbd_id in ('1822', '14') then 'Wells WH'
         when cbd_id in ('1823') then 'Wells FI'
         when cbd_id in ('438') then 'AFS'
     else dist_ch
     end as new_dist
 FROM opp_final
+LEFT JOIN (SELECT TO_CHAR(CBD_ID) AS ov_cbd, DIST_CH AS ov_dist_ch, NEW_DIST AS ov_new_dist
+           FROM ssdb_integration.lr_strategy.firm_override) ovr ON ovr.ov_cbd = opp_final.cbd_id
 ),
 
 e AS (   --the links, with their opportunity
@@ -424,6 +427,7 @@ pv AS (              -- firm_2's VA is VARIABLE (owner, 2026-10-26, Q8)
   SELECT a.VALUE AS VA, b.VALUE AS VARIABLE
   FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02'
   WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
+fov AS (SELECT TO_CHAR(CBD_ID) AS CBD_ID, DIST_CH, NEW_DIST FROM ssdb_integration.lr_strategy.firm_override),   -- the firm overrides
 fo AS (              -- opp_f2_final without its dropped rows; a FILE_DIST_CH in no map is kept, with a NULL DIST_CH (checks fail)
   SELECT f.ZIP_CODE, dm.DIST_CH, TO_CHAR(f.CBD_ID) AS CBD_ID, f.PRODUCT_LINE AS PRODUCT_V2, f.NEW_DIST,
          TO_CHAR(f.FIRM_CRD) AS FIRM_CRD, f.MM_OPP
@@ -466,10 +470,16 @@ nm AS (              -- the name the union already carries for that ID
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 st AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.territories GROUP BY ZIP_CODE),
 us AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.union_base GROUP BY ZIP_CODE),
-r0 AS (              -- the union with its seller = holder flag; firm_2's VA as VARIABLE (Q8)
-  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2),
-         COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER
-  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s2 CROSS JOIN pv),
+r0 AS (              -- the union with its seller = holder flag; firm_2's VA as VARIABLE (Q8); the firm overrides
+  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2,
+                      CASE WHEN fv.CBD_ID IS NOT NULL AND u.SOURCE = s1.V THEN fv.DIST_CH ELSE u.DIST_CH END AS DIST_CH,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fv.NEW_DIST ELSE u.NEW_DIST END AS NEW_DIST,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fc.CHANNEL ELSE u.CHANNEL END AS CHANNEL),
+         COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER,
+         CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
+  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s1 CROSS JOIN s2 CROSS JOIN pv
+  LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(u.CBD_ID)
+  LEFT JOIN ch1 fc ON fc.NEW_DIST = fv.NEW_DIST),
 r AS (               -- PICK: the one firm_2 holder row per opportunity key that takes the key's MM_OPP
   SELECT r0.*, r0.SOURCE = s2.V AND r0.IS_HOLDER AND ROW_NUMBER() OVER (
            PARTITION BY r0.SOURCE, r0.ZIP_CODE, r0.DIST_CH, r0.CBD_ID, r0.PRODUCT_V2
@@ -493,7 +503,8 @@ b AS (
          CASE WHEN ch1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, ch1.CHANNEL,
          COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
          h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(h.N, 0) AS N_HOLDERS,
-         COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY
+         COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY,
+         CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
   FROM a CROSS JOIN s1 CROSS JOIN s2
   LEFT JOIN ch1 ON ch1.NEW_DIST = a.NEW_DIST
   LEFT JOIN fp p2 ON p2.CBD_ID = a.CBD_ID AND p2.SOURCE = s2.V
@@ -503,7 +514,8 @@ b AS (
   LEFT JOIN nm ON nm.ID = h.ID
   LEFT JOIN st ON st.ZIP_CODE = a.ZIP_CODE
   LEFT JOIN us ON us.ZIP_CODE = a.ZIP_CODE
-  LEFT JOIN firm_key fk ON fk.ID_TYPE = 'CBD_ID' AND fk.ID = TO_CHAR(a.CBD_ID))
+  LEFT JOIN firm_key fk ON fk.ID_TYPE = 'CBD_ID' AND fk.ID = TO_CHAR(a.CBD_ID)
+  LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(a.CBD_ID))
 SELECT r.* EXCLUDE (IS_HOLDER, PICK) REPLACE (COALESCE(ak.MM_OPP, r.MM_OPP) AS MM_OPP),
        CASE WHEN ak.CBD_ID IS NOT NULL THEN 'union + opp file' ELSE 'union' END AS ROW_ORIGIN,
        ak.FILE_NEW_DIST, CASE WHEN ak.CBD_ID IS NOT NULL THEN 'sales row' END AS CHANNEL_RULE,
@@ -525,5 +537,5 @@ SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHA
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS SALES_WHOLESALER_HAS_TERRITORY,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS TERRITORY_WHOLESALER_HAS_TERRITORY,
        'opp file' AS ROW_ORIGIN, b.NEW_DIST AS FILE_NEW_DIST, b.CHANNEL_RULE, b.N_HOLDERS, b.FIRM_KEY,
-       b.FIRM_CRD, 'file' AS CRD_RULE
+       b.FIRM_CRD, 'file' AS CRD_RULE, b.FIRM_OVERRIDE
 FROM b;

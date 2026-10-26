@@ -9,7 +9,7 @@ use secondary roles all;
 --blank, for manual review (owner, 2026-10-25).  The owner's manual dist_ch (crd_dist_override, statement 0) fills
 --those rows; it never overrules a CRD firm_1 gives one dist_ch.  DIST_SOURCE says which.  firm_2's own channel stays
 --in FILE_DIST_CH.
---Statement 0  (once) the table of manual dist_ch.
+--Statement 0  (once) the table of manual dist_ch.   Statement 0b  the firm overrides (CBD_ID -> DIST_CH, NEW_DIST).
 --Statement 1  ssdb_integration.lr_strategy.opp_base_both: both firms' rows through one opp_base.
 --Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final, then the query's new_dist.
 --Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch by firm_2's own channel.
@@ -21,6 +21,13 @@ use secondary roles all;
 --One row per CRD (BROKER_NAME blank: every broker name of the CRD) or per CRD x broker name (wins over the blank
 --row).  DIST_CH as the query writes firm_1's (the labels in statement 5).
 CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.crd_dist_override (FIRM_CRD VARCHAR, BROKER_NAME VARCHAR, DIST_CH VARCHAR);
+
+--Statement 0b.  The firm overrides (owner, 2026-10-26): every row of the company, both firms, gets this DIST_CH and
+--NEW_DIST (opp_f2_final in statement 2; UNION_OPP in 24, where CHANNEL follows NEW_DIST and firm_2's union rows keep
+--their own DIST_CH).  One line per CBD_ID; rerun this statement after a change, then the pipeline.
+CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.firm_override AS
+SELECT CBD_ID, DIST_CH, NEW_DIST
+FROM (VALUES ('46', 'FI', 'FI')) v(CBD_ID, DIST_CH, NEW_DIST);
 
 --Statement 1.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.opp_base_both AS (
@@ -362,15 +369,18 @@ opp_final AS (
         broker_name
 )
 
-SELECT opp_final.*,
-    --f2: new_dist as the query sets it (outputfornick), on firm_2's resolved cbd_id and dist_ch
-    case when cbd_id in ('57', '1967') then 'National (Chase)'
+SELECT opp_final.* REPLACE (COALESCE(ovr.ov_dist_ch, opp_final.dist_ch) AS dist_ch),   --f2: the firm overrides (statement 0b)
+    --f2: new_dist as the query sets it (outputfornick), on firm_2's resolved cbd_id and dist_ch; a firm override first
+    case when ovr.ov_cbd IS NOT NULL then ovr.ov_new_dist
+        when cbd_id in ('57', '1967') then 'National (Chase)'
         when cbd_id in ('1822', '14') then 'Wells WH'
         when cbd_id in ('1823') then 'Wells FI'
         when cbd_id in ('438') then 'AFS'
     else dist_ch
     end as new_dist
 FROM opp_final
+LEFT JOIN (SELECT TO_CHAR(CBD_ID) AS ov_cbd, DIST_CH AS ov_dist_ch, NEW_DIST AS ov_new_dist
+           FROM ssdb_integration.lr_strategy.firm_override) ovr ON ovr.ov_cbd = opp_final.cbd_id
 );
 
 --Statement 3.  Checks.

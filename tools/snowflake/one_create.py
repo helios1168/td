@@ -33,7 +33,7 @@ b2 = between(f2, f'CREATE OR REPLACE TABLE {T}opp_f2_final AS (\nWITH\n', '\n);\
 b2 = one(b2, f"opp_base AS (SELECT * FROM {T}opp_base_both WHERE src = 'firm_2'),",
          "opp_base_f2 AS (SELECT * FROM opp_base_both WHERE src = 'firm_2'),   --one query: opp_base is statement 1's")
 b2 = one(b2, '    FROM opp_base\n    WHERE original_cbd_id IS NOT NULL', '    FROM opp_base_f2\n    WHERE original_cbd_id IS NOT NULL')
-cut = b2.index('\n\nSELECT opp_final.*,')
+cut = b2.index('\n\nSELECT opp_final.*')
 s2 = b2[:cut] + ',\n\nopp_f2_final AS (' + b2[cut + 1:] + '\n),\n'
 # statement 7: firm_key
 b7 = between(f2, f'CREATE OR REPLACE TABLE {T}firm_key AS (\nWITH\n', '\n);\n\n--Statement 8.')
@@ -48,7 +48,7 @@ sql = f"""use secondary roles all;
 --Made from mm_query_f2.sql (statements 1, 2, 7) and 24_union_opp.sql (statement 1): a change goes in those files, not
 --here.  The whole pipeline in one CREATE (owner, 2026-10-26): firm_2's
 --opportunity file through the owner's firm_1 query steps (opp_base_both, opp_f2_final), the firm key (firm_key), and
---the join onto the union (UNION_OPP).  Needs at work: union_base, opp_original, crd_cbd_mm, crd_dist_override,
+--the join onto the union (UNION_OPP).  Needs at work: union_base, opp_original, crd_cbd_mm, crd_dist_override, firm_override,
 --crd_cbd, territories, synthetic_key and the vendor table.  The checks (mm_query_f2.sql 3-9, 24 statements 2-5) read
 --the step tables: to check, run the step files instead.
 

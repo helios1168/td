@@ -137,6 +137,9 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Firm key across both firms: `FIRM_KEY`, the group of CRDs and `CBD_ID`s the vendor's resolved rows link
   (`crd_cbd_mm`, `opp_f2_final`), labelled by its `CBD_ID` with the most opportunity; a group whose `CBD_ID`s carry 2+
   `PARENT` is for manual review (owner, 2026-10-26).
+- Firm overrides: `CBD_ID` -> `DIST_CH`, `NEW_DIST` on every row of the company, both firms, sales and opportunity;
+  `CHANNEL` follows `NEW_DIST`; `firm_2`'s union rows keep their own `DIST_CH` (owner, 2026-10-26). List in
+  `mm_query_f2.sql` statement 0b.
 
 ## Open questions
 
@@ -1456,3 +1459,21 @@ no CRD'. No largest-share choice. New must-be-zero check: an opp-only row with n
 for each firm is for reading. `25` regenerated. Tested on the stand-in: the check is 0, `firm_2` `MM_OPP` still equals
 `opp_f2_final` after drops, and `25` gives the same table as the steps (161,084 rows, 0 differ). If `union_base` at work
 already has a `FIRM_CRD` column, the `CREATE` fails on the repeated name (loud, not silent).
+
+### 2026-10-26: firm overrides
+
+> **Owner, 2026-10-26:** "I have additional firm level overrides. namely for cbd_id = 46, I need to ensure it is mapped to 'FI' in dist_ch and new_dist"
+
+> **Owner, 2026-10-26** (asked which rows): "Every row of 46, both firms (Recommended)"
+
+The owner's `firm_1` query has no rule for this company. `mm_query_f2.sql` statement 0b builds `firm_override`
+(`CBD_ID`, `DIST_CH`, `NEW_DIST`) from a `VALUES` list, one line per company; statement 2 applies it last, on the
+resolved company, to `firm_2`'s opportunity (`dist_ch`, `new_dist`; it wins over the CRD rule and the manual
+overrides). `24` applies it to every `union_base` row of the company: `NEW_DIST`, `CHANNEL` = the one `firm_1`'s rows
+carry for that `NEW_DIST`, and `DIST_CH` on `firm_1`'s rows; `firm_2`'s keep their own `DIST_CH` (its current state).
+New lineage column `FIRM_OVERRIDE`. Statement 2's row-identity check applies the same override to the source, so it
+still proves nothing else changed. New must-be-zero checks: a company listed twice; a row of an overridden company
+without its `NEW_DIST` or with no `CHANNEL` (also catches `mm_query_f2.sql` statement 2 not rerun after a change); a
+`firm_1` row without its `DIST_CH`; a row not marked. Tested on the stand-in with a company in both firms: every row
+takes the override, all new checks 0, `25` equals the steps (161,084 rows, 0 differ); changing the list without
+rerunning statement 2 fails two checks.

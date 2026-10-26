@@ -7,7 +7,10 @@
 -- (mm_query_f2.sql: company, dist_ch and new_dist as firm_1's), without FIXED (out of scope, owner, 2026-10-24, Q22)
 -- and NO CHANNEL (owner, 2026-10-25).
 -- UNION_OPP = the union's firm_1 rows unchanged + its firm_2 rows (every column unchanged except MM_OPP, and
--- PRODUCT_V2: firm_2's VA counted as VARIABLE, owner, 2026-10-26, Q8) + opp-only rows.
+-- PRODUCT_V2: firm_2's VA counted as VARIABLE, owner, 2026-10-26, Q8) + opp-only rows; except the firm overrides
+-- (firm_override, mm_query_f2.sql statement 0b; owner, 2026-10-26): every row of an overridden CBD_ID, both firms,
+-- takes its NEW_DIST and the CHANNEL firm_1's rows carry for that NEW_DIST, and firm_1's rows its DIST_CH (firm_2's
+-- keep their own DIST_CH, firm_2's current state).
 -- Same columns as the union, in its order, plus lineage columns at the end:
 --   ROW_ORIGIN    'union' (row as in the source), 'union + opp file' (a firm_2 sales row now carrying MM_OPP),
 --                 'opp file' (a new opp-only row)
@@ -19,6 +22,7 @@
 --   FIRM_KEY      one key per firm across both firms (mm_query_f2.sql statement 7, by CBD_ID; owner, 2026-10-26)
 --   FIRM_CRD      (owner, 2026-10-26) opp-only rows: the CRD of firm_2's file (one row per CRD); every other row: the
 --                 company's CRD where its CBD_ID has one in the vendor's resolved rows (crd_cbd_mm, opp_f2_final)
+--   FIRM_OVERRIDE TRUE on the rows of an overridden CBD_ID
 --   CRD_RULE      'file', 'company has one CRD', or, FIRM_CRD blank, 'company has 2+ CRDs' (for review) /
 --                 'company has no CRD'; NULL where CBD_ID is NULL
 -- The key is ZIP_CODE x DIST_CH x CBD_ID x PRODUCT_V2, as firm_1's (CHANNEL is not in it), DIST_CH = firm_2's own
@@ -49,6 +53,7 @@ pv AS (              -- firm_2's VA is VARIABLE (owner, 2026-10-26, Q8)
   SELECT a.VALUE AS VA, b.VALUE AS VARIABLE
   FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02'
   WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
+fov AS (SELECT TO_CHAR(CBD_ID) AS CBD_ID, DIST_CH, NEW_DIST FROM ssdb_integration.lr_strategy.firm_override),   -- the firm overrides
 fo AS (              -- opp_f2_final without its dropped rows; a FILE_DIST_CH in no map is kept, with a NULL DIST_CH (checks fail)
   SELECT f.ZIP_CODE, dm.DIST_CH, TO_CHAR(f.CBD_ID) AS CBD_ID, f.PRODUCT_LINE AS PRODUCT_V2, f.NEW_DIST,
          TO_CHAR(f.FIRM_CRD) AS FIRM_CRD, f.MM_OPP
@@ -91,10 +96,16 @@ nm AS (              -- the name the union already carries for that ID
   GROUP BY u.TERRITORY_WHOLESALER_TERRITORY_ID),
 st AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.territories GROUP BY ZIP_CODE),
 us AS (SELECT ZIP_CODE, MAX(STATE) AS STATE FROM ssdb_integration.lr_strategy.union_base GROUP BY ZIP_CODE),
-r0 AS (              -- the union with its seller = holder flag; firm_2's VA as VARIABLE (Q8)
-  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2),
-         COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER
-  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s2 CROSS JOIN pv),
+r0 AS (              -- the union with its seller = holder flag; firm_2's VA as VARIABLE (Q8); the firm overrides
+  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2,
+                      CASE WHEN fv.CBD_ID IS NOT NULL AND u.SOURCE = s1.V THEN fv.DIST_CH ELSE u.DIST_CH END AS DIST_CH,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fv.NEW_DIST ELSE u.NEW_DIST END AS NEW_DIST,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fc.CHANNEL ELSE u.CHANNEL END AS CHANNEL),
+         COALESCE(u.SALES_WHOLESALER_TERRITORY_ID = u.TERRITORY_WHOLESALER_TERRITORY_ID, FALSE) AS IS_HOLDER,
+         CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
+  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s1 CROSS JOIN s2 CROSS JOIN pv
+  LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(u.CBD_ID)
+  LEFT JOIN ch1 fc ON fc.NEW_DIST = fv.NEW_DIST),
 r AS (               -- PICK: the one firm_2 holder row per opportunity key that takes the key's MM_OPP
   SELECT r0.*, r0.SOURCE = s2.V AND r0.IS_HOLDER AND ROW_NUMBER() OVER (
            PARTITION BY r0.SOURCE, r0.ZIP_CODE, r0.DIST_CH, r0.CBD_ID, r0.PRODUCT_V2
@@ -118,7 +129,8 @@ b AS (
          CASE WHEN ch1.NEW_DIST IS NOT NULL THEN 'firm_1 NEW_DIST' END AS CHANNEL_RULE, ch1.CHANNEL,
          COALESCE(p2.FIRM, p1.FIRM, cn.FIRM) AS FIRM, COALESCE(p2.PARENT, p1.PARENT) AS PARENT,
          h.ID AS HOLDER_ID, COALESCE(nm.NAME, h.NAME) AS HOLDER_NAME, COALESCE(h.N, 0) AS N_HOLDERS,
-         COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY
+         COALESCE(st.STATE, us.STATE) AS STATE, fk.FIRM_KEY,
+         CASE WHEN fv.CBD_ID IS NOT NULL THEN TRUE END AS FIRM_OVERRIDE
   FROM a CROSS JOIN s1 CROSS JOIN s2
   LEFT JOIN ch1 ON ch1.NEW_DIST = a.NEW_DIST
   LEFT JOIN fp p2 ON p2.CBD_ID = a.CBD_ID AND p2.SOURCE = s2.V
@@ -128,7 +140,8 @@ b AS (
   LEFT JOIN nm ON nm.ID = h.ID
   LEFT JOIN st ON st.ZIP_CODE = a.ZIP_CODE
   LEFT JOIN us ON us.ZIP_CODE = a.ZIP_CODE
-  LEFT JOIN ssdb_integration.lr_strategy.firm_key fk ON fk.ID_TYPE = 'CBD_ID' AND fk.ID = TO_CHAR(a.CBD_ID))
+  LEFT JOIN ssdb_integration.lr_strategy.firm_key fk ON fk.ID_TYPE = 'CBD_ID' AND fk.ID = TO_CHAR(a.CBD_ID)
+  LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(a.CBD_ID))
 SELECT r.* EXCLUDE (IS_HOLDER, PICK) REPLACE (COALESCE(ak.MM_OPP, r.MM_OPP) AS MM_OPP),
        CASE WHEN ak.CBD_ID IS NOT NULL THEN 'union + opp file' ELSE 'union' END AS ROW_ORIGIN,
        ak.FILE_NEW_DIST, CASE WHEN ak.CBD_ID IS NOT NULL THEN 'sales row' END AS CHANNEL_RULE,
@@ -150,7 +163,7 @@ SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHA
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS SALES_WHOLESALER_HAS_TERRITORY,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS TERRITORY_WHOLESALER_HAS_TERRITORY,
        'opp file' AS ROW_ORIGIN, b.NEW_DIST AS FILE_NEW_DIST, b.CHANNEL_RULE, b.N_HOLDERS, b.FIRM_KEY,
-       b.FIRM_CRD, 'file' AS CRD_RULE
+       b.FIRM_CRD, 'file' AS CRD_RULE, b.FIRM_OVERRIDE
 FROM b;
 
 -- Statement 2.  Checks.
@@ -167,9 +180,20 @@ dm AS (              -- as statement 1
 pv AS (SELECT a.VALUE AS VA, b.VALUE AS VARIABLE
        FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02' WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
 uo AS (SELECT * FROM ssdb_integration.lr_strategy.UNION_OPP),
-src AS (             -- union_base as UNION_OPP should carry it: firm_2's VA as VARIABLE (Q8)
-  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2)
-  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s2 CROSS JOIN pv),
+fov AS (SELECT TO_CHAR(CBD_ID) AS CBD_ID, DIST_CH, NEW_DIST FROM ssdb_integration.lr_strategy.firm_override),
+ch1 AS (             -- as statement 1
+  SELECT u.NEW_DIST, MAX(u.CHANNEL) AS CHANNEL
+  FROM ssdb_integration.lr_strategy.union_base u JOIN s1 ON u.SOURCE = s1.V
+  WHERE u.NEW_DIST IS NOT NULL
+  GROUP BY u.NEW_DIST HAVING COUNT(DISTINCT COALESCE(u.CHANNEL, '~')) = 1),
+src AS (             -- union_base as UNION_OPP should carry it: firm_2's VA as VARIABLE (Q8), the firm overrides
+  SELECT u.* REPLACE (CASE WHEN u.SOURCE = s2.V AND u.PRODUCT_V2 = pv.VA THEN pv.VARIABLE ELSE u.PRODUCT_V2 END AS PRODUCT_V2,
+                      CASE WHEN fv.CBD_ID IS NOT NULL AND u.SOURCE = s1.V THEN fv.DIST_CH ELSE u.DIST_CH END AS DIST_CH,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fv.NEW_DIST ELSE u.NEW_DIST END AS NEW_DIST,
+                      CASE WHEN fv.CBD_ID IS NOT NULL THEN fc.CHANNEL ELSE u.CHANNEL END AS CHANNEL)
+  FROM ssdb_integration.lr_strategy.union_base u CROSS JOIN s1 CROSS JOIN s2 CROSS JOIN pv
+  LEFT JOIN fov fv ON fv.CBD_ID = TO_CHAR(u.CBD_ID)
+  LEFT JOIN ch1 fc ON fc.NEW_DIST = fv.NEW_DIST),
 fo AS (              -- opp_f2_final with its drop reason
   SELECT f.*, CASE WHEN dm.GONE IS NULL THEN 'FILE_DIST_CH in no map' WHEN dm.GONE THEN 'NO CHANNEL'
                    WHEN f.PRODUCT_LINE = 'FIXED' THEN 'FIXED' END AS DROP_REASON
@@ -194,7 +218,7 @@ sc AS (              -- ACTUAL_SALES_AMOUNT by SOURCE x CHANNEL x PRODUCT_V2: UN
 hs AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
        FROM (SELECT HASH(* EXCLUDE (MM_OPP)) AS H, SOURCE, MM_OPP FROM src) x GROUP BY H),
 hu AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
-       FROM (SELECT HASH(* EXCLUDE (MM_OPP, ROW_ORIGIN, FILE_NEW_DIST, CHANNEL_RULE, N_HOLDERS, FIRM_KEY, FIRM_CRD, CRD_RULE)) AS H, SOURCE, MM_OPP
+       FROM (SELECT HASH(* EXCLUDE (MM_OPP, ROW_ORIGIN, FILE_NEW_DIST, CHANNEL_RULE, N_HOLDERS, FIRM_KEY, FIRM_CRD, CRD_RULE, FIRM_OVERRIDE)) AS H, SOURCE, MM_OPP
              FROM uo WHERE ROW_ORIGIN <> 'opp file') x GROUP BY H),
 hd AS (SELECT COALESCE(hs.SOURCE, hu.SOURCE) AS SOURCE, COALESCE(hs.N, 0) AS NS, COALESCE(hu.N, 0) AS NU,
               COALESCE(hs.NM, 0) AS NMS, COALESCE(hu.NM, 0) AS NMU, COALESCE(hs.S, 0) AS SS, COALESCE(hu.S, 0) AS SU
@@ -216,6 +240,18 @@ UNION ALL SELECT 'UNION_OPP rows with a CBD_ID and no FIRM_KEY',
        (SELECT COUNT(*) FROM uo WHERE CBD_ID IS NOT NULL AND FIRM_KEY IS NULL), TRUE
 UNION ALL SELECT 'opp_f2_final rows whose FILE_DIST_CH is in no map',
        (SELECT COUNT(*) FROM fo WHERE DROP_REASON = 'FILE_DIST_CH in no map'), TRUE
+UNION ALL SELECT 'firm_override CBD_IDs listed twice',
+       (SELECT COUNT(*) FROM (SELECT CBD_ID FROM fov GROUP BY CBD_ID HAVING COUNT(*) > 1) x), TRUE
+UNION ALL SELECT 'rows of an overridden CBD_ID without its NEW_DIST, or with no CHANNEL (rerun mm_query_f2.sql 2 after 0b)',
+       (SELECT COUNT(*) FROM uo JOIN fov ON fov.CBD_ID = TO_CHAR(uo.CBD_ID)
+        WHERE uo.NEW_DIST IS DISTINCT FROM fov.NEW_DIST OR uo.CHANNEL IS NULL), TRUE
+UNION ALL SELECT 'firm_1 rows of an overridden CBD_ID without its DIST_CH',
+       (SELECT COUNT(*) FROM uo JOIN s1 ON uo.SOURCE = s1.V JOIN fov ON fov.CBD_ID = TO_CHAR(uo.CBD_ID)
+        WHERE uo.DIST_CH IS DISTINCT FROM fov.DIST_CH), TRUE
+UNION ALL SELECT 'rows of an overridden CBD_ID not marked FIRM_OVERRIDE',
+       (SELECT COUNT(*) FROM uo JOIN fov ON fov.CBD_ID = TO_CHAR(uo.CBD_ID) WHERE uo.FIRM_OVERRIDE IS NULL), TRUE
+UNION ALL SELECT 'rows changed by a firm override: ' || uo.SOURCE, COUNT(*), FALSE
+       FROM uo WHERE uo.FIRM_OVERRIDE GROUP BY uo.SOURCE
 UNION ALL SELECT 'opp-only rows with no FIRM_CRD',
        (SELECT COUNT(*) FROM ap WHERE ROW_ORIGIN = 'opp file' AND FIRM_CRD IS NULL), TRUE
 UNION ALL SELECT 'firm_2 opportunity keys carrying MM_OPP on more than one row (opp-only rows: key x NEW_DIST x CRD)',
