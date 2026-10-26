@@ -1255,3 +1255,33 @@ Tested in DuckDB on the extract, with a stand-in vendor table built from `opp_ma
 '0' with and without a client firm ID, ZIPs missing): every must-be-zero check 0, and the broker-name overrides change
 `firm_2` rows (1.01% of `OPP`). A product label no branch knows and a missing key row are each caught. `22` statements
 12-15 are on hold: the copy reads `crd_cbd_mm` at work directly.
+
+### 2026-10-25: first run of the `firm_2` copy at work; `dist_ch` taken from `firm_1`'s vendor rows
+
+Owner's run of statement 3 (file `td/Untitled 14_2026-10-25-2051.csv`), `firm_2`'s file through the query's steps:
+
+| check | value |
+|---|---|
+| every must-be-zero row (rows and `OPP` kept, `firm_1` rows kept, products, last step) | 0 |
+| % of `OPP` with a company from `firm_1`'s vendor rows at the same ZIP x CRD x broker name | 99.87 |
+| % from `crd_cbd_mm` (no vendor row there) | 0.13 |
+| % with no company, dropped as `firm_1`'s are | 1.04 |
+| % at a ZIP x CRD x broker name where `firm_1`'s rows name 2+ companies | 52.26 |
+| % with a `\|` list of companies | 5.76 |
+| % whose `dist_ch` the query's rules changed | 3.59 |
+| % with the same `dist_ch` as `firm_1` at the same ZIP x CRD x broker name | 3.58 |
+| % in cells (ZIP x CRD x broker name x product) whose `OPP` equals `firm_1`'s within 1 | 6.89 |
+
+- Products: the query's `CASE` on `firm_2`'s file gives the settled map exactly, so the labels are `PR01` RILA, `PR02`
+  VARIABLE, `PR03` INDEX, `PR04` IOVA (the query's own output labels; the earlier hypothesis holds).
+- `dist_ch`: `firm_2`'s file names its channels differently from the vendor table. Only the rows the rules rewrite
+  (3.59%) end on `firm_1`'s names (3.58%), so `firm_2`'s own label cannot go through the rules.
+- The 52.26% says one ZIP x CRD x broker name is not one company in `firm_1`'s rows.
+
+Changed (local copy, statement 1): each `firm_2` row now takes company, client firm ID and `dist_ch` from `firm_1`'s
+vendor rows of the same ZIP x CRD x broker name x product (the query's product `CASE`, once more, as the key), else of
+the same ZIP x CRD x broker name, else the company only from `crd_cbd_mm` with no `dist_ch`. Then the query's rules run
+on it as on a `firm_1` row. `firm_2`'s own label is kept beside it, for the current state. Statement 4 now lists
+`firm_2`'s label, `firm_1`'s and the rules' result. Tested on a stand-in built from `firm_2`'s rows (`firm_1`'s own
+channel names, a company that changes by product, cells and ZIPs missing): must-be-zero rows 0; 80.4% / 3.6% / 15.9%
+by the three sources as built; the product key brings the 2+ companies share to 1.2%.
