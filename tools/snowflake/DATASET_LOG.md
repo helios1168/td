@@ -1352,3 +1352,21 @@ is none of `firm_1`'s for the CRD (a typo or a deliberate choice), and the share
 stand-in: overrides fill their rows; a planted override on a CRD `firm_1` gives one `dist_ch` is flagged by both; a
 repeated override row is flagged and also breaks the row count. A missing comma between two CTEs was caught by the
 test before any run at work.
+
+### 2026-10-25: overrides done; `new_dist` for `firm_2`'s opportunity, as the owner's query sets it
+
+> **Owner, 2026-10-25:** "ok all of the dist_review items are completed and overrides uploaded into the override table. Note that we will not consider the firms that have file_dist_ch = 'NO CHANNEL' for this exercise and will be dropped out later so we are done with overrides."
+
+> **Owner, 2026-10-25:** "sorry continue on your path for new_dist"
+
+The query sets `new_dist` once, after the opportunity steps: a `CASE` on the resolved company ID (six IDs broken out
+into four values), else the row's `dist_ch`. `mm_query_f2.sql` statement 2 now ends with that `CASE`, as written, on
+`firm_2`'s resolved company and `dist_ch`. `opp_final` sums away CRD and broker name, so `firm_2`'s own channel
+(`FILE_DIST_CH`) is now carried through the opportunity steps (grouping and partition keys too); without it NO
+CHANNEL could not be dropped later. Statement 6 is new: `firm_2`'s `new_dist` next to `firm_1`'s `NEW_DIST` in
+`union_base` at the same `CBD_ID` x `DIST_CH`, by `firm_2`'s own channel: same, differs, `firm_1` 2+, no `firm_1` row.
+It tells whether any step after the query changes `firm_1`'s `NEW_DIST`.
+
+Tested on the stand-in (three companies given IDs the `CASE` breaks out, `union_base` with real-like labels): all
+must-be-zero rows 0 (`OPP` unchanged through `opp_final` with the new key); the broken-out companies get their
+`new_dist`; a `NEW_DIST` changed on purpose in `union_base` shows as 'differs'.

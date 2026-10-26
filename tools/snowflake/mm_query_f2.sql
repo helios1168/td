@@ -11,9 +11,9 @@ use secondary roles all;
 --in FILE_DIST_CH.
 --Statement 0  (once) the table of manual dist_ch.
 --Statement 1  ssdb_integration.lr_strategy.opp_base_both: both firms' rows through one opp_base.
---Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final.
+--Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final, then the query's new_dist.
 --Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch by firm_2's own channel.
---Statement 5  the CRDs for manual review.
+--Statement 5  the CRDs for manual review.   Statement 6  new_dist against firm_1's in union_base.
 
 --Statement 0.  Once, then fill it (Snowsight "Load data" from a CSV with these three headers, or INSERT ... VALUES).
 --One row per CRD (BROKER_NAME blank: every broker name of the CRD) or per CRD x broker name (wins over the blank
@@ -218,6 +218,7 @@ opp_grouped AS (
         territory,
         firm_crd,
         broker_name,
+        file_dist_ch,   --f2: firm_2's own channel, carried to the end so NO CHANNEL can be dropped later
         SUM(global_sales) AS mm_opp
     FROM opp_base
     WHERE original_cbd_id IS NOT NULL
@@ -230,7 +231,8 @@ opp_grouped AS (
         original_cbd_id,
         territory,
         firm_crd,
-        broker_name
+        broker_name,
+        file_dist_ch
 ),
 
 opp_split AS (
@@ -245,6 +247,7 @@ opp_split AS (
         territory,
         o.firm_crd,
         o.broker_name,
+        o.file_dist_ch,
         TRIM(f.value::VARCHAR) AS candidate_cbd_id,
         f.index AS split_position
     FROM opp_grouped o,
@@ -267,7 +270,8 @@ opp_matches AS (
         sk.cbd_id AS matched_sales_cbd_id,
         os.territory,
         os.firm_crd,
-        os.broker_name
+        os.broker_name,
+        os.file_dist_ch
     FROM opp_split os
     LEFT JOIN sales_keys sk
         ON sk.fiscal_yr = os.fiscal_yr
@@ -291,7 +295,8 @@ opp_ranked AS (
                 original_cbd_id,
                 territory,
                 firm_crd,
-                broker_name
+                broker_name,
+                file_dist_ch
             ORDER BY
                 CASE
                     WHEN matched_sales_cbd_id IS NOT NULL THEN 0
@@ -312,6 +317,7 @@ opp_resolved AS (
         territory,
         firm_crd,
         broker_name,
+        file_dist_ch,
 
         /* Use the matching sales CBD.
            If no split value matches sales, use the first value. */
@@ -334,6 +340,7 @@ opp_final AS (
         dist_ch,
         cbd_id,
         territory,
+        file_dist_ch,
         SUM(mm_opp) AS mm_opp
     FROM opp_resolved
     GROUP BY
@@ -343,10 +350,19 @@ opp_final AS (
         product_line,
         dist_ch,
         cbd_id,
-        territory
+        territory,
+        file_dist_ch
 )
 
-SELECT * FROM opp_final
+SELECT opp_final.*,
+    --f2: new_dist as the query sets it (outputfornick), on firm_2's resolved cbd_id and dist_ch
+    case when cbd_id in ('57', '1967') then 'National (Chase)'
+        when cbd_id in ('1822', '14') then 'Wells WH'
+        when cbd_id in ('1823') then 'Wells FI'
+        when cbd_id in ('438') then 'AFS'
+    else dist_ch
+    end as new_dist
+FROM opp_final
 );
 
 --Statement 3.  Checks.
@@ -448,3 +464,32 @@ FROM r
 LEFT JOIN f1s ON f1s.firm_crd = r.firm_crd
 CROSS JOIN t
 ORDER BY r.opp DESC;
+
+--Statement 6.  new_dist: firm_2's (statement 2) next to firm_1's NEW_DIST in union_base at the same CBD_ID x DIST_CH,
+--by firm_2's own channel; share of firm_2's OPP after opp_final.  AGREEMENT: same, differs, firm_1 2+ (union_base's
+--firm_1 rows there carry 2+ NEW_DIST), no firm_1 row (none at that CBD_ID x DIST_CH, or a blank dist_ch).
+WITH
+f AS (SELECT * FROM ssdb_integration.lr_strategy.opp_f2_final),
+t AS (SELECT SUM(mm_opp) AS opp FROM f),
+u1 AS (
+    SELECT TO_CHAR(u.cbd_id) AS cbd_id, TO_CHAR(u.dist_ch) AS dist_ch, MAX(TO_CHAR(u.new_dist)) AS f1_new_dist,
+           COUNT(DISTINCT COALESCE(TO_CHAR(u.new_dist), '~')) AS n_nd
+    FROM ssdb_integration.lr_strategy.union_base u
+    JOIN ssdb_integration.lr_strategy.synthetic_key s ON s.KIND = 'SOURCE' AND s.CODE = 'firm_1' AND s.VALUE = u.source
+    GROUP BY TO_CHAR(u.cbd_id), TO_CHAR(u.dist_ch)
+),
+x AS (
+    SELECT f.file_dist_ch, f.dist_ch, f.new_dist, f.cbd_id, f.mm_opp,
+           CASE WHEN u1.cbd_id IS NULL THEN '(no firm_1 row)' WHEN u1.n_nd > 1 THEN '(firm_1 2+)'
+                ELSE COALESCE(u1.f1_new_dist, '(blank)') END AS firm_1_new_dist,
+           CASE WHEN u1.cbd_id IS NULL THEN 'no firm_1 row' WHEN u1.n_nd > 1 THEN 'firm_1 2+'
+                WHEN f.new_dist IS NOT DISTINCT FROM u1.f1_new_dist THEN 'same' ELSE 'differs' END AS agreement
+    FROM f
+    LEFT JOIN u1 ON u1.cbd_id = f.cbd_id AND u1.dist_ch = f.dist_ch
+)
+SELECT x.file_dist_ch AS firm_2_dist_ch, x.dist_ch, x.new_dist, x.firm_1_new_dist, x.agreement,
+       COUNT(DISTINCT x.cbd_id) AS cbd_ids, ROUND(100 * SUM(x.mm_opp) / MAX(t.opp), 2) AS pct_firm_2_opp
+FROM x
+CROSS JOIN t
+GROUP BY x.file_dist_ch, x.dist_ch, x.new_dist, x.firm_1_new_dist, x.agreement
+ORDER BY pct_firm_2_opp DESC;
