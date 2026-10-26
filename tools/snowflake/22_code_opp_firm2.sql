@@ -145,7 +145,11 @@ LEFT JOIN ssdb_integration.lr_strategy.synthetic_key cb ON cb.KIND = 'CBD_ID' AN
 WITH
 k AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_key),
 b AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_key_before_22),
-newk AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_key EXCEPT SELECT * FROM ssdb_integration.lr_strategy.synthetic_key_before_22),
+newk AS (           -- key rows not in the backup; IS NOT DISTINCT FROM is NULL-safe (most rows have SOURCE NULL), and the
+                    -- docs do not say how EXCEPT compares NULLs (docs, Set operators, read 2026-10-25)
+  SELECT * FROM k
+  WHERE NOT EXISTS (SELECT 1 FROM b WHERE b.KIND = k.KIND AND b.SOURCE IS NOT DISTINCT FROM k.SOURCE
+                    AND b.VALUE IS NOT DISTINCT FROM k.VALUE)),
 d AS (SELECT NUM AS D_OPP FROM k WHERE KIND = 'divisor' AND VALUE = 'MM_OPP'),
 real_vals AS (SELECT DISTINCT VALUE FROM k WHERE KIND <> 'divisor'),
 coded AS (           -- every coded value in the three synthetic tables (BROKER_NAME, FIRM_CRD, ZIP_CODE stay clear)
@@ -191,7 +195,9 @@ UNION ALL SELECT 'key (KIND, SOURCE, CODE) twice',
        (SELECT COUNT(*) FROM (SELECT KIND, SOURCE, CODE FROM k WHERE KIND <> 'divisor'
                               GROUP BY KIND, SOURCE, CODE HAVING COUNT(*) > 1) x), 1
 UNION ALL SELECT 'synthetic_key_before_22 rows missing from synthetic_key',
-       (SELECT COUNT(*) FROM (SELECT * FROM b EXCEPT SELECT * FROM k) x), 1
+       (SELECT COUNT(*) FROM b WHERE NOT EXISTS (SELECT 1 FROM k WHERE k.KIND = b.KIND
+          AND k.SOURCE IS NOT DISTINCT FROM b.SOURCE AND k.VALUE IS NOT DISTINCT FROM b.VALUE
+          AND k.CODE IS NOT DISTINCT FROM b.CODE AND k.NUM IS NOT DISTINCT FROM b.NUM)), 1
 UNION ALL SELECT 'real key values left in coded output columns',
        (SELECT COUNT(*) FROM coded c JOIN real_vals r ON r.VALUE = c.V), 1
 UNION ALL SELECT 'new CBD_ID values equal to an old one after TRIM and leading zeros (format mismatch)',

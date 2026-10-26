@@ -53,6 +53,10 @@ checks grid. One-off digging: `explore/<topic>.sql`.
 - `Pxxxxx`: `FIRM` and `PARENT` (one numbering).
 - `W` person IDs, `M` names, `A` address IDs.
 
+**Snowflake.** How a Snowflake function or clause behaves is settled by the Snowflake docs (page cited, with the
+date read) or by asking the owner, never assumed; a construct the owner has run at work counts as confirmed (owner,
+2026-10-25).
+
 **Words.** Both firms are annuity carriers, so "carrier" never means a `SOURCE`. Say `firm_1` (the
 `SOURCE` whose rows hold `MM_OPP`) or `firm_2`. Log entries before 2026-10-21 use "carrier" for
 `firm_1`. "Sells" means positive net `ACTUAL_SALES_AMOUNT` over the scope named. `DIST_CH`, `NEW_DIST`
@@ -138,7 +142,7 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q2 | What does `MM_OPP` measure: whole market or what `firm_1` can address? | 2026-10-20 |
 | Q4 | What are `D1_04`-`D1_07`; rank their 34 people? | 2026-10-20 |
 | Q6 | Do real `NEW_DIST` values match across `SOURCE`s? | 2026-10-20 |
-| Q7 | Same period and same ZIP basis for `MM_OPP` and sales? | 2026-10-20 |
+| Q7 | Same ZIP basis for `MM_OPP` and sales? (period: fiscal year 2025 only, owner 2026-10-25) | 2026-10-20 |
 | Q8 | What is `PR05`; leave it out of market share? | 2026-10-20 |
 | Q10 | Is the `firm_2` TX/NY block with no `CLEAN_ID` W00155/W00171's territory? (check territories `NAME` at work; folds in Q5) | 2026-10-21 |
 | Q12 | `firm_2` `PR05`: contribution only? | 2026-10-21 |
@@ -150,6 +154,8 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q20 | `FIRM_CRD` to `CBD_ID`, our own match: cardinality both ways; agreement with `opp_matched` and `crd_cbd`; same crosswalk as the union's firm_2 `CBD_ID`s? CRDs with no `CBD_ID`? Proposed rule in `23`. | 2026-10-24 |
 | Q21 | `NEW_DIST` and `CHANNEL` for an opportunity row with no `CBD_ID`, and for companies with several `CHANNEL`s (`D2_04`'s default?) Proposed rule in `24`. | 2026-10-24 |
 | Q23 | Is firm_2's `OPP` the same measure as `MM_OPP`? Test equality within distribution firm x `ZIP_CODE` x product where both exist (links Q2, Q7) | 2026-10-24 |
+| Q24 | Where do `firm_2`'s union `CBD_ID`s come from? (owner: unknown) | 2026-10-25 |
+| Q25 | Does `opp_matched` have `VA_PRODUCT_TYPE` (its export header) rather than `VA_PRODUCT_LINE` (`22`)? | 2026-10-25 |
 
 ## Log
 
@@ -1143,3 +1149,41 @@ internal table and firm names). Read in full by the session; what it settles, in
   takes the first candidate.
 - The session wrote a copy that carries `FIRM_CRD` through the opportunity side and attaches it by `CBD_ID` at the end
   (no row added or split), plus the vendor crosswalk CRD x broker name -> `CBD_ID` (hub root, git-excluded).
+
+### 2026-10-25: Snowflake constructs checked against the docs; fiscal year 2025
+
+> **Owner, 2026-10-25:** "snowflake does include count(distinct...). either way you should be searching the web or
+> asking me instead of assuming those kinds of things. tokens or costs is not a factor here, quality is the end goal"
+
+The session had rewritten a check in its copy of the owner's query on the assumption that `COUNT(DISTINCT ...) OVER` is
+not supported. The docs (COUNT) allow it; only a multi-column distinct with `ORDER BY` in the window is invalid. Rule
+added to Conventions. Every construct in the files not yet run at work, checked (docs read 2026-10-25):
+
+| construct | used in | evidence | result |
+|---|---|---|---|
+| `REGEXP_REPLACE` default occurrence | `21` | docs: default 0, all occurrences | as written |
+| `SPLIT_PART` part 1 | `21` | docs: 1-based | as written |
+| `JAROWINKLER_SIMILARITY` | `21` | docs: integer 0-100, case-insensitive | as written |
+| `LTRIM(x, '0')`, `COUNT_IF`, `TRUNC`, `LISTAGG(DISTINCT ...)`, `GREATEST` | `22`, explore | docs | as written (GREATEST is NULL if an input is; inputs are COALESCEd) |
+| `UNION ALL BY NAME` with unequal column lists | `24` | docs: a missing column is NULL; owner's run | as written |
+| `MINUS` / `EXCEPT` and NULLs, duplicates | `22` statement 7, `24` statement 2 | docs say neither | replaced: `24` compares row multisets by `HASH(* EXCLUDE ...)` (docs: never NULL, NULL inputs included; NUMBER hashes alike across precision and scale); `22` uses `NOT EXISTS` with `IS NOT DISTINCT FROM` (docs: NULL-safe) |
+| `GROUP BY` with NULL keys | `24` statement 2 | docs (aggregate functions and NULL): NULL rows kept as a group | as written |
+| window ordered by `SUM()` in a grouped query | session's copy of the owner's query | docs: windows run after `GROUP BY`, but no example orders by an aggregate | moved the sum into a subquery |
+| everything in `22` statements 1-6, `23` statements 1-2, `24` statement 1, `explore/opp_totals_check.sql` statement 1 | | owner's runs at work | confirmed |
+
+`24` statement 2 also gains a check that `union_base` holds no `firm_2` `MM_OPP`. Tested on the coded extract: all checks
+0; four faults put in by hand are each caught (a repeated union row, a changed `firm_1` `MM_OPP`, a NULL column given
+a value, `firm_2` `MM_OPP` left in `union_base`); in `22`, a changed old key row with NULL `SOURCE` is caught and the
+NULL-`SOURCE` rows are not miscounted as new.
+
+Truncation (pending `explore/amount_precision.sql`): by the docs (arithmetic operators) addition keeps the larger
+scale and division adds 6 digits up to 12 and rounds; `COALESCE` turns a text argument into NUMBER(18,5). No step of
+`23` or `24` can drop the decimals of an amount unless a source column has scale 0, which statement 1 of that file shows.
+
+> **Owner, 2026-10-25:** "all fiscal years is 2025 only. I have no clue where firm 2's cbd_id comes from."
+
+Correction to the entry "how `firm_1`'s half of the union is built": its line "every total in this log sums both years
+for `firm_1`" is wrong; all data is fiscal year 2025. Q7 keeps only its ZIP part. Q24 is new: 370 of the 388 `firm_2`
+`CBD_ID`s are `firm_1`'s IDs (2026-10-24); the vendor crosswalk from the owner's query keys `firm_2`'s file by CRD
+without depending on them. Q25 is new: the `opp_matched` files arrived with a `VA_PRODUCT_TYPE` column where `22`
+writes `VA_PRODUCT_LINE`, every other column in `22`'s order; `22` is unchanged until the owner confirms.

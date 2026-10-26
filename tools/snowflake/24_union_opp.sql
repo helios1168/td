@@ -152,28 +152,27 @@ sc AS (              -- ACTUAL_SALES_AMOUNT by SOURCE x CHANNEL x PRODUCT_V2: UN
   SELECT SOURCE, CHANNEL, PRODUCT_V2, SUM(S) AS DIFF
   FROM (SELECT SOURCE, CHANNEL, PRODUCT_V2, ACTUAL_SALES_AMOUNT AS S FROM uo
         UNION ALL SELECT SOURCE, CHANNEL, PRODUCT_V2, -ACTUAL_SALES_AMOUNT FROM src) x
-  GROUP BY SOURCE, CHANNEL, PRODUCT_V2)
-SELECT 'source union rows missing from UNION_OPP (every column except MM_OPP)' AS CHECK_NAME,
-       (SELECT COUNT(*) FROM (SELECT * EXCLUDE (MM_OPP) FROM src
-                              EXCEPT
-                              SELECT * EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
-                              FROM uo WHERE ROW_ORIGIN <> 'opp file') x) AS VALUE, TRUE AS MUST_BE_ZERO
-UNION ALL SELECT 'UNION_OPP rows other than opp-only rows missing from the source (every column except MM_OPP)',
-       (SELECT COUNT(*) FROM (SELECT * EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
-                              FROM uo WHERE ROW_ORIGIN <> 'opp file'
-                              EXCEPT
-                              SELECT * EXCLUDE (MM_OPP) FROM src) x), TRUE
-UNION ALL SELECT 'rows other than opp-only rows minus source rows (with the two EXCEPT checks: no row lost or changed)',
-       (SELECT COUNT(*) FROM uo WHERE ROW_ORIGIN <> 'opp file') - (SELECT COUNT(*) FROM src), TRUE     -- Snowflake has no EXCEPT ALL
-UNION ALL SELECT 'firm_1 rows whose MM_OPP changed (either way)',
-       (SELECT COUNT(*) FROM (SELECT * FROM src WHERE SOURCE IN (SELECT V FROM s1)
-                              EXCEPT
-                              SELECT * EXCLUDE (ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
-                              FROM uo WHERE SOURCE IN (SELECT V FROM s1)) x)
-     + (SELECT COUNT(*) FROM (SELECT * EXCLUDE (ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)
-                              FROM uo WHERE SOURCE IN (SELECT V FROM s1)
-                              EXCEPT
-                              SELECT * FROM src WHERE SOURCE IN (SELECT V FROM s1)) x), TRUE
+  GROUP BY SOURCE, CHANNEL, PRODUCT_V2),
+-- Row identity without EXCEPT: Snowflake's docs say neither how MINUS / EXCEPT compare NULLs nor whether they keep
+-- duplicates (docs, Set operators, read 2026-10-25).  HASH "never returns NULL, even for NULL inputs" and takes * EXCLUDE (docs, HASH), so counting rows per
+-- hash on each side compares the two tables as multisets, NULL-safe.  NUMBER values hash alike whatever their
+-- precision and scale; a column whose type changes kind (FLOAT <-> NUMBER) would make every row differ (loud).
+hs AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
+       FROM (SELECT HASH(* EXCLUDE (MM_OPP)) AS H, SOURCE, MM_OPP FROM src) x GROUP BY H),
+hu AS (SELECT H, MAX(SOURCE) AS SOURCE, COUNT(*) AS N, COUNT(MM_OPP) AS NM, SUM(MM_OPP) AS S
+       FROM (SELECT HASH(* EXCLUDE (MM_OPP, ROW_ORIGIN, CBD_METHOD, CHANNEL_RULE, N_HOLDERS)) AS H, SOURCE, MM_OPP
+             FROM uo WHERE ROW_ORIGIN <> 'opp file') x GROUP BY H),
+hd AS (SELECT COALESCE(hs.SOURCE, hu.SOURCE) AS SOURCE, COALESCE(hs.N, 0) AS NS, COALESCE(hu.N, 0) AS NU,
+              COALESCE(hs.NM, 0) AS NMS, COALESCE(hu.NM, 0) AS NMU, COALESCE(hs.S, 0) AS SS, COALESCE(hu.S, 0) AS SU
+       FROM hs FULL OUTER JOIN hu ON hu.H = hs.H)
+SELECT 'union_base rows not found in UNION_OPP with every column but MM_OPP unchanged, plus rows added or repeated'
+       AS CHECK_NAME,
+       (SELECT SUM(ABS(NS - NU)) FROM hd) AS VALUE, TRUE AS MUST_BE_ZERO
+UNION ALL SELECT 'firm_1 rows whose MM_OPP changed (row groups by hash)',
+       (SELECT COUNT(*) FROM hd WHERE SOURCE IN (SELECT V FROM s1)
+          AND (NS <> NU OR NMS <> NMU OR ABS(SS - SU) > 1e-9 * GREATEST(ABS(SS), ABS(SU), 1))), TRUE
+UNION ALL SELECT 'firm_2 rows of union_base carrying MM_OPP (union_base is the union without firm_2 opportunity)',
+       (SELECT COUNT(*) FROM src JOIN s2 ON src.SOURCE = s2.V WHERE src.MM_OPP IS NOT NULL), TRUE
 UNION ALL SELECT 'ACTUAL_SALES_AMOUNT cells (SOURCE x CHANNEL x PRODUCT_V2) different from the source',
        (SELECT COUNT(*) FROM sc WHERE ABS(COALESCE(DIFF, 0)) > 0.001), TRUE     -- ponytail: 0.001 absorbs float summation order
 UNION ALL SELECT 'firm_2 OPP after drops differs from firm_2 MM_OPP in UNION_OPP by more than 0.001 x divisor (1 = yes)',
