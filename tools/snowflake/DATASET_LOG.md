@@ -1442,3 +1442,17 @@ and `24` statement 1, each step's table a CTE. `one_create.py` writes it from th
 the step tables dropped, gives the same `UNION_OPP` as the steps (159,378 rows; 0 rows differ with `MM_OPP` to 6
 decimals; equal totals). Two runs of the step build differ in the last float digits of `MM_OPP` on 49 rows, so parallel
 `SUM` order, not the query, is the source of differences beyond 6 decimals.
+
+### 2026-10-26: `FIRM_CRD` in `UNION_OPP`
+
+> **Owner, 2026-10-26:** "we need to include firm_crd in union_opp"
+
+Session decision, after the owner's rule for `dist_ch` (2026-10-25: assign where it is one, flag the rest): `UNION_OPP`
+gains `FIRM_CRD` and `CRD_RULE` at the end. Opp-only rows carry the CRD of `firm_2`'s file exactly and are now one row per
+key x `new_dist` x CRD (`MM_OPP` totals unchanged). No sales row of either firm carries a CRD (the owner's query writes
+`'' as firmcrd`), so every other row takes the company's: `FIRM_CRD` where its `CBD_ID` has one CRD in the vendor's
+resolved rows (`crd_cbd_mm`, `opp_f2_final`); blank with `CRD_RULE` 'company has 2+ CRDs' (for review) or 'company has
+no CRD'. No largest-share choice. New must-be-zero check: an opp-only row with no `FIRM_CRD`; `% of MM_OPP by CRD_RULE`
+for each firm is for reading. `25` regenerated. Tested on the stand-in: the check is 0, `firm_2` `MM_OPP` still equals
+`opp_f2_final` after drops, and `25` gives the same table as the steps (161,084 rows, 0 differ). If `union_base` at work
+already has a `FIRM_CRD` column, the `CREATE` fails on the repeated name (loud, not silent).

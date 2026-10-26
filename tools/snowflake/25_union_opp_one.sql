@@ -425,7 +425,8 @@ pv AS (              -- firm_2's VA is VARIABLE (owner, 2026-10-26, Q8)
   FROM k a JOIN k b ON b.KIND = 'PRODUCT_V2' AND b.CODE = 'PR02'
   WHERE a.KIND = 'PRODUCT_V2' AND a.CODE = 'PR05'),
 fo AS (              -- opp_f2_final without its dropped rows; a FILE_DIST_CH in no map is kept, with a NULL DIST_CH (checks fail)
-  SELECT f.ZIP_CODE, dm.DIST_CH, TO_CHAR(f.CBD_ID) AS CBD_ID, f.PRODUCT_LINE AS PRODUCT_V2, f.NEW_DIST, f.MM_OPP
+  SELECT f.ZIP_CODE, dm.DIST_CH, TO_CHAR(f.CBD_ID) AS CBD_ID, f.PRODUCT_LINE AS PRODUCT_V2, f.NEW_DIST,
+         TO_CHAR(f.FIRM_CRD) AS FIRM_CRD, f.MM_OPP
   FROM opp_f2_final f
   LEFT JOIN dm ON dm.FILE_DIST_CH = f.FILE_DIST_CH
   WHERE dm.GONE IS DISTINCT FROM TRUE
@@ -435,6 +436,12 @@ ak AS (              -- the opportunity keys
          CASE WHEN COUNT(DISTINCT COALESCE(NEW_DIST, '~')) = 1 THEN MAX(NEW_DIST) END AS FILE_NEW_DIST
   FROM fo GROUP BY ZIP_CODE, DIST_CH, CBD_ID, PRODUCT_V2
   HAVING COALESCE(SUM(MM_OPP), 0) <> 0),
+cc AS (              -- a company's CRDs in the vendor's resolved rows; FIRM_CRD where it has one
+  SELECT CBD, MAX(CRD) AS CRD, COUNT(DISTINCT CRD) AS N_CRD
+  FROM (SELECT TO_CHAR(cbd_id) AS CBD, TO_CHAR(firm_crd) AS CRD FROM ssdb_integration.lr_strategy.crd_cbd_mm
+        UNION SELECT TO_CHAR(CBD_ID), TO_CHAR(FIRM_CRD) FROM opp_f2_final) x
+  WHERE CBD IS NOT NULL AND CRD IS NOT NULL
+  GROUP BY CBD),
 ch1 AS (             -- the CHANNEL firm_1's union rows carry for a NEW_DIST, where they carry one
   SELECT u.NEW_DIST, MAX(u.CHANNEL) AS CHANNEL
   FROM ssdb_integration.lr_strategy.union_base u JOIN s1 ON u.SOURCE = s1.V
@@ -473,13 +480,13 @@ r AS (               -- PICK: the one firm_2 holder row per opportunity key that
                     r0.TERRITORY_WHOLESALER_ADDRESS_ID, r0.SALES_WHOLESALER_HAS_TERRITORY,
                     r0.TERRITORY_WHOLESALER_HAS_TERRITORY) = 1 AS PICK
   FROM r0 CROSS JOIN s2),
-a AS (               -- the keys with no holder row: their opportunity becomes opp-only rows, one per the file's new_dist
-  SELECT fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST, SUM(fo.MM_OPP) AS MM_OPP
+a AS (               -- the keys with no holder row: their opportunity becomes opp-only rows, one per the file's new_dist and CRD
+  SELECT fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST, fo.FIRM_CRD, SUM(fo.MM_OPP) AS MM_OPP
   FROM fo
   JOIN ak ON ak.ZIP_CODE = fo.ZIP_CODE AND ak.DIST_CH = fo.DIST_CH AND ak.CBD_ID = fo.CBD_ID AND ak.PRODUCT_V2 = fo.PRODUCT_V2
   WHERE NOT EXISTS (SELECT 1 FROM r WHERE r.PICK AND r.ZIP_CODE = ak.ZIP_CODE AND r.DIST_CH = ak.DIST_CH
                     AND r.CBD_ID = ak.CBD_ID AND r.PRODUCT_V2 = ak.PRODUCT_V2)
-  GROUP BY fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST
+  GROUP BY fo.ZIP_CODE, fo.DIST_CH, fo.CBD_ID, fo.PRODUCT_V2, fo.NEW_DIST, fo.FIRM_CRD
   HAVING COALESCE(SUM(fo.MM_OPP), 0) <> 0),
 b AS (
   SELECT a.*, s2.V AS SRC,
@@ -500,12 +507,16 @@ b AS (
 SELECT r.* EXCLUDE (IS_HOLDER, PICK) REPLACE (COALESCE(ak.MM_OPP, r.MM_OPP) AS MM_OPP),
        CASE WHEN ak.CBD_ID IS NOT NULL THEN 'union + opp file' ELSE 'union' END AS ROW_ORIGIN,
        ak.FILE_NEW_DIST, CASE WHEN ak.CBD_ID IS NOT NULL THEN 'sales row' END AS CHANNEL_RULE,
-       CASE WHEN ak.CBD_ID IS NOT NULL THEN COALESCE(h.N, 0) END AS N_HOLDERS, fk.FIRM_KEY
+       CASE WHEN ak.CBD_ID IS NOT NULL THEN COALESCE(h.N, 0) END AS N_HOLDERS, fk.FIRM_KEY,
+       CASE WHEN cc.N_CRD = 1 THEN cc.CRD END AS FIRM_CRD,
+       CASE WHEN r.CBD_ID IS NULL THEN NULL WHEN cc.N_CRD = 1 THEN 'company has one CRD'
+            WHEN cc.N_CRD > 1 THEN 'company has 2+ CRDs' ELSE 'company has no CRD' END AS CRD_RULE
 FROM r
 LEFT JOIN ak ON r.PICK AND ak.ZIP_CODE = r.ZIP_CODE AND ak.DIST_CH = r.DIST_CH
             AND ak.CBD_ID = r.CBD_ID AND ak.PRODUCT_V2 = r.PRODUCT_V2
 LEFT JOIN h ON h.ZIP_CODE = r.ZIP_CODE AND h.DIST_CH = r.DIST_CH
 LEFT JOIN firm_key fk ON fk.ID_TYPE = 'CBD_ID' AND fk.ID = TO_CHAR(r.CBD_ID)
+LEFT JOIN cc ON cc.CBD = TO_CHAR(r.CBD_ID)
 UNION ALL BY NAME     -- the columns not named below are NULL on opp-only rows
 SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHANNEL, b.STATE,
        b.ZIP_CODE, b.PRODUCT_V2, b.MM_OPP,
@@ -513,5 +524,6 @@ SELECT b.SRC AS SOURCE, b.CBD_ID, b.FIRM, b.PARENT, b.DIST_CH, b.NEW_DIST, b.CHA
        b.HOLDER_ID AS SALES_WHOLESALER_TERRITORY_ID, b.HOLDER_ID AS TERRITORY_WHOLESALER_TERRITORY_ID,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS SALES_WHOLESALER_HAS_TERRITORY,
        CASE WHEN b.N_HOLDERS > 0 THEN 1 ELSE 0 END AS TERRITORY_WHOLESALER_HAS_TERRITORY,
-       'opp file' AS ROW_ORIGIN, b.NEW_DIST AS FILE_NEW_DIST, b.CHANNEL_RULE, b.N_HOLDERS, b.FIRM_KEY
+       'opp file' AS ROW_ORIGIN, b.NEW_DIST AS FILE_NEW_DIST, b.CHANNEL_RULE, b.N_HOLDERS, b.FIRM_KEY,
+       b.FIRM_CRD, 'file' AS CRD_RULE
 FROM b;
