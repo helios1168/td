@@ -1285,3 +1285,11 @@ on it as on a `firm_1` row. `firm_2`'s own label is kept beside it, for the curr
 `firm_2`'s label, `firm_1`'s and the rules' result. Tested on a stand-in built from `firm_2`'s rows (`firm_1`'s own
 channel names, a company that changes by product, cells and ZIPs missing): must-be-zero rows 0; 80.4% / 3.6% / 15.9%
 by the three sources as built; the product key brings the 2+ companies share to 1.2%.
+
+### 2026-10-25: the `firm_2` copy of the owner's query goes into the repo
+
+> **Owner, 2026-10-25:** "just put mm_query_f2.sql in github. im giving you explicit permission"
+
+`tools/snowflake/mm_query_f2.sql` is that copy. It holds what the owner's query holds in the steps it copies: firm
+names in the override lists, company IDs, and the internal table paths. Exception to the masking convention for this
+file only, by the owner's words above; every other file and this log stay as before.
