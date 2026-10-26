@@ -1187,3 +1187,27 @@ for `firm_1`" is wrong; all data is fiscal year 2025. Q7 keeps only its ZIP part
 `CBD_ID`s are `firm_1`'s IDs (2026-10-24); the vendor crosswalk from the owner's query keys `firm_2`'s file by CRD
 without depending on them. Q25 is new: the `opp_matched` files arrived with a `VA_PRODUCT_TYPE` column where `22`
 writes `VA_PRODUCT_LINE`, every other column in `22`'s order; `22` is unchanged until the owner confirms.
+
+### 2026-10-25: `crd_cbd_mm` built at work; `22` statements 12-15 code it
+
+> **Owner, 2026-10-25:** "the output is 404, 382, 393, 13, null"
+
+The check query at the end of the session's copy of the owner's query (kept out of the repo), fiscal year 2025:
+
+| | value |
+|---|---|
+| rows (CRD x broker name x `CBD_ID`) | 404 |
+| CRDs | 382 |
+| `CBD_ID`s | 393 |
+| CRDs with 2+ `CBD_ID`s | 13 |
+| share of `MM_OPP` with no CRD | NULL, read as 0: `SUM` of no non-NULL values is NULL (docs, SUM, read 2026-10-25), so no row has a NULL CRD |
+
+The query drops vendor rows whose ID is '0' with no client firm ID before this table, so opportunity the vendor gives
+no company is not in it. `firm_2`'s kept rows (no `L01`, no `O2_05`) have 355 CRDs, 360 CRD x broker name; how many of
+them, and how much of their `OPP`, the crosswalk covers is measured once `synthetic_crd_cbd_mm` is loaded (Q20).
+
+`22` statements 12-15 are new: 12 inserts `crd_cbd_mm`'s `CBD_ID`s not yet in the key (insert-only, next C codes), 13
+builds `synthetic_crd_cbd_mm` (`CBD_ID` coded, `MM_OPP` / the divisor, CRD and broker name clear), 14 checks it after a
+rerun of 7, 15 is the one download. Every construct in them already ran at work in `22` statements 2, 3 and 7. Tested
+on the extract with a stand-in `crd_cbd_mm` (real values made different from codes, two new `CBD_ID`s): the new codes
+follow the largest, a second run of 12 adds nothing, every check is 0, a `CBD_ID` left out of the key is caught.

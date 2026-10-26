@@ -28,6 +28,8 @@
 -- The key never leaves work; it maps results from outside back to real values.
 -- Run order: 1 (backup), 2, 3, 4-6, then 7: every MUST_BE_ZERO row of 7 must be 0.  Then 8 and the downloads
 -- 9-11: every file sent must be under 800 KB, so the opportunity tables go out in parts.
+-- 12-15 (2026-10-25): the vendor crosswalk crd_cbd_mm (FIRM_CRD, BROKER_NAME, CBD_ID, FISCAL_YR, MM_OPP; built at
+-- work from the owner's firm_1 query) -> synthetic_crd_cbd_mm.  Run order: 12, 13, 7 again (the key), 14, then 15.
 
 -- Statement 1.  Backup of the key as it was.  IF NOT EXISTS: a re-run keeps the first backup.
 CREATE TABLE IF NOT EXISTS ssdb_integration.lr_strategy.synthetic_key_before_22 AS
@@ -250,3 +252,46 @@ WHERE PART = 0;
 
 -- Statement 11.  synthetic_crd_cbd, one file.
 SELECT * FROM ssdb_integration.lr_strategy.synthetic_crd_cbd;
+
+-- Statement 12.  crd_cbd_mm's CBD_IDs not yet in the key, with the next C codes.  Insert-only; a re-run adds nothing.
+INSERT INTO ssdb_integration.lr_strategy.synthetic_key
+SELECT 'CBD_ID', CAST(NULL AS VARCHAR), c.V,
+       'C' || LPAD(CAST(ROW_NUMBER() OVER (ORDER BY RANDOM()) + mx.C AS VARCHAR), 5, '0'), CAST(NULL AS DOUBLE)
+FROM (SELECT DISTINCT CAST(CBD_ID AS VARCHAR) AS V FROM ssdb_integration.lr_strategy.crd_cbd_mm
+      WHERE CBD_ID IS NOT NULL) c
+CROSS JOIN (SELECT COALESCE(MAX(TRY_CAST(SUBSTR(CODE, 2) AS INT)), 0) AS C
+            FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'CBD_ID') mx
+WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.synthetic_key k WHERE k.KIND = 'CBD_ID' AND k.VALUE = c.V);
+
+-- Statement 13.  The synthetic crd_cbd_mm: CBD_ID coded, MM_OPP / the divisor; FIRM_CRD, BROKER_NAME clear.
+CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.synthetic_crd_cbd_mm AS
+SELECT m.FIRM_CRD,
+       m.BROKER_NAME,
+       cb.CODE AS CBD_ID,
+       m.FISCAL_YR,
+       ROUND(m.MM_OPP / dv.D_OPP, 3) AS MM_OPP
+FROM ssdb_integration.lr_strategy.crd_cbd_mm m
+CROSS JOIN (SELECT NUM AS D_OPP FROM ssdb_integration.lr_strategy.synthetic_key
+            WHERE KIND = 'divisor' AND VALUE = 'MM_OPP') dv
+LEFT JOIN ssdb_integration.lr_strategy.synthetic_key cb ON cb.KIND = 'CBD_ID' AND cb.VALUE = CAST(m.CBD_ID AS VARCHAR);
+
+-- Statement 14.  Checks.  Rerun 7 first (key twice, old rows kept, new CBD_ID format); every MUST_BE_ZERO = 1 row
+-- here must be 0.
+WITH
+r AS (SELECT * FROM ssdb_integration.lr_strategy.crd_cbd_mm),
+s AS (SELECT * FROM ssdb_integration.lr_strategy.synthetic_crd_cbd_mm),
+d AS (SELECT NUM AS D_OPP FROM ssdb_integration.lr_strategy.synthetic_key WHERE KIND = 'divisor' AND VALUE = 'MM_OPP')
+SELECT 'crd_cbd_mm rows: real minus synthetic' AS CHECK_NAME,
+       (SELECT COUNT(*) FROM r) - (SELECT COUNT(*) FROM s) AS VALUE, 1 AS MUST_BE_ZERO
+UNION ALL SELECT 'crd_cbd_mm CBD_ID with no code (non-NULL in, NULL out)',
+       (SELECT COUNT_IF(CBD_ID IS NOT NULL) FROM r) - (SELECT COUNT_IF(CBD_ID IS NOT NULL) FROM s), 1
+UNION ALL SELECT 'real key values left in the coded CBD_ID',
+       (SELECT COUNT(*) FROM s JOIN ssdb_integration.lr_strategy.synthetic_key k
+          ON k.KIND <> 'divisor' AND k.VALUE = s.CBD_ID), 1
+UNION ALL SELECT 'MM_OPP total: synthetic x divisor / real (should be 1)',
+       (SELECT SUM(MM_OPP) FROM s) * (SELECT D_OPP FROM d) / NULLIF((SELECT SUM(MM_OPP) FROM r), 0), 0
+UNION ALL SELECT 'MM_OPP total in coded units: compare outside work', (SELECT SUM(MM_OPP) FROM s), 0
+ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
+
+-- Statement 15.  synthetic_crd_cbd_mm, one file (404 rows on 2026-10-25).  Keep the quoting: BROKER_NAME can hold commas.
+SELECT * FROM ssdb_integration.lr_strategy.synthetic_crd_cbd_mm;
