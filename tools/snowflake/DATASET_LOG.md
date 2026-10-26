@@ -140,6 +140,9 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Firm overrides: `CBD_ID` -> `DIST_CH`, `NEW_DIST` on every row of the company, both firms, sales and opportunity;
   `CHANNEL` follows `NEW_DIST`; `firm_2`'s union rows keep their own `DIST_CH` (owner, 2026-10-26). List in
   `mm_query_f2.sql` statement 0b.
+- Opportunity overrides: for a listed `CBD_ID`, `firm_1`'s `MM_OPP` becomes `firm_2`'s per ZIP x product, `firm_1`'s
+  rows there scaled by `firm_2` / `firm_1`; full replace (cells only `firm_1` had lose it, cells only `firm_2` had get
+  new `firm_1` opp-only rows) (owner, 2026-10-26). List in `25_union_opp_one.sql` statement 3.
 
 ## Open questions
 
@@ -1508,3 +1511,28 @@ tables of earlier runs carry the old names, so the temporary ones are `tmp_`; th
 The reports and checks read the `tmp_` tables, so they run in the builds' session (Run All). Tested on the stand-in:
 `UNION_OPP` equals the previous version's (161,084 rows, 0 differ, a firm override active); the run leaves no other
 permanent table.
+
+### 2026-10-26: opportunity overrides (firm_1's opportunity from firm_2 for a company)
+
+> **Owner, 2026-10-26:** "and now how about if I want to override firm 1's opportunity values with what firm 2 has for a particular cbd_id?"
+
+> **Owner, 2026-10-26** (asked): grain "ZIP x product, firm_1's rows scaled (Recommended)"; coverage "Full replace (Recommended)".
+
+Session decision: `firm_2`'s values are the ones `UNION_OPP` carries for it (no FIXED, no NO CHANNEL), so the two firms
+come out equal in the alignment report. `25_union_opp_one.sql` statement 3 is the list (`tmp_opp_override`, temporary,
+`VALUES`, initially `46`); statements after it move up one (checks are 15). In the `UNION_OPP` build, per listed company
+and ZIP x `PRODUCT_V2`: both firms have `MM_OPP`: each `firm_1` row x `firm_2` total / `firm_1` total ('scaled'); only
+`firm_1`: its `MM_OPP` blank ('removed'); only `firm_2`: new `firm_1` opp-only rows in the `firm_1` channel each
+`firm_2` row was given, holder from `firm_1`'s territories ('added'). Lineage column `OPP_OVERRIDE`. Docs read
+2026-10-26 (Arithmetic operators): multiplication keeps scale up to 12 digits, division adds 6 and rounds, the final
+output does not overflow. The firm_2-only report (statement 12) now filters `SOURCE`. New must-be-zero checks: a
+company listed twice; a listed company with no `firm_2` `MM_OPP`; a cell where `firm_1` differs from `firm_2`; a listed
+`firm_1` row with `MM_OPP` not marked; added rows with NULL `DIST_CH`, `PRODUCT_V2`, `NEW_DIST` or `CHANNEL`. The check
+that `firm_1`'s `MM_OPP` is unchanged now covers the companies not listed. For reading: rows by `OPP_OVERRIDE`, added
+rows with no holder, `firm_1` `MM_OPP` of the listed companies before and after.
+
+Tested on the stand-in: a list naming no company in the data changes nothing (161,084 rows, 0 differ) and fails the
+"no firm_2" check; a company in both firms ends with `firm_1` = `firm_2` (1,348 rows scaled, 74 removed, 29 added; every
+other row and every `firm_2` row unchanged); with the same company in the firm overrides, every row, added ones too,
+takes the firm override; a doubled scaled row and a change to an unlisted company are each caught. Added rows had no
+holder on the stand-in, whose territories carry other channel labels than its union.
