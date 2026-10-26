@@ -1118,3 +1118,28 @@ Done in `23` and `24` (Settled). Rerun on the extract, with '0' put back in plac
 only `opp_matched` names, absent from `crd_cbd` (0.11%). No row has `CBD_ID` '0'. `24`'s grid reports, for companies in
 both `union_base` and `crd_cbd`, the percent whose two firm names are equal (at work: whether the filled names follow
 the union's spelling).
+
+### 2026-10-25: how `firm_1`'s half of the union is built (owner's query, kept out of the repo)
+
+The owner shared the query that builds `firm_1`'s rows with `CBD_ID` and `MM_OPP` (hub root, git-excluded: it holds
+internal table and firm names). Read in full by the session; what it settles, in neutral terms:
+
+- `firm_1`'s opportunity is a vendor opportunity table with the same columns as `firm_2`'s file (`DIST_CH`, ZIP,
+  `FIRM_CRD`, broker name, product line, VA product type, amount), plus the vendor's own `CBD_ID` for `firm_1`. One
+  source for both firms explains the exact equality of 2026-10-24 (Q23) and gives a CRD-to-`CBD_ID` crosswalk from the
+  vendor's rows instead of matching (Q20).
+- `CBD_ID` '0' is a vendor row the vendor could not tie to a `firm_1` broker-dealer. The query uses a list of candidate
+  IDs when there is one ('|'-separated, resolved against `firm_1` sales, else the first), and otherwise drops the row:
+  `firm_1`'s `MM_OPP` holds no '0' opportunity. So `firm_2`'s opportunity at CRDs with no `CBD_ID` should be left out the
+  same way (the owner's expected totals already do).
+- Sales and opportunity cover fiscal years 2024 and 2025, one row per year. The coded extract has no `FISCAL_YR`, so
+  every total in this log sums both years for `firm_1`; `firm_2`'s file has no fiscal year (Q7).
+- `MM_OPP` goes on the sales row whose wholesaler is the vendor's territory for that row, else on its own row: the
+  layout of 2026-10-25 that `24` copies.
+- Possible duplication, for the owner to check: the opportunity join hits every sales row of a key (two name spellings
+  for one company double it: the 50 keys with `MM_OPP` twice, 2026-10-20); the current-territory join doubles rows where
+  a ZIP has two wholesalers in a channel; the firm-master join doubles rows where a `CBD_ID` has two active entries.
+- The '|' resolution compares an unpadded ZIP to sales ZIPs, so for ZIPs with a leading zero it never sees sales and
+  takes the first candidate.
+- The session wrote a copy that carries `FIRM_CRD` through the opportunity side and attaches it by `CBD_ID` at the end
+  (no row added or split), plus the vendor crosswalk CRD x broker name -> `CBD_ID` (hub root, git-excluded).
