@@ -1231,3 +1231,27 @@ On the coded extract (union, and `UNION_OPP` rebuilt from `23` and `24` statemen
 
 So `firm_1`'s channel would change 0.06% of the file's `MM_OPP`. The 5.13% at companies with no `firm_1` rows is what
 the default really decides; the CRD-keyed `23` (from `crd_cbd_mm`) may move those CRDs to other companies.
+
+### 2026-10-25: firm_2's opportunity file through the opportunity steps of the owner's query
+
+> **Owner, 2026-10-25:** "think about all the datasets and the transformations we're doing. lets map as much as we can as early on as we can so that firm 2's data matches firm 1's data as much as possible before ever touching union"
+
+> **Owner, 2026-10-25:** "as long as we have dist_ch we can get to new_dist and then channel. lets work on getting dist_ch first. [...] lets run firm 2's opportunity file through the logic in that query and make sure everything matches up, then we can think about the rest."
+
+The owner approved a `firm_2` copy of the query, kept out of the repo beside it (its rule lists hold firm names). It
+runs both firms' rows through one copy of the query's first opportunity step, so both are judged by the same rules,
+then takes `firm_2`'s rows through the remaining opportunity steps. `firm_2`'s file has no company, client firm ID or
+state: it takes the ones `firm_1`'s vendor rows give at the same ZIP x CRD x broker name, else `crd_cbd_mm` by CRD x
+broker name. Other changes, each marked in the file: RILA is a VA type in `firm_2`'s file but a product line in the
+vendor table (settled map, `V02` -> `PR01`); `|` lists resolve against `firm_2`'s sales in `union_base`, without the
+channel and territory conditions. `dist_ch` is per CRD in `firm_2`'s file (471 of 475 CRDs have one).
+
+Checks that must be 0: rows and `OPP` of the file kept; `firm_1`'s vendor rows kept; no product left without a branch;
+products as the settled map; `OPP` kept through to the last step. For reading: where each company came from, the share
+dropped for no company (as `firm_1`'s are), `|` lists, `dist_ch` changed by the rules, `dist_ch` and `OPP` against
+`firm_1` at the same key. A last query lists `firm_2`'s file `dist_ch`, the rules' result and `firm_1`'s side by side.
+
+Tested in DuckDB on the extract, with a stand-in vendor table built from `opp_matched` (real-like labels, a `|` list,
+'0' with and without a client firm ID, ZIPs missing): every must-be-zero check 0, and the broker-name overrides change
+`firm_2` rows (1.01% of `OPP`). A product label no branch knows and a missing key row are each caught. `22` statements
+12-15 are on hold: the copy reads `crd_cbd_mm` at work directly.
