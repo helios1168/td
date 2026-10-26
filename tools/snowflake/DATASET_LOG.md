@@ -1477,3 +1477,19 @@ without its `NEW_DIST` or with no `CHANNEL` (also catches `mm_query_f2.sql` stat
 `firm_1` row without its `DIST_CH`; a row not marked. Tested on the stand-in with a company in both firms: every row
 takes the override, all new checks 0, `25` equals the steps (161,084 rows, 0 differ); changing the list without
 rerunning statement 2 fails two checks.
+
+### 2026-10-26: one file, Run All
+
+> **Owner, 2026-10-26:** "no. it needs to be in the combined query? why are we working with separate queries?"
+
+> **Owner, 2026-10-26:** "it can be a single file we use with run all"
+
+The steps were in separate files so each table had its own checks; nothing at work needs that. `25_union_opp_one.sql`
+is now the one file, in Run All order: `crd_dist_override` (created once, never replaced), `firm_override` (the list),
+`opp_base_both`, `opp_f2_final`, `firm_key`, `UNION_OPP`, seven review lists and reports, and last one checks grid with a
+`STEP` column (the three former grids in one `WITH`; no `WITH` inside a subquery, which the docs do not show). By the
+Snowflake docs (Querying data using worksheets, read 2026-10-26), Run All runs the whole worksheet and Query history
+keeps each result, up to 25 queries; the file has 15. `mm_query_f2.sql`, `24_union_opp.sql` and `one_create.py` are
+merged into it and removed (in git history at `11d61a0`). Tested on the stand-in: the file runs end to end, and its
+`opp_f2_final`, `firm_key` and `UNION_OPP` equal the former step build exactly (236,070 / 893 / 161,084 rows, 0 differ,
+a firm override active); the grid's failing rows are the two known stand-in gaps.
