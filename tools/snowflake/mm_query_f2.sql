@@ -341,6 +341,8 @@ opp_final AS (
         cbd_id,
         territory,
         file_dist_ch,
+        firm_crd,      --f2: CRD and broker name kept (owner, 2026-10-25)
+        broker_name,
         SUM(mm_opp) AS mm_opp
     FROM opp_resolved
     GROUP BY
@@ -351,7 +353,9 @@ opp_final AS (
         dist_ch,
         cbd_id,
         territory,
-        file_dist_ch
+        file_dist_ch,
+        firm_crd,
+        broker_name
 )
 
 SELECT opp_final.*,

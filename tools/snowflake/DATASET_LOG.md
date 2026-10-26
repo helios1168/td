@@ -1370,3 +1370,11 @@ It tells whether any step after the query changes `firm_1`'s `NEW_DIST`.
 Tested on the stand-in (three companies given IDs the `CASE` breaks out, `union_base` with real-like labels): all
 must-be-zero rows 0 (`OPP` unchanged through `opp_final` with the new key); the broken-out companies get their
 `new_dist`; a `NEW_DIST` changed on purpose in `union_base` shows as 'differs'.
+
+### 2026-10-25: `opp_f2_final` keeps CRD and broker name
+
+> **Owner, 2026-10-25:** "yes keep those two columns in the table"
+
+`new_dist` is in `opp_f2_final` (statement 2), not `opp_base_both`: the query sets it after `|` lists resolve to one
+company. `opp_final` in `mm_query_f2.sql` now also groups by `FIRM_CRD` and `BROKER_NAME`, so every row of
+`opp_f2_final` has its CRD. Tested on the stand-in: `OPP` the same through `opp_final`; every row has a CRD.
