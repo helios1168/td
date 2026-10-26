@@ -1586,3 +1586,18 @@ An address ID that is a territories `CLEAN_ID` is always the row's own territory
 `SOURCE`s); the ones that differ are no territories `CLEAN_ID`. `union_base` at work has 88,620 rows, not the extract's
 97,361: the stand-in tests run on older data. Query 2 (added, tested on planted data) splits the territory side by
 row type and by whether the territory ID is a territories `CLEAN_ID`, which every opp-only row of `UNION_OPP` has.
+
+Q26, owner's run of query 2 (2026-10-26), territory side:
+
+| `SOURCE` | territory ID | address ID = territory ID | differs | none |
+|---|---|---|---|---|
+| `firm_1` | in territories (80,677 rows, all) | 70,176 (86.98%) | 7,371 (9.14%) | 3,130 (3.88%) |
+| `firm_2` | in territories (7,491 rows) | 5,590 (74.62%) | 1,378 (18.40%) | 523 (6.98%) |
+| `firm_2` | not in territories (452 rows) | 0 | 244 | 208 |
+
+So the address ID differs from the territory ID even where the territory ID is a territories `CLEAN_ID`: holder rows
+alone do not settle it. Every row came out 'sales' (no `MM_OPP` with a NULL `ACTUAL_SALES_AMOUNT`), unlike the extract,
+where 74,303 `firm_1` rows had `MM_OPP` only: query 3 (added) shows how the two are filled at work; the grid rows of
+2026-10-26 that read `firm_1`'s opp-only rows as "`MM_OPP`, NULL sales" depend on it. Query 4 (added) classes each
+person (territory ID) by the address IDs the union gives them: always their own, always one other, 2+ others, mixed,
+none. Both tested on planted data (each category read right).
