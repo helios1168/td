@@ -1493,3 +1493,18 @@ keeps each result, up to 25 queries; the file has 15. `mm_query_f2.sql`, `24_uni
 merged into it and removed (in git history at `11d61a0`). Tested on the stand-in: the file runs end to end, and its
 `opp_f2_final`, `firm_key` and `UNION_OPP` equal the former step build exactly (236,070 / 893 / 161,084 rows, 0 differ,
 a firm override active); the grid's failing rows are the two known stand-in gaps.
+
+### 2026-10-26: intermediate tables are temporary
+
+> **Owner, 2026-10-26:** "make sure all intermediate tables are temporary tables except for the final"
+
+`25_union_opp_one.sql` statements 2-5 now `CREATE OR REPLACE TEMPORARY TABLE`: `tmp_firm_override`, `tmp_opp_base_both`,
+`tmp_opp_f2_final`, `tmp_firm_key`; `UNION_OPP` is the one permanent table it makes. `crd_dist_override` stays permanent:
+it holds the owner's loaded overrides (an input, created once). Docs read 2026-10-26: CREATE TABLE (TEMPORARY in the
+syntax; a temporary table lasts for the session), UNPIVOT and data lineage pages (`CREATE OR REPLACE TEMPORARY TABLE ...
+AS SELECT` in their examples), Working with temporary and transient tables (a temporary table hides a table of the same
+name in the session; "avoid naming temporary tables after tables that already exist in the schema"). The permanent
+tables of earlier runs carry the old names, so the temporary ones are `tmp_`; the old ones are for the owner to drop.
+The reports and checks read the `tmp_` tables, so they run in the builds' session (Run All). Tested on the stand-in:
+`UNION_OPP` equals the previous version's (161,084 rows, 0 differ, a firm override active); the run leaves no other
+permanent table.
