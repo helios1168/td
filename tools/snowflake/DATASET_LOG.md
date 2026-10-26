@@ -134,6 +134,9 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
   `D2_03`; `O2_05` is no channel and its rows are dropped (owner, 2026-10-25, Q19).
 - Opportunity-file product to `PRODUCT_V2`: `L02` (indexed annuity) = `PR03`; `PR05` x `V01` / `V02` / `V03` =
   `PR04` / `PR01` / `PR02` (owner, 2026-10-24, Q22; found by the equality test of that day).
+- Firm key across both firms: `FIRM_KEY`, the group of CRDs and `CBD_ID`s the vendor's resolved rows link
+  (`crd_cbd_mm`, `opp_f2_final`), labelled by its `CBD_ID` with the most opportunity; a group whose `CBD_ID`s carry 2+
+  `PARENT` is for manual review (owner, 2026-10-26).
 
 ## Open questions
 
@@ -1402,3 +1405,28 @@ Tested on the stand-in (`mm_query_f2.sql` then `24`): `firm_1` rows and all sale
 `opp_f2_final` after drops; one key per row; no VA left (1,275 rows counted as VARIABLE). The two failing rows are
 stand-in gaps (review rows with no override; a `NEW_DIST` absent from `firm_1`'s union on purpose). A file channel in
 no map is caught.
+
+### 2026-10-26: `FIRM_KEY`, one key per firm across both firms
+
+> **Owner, 2026-10-26:** "how do we come up with a unique key for firms across the latest opportunity data we just developed"
+
+> **Owner, 2026-10-26:** "yes build it"
+
+No existing ID works alone. `CBD_ID` is on every row, but the vendor splits one CRD in the same ZIP across several of
+`firm_1`'s company IDs (`crd_cbd_mm` at work: 13 CRDs with 2+; the first work run of `mm_query_f2.sql`: 52.26% of
+`firm_2`'s `OPP` in ZIP x CRD x broker name cells where `firm_1`'s vendor rows name 2+ IDs, before `|` resolution), and
+`firm_2`'s file cannot say how, so it takes the largest. CRD x broker name is exact for both firms' opportunity, but no
+sales row carries it (the owner's query writes `'' as firmcrd` on `firm_1`'s sales). `FIRM` and `PARENT` are names. The
+extract cannot show the split: `opp_matched` gives every CRD x broker name one `CBD_ID`.
+
+`mm_query_f2.sql` statement 7 builds `firm_key` (one row per `CBD_ID` and per CRD: `FIRM_KEY`, `N_CBD`, `N_CRD`,
+`KEY_REVIEW`). Groups come from six label passes, no recursion; statement 8 checks that every link's two ends share a
+key (else: more passes) and lists the shares in multi-`CBD_ID` and review keys; statement 9 lists every key joining 2+
+`CBD_ID`s with names (read at work). `24` carries `FIRM_KEY` on every `UNION_OPP` row (must be zero: a row with a
+`CBD_ID` and no key) and gains statement 4, alignment of the two firms' `MM_OPP` at ZIP x firm x product, at `FIRM_KEY`
+and, for comparison, `CBD_ID` level, and statement 5, the keys with the largest gaps.
+
+Tested on the stand-in: every must-be-zero row of statement 8 is 0; a company planted on every third CRD chains 125
+`CBD_ID`s into one key and is flagged for review; a nine-step chain (more than six passes reach) fails both convergence
+checks. On the stand-in, `firm_1`-only / `firm_2`-only `MM_OPP` falls from 35.4% / 26.5% at `CBD_ID` to 19.7% / 7.6% at
+`FIRM_KEY` (stand-in numbers, not work data).

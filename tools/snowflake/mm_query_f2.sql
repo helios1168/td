@@ -1,7 +1,7 @@
 use secondary roles all;
 
 --firm_2's opportunity file through the opportunity steps of the firm_1 query (mm_query.sql, opp_base .. opp_final).
---The steps are copied as written; every change is marked --f2:.  Kept out of the repo, like mm_query.sql.
+--The steps are copied as written; every change is marked --f2:.  In the repo by the owner's permission (2026-10-25).
 --firm_2's file has no company, client firm ID or state: each firm_2 row takes them from firm_1's vendor rows of the
 --same ZIP x CRD x broker name x product, else of the same ZIP x CRD x broker name, else crd_cbd_mm (company only).
 --dist_ch: firm_2's file names its channels differently from the vendor table, so a firm_2 row takes the dist_ch the
@@ -14,6 +14,8 @@ use secondary roles all;
 --Statement 2  ssdb_integration.lr_strategy.opp_f2_final: firm_2's rows through opp_grouped .. opp_final, then the query's new_dist.
 --Statement 3  checks: every MUST_BE_ZERO = 1 row must be 0.   Statement 4  dist_ch by firm_2's own channel.
 --Statement 5  the CRDs for manual review.   Statement 6  new_dist against firm_1's in union_base.
+--Statement 7  ssdb_integration.lr_strategy.firm_key: one key per firm across both firms.   Statement 8  its checks.
+--Statement 9  the keys that join 2+ CBD_IDs, with the review flag.
 
 --Statement 0.  Once, then fill it (Snowsight "Load data" from a CSV with these three headers, or INSERT ... VALUES).
 --One row per CRD (BROKER_NAME blank: every broker name of the CRD) or per CRD x broker name (wins over the blank
@@ -499,3 +501,132 @@ FROM x
 CROSS JOIN t
 GROUP BY x.file_dist_ch, x.dist_ch, x.new_dist, x.firm_1_new_dist, x.agreement
 ORDER BY pct_firm_2_opp DESC;
+
+--Statement 7.  FIRM_KEY: one key per firm across both firms' rows (owner, 2026-10-26).  A CRD and a CBD_ID are linked
+--when the vendor's resolved rows put them together: firm_1's (crd_cbd_mm) and firm_2's (opp_f2_final, statement 2).
+--Linked CRDs and CBD_IDs form one group (a CBD_ID of union_base with no link is a group alone), so both firms'
+--opportunity of a CRD lands in one key, and sales reach it by CBD_ID.  FIRM_KEY = the group's CBD_ID carrying the
+--most opportunity.  Groups: six label passes, each carrying the smallest CBD_ID one step along the links (no
+--recursion); statement 8 checks that six were enough.  One row per CBD_ID and per CRD.  KEY_REVIEW: the key's CBD_IDs
+--carry 2+ PARENT in firm_1's rows (a link may chain two firms), for manual review.
+CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.firm_key AS (
+WITH
+e AS (   --the links, with their opportunity
+    SELECT crd, cbd, SUM(opp) AS opp
+    FROM (SELECT TO_CHAR(firm_crd) AS crd, TO_CHAR(cbd_id) AS cbd, mm_opp AS opp FROM ssdb_integration.lr_strategy.crd_cbd_mm
+          UNION ALL
+          SELECT TO_CHAR(firm_crd), TO_CHAR(cbd_id), mm_opp FROM ssdb_integration.lr_strategy.opp_f2_final) x
+    WHERE crd IS NOT NULL AND cbd IS NOT NULL
+    GROUP BY crd, cbd
+),
+c0 AS (SELECT DISTINCT cbd, cbd AS lab FROM e),
+r1 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c0 c ON c.cbd = e.cbd GROUP BY e.crd),
+c1 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r1 r ON r.crd = e.crd GROUP BY e.cbd),
+r2 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c1 c ON c.cbd = e.cbd GROUP BY e.crd),
+c2 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r2 r ON r.crd = e.crd GROUP BY e.cbd),
+r3 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c2 c ON c.cbd = e.cbd GROUP BY e.crd),
+c3 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r3 r ON r.crd = e.crd GROUP BY e.cbd),
+r4 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c3 c ON c.cbd = e.cbd GROUP BY e.crd),
+c4 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r4 r ON r.crd = e.crd GROUP BY e.cbd),
+r5 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c4 c ON c.cbd = e.cbd GROUP BY e.crd),
+c5 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r5 r ON r.crd = e.crd GROUP BY e.cbd),
+r6 AS (SELECT e.crd, MIN(c.lab) AS lab FROM e JOIN c5 c ON c.cbd = e.cbd GROUP BY e.crd),
+c6 AS (SELECT e.cbd, MIN(r.lab) AS lab FROM e JOIN r6 r ON r.crd = e.crd GROUP BY e.cbd),
+g AS (   --every CBD_ID and its group
+    SELECT cbd, lab AS grp FROM c6
+    UNION ALL
+    SELECT DISTINCT TO_CHAR(x.cbd_id), TO_CHAR(x.cbd_id)
+    FROM ssdb_integration.lr_strategy.union_base x
+    WHERE x.cbd_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM e WHERE e.cbd = TO_CHAR(x.cbd_id))
+),
+w AS (SELECT g.cbd, g.grp, COALESCE(o.opp, 0) AS opp
+      FROM g LEFT JOIN (SELECT cbd, SUM(opp) AS opp FROM e GROUP BY cbd) o ON o.cbd = g.cbd),
+kl AS (   --the label: the group's CBD_ID with the most opportunity
+    SELECT grp, cbd AS firm_key
+    FROM (SELECT grp, cbd, ROW_NUMBER() OVER (PARTITION BY grp ORDER BY opp DESC, cbd) AS rk FROM w) x
+    WHERE rk = 1
+),
+cr AS (SELECT DISTINCT e.crd, w.grp FROM e JOIN w ON w.cbd = e.cbd),
+u AS (SELECT x.*, s.CODE AS src
+      FROM ssdb_integration.lr_strategy.union_base x JOIN ssdb_integration.lr_strategy.synthetic_key s ON s.KIND = 'SOURCE' AND s.VALUE = x.source),
+p1 AS (SELECT TO_CHAR(cbd_id) AS cbd, MAX(parent) AS parent FROM u WHERE src = 'firm_1' AND cbd_id IS NOT NULL
+       GROUP BY TO_CHAR(cbd_id)),
+n AS (SELECT w.grp, COUNT(DISTINCT w.cbd) AS n_cbd, COUNT(DISTINCT p1.parent) AS n_parent
+      FROM w LEFT JOIN p1 ON p1.cbd = w.cbd GROUP BY w.grp),
+nc AS (SELECT grp, COUNT(*) AS n_crd FROM cr GROUP BY grp)
+SELECT 'CBD_ID' AS id_type, w.cbd AS id, kl.firm_key, n.n_cbd, COALESCE(nc.n_crd, 0) AS n_crd,
+       CASE WHEN n.n_parent > 1 THEN 'CBD_IDs of the key carry 2+ PARENT' END AS key_review
+FROM w JOIN kl ON kl.grp = w.grp JOIN n ON n.grp = w.grp LEFT JOIN nc ON nc.grp = w.grp
+UNION ALL
+SELECT 'CRD', cr.crd, kl.firm_key, n.n_cbd, COALESCE(nc.n_crd, 0),
+       CASE WHEN n.n_parent > 1 THEN 'CBD_IDs of the key carry 2+ PARENT' END
+FROM cr JOIN kl ON kl.grp = cr.grp JOIN n ON n.grp = cr.grp LEFT JOIN nc ON nc.grp = cr.grp
+);
+
+--Statement 8.  FIRM_KEY checks.  Every MUST_BE_ZERO = 1 row must be 0.  If the first fails, the links are longer
+--than six passes reach: copy the r6/c6 pair as r7/c7 (and so on) and read the last one in g.
+WITH
+fk AS (SELECT * FROM ssdb_integration.lr_strategy.firm_key),
+e AS (SELECT TO_CHAR(firm_crd) AS crd, TO_CHAR(cbd_id) AS cbd FROM ssdb_integration.lr_strategy.crd_cbd_mm
+      UNION SELECT TO_CHAR(firm_crd), TO_CHAR(cbd_id) FROM ssdb_integration.lr_strategy.opp_f2_final),
+u AS (SELECT x.*, s.CODE AS src
+      FROM ssdb_integration.lr_strategy.union_base x JOIN ssdb_integration.lr_strategy.synthetic_key s ON s.KIND = 'SOURCE' AND s.VALUE = x.source),
+f1 AS (SELECT u.mm_opp, fk.n_cbd, fk.key_review FROM u LEFT JOIN fk ON fk.id_type = 'CBD_ID' AND fk.id = TO_CHAR(u.cbd_id)
+       WHERE u.src = 'firm_1' AND u.mm_opp IS NOT NULL),
+f2 AS (SELECT o.mm_opp, fk.n_cbd, fk.key_review FROM ssdb_integration.lr_strategy.opp_f2_final o
+       LEFT JOIN fk ON fk.id_type = 'CBD_ID' AND fk.id = TO_CHAR(o.cbd_id))
+SELECT 'links whose CRD and CBD_ID have different FIRM_KEY (passes not enough)' AS CHECK_NAME,
+       (SELECT COUNT(*) FROM e JOIN fk a ON a.id_type = 'CRD' AND a.id = e.crd
+                               JOIN fk b ON b.id_type = 'CBD_ID' AND b.id = e.cbd
+        WHERE a.firm_key <> b.firm_key) AS VALUE, 1 AS MUST_BE_ZERO
+UNION ALL SELECT 'IDs listed twice',
+       (SELECT COUNT(*) FROM (SELECT id_type, id FROM fk GROUP BY id_type, id HAVING COUNT(*) > 1) x), 1
+UNION ALL SELECT 'links with a CRD or CBD_ID with no FIRM_KEY',
+       (SELECT COUNT(*) FROM e
+        WHERE e.crd IS NOT NULL AND e.cbd IS NOT NULL
+          AND (NOT EXISTS (SELECT 1 FROM fk WHERE fk.id_type = 'CRD' AND fk.id = e.crd)
+               OR NOT EXISTS (SELECT 1 FROM fk WHERE fk.id_type = 'CBD_ID' AND fk.id = e.cbd))), 1
+UNION ALL SELECT 'union_base CBD_IDs with no FIRM_KEY',
+       (SELECT COUNT(DISTINCT TO_CHAR(u.cbd_id)) FROM u
+        WHERE u.cbd_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM fk WHERE fk.id_type = 'CBD_ID' AND fk.id = TO_CHAR(u.cbd_id))), 1
+UNION ALL SELECT 'FIRM_KEYs', (SELECT COUNT(DISTINCT firm_key) FROM fk), 0
+UNION ALL SELECT 'FIRM_KEYs joining 2+ CBD_IDs', (SELECT COUNT(DISTINCT firm_key) FROM fk WHERE n_cbd > 1), 0
+UNION ALL SELECT 'FIRM_KEYs for review (2+ PARENT)', (SELECT COUNT(DISTINCT firm_key) FROM fk WHERE key_review IS NOT NULL), 0
+UNION ALL SELECT 'most CBD_IDs in one FIRM_KEY', (SELECT MAX(n_cbd) FROM fk), 0
+UNION ALL SELECT 'most CRDs in one FIRM_KEY', (SELECT MAX(n_crd) FROM fk), 0
+UNION ALL SELECT 'firm_1 % of MM_OPP (union_base) in FIRM_KEYs joining 2+ CBD_IDs',
+       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN n_cbd > 1 THEN mm_opp END), 0) / SUM(mm_opp), 2) FROM f1), 0
+UNION ALL SELECT 'firm_2 % of MM_OPP (opp_f2_final) in FIRM_KEYs joining 2+ CBD_IDs',
+       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN n_cbd > 1 THEN mm_opp END), 0) / SUM(mm_opp), 2) FROM f2), 0
+UNION ALL SELECT 'firm_1 % of MM_OPP (union_base) in FIRM_KEYs for review',
+       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN key_review IS NOT NULL THEN mm_opp END), 0) / SUM(mm_opp), 2) FROM f1), 0
+UNION ALL SELECT 'firm_2 % of MM_OPP (opp_f2_final) in FIRM_KEYs for review',
+       (SELECT ROUND(100 * COALESCE(SUM(CASE WHEN key_review IS NOT NULL THEN mm_opp END), 0) / SUM(mm_opp), 2) FROM f2), 0
+ORDER BY MUST_BE_ZERO DESC, CHECK_NAME;
+
+--Statement 9.  The FIRM_KEYs joining 2+ CBD_IDs: each CBD_ID with firm_1's FIRM and PARENT, the CRDs with their
+--broker names, each firm's share of opportunity, and the review flag.  Names: read at work, never copied here.
+WITH
+fk AS (SELECT * FROM ssdb_integration.lr_strategy.firm_key WHERE n_cbd > 1),
+u AS (SELECT x.*, s.CODE AS src
+      FROM ssdb_integration.lr_strategy.union_base x JOIN ssdb_integration.lr_strategy.synthetic_key s ON s.KIND = 'SOURCE' AND s.VALUE = x.source),
+nm AS (SELECT TO_CHAR(cbd_id) AS cbd, MAX(firm) AS firm, MAX(parent) AS parent FROM u
+       WHERE src = 'firm_1' AND cbd_id IS NOT NULL GROUP BY TO_CHAR(cbd_id)),
+o1 AS (SELECT TO_CHAR(cbd_id) AS cbd, SUM(mm_opp) AS opp FROM u WHERE src = 'firm_1' GROUP BY TO_CHAR(cbd_id)),
+o2 AS (SELECT TO_CHAR(cbd_id) AS cbd, SUM(mm_opp) AS opp FROM ssdb_integration.lr_strategy.opp_f2_final GROUP BY TO_CHAR(cbd_id)),
+t AS (SELECT (SELECT SUM(mm_opp) FROM u WHERE src = 'firm_1') AS t1, (SELECT SUM(mm_opp) FROM ssdb_integration.lr_strategy.opp_f2_final) AS t2),
+bn AS (SELECT TO_CHAR(firm_crd) AS crd, broker_name FROM ssdb_integration.lr_strategy.crd_cbd_mm
+       UNION SELECT TO_CHAR(firm_crd), broker_name FROM ssdb_integration.lr_strategy.opp_f2_final),
+c AS (SELECT fk.firm_key, MAX(fk.key_review) AS key_review,
+             LISTAGG(fk.id || ' ' || COALESCE(nm.firm, '?') || ' / ' || COALESCE(nm.parent, '?'), '; ')
+                 WITHIN GROUP (ORDER BY fk.id) AS cbd_ids,
+             SUM(o1.opp) AS opp1, SUM(o2.opp) AS opp2
+      FROM fk LEFT JOIN nm ON nm.cbd = fk.id LEFT JOIN o1 ON o1.cbd = fk.id LEFT JOIN o2 ON o2.cbd = fk.id
+      WHERE fk.id_type = 'CBD_ID' GROUP BY fk.firm_key),
+r AS (SELECT fk.firm_key, LISTAGG(fk.id || ' ' || COALESCE(bn.broker_name, '?'), '; ') WITHIN GROUP (ORDER BY fk.id) AS crds
+      FROM fk LEFT JOIN bn ON bn.crd = fk.id WHERE fk.id_type = 'CRD' GROUP BY fk.firm_key)
+SELECT c.firm_key, c.key_review, c.cbd_ids, r.crds,
+       ROUND(100 * c.opp1 / t.t1, 2) AS pct_firm_1_opp, ROUND(100 * c.opp2 / t.t2, 2) AS pct_firm_2_opp
+FROM c LEFT JOIN r ON r.firm_key = c.firm_key CROSS JOIN t
+ORDER BY COALESCE(c.opp1, 0) + COALESCE(c.opp2, 0) DESC;
