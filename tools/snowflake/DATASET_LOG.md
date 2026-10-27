@@ -1667,3 +1667,29 @@ flagged). A first name that is only an initial ("Last, J", "J Last") stays flagg
 initial'). Samples added: the owner's case with and without a period and a suffix, and "Last, J". Tested in DuckDB: every
 sample splits as expected; with the rule switched off the sample check fails (3); against the version before, on
 made-up union and territories names, only the names with an initial before a full name changed.
+
+### 2026-10-27: `27_name_xwalk.sql`, joining datasets on name
+
+> **Owner, 2026-10-27:** "ok name_norm looks good. now I need to use this somehow to join all datasets across name. namely joining union datsets to territory and address datasets by name. how can we do that? taking into account it likely won't be an exact match?"
+
+The owner then sent the work version of `26`'s input statement (kept at work, not here: it names the real tables and
+firm labels). Per firm it lists four name columns: the union's 2026 territory holder and its seller, a territories table
+and an address table; placeholders (NULL, "open", "unassigned", anything with a hyphen) become 'open'.
+
+`27` writes `NAME_XWALK`: one row per person name x every other table x column of its `SOURCE`, with the match, `STEP`,
+`STATUS` ('matched', 'review', 'none'), `NAME_SCORE` and `COVER` (share of the FROM name's `ZIP_CODE` x channel cells
+the match covers). Role-free: the owner picks the pair of columns to join. Steps: 0 the owner's pairs, 1 same
+`NAME_STD`, 2 same `NAME_KEY`, 3 nickname list, 4 first initial or middle name, 5 part of a hyphenated last name, 6
+`JAROWINKLER_SIMILARITY` (last >= 90, first >= 85), 7 territory alone (`21`'s rule). Session decision, the owner's
+answer to the question asked on 2026-10-27 pending: the rule of 2026-10-21 (name similarity only as a check) holds,
+so steps 3-6 match only with `COVER` >= 0.8 and otherwise go to review; steps 1-2 match unless the territories clearly
+disagree (`COVER` < 0.5); a name matched by two people of one column with different middle initials goes to review.
+Territory cells come from the owner's statement 1 (the territory tables' ZIP and channel columns are not known here).
+
+Snowflake behaviour from the docs, read 2026-10-27: `JAROWINKLER_SIMILARITY` returns an integer 0-100,
+case-insensitive, scaling factor 0.1; `QUALIFY` filters after window functions. No named `WINDOW` clause is
+documented, so each `OVER` spells out its partition.
+
+Tested in DuckDB (Jaro-Winkler mapped to Snowflake's 0-100 scale) on made-up names covering every step: each case
+matched as designed. The first run showed a wrong match (a same-key name whose territories did not overlap, and two
+territory people claiming one address name); both now go to review.
