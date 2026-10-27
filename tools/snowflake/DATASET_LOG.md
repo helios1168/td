@@ -1632,3 +1632,27 @@ label); a reading row lists each `SOURCE`'s `PRODUCT_V2` labels. Tested on the s
 the check fails (2) and FIXED is opp-only; with FIXED rows planted for both firms it passes and 300 `firm_2` FIXED sales
 rows take `MM_OPP`; in both, every non-FIXED row equals the previous version and `firm_2`'s `MM_OPP` total equals the
 file after drops. Until the `CHANNEL` step is in, FIXED opp-only rows add to the expected "no CHANNEL" failure.
+
+### 2026-10-27: `26_name_norm.sql`, names in one schema
+
+> **Owner, 2026-10-27:** "help me write a sql script that normalizes name fields to a unified schema handling some particular cases. namely we have "last name, first name middle initial", "last name, first name middle initial Jr./III/etc", "first name middle initial last name" etc"
+
+Asked before it: "I need to redo and clean up the logic I run on names which we use to join to territory and address
+tables." `26` writes `NAME_NORM`: one row per table x column x `SOURCE` x raw name, split into `LAST_NAME`,
+`FIRST_NAME`, `MIDDLE_NAME`, `MIDDLE_INITIAL`, `SUFFIX` (`JR`, `SR`, `II`, `III`, `IV`; never `V`, an initial in
+"Last, First V"), `NAME_STD` ("LAST, FIRST M SUFFIX") and `NAME_KEY` (LAST|FIRST, letters only). The suffix and
+credential lists come from `21_name_match.sql`. The script only splits names; the joins to the territory and address
+tables stay the owner's. Not resolvable from one name, so flagged: one word, a first name given as an initial, and
+"Last First" with no comma (the checks count keys whose first/last swap is another name's key).
+
+Snowflake behaviour from the docs, read 2026-10-27: regular expressions are POSIX ERE with no non-greedy quantifiers,
+and a backslash in a single-quoted pattern must be doubled (`functions-regexp`; `26` has no backslash);
+`REGEXP_REPLACE` replaces every match by default; `REGEXP_SUBSTR` takes `group_num` as its sixth argument (`e`
+implied) and returns NULL when nothing matches; `TRIM(expr, characters)`; `TRANSLATE(subject, from, to)`; `VALUES`
+gives a column one common type across its rows.
+
+Tested in DuckDB (RE2, so `REGEXP_SUBSTR` and the replace-all were mapped in the harness): the 26 sample names, one
+per format, split as expected; a planted fault in the suffix list fails the sample check (3), one in the particle
+list fails it too (2); on made-up union and territories names the review list catches a swapped name, a key shared
+by two people, a one-word name and an initial for a first name. The sample check runs at work too, so it tests the
+parsing on Snowflake's own regular expressions.
