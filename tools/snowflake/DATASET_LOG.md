@@ -1656,3 +1656,14 @@ per format, split as expected; a planted fault in the suffix list fails the samp
 list fails it too (2); on made-up union and territories names the review list catches a swapped name, a key shared
 by two people, a one-word name and an initial for a first name. The sample check runs at work too, so it tests the
 parsing on Snowflake's own regular expressions.
+
+### 2026-10-27: `26`, an initial before the first name
+
+> **Owner, 2026-10-27:** "we have one case where we have "last name, middle initial first name""
+
+`26` now reads an initial followed by a full name as middle initial + first name, in both orders ("Last, M First",
+"M First Last"), so the key is the name the person goes by: "J. Robert Last" gives `FIRST_NAME` ROBERT (it gave J,
+flagged). A first name that is only an initial ("Last, J", "J Last") stays flagged ('first name is only an
+initial'). Samples added: the owner's case with and without a period and a suffix, and "Last, J". Tested in DuckDB: every
+sample splits as expected; with the rule switched off the sample check fails (3); against the version before, on
+made-up union and territories names, only the names with an initial before a full name changed.

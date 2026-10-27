@@ -7,11 +7,12 @@ use secondary roles all;
 --  FORMAT     how the raw name was written: 'LAST, FIRST', 'FIRST LAST', 'ONE WORD'
 --  REVIEW     why a name needs a look, else NULL
 --One row per table x column x SOURCE x raw name; N_ROWS = rows carrying it.
---Handles "Last, First M", "Last, First M Jr.", "Last Jr., First", "First M Last", "First M Last, Jr.", credentials
---after the name ("First Last, CFP"), nicknames in () or "", periods, accents, extra spaces, case, and last names
---with a particle ("De La Cruz", "Van Dyke").  Not handled, so REVIEW or the checks flag them: a one-word name, a
---first name given as an initial ("J Robert Last"), and "Last First" with no comma (it reads as "First Last"; the
---checks count names whose swap is another name's key).  V is never a suffix: in "Last, First V" it is an initial.
+--Handles "Last, First M", "Last, First M Jr.", "Last Jr., First", "Last, M First", "First M Last", "First M Last, Jr.",
+--"M First Last", credentials after the name ("First Last, CFP"), nicknames in () or "", periods, accents, extra spaces,
+--case, and last names with a particle ("De La Cruz", "Van Dyke").  An initial before a full name is the middle
+--initial, the full name the first name.  Not handled, so REVIEW or the checks flag them: a one-word name, a first name
+--that is only an initial ("Last, J"), and "Last First" with no comma (it reads as "First Last"; the checks count
+--names whose swap is another name's key).  V is never a suffix: in "Last, First V" it is an initial.
 --Run All.  Statements 1-3 are temporary, NAME_NORM (4) is kept, 5 = checks (MUST_BE_ZERO rows must be 0),
 --6 = the review list: real names, keep at work.
 --To add a column (the address table's name column, ...): one more UNION ALL line in statement 2.
@@ -45,7 +46,10 @@ SELECT * FROM (VALUES
   ('De La Roe, Jane',          'DE LA ROE', 'JANE',    NULL,     NULL),
   ('Del Roe',                  'ROE',       'DEL',     NULL,     NULL),
   ('José Doe',                 'DOE',       'JOSE',    NULL,     NULL),
-  ('J. Robert Doe',            'DOE',       'J',       'ROBERT', NULL),
+  ('Doe, Q Jane',              'DOE',       'JANE',    'Q',      NULL),
+  ('DOE, Q. JANE JR',          'DOE',       'JANE',    'Q',      'JR'),
+  ('J. Robert Doe',            'DOE',       'ROBERT',  'J',      NULL),
+  ('Doe, J',                   'DOE',       'J',       NULL,     NULL),
   ('Vacant',                   'VACANT',    NULL,      NULL,     NULL)
 ) v(RAW_NAME, LAST_NAME, FIRST_NAME, MIDDLE_NAME, SUFFIX);
 
@@ -100,21 +104,30 @@ l AS (   -- "FIRST ... LAST": LAST = the last token with any particles before it
          CASE WHEN LF THEN TRIM(SPLIT_PART(R, ',', 1))
               ELSE REGEXP_SUBSTR(REST, '(^| )(((DA|DE|DEL|DELLA|DER|DI|DU|LA|LE|VAN|VON|DEN|ST|SAN|SANTA) )*[^ ]+)$',
                                  1, 1, 'e', 2) END AS L1
-  FROM h)
+  FROM h),
+m AS (   -- M0 = the middle names: GIVEN after the first token ("LAST, FIRST ...") or REST before the last name
+  SELECT l.*, NULLIF(TRIM(CASE WHEN LF THEN REST ELSE LEFT(REST, LENGTH(REST) - LENGTH(COALESCE(L1, ''))) END), '') AS M0
+  FROM l),
+x AS (   -- SW: an initial before a full name ("Last, M First", "M First Last"): the full name is the first name
+  SELECT m.*, COALESCE(LENGTH(F1) = 1 AND LENGTH(SPLIT_PART(M0, ' ', 1)) > 1, FALSE) AS SW FROM m),
+y AS (
+  SELECT x.*,
+         CASE WHEN SW THEN SPLIT_PART(M0, ' ', 1) ELSE F1 END AS FN,
+         CASE WHEN SW THEN TRIM(F1 || ' ' || SUBSTR(M0, LENGTH(SPLIT_PART(M0, ' ', 1)) + 1)) ELSE M0 END AS MN
+  FROM x)
 SELECT SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME, N_ROWS,
        NULLIF(COALESCE(NULLIF(L1, ''), F1), '') AS LAST_NAME,
-       CASE WHEN NULLIF(L1, '') IS NOT NULL THEN NULLIF(F1, '') END AS FIRST_NAME,
-       NULLIF(TRIM(CASE WHEN LF THEN REST ELSE LEFT(REST, LENGTH(REST) - LENGTH(COALESCE(L1, ''))) END), '') AS MIDDLE_NAME,
-       LEFT(NULLIF(TRIM(CASE WHEN LF THEN REST ELSE LEFT(REST, LENGTH(REST) - LENGTH(COALESCE(L1, ''))) END), ''), 1)
-         AS MIDDLE_INITIAL,
+       CASE WHEN NULLIF(L1, '') IS NOT NULL THEN NULLIF(FN, '') END AS FIRST_NAME,
+       MN AS MIDDLE_NAME,
+       LEFT(MN, 1) AS MIDDLE_INITIAL,
        SFX AS SUFFIX,
        CASE WHEN R = '' THEN NULL WHEN LF THEN 'LAST, FIRST' WHEN NULLIF(L1, '') IS NULL THEN 'ONE WORD' ELSE 'FIRST LAST' END
          AS FORMAT,
        CASE WHEN R = '' THEN 'no letters'
             WHEN NULLIF(L1, '') IS NULL THEN 'one word'
             WHEN N_COMMA > 1 THEN '2+ commas left after suffixes and credentials'
-            WHEN LENGTH(F1) = 1 THEN 'first name is an initial' END AS REVIEW
-FROM l;
+            WHEN LENGTH(FN) = 1 THEN 'first name is only an initial' END AS REVIEW
+FROM y;
 
 --Statement 4.  NAME_NORM, the table kept.
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.NAME_NORM AS
