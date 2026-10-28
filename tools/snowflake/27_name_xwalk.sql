@@ -30,19 +30,24 @@ use secondary roles all;
 --Run All.  Statements 1-3 are temporary, NAME_XWALK (4) is kept, 5 = checks (MUST_BE_ZERO rows must be 0),
 --6 = the review list: real names, keep at work.
 
---Statement 1.  The ZIP_CODE x channel cells a name covers, one line per table x column with territory meaning (the
---territory holder; the territories tables).  SRC_TABLE, SRC_COLUMN, SOURCE and the name exactly as in 26's input
---(the same expression), so the names line up.  Both sides must use the same channel labels: relabel with a CASE
---here, or put the same constant (e.g. 'ALL') on both sides to compare ZIP_CODEs alone.
+--Statement 1.  The ZIP_CODE x channel cells a name covers: the union's territory holder and the territories tables.
+--SRC_TABLE, SRC_COLUMN and SOURCE as in 26's input.  Both sides use the same channel labels: the CRBG union's
+--updated_wholesaler2026 is crbg_territories' whslr_nm at the same zip and new_dist_channel = dist_ch (the owner's
+--query); EQH's channel is taken to be the union's dist_ch (if 28's check shows otherwise, use channel_name, or the
+--same constant on both sides to compare ZIP_CODEs alone).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_name_geo AS
-SELECT DISTINCT SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME, ZIP_CODE, CHANNEL
+SELECT DISTINCT SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME, LPAD(LEFT(TRIM(TO_CHAR(ZIP)), 5), 5, '0') AS ZIP_CODE, CHANNEL
 FROM (
-  SELECT 'union_base' AS SRC_TABLE, 'TERR_WHOLESALER' AS SRC_COLUMN, SOURCE, TERR_WHOLESALER AS RAW_NAME,
-         ZIP_CODE, DIST_CH AS CHANNEL
-  FROM ssdb_integration.lr_strategy.union_base
-  UNION ALL SELECT 'territories', 'NAME', SOURCE, NAME, ZIP_CODE, CHANNEL FROM ssdb_integration.lr_strategy.territories
+  SELECT 'data_withnewchannel_eqhv3' AS SRC_TABLE, 'updated_wholesaler2026' AS SRC_COLUMN, 'EQH' AS SOURCE,
+         updated_wholesaler2026 AS RAW_NAME, zip_code AS ZIP, dist_ch AS CHANNEL
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_eqhv3
+  UNION ALL SELECT 'data_withnewchannel_crbgwithiova', 'updated_wholesaler2026', 'CRBG', updated_wholesaler2026, zip_code, dist_ch
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_crbgwithiova
+  UNION ALL SELECT 'eqh_territories', 'rvp', 'EQH', rvp, zip_code, channel FROM ssdb_integration.lr_strategy.eqh_territories
+  UNION ALL SELECT 'crbg_territories', 'whslr_nm', 'CRBG', whslr_nm, zip, new_dist_channel
+            FROM ssdb_integration.lr_strategy.crbg_territories
 ) x
-WHERE RAW_NAME IS NOT NULL AND ZIP_CODE IS NOT NULL AND CHANNEL IS NOT NULL;
+WHERE RAW_NAME IS NOT NULL AND ZIP IS NOT NULL AND CHANNEL IS NOT NULL;
 
 --Statement 2.  Nicknames: each NICK once, with the name it stands for.  Add lines as the review list shows them.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_name_alias AS

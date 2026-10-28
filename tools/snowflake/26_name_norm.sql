@@ -4,7 +4,8 @@ use secondary roles all;
 --  LAST_NAME, FIRST_NAME, MIDDLE_NAME, MIDDLE_INITIAL, SUFFIX   the parts, upper case
 --  NAME_STD   "LAST, FIRST M SUFFIX"
 --  NAME_KEY   LAST|FIRST, letters only (no middle, no suffix): the join key
---  FORMAT     how the raw name was written: 'LAST, FIRST', 'FIRST LAST', 'ONE WORD'
+--  FORMAT     how the raw name was written: 'LAST, FIRST', 'FIRST LAST', 'ONE WORD', 'PLACEHOLDER' (no person: the
+--             word OPEN, UNASSIGNED or VACANT, or a spaced dash as in "IFA - Northeast"; every part NULL)
 --  REVIEW     why a name needs a look, else NULL
 --One row per table x column x SOURCE x raw name; N_ROWS = rows carrying it.
 --Handles "Last, First M", "Last, First M Jr.", "Last Jr., First", "Last, M First", "First M Last", "First M Last, Jr.",
@@ -15,7 +16,7 @@ use secondary roles all;
 --names whose swap is another name's key).  V is never a suffix: in "Last, First V" it is an initial.
 --Run All.  Statements 1-3 are temporary, NAME_NORM (4) is kept, 5 = checks (MUST_BE_ZERO rows must be 0),
 --6 = the review list: real names, keep at work.
---To add a column (the address table's name column, ...): one more UNION ALL line in statement 2.
+--To add a column: one more UNION ALL line in statement 2.
 --To add a suffix, credential or particle: the lists in statement 3.
 
 --Statement 1.  Made-up names in each format with their expected split.  They go through the same steps as the real
@@ -50,18 +51,31 @@ SELECT * FROM (VALUES
   ('DOE, Q. JANE JR',          'DOE',       'JANE',    'Q',      'JR'),
   ('J. Robert Doe',            'DOE',       'ROBERT',  'J',      NULL),
   ('Doe, J',                   'DOE',       'J',       NULL,     NULL),
-  ('Vacant',                   'VACANT',    NULL,      NULL,     NULL)
+  ('Vacant',                   NULL,        NULL,      NULL,     NULL),
+  ('Open - IFA',               NULL,        NULL,      NULL,     NULL),
+  ('IFA-OPEN',                 NULL,        NULL,      NULL,     NULL),
+  ('Unassigned',               NULL,        NULL,      NULL,     NULL),
+  ('Copenhaver, Jane',         'COPENHAVER','JANE',    NULL,     NULL)
 ) v(RAW_NAME, LAST_NAME, FIRST_NAME, MIDDLE_NAME, SUFFIX);
 
---Statement 2.  The names to normalize: one line per table x column.
+--Statement 2.  The names to normalize: one line per table x name column, SRC_TABLE = the table's own name.  Names
+--are kept as written (placeholders are found in statement 3), so every table joins NAME_KEY on its own column.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_name_input AS
 SELECT SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME, COUNT(*) AS N_ROWS
 FROM (
-  SELECT 'union_base' AS SRC_TABLE, 'TERR_WHOLESALER' AS SRC_COLUMN, SOURCE, TERR_WHOLESALER AS RAW_NAME
-  FROM ssdb_integration.lr_strategy.union_base
-  UNION ALL SELECT 'union_base', 'SALES_WHOLESALER', SOURCE, SALES_WHOLESALER FROM ssdb_integration.lr_strategy.union_base
-  UNION ALL SELECT 'territories', 'NAME', SOURCE, NAME FROM ssdb_integration.lr_strategy.territories
-  --UNION ALL SELECT '<address table>', '<name column>', SOURCE, <name column> FROM ssdb_integration.lr_strategy.<address table>
+  SELECT 'data_withnewchannel_eqhv3' AS SRC_TABLE, 'updated_wholesaler2026' AS SRC_COLUMN, 'EQH' AS SOURCE,
+         updated_wholesaler2026 AS RAW_NAME
+  FROM ssdb_integration.lr_strategy.data_withnewchannel_eqhv3
+  UNION ALL SELECT 'data_withnewchannel_eqhv3', 'wholesaler_name', 'EQH', wholesaler_name
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_eqhv3
+  UNION ALL SELECT 'data_withnewchannel_crbgwithiova', 'updated_wholesaler2026', 'CRBG', updated_wholesaler2026
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_crbgwithiova
+  UNION ALL SELECT 'data_withnewchannel_crbgwithiova', 'wholesaler_name', 'CRBG', wholesaler_name
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_crbgwithiova
+  UNION ALL SELECT 'eqh_territories', 'rvp', 'EQH', rvp FROM ssdb_integration.lr_strategy.eqh_territories
+  UNION ALL SELECT 'crbg_territories', 'whslr_nm', 'CRBG', whslr_nm FROM ssdb_integration.lr_strategy.crbg_territories
+  UNION ALL SELECT 'eqh_wh_addr', 'wh', 'EQH', wh FROM ssdb_integration.lr_strategy.eqh_wh_addr
+  UNION ALL SELECT 'crbg_wh_addr', 'agent', 'CRBG', agent FROM ssdb_integration.lr_strategy.crbg_wh_addr
   UNION ALL SELECT 'sample', 'RAW_NAME', NULL, RAW_NAME FROM ssdb_integration.lr_strategy.tmp_name_sample
 ) x
 WHERE RAW_NAME IS NOT NULL
@@ -70,14 +84,21 @@ GROUP BY SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME;
 --Statement 3.  The split.  No backslashes in any pattern: [.] style classes instead, so nothing needs escaping.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_name_parsed AS
 WITH
-c AS (   -- accents off, upper case, nicknames in () or "" out, anything but letters ' - and , becomes a space
+c0 AS (  -- accents off, upper case, nicknames in () or "" out, anything but letters ' - and , becomes a space
   SELECT i.*,
          REGEXP_REPLACE(REGEXP_REPLACE(
            UPPER(TRANSLATE(RAW_NAME, 'ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüý',
                                      'AAAAAACEEEEIIIINOOOOOUUUUYaaaaaaceeeeiiiinooooouuuuy')),
            '[(][^)]*[)]|"[^"]*"', ' '),
-           '[^A-Z,''-]', ' ') AS U
+           '[^A-Z,''-]', ' ') AS U0
   FROM ssdb_integration.lr_strategy.tmp_name_input i),
+c AS (   -- PH: a placeholder, not a person (its U is blanked, so every part comes out NULL)
+  SELECT c0.*, PH, CASE WHEN PH THEN '' ELSE U0 END AS U
+  FROM (SELECT c0.*, ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% OPEN %'
+                  OR ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% UNASSIGNED %'
+                  OR ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% VACANT %'
+                  OR RAW_NAME LIKE '% - %' AS PH
+        FROM c0) c0),
 t AS (   -- every token (commas too) between its own spaces, so adjacent tokens each match ' TOKEN '
   SELECT c.*, ' ' || REPLACE(REPLACE(U, ',', ' , '), ' ', '  ') || ' ' AS T FROM c),
 s AS (   -- the suffix kept; suffixes and credentials taken out
@@ -121,9 +142,9 @@ SELECT SRC_TABLE, SRC_COLUMN, SOURCE, RAW_NAME, N_ROWS,
        MN AS MIDDLE_NAME,
        LEFT(MN, 1) AS MIDDLE_INITIAL,
        SFX AS SUFFIX,
-       CASE WHEN R = '' THEN NULL WHEN LF THEN 'LAST, FIRST' WHEN NULLIF(L1, '') IS NULL THEN 'ONE WORD' ELSE 'FIRST LAST' END
-         AS FORMAT,
-       CASE WHEN R = '' THEN 'no letters'
+       CASE WHEN PH THEN 'PLACEHOLDER' WHEN R = '' THEN NULL WHEN LF THEN 'LAST, FIRST'
+            WHEN NULLIF(L1, '') IS NULL THEN 'ONE WORD' ELSE 'FIRST LAST' END AS FORMAT,
+       CASE WHEN PH THEN NULL WHEN R = '' THEN 'no letters'
             WHEN NULLIF(L1, '') IS NULL THEN 'one word'
             WHEN N_COMMA > 1 THEN '2+ commas left after suffixes and credentials'
             WHEN LENGTH(FN) = 1 THEN 'first name is only an initial' END AS REVIEW

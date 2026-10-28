@@ -1705,3 +1705,34 @@ address tables are taken to one row per name first (the territory table has a ro
 with 2+ IDs gets NULL. Real table names and labels stay at work: the file has `<...>` placeholders. Tested in DuckDB on
 made-up tables through `26` and `27`: output rows equal the union's, each ID as expected, NULL for 'open', for names
 still in review and for a territory name with two IDs.
+
+### 2026-10-28: `28_name_key.sql`, one key per wholesaler; real table names
+
+> **Owner, 2026-10-28:** "you have the columns for address and territories tables already" Then: "ok territory table is called "territories" and has fields: source, name, zip_code, state, chanel, clean_name, clean_id. We want to produce a new clean_name and clean_id column to join the union tables on." Then, correcting it: "For addresses we have two tables: eqh_wh_addr with fields: manager, wh, address1, address2, home_city, home_state, and postal. Use "wh" column which is the name column used in the original name clean up query. the second table is crbg_wh_addr with fields: channel, agent, ad, city, st, postal, and mobile number. "agent" is the name column used in the original clean up query. similarly for territories: we have crbg_territories with fields whslr_id, whslr_nm, zip, state_cd, new_dist_channel with "whslr_nm" as the original name column used. and eqh_territories with fields: rvp, territory_id, zip_code, state, channel, and channel_name with rvp as the name column. The goal here is to product join keys for each of these 4 tables that can join back to the data_withnewchannel_eqhv3 and data_withnewchannel_crbgwithiova. don't worry about masking anything just write the query as cleanly as possible"
+
+Masking: by the owner's words above, `26`-`28` name the real tables and the firm labels `EQH` and `CRBG`; no person
+name is in them. (The session asked which key the owner wanted and which address column is the name; the owner declined
+the question and sent the tables instead.)
+
+- `26` reads the eight name columns directly, names kept as written, so each table joins `NAME_KEY` on its own column.
+  The owner's placeholder rule (blank, "open", "unassigned" or any hyphen -> 'open') moved into the parse as
+  `FORMAT` 'PLACEHOLDER' and was narrowed, a session decision: the words OPEN, UNASSIGNED or VACANT, or a spaced dash,
+  so "Copenhaver" and hyphenated surnames such as "Moe-Smith" stay people (raised 2026-10-27, unanswered).
+- `27` statement 1: the union holder's cells (`zip_code`, `dist_ch`) against `crbg_territories` (`zip`,
+  `new_dist_channel`; the owner's query sets `updated_wholesaler2026` by that very join) and `eqh_territories`
+  (`zip_code`, `channel`; taken to carry the union's `dist_ch` labels, not known: `28`'s check shows it).
+- `28_name_key.sql` replaces `28_join_by_name.sql`. A wholesaler is the names `27` matched, directly or through
+  another table (label passes, as `FIRM_KEY` in `25`). `CLEAN_ID` = SOURCE_LAST_FIRST_M_SUFFIX of the territories
+  spelling, else the holder, seller, address spelling. No ID, with the reason, for: a placeholder or a name with no
+  first name; a name `27` found ambiguous; names linking two middle initials or suffixes; two unlinked wholesalers with
+  one clean name (no guesses, owner's rule).
+
+Snowflake behaviour from the docs, read 2026-10-28 (`querying-subqueries`): EXISTS, ANY/ALL and IN subqueries are
+supported only in WHERE; `28` uses joins for them elsewhere. `COUNT_IF` returns NULL when no record satisfies the
+condition (`count_if`), so the rates use AVG of 0/1.
+
+Tested in DuckDB on made-up tables with the real table and column names through `26`, `27` and `28`: every case as
+designed (nickname, initial, territory alone, hyphenated surname, placeholders, an ambiguous address name, two middle
+initials linked, two unlinked people with one name); union rows reaching a territories row and an address as counted
+by hand. Planted faults: the placeholder rule off fails `26`'s sample check (1); one label pass instead of six fails
+`28`'s pass check (2). Dropping the reverse links did not fail it: `27` already writes each pair both ways.
