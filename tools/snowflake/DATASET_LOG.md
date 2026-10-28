@@ -1736,3 +1736,19 @@ designed (nickname, initial, territory alone, hyphenated surname, placeholders, 
 initials linked, two unlinked people with one name); union rows reaching a territories row and an address as counted
 by hand. Planted faults: the placeholder rule off fails `26`'s sample check (1); one label pass instead of six fails
 `28`'s pass check (2). Dropping the reverse links did not fail it: `27` already writes each pair both ways.
+
+### 2026-10-28: `26`-`28` consolidated into `26_name_key.sql`
+
+> **Owner, 2026-10-28:** "consolidate into a single query."
+
+Read as one Run All file (the owner's way, 2026-10-26), not one statement: `26_name_key.sql` replaces
+`26_name_norm.sql`, `27_name_xwalk.sql` and `28_name_key.sql` (removed; in git history). Only `NAME_KEY` is kept; the
+split names and the matches are temporary (`tmp_name_norm`, `tmp_name_xwalk`). Same rules, nothing new in the
+matching. Trimmed: the sample table (its expected split rides on the sample rows), the per-pair match-rate rows and the
+"none" rows of the crosswalk (nothing read them once `NAME_KEY` existed), the text match on a review reason (now a
+`CLAIMED` flag). One checks grid, one review list: names with no ID, pairs to confirm, names with 2+ candidates (now
+listed), and names that may have first and last swapped.
+
+Tested in DuckDB on the made-up tables of the entry before plus one swapped name: `NAME_KEY` equals the three-file
+chain's on every ID and name (4 `REVIEW` texts reworded); every check 0; one label pass instead of six fails the pass
+check (2); the placeholder rule off fails the sample check (1).
