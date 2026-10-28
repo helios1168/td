@@ -1752,3 +1752,12 @@ listed), and names that may have first and last swapped.
 Tested in DuckDB on the made-up tables of the entry before plus one swapped name: `NAME_KEY` equals the three-file
 chain's on every ID and name (4 `REVIEW` texts reworded); every check 0; one label pass instead of six fails the pass
 check (2); the placeholder rule off fails the sample check (1).
+
+### 2026-10-28: `26_name_key.sql` failed at work: ambiguous column `PH`
+
+> **Owner, 2026-10-28:** "I get an ambiguous column name 'PH' error"
+
+Statement 3's CTE `c` selected `PH` twice (`c0.*` already carried it). Snowflake rejects the duplicate; DuckDB renames
+it (`PH_1`), so the tests missed it (introduced in `edd2068`, carried into `1bf368c`). Fixed by dropping the second
+`PH`. Every CTE of every statement was then described in DuckDB (573 columns): no renamed duplicate is left; the same
+probe on the broken version shows `PH_1`. The probe is part of the DuckDB testing of this file from now on.

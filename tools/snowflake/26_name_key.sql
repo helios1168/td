@@ -146,7 +146,7 @@ c0 AS (  -- accents off, upper case, nicknames in () or "" out, anything but let
            '[^A-Z,''-]', ' ') AS U0
   FROM i),
 c AS (   -- PH: a placeholder, not a person (its U is blanked, so every part comes out NULL)
-  SELECT c0.*, PH, CASE WHEN PH THEN '' ELSE U0 END AS U
+  SELECT c0.*, CASE WHEN PH THEN '' ELSE U0 END AS U
   FROM (SELECT c0.*, ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% OPEN %'
                   OR ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% UNASSIGNED %'
                   OR ' ' || TRANSLATE(U0, '-,', '  ') || ' ' LIKE '% VACANT %'
