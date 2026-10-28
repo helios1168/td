@@ -1693,3 +1693,15 @@ documented, so each `OVER` spells out its partition.
 Tested in DuckDB (Jaro-Winkler mapped to Snowflake's 0-100 scale) on made-up names covering every step: each case
 matched as designed. The first run showed a wrong match (a same-key name whose territories did not overlap, and two
 territory people claiming one address name); both now go to review.
+
+### 2026-10-28: `28_join_by_name.sql`, the join through `NAME_XWALK`
+
+> **Owner, 2026-10-28:** "query ran, how do I use it to join the different tables together?" Then: "put it in github"
+
+`28` is the join given in the answer, as a file: per firm, the union table with `TERRITORY_WHOLESALER_TERRITORY_ID`,
+`TERRITORY_WHOLESALER_ADDRESS_ID`, `SALES_WHOLESALER_TERRITORY_ID` and `SALES_WHOLESALER_ADDRESS_ID` from the
+territory and address tables, through `NAME_XWALK`'s matched pairs, plus the step that found each. The territory and
+address tables are taken to one row per name first (the territory table has a row per `ZIP_CODE` x channel); a name
+with 2+ IDs gets NULL. Real table names and labels stay at work: the file has `<...>` placeholders. Tested in DuckDB on
+made-up tables through `26` and `27`: output rows equal the union's, each ID as expected, NULL for 'open', for names
+still in review and for a territory name with two IDs.
