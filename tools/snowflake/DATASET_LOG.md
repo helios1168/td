@@ -1791,3 +1791,40 @@ and 1,761 `firm_2` union rows moved, each holder the territories holder; the com
 in total (11,343.9 coded units), now in `D2_02`; seller columns unchanged; both firms' `MM_OPP` totals unchanged;
 every new check 0. Faults caught: `F2_DIST_CH` blank (1); holder not swapped (8,138); `HOLDER_MOVED` not set
 (row-identity check).
+
+### 2026-10-29: `25_union_opp.sql`, the same `UNION_OPP`, rebuilt to read and debug
+
+> **Owner, 2026-10-27:** "we need to drasticaly simplify and refactor our 25 sql script for ease of maintainability and readability. First think through the primitives from the business perspective, i.e. for each firm we have opportunity, sales, and territories. second think about how we can implement this without any reference to the synthetic keys and other data / logic that is specific to the work we are doing here in pi-agent."
+
+> **Owner, 2026-10-29:** "ok we need to proceed with the simplification and refactor of 25 so that it is debuggable and maintable by me." Then: "lets purely focus on the current state without integrating anything new". Asked whether that meant (A) the same table with readable code or (B) the `DIST_CH` view only: "lets go with A first".
+
+Nothing of the 2026-10-27 proposals (deferred join, `NAME_KEY`, one channel per company) is in it; those wait. Same
+rules, same output: `25_union_opp.sql` sits beside `25_union_opp_one.sql` until the owner compares the two at work.
+- No `synthetic_key`: the labels are typed once in statements 1-2 (both `SOURCE`s, `firm_2`'s VA product, the file's
+  RILA type, the file channel map; `'NO CHANNEL'` is the owner's own label, 2026-10-25); the rest ship as
+  `'<label of CODE>'` placeholders, and a must-be-zero check lists any label found in no row. Reports and checks give
+  percentages and counts, no coded units.
+- `firm_2`'s opportunity steps (old statements 4-5, about 350 lines) are one statement, `tmp_f2_opp`, one row per file
+  row: same company, product, `dist_ch` and `new_dist` rules. A `'a|b'` list resolves per ZIP x state x product x
+  list, which is what the old per-group ranking reduced to. `firm_1`'s `dist_ch` per CRD is its own small table,
+  `tmp_f1_crd_dist`, read by `tmp_f2_opp` and the review list.
+- `UNION_OPP`: one builder for both kinds of opp-only rows (`firm_2`'s keys with no holder row, `firm_1`'s rows an
+  opportunity override adds), where there were two copies.
+- Kept: the `dist_ch` review list, the firm key review list, the alignment reports (owner, 2026-10-26). Dropped (in
+  git history): old statements 8 (`dist_ch` by file channel), 10 (`new_dist` against `firm_1`'s) and 12 (`firm_2`
+  `MM_OPP` by channel), build-time diagnostics. Checks: every must-be-zero row that can fail on data, plus label
+  checks; dropped are the ones the new structure makes impossible (a row with neither `dist_ch` nor reason, vendor
+  rows minus `opp_base`, the split step's reconciliation), the sales-amount cells (covered by row identity), the
+  settled product-map check (it needs coded labels) and the reading rows of the Q26 and method shares.
+- Found in the old file: its checks statement defines the CTE `b2` twice (since `fd72713`), and it uses `IN
+  (subquery)` in a select list, which Snowflake documents only in `WHERE` (docs, "Working with subqueries", read
+  2026-10-28). The new file has neither.
+
+Tested on the stand-in (labels set to the stand-in's codes), against `25_union_opp_one.sql` on the same data: as
+shipped, `UNION_OPP` 182,006 rows each, 0 rows differ either way; with two firm overrides (one with
+`F2_DIST_CH`) and two opportunity overrides (one on an overridden company), 185,336 rows each, 0 differ. Firm keys
+and `firm_2`'s opportunity by ZIP x company x product x channels x CRD identical in both. Column names and order the
+same (one differs in case only in DuckDB; Snowflake upper-cases unquoted names). Every CTE of every statement
+described in DuckDB: no repeated column (a planted one is caught). Planted faults each fail their check: labels left
+as placeholders (12, each listed), a duplicated `crd_dist_override` row, a holder not moved (9,097), `HOLDER_MOVED`
+not set (row identity), scaling skipped (7,693), added rows dropped (5,121).
