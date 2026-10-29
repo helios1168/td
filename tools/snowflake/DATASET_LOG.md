@@ -1828,3 +1828,30 @@ same (one differs in case only in DuckDB; Snowflake upper-cases unquoted names).
 described in DuckDB: no repeated column (a planted one is caught). Planted faults each fail their check: labels left
 as placeholders (12, each listed), a duplicated `crd_dist_override` row, a holder not moved (9,097), `HOLDER_MOVED`
 not set (row identity), scaling skipped (7,693), added rows dropped (5,121).
+
+### 2026-10-29: the opportunity pieces and their crosswalk, by firm
+
+> **Owner, 2026-10-29:** "lets break out the opportunity pieces for both firms. isolate within the current 25 script I use exactly what touches opportunity and how it changes things, be sure to include checks by firm. ideally a full crosswalk for each step"
+
+Done in `25_union_opp.sql` (the file being taken forward; same output as `25_union_opp_one.sql`), `UNION_OPP` unchanged.
+- firm_2's opportunity is its own tables, which `UNION_OPP` now reads instead of recomputing: `tmp_f2_opp` (one row
+  per file row, with the file's product line and VA type, `CBD_METHOD`, `UNION_DIST_CH` and `DROP_REASON` 'no
+  company' / 'NO CHANNEL') and `tmp_f2_key` (per key, `KEPT` = FALSE for a key summing to 0).
+- `tmp_opp_xwalk`, statement 11: one row per firm x step x from -> to, rows and opportunity before and after; each
+  step declares what it may do (`CHANGES`: nothing, drops, regroups, amounts). firm_2: source, product, company,
+  firm_1 channel and new_dist, firm_2 channel, keys, placement. firm_1 (its opportunity arrives on `union_base` from
+  the owner's query): source, firm override (channel, holder), opportunity override (cells scaled, removed, added),
+  territory holder. Statement 12 prints it with step totals and the share of each firm's source opportunity.
+- Checks by firm: a step's rows and opportunity before equal the previous step's after; no crosswalk row breaks its
+  step's `CHANGES`; the last step equals `UNION_OPP`. They replace the single firm_2 total check.
+- A cell whose `firm_1` opportunity sums to 0 is both 'removed' and 'added' (the existing override rule); the
+  crosswalk shows it as 'added + removed'.
+- No semicolon is left in a comment: one the session added inside the `UNION_OPP` statement split it for any
+  statement splitter that is not comment-aware (the old file has one there too, `r0`, since `afb656d`; whether
+  Snowsight's Run All splits on it is not known here).
+
+Tested on the stand-in against `25_union_opp_one.sql`: as shipped and with two firm overrides and two opportunity
+overrides, `UNION_OPP` 0 rows differ either way; every crosswalk check 0; firm_2 97.45% of its file's opportunity in
+`UNION_OPP` (no company 0.56%, NO CHANNEL 1.98%), firm_1 112.14% (the opportunity override adds). Faults each fail a
+per-firm check: keys lost in placement, a firm_1 amount changed outside the list, keys built from fewer rows, a
+company lookup that duplicates rows. All 121 CTEs described in DuckDB, no repeated column.
