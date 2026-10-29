@@ -138,9 +138,11 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 - Firm key across both firms: `FIRM_KEY`, the group of CRDs and `CBD_ID`s the vendor's resolved rows link
   (`crd_cbd_mm`, `opp_f2_final`), labelled by its `CBD_ID` with the most opportunity; a group whose `CBD_ID`s carry 2+
   `PARENT` is for manual review (owner, 2026-10-26).
-- Firm overrides: `CBD_ID` -> `DIST_CH`, `NEW_DIST` on every row of the company, both firms, sales and opportunity;
-  `CHANNEL` follows `NEW_DIST`; `firm_2`'s union rows keep their own `DIST_CH` (owner, 2026-10-26). List in
-  `mm_query_f2.sql` statement 0b.
+- Firm overrides: `CBD_ID` -> `NEW_DIST` on every row of the company, both firms, sales and opportunity; `CHANNEL`
+  follows `NEW_DIST` (owner, 2026-10-26). `DIST_CH`: `firm_1`'s rows the override's, `firm_2`'s rows and opportunity
+  `F2_DIST_CH`, `firm_2`'s own channel, stated in the list; a row whose `DIST_CH` changes takes the territory holder of
+  its `ZIP_CODE` x new `DIST_CH`, the lowest `CLEAN_ID` where 2+ hold it; seller columns stay (owner, 2026-10-28).
+  List in `25_union_opp_one.sql` statement 2.
 - Opportunity overrides: for a listed `CBD_ID`, `firm_1`'s `MM_OPP` becomes `firm_2`'s per ZIP x product, `firm_1`'s
   rows there scaled by `firm_2` / `firm_1`; full replace (cells only `firm_1` had lose it, cells only `firm_2` had get
   new `firm_1` opp-only rows) (owner, 2026-10-26). List in `25_union_opp_one.sql` statement 3.
@@ -1761,3 +1763,31 @@ Statement 3's CTE `c` selected `PH` twice (`c0.*` already carried it). Snowflake
 it (`PH_1`), so the tests missed it (introduced in `edd2068`, carried into `1bf368c`). Fixed by dropping the second
 `PH`. Every CTE of every statement was then described in DuckDB (573 columns): no renamed duplicate is left; the same
 probe on the broken version shows `PH_1`. The probe is part of the DuckDB testing of this file from now on.
+
+### 2026-10-28: firm overrides move the territory holder too
+
+> **Owner, 2026-10-28:** "so essentially when we do these overrides. we need to also handle the territory wholesaler - i.e. who that opportunity is assigned to. For example, lets say we made an override to a cbd, changing it's channel from IFA to FI. When we apply that override, the wholesaler who covered that firm in IFA still is associated with that firm's opportunity, except now showing it in FI. And so we end up with an IFA wholesaler who has opportunity in a channel he is not in, FI. How can we also update the wholesaler so that the opportunity is associated with the wholesaler that covers the new channel and zip?"
+
+Owner's answers (asked): `firm_2` rows "Move them too (Recommended)"; a shared `ZIP_CODE` x channel "Lowest CLEAN_ID,
+flagged (as now) (Recommended)". The proposal read `firm_2`'s channel for the override off `firm_2`'s union rows; on the
+stand-in every `firm_2` `DIST_CH` carries 2-4 `CHANNEL`s (`CHANNEL` follows the company), so that rule finds none.
+Session decision: the owner states it, a fourth column `F2_DIST_CH` in statement 2; blank for a company with `firm_2`
+rows or opportunity is a must-be-zero failure, not a guess. `46` ships with it blank.
+
+`25` statement 7: a union row whose `DIST_CH` the override changes takes, from territories, the holder of its
+`ZIP_CODE` x new `DIST_CH` (`TERR_WHOLESALER`, `TERR_WHOLESALER_CLEAN_NAME`, `TERRITORY_WHOLESALER_TERRITORY_ID`,
+`_ADDRESS_ID`, `_HAS_TERRITORY`, named and addressed as opp-only rows are), new lineage column `HOLDER_MOVED`;
+`firm_2`'s opportunity of the company keys on `F2_DIST_CH`, so it lands on the new holder's sales rows, else on
+opp-only rows for that holder. Seller columns and amounts are unchanged. The holder lookups of firm_2's opp-only rows,
+firm_1's added rows and the moved rows are one CTE (`hz`, `hn`). Checks: the row-identity hash leaves out the holder
+columns of moved rows on both sides; new must-be-zero rows: no `F2_DIST_CH` where needed, a `firm_2` row without it, a
+moved row whose holder is not the territories holder of its `ZIP_CODE` x `DIST_CH` or is unnamed; reading rows: moved
+rows per firm, into a shared or an empty `ZIP_CODE` x channel, and `firm_2`'s current `DIST_CH`s per overridden
+company (to choose `F2_DIST_CH`).
+
+Tested on the stand-in: with no override in effect `UNION_OPP` equals the version before (182,006 rows, 0 differ).
+With one company moved IFA -> FI (`firm_1`) and to `D2_02` (`firm_2`): every other company identical; 7,725 `firm_1`
+and 1,761 `firm_2` union rows moved, each holder the territories holder; the company's `firm_2` opportunity unchanged
+in total (11,343.9 coded units), now in `D2_02`; seller columns unchanged; both firms' `MM_OPP` totals unchanged;
+every new check 0. Faults caught: `F2_DIST_CH` blank (1); holder not swapped (8,138); `HOLDER_MOVED` not set
+(row-identity check).
