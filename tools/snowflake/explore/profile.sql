@@ -3,8 +3,7 @@
 --channel labels, which ZIP x channel has 0, 1 or 2+ holders; across sources: whether source 2's firms have a source 1
 --channel.  Counts, $ and the labels of channel and product columns only; no ID or name value leaves the temporary
 --tables.  The sales half of this profile is in git history (73774ed).
---Reads crd_dist_override (2026-10-25) and s1_channel_rule (firm 1's channel rules, s1_opp_sales.sql:459-470, made by
---owner_sql/rules_s1.sql; run that once first).
+--Reads crd_dist_override (2026-10-25).
 --Run All; download the last statement's result as CSV into $TD_REPO/data/safe/.
 --Source 1: fiscal year 2025; DIST_CH is firm 1's channel after its rules, FEED_DIST_CH the vendor's.  A route with no
 --firm 1 channel is UNMAPPED (owner, 2026-10-30).
@@ -24,9 +23,28 @@ SET s1_territories = 'ssdb_integration.lr_strategy.<source 1 territories, ends _
 SET s2_opp         = 'ssdb_integration.lr_strategy.<source 2 opportunity, ends _OPP_ORIGINAL>';
 SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _TERRITORIES>';
 
---1. Each source's opportunity, cleaned once and grouped: ZIP padded to 5, IDs as whole-number text, names and
---channels trimmed and upper-cased.  Source 1's rows take firm 1's channel rules: the lowest RULE_ORDER whose company
---ID, broker name or vendor DIST_CH matches, else the vendor's DIST_CH (as the query's CASE).  2 and 7 read these.
+--1. Firm 1's channel rules, then each source's opportunity, cleaned once and grouped: ZIP padded to 5, IDs as
+--whole-number text, names and channels trimmed and upper-cased.  The rules are s1_opp_sales.sql:459-470 (sha256
+--6262e2f93bbd..., generated from those lines), one row per value: a row matches on the one column it fills (company
+--ID, broker name, the vendor's DIST_CH) and the lowest RULE_ORDER that matches wins, as the query's CASE does.
+--Source 1's rows take the winning rule's channel, else the vendor's DIST_CH.  2 and 7 read these.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1_channel_rule AS
+SELECT CAST(rule_order AS INTEGER) AS rule_order, CAST(cbd_id AS VARCHAR) AS cbd_id,
+       CAST(broker_name AS VARCHAR) AS broker_name, CAST(dist_ch AS VARCHAR) AS dist_ch, CAST(channel AS VARCHAR) AS channel
+FROM (VALUES
+  (1, '1993', NULL, NULL, 'PRI'),
+  (1, '685', NULL, NULL, 'PRI'),
+  (2, '805', NULL, NULL, 'AMER'),
+  (3, NULL, 'WELLS FARGO CLEARING SERVICES, LLC', NULL, 'WH'),
+  (3, NULL, 'FIRST COMMAND BROKERAGE SERVICES, INC.', NULL, 'WH'),
+  (4, NULL, 'MERCER ALLIED COMPANY, L.P.', NULL, 'IFA'),
+  (5, NULL, 'TD SECURITIES (USA) LLC', NULL, 'FI'),
+  (5, NULL, 'WOODMEN FINANCIAL SERVICES, INC.', NULL, 'FI'),
+  (5, NULL, 'UNITED BROKERAGE SERVICES, INC', NULL, 'FI'),
+  (5, NULL, 'FROST BROKERAGE SERVICES, INC.', NULL, 'FI'),
+  (6, NULL, NULL, 'EDWARD JONES', 'EDJ')
+) AS v (rule_order, cbd_id, broker_name, dist_ch, channel);
+
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s1 AS
 WITH
 o AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS oid FROM (
@@ -36,7 +54,7 @@ o AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS oid FROM (
          COUNT(*) AS n, SUM(global_sales) AS amt
   FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025' GROUP BY ALL)),
 r AS (SELECT o.oid, ru.channel AS rule_channel, ROW_NUMBER() OVER (PARTITION BY o.oid ORDER BY ru.rule_order) AS rk
-      FROM o JOIN ssdb_integration.lr_strategy.s1_channel_rule ru
+      FROM o JOIN ssdb_integration.lr_strategy.tmp_s1_channel_rule ru
         ON ru.cbd_id = o.cbd_id OR ru.broker_name = o.broker_name OR ru.dist_ch = o.feed_dist_ch)
 SELECT o.zip, o.cbd_id, o.client_firm_id, o.firm_crd, o.broker_name, o.feed_dist_ch,
        COALESCE(r.rule_channel, o.feed_dist_ch) AS dist_ch, o.channel, o.product_line, o.va_product_type, o.n, o.amt

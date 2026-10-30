@@ -41,8 +41,11 @@ channels."
   vocabulary is in `DATA_MODEL.md`. A channel is a sales channel, never a "desk".
 - **Owner's queries.** Kept verbatim in `$TD_REPO/owner_sql/` (git-excluded). A cite into one names the file's
   sha256 prefix in its log entry; a changed file gets a new entry that re-cites, and old cites stay with their hash.
-- **Masking.** No person, firm or carrier names in the repo, this log or notes; this file gives amounts as
-  percentages and counts.
+- **Masking** (for `tools/snowflake/` only; the repo's `AGENTS.md` rule holds everywhere else). Never a person's name,
+  and never sales $ tied to a firm name. Distributor firm names may stand in SQL and rule lists; a carrier's name only
+  through the table variables. This file gives amounts as percentages and counts (owner, 2026-10-30: "the real concern
+  is people or individual's names. or sales dollars associated with firm names"; "carrier-based names should be handled
+  with the "set" convention we defined earlier"; "exceptions are scoped only to tools/snowflake").
 
 ## Settled
 
@@ -67,7 +70,8 @@ channels."
   rows drop (owner, 2026-10-25, Q19). Its product line x VA type maps onto products (owner, 2026-10-24, Q22). The coded
   version is in the tag; the real labels go here from the new extract.
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
-  worry about masking I will only include relevent non-sensitive columns"). Names still stay out of the repo.
+  worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
+  Masking.
 
 - Opportunity or sales with no firm 1 channel takes the channel UNMAPPED: kept, with its $, and flagged as a manual
   mapping exercise for the project team (owner, 2026-10-30: "give it a new channel on it's own so that we can keep the
@@ -455,3 +459,20 @@ firm 1's channels after those rules, so the comparison needs them.
   row: agrees, differs with the pair, fills a 2+ / UNMAPPED / absent route); the override table's own keys (CRD only or
   CRD x name, repeated, 2+ channels, matching no source 2 row); whether a region's ZIP range stays within one ZIP.
 - DuckDB test: 62 checks, worked out by hand from the made-up rows; reversing the rule order fails one.
+
+### 2026-10-30: masking narrowed for this directory; firm 1's rules inside the profile
+
+> **Owner, 2026-10-30:** "no worries about the masking lapse. the real concern is people or individual's names. or sales dollars associated with firm names - which have never been pushed to this machine raw so we are good. and ok lets update that code piece to be a temporary table and add the logic to profile.sql"
+
+> **Owner, 2026-10-30:** "carrier-based names should be handled with the "set" convention we defined earlier"
+
+> **Owner, 2026-10-30:** "exceptions are scoped only to tools/snowflake"
+
+Conventions, Masking, now says this. The three commits of the masking slip (`5fdc55c`, `9e3beb3`, `243dd77`) stay as
+they are: the owner declined a rewrite.
+
+`explore/profile.sql` statement 1 now builds firm 1's rules itself, as the temporary table `tmp_s1_channel_rule` (the
+same 11 rows, generated from `s1_opp_sales.sql:459`-`:470`), so nothing has to run first; the permanent
+`s1_channel_rule` of the entry before is not needed and `owner_sql/rules_s1.sql` is removed. The carrier-named tables
+stay `SET` placeholders. The DuckDB test runs the file's own rules on made-up rows that use two of their values
+(company 685 with an IFA-rule broker name: the company rule wins; the one-firm feed label): 62 checks.
