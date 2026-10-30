@@ -642,3 +642,16 @@ report. `explore/profile.sql` statement 1 holds the three answers as tables (`tm
 Q19, to its new-state territory, by route and Q39, the lowest territory ID where 2+: same, other, none, dropped) and
 `... BY LABEL AND ROUTE`; source 2's coverage match now goes through Q19. DuckDB test: 76 checks; switching NO CHANNEL to
 dropped fails it.
+
+### 2026-10-30: Q41, AMER's holder: what the query shows and the evidence query
+
+> **Owner, 2026-10-30:** "lets go to q41"
+
+AMER is company 805's channel (`s1_opp_sales.sql:460`). The territory step keeps channel-level regions (company 0)
+and company 3's own (`:692`); a region tied to any other company is left out, so if company 805 has regions of its own
+they never reach the territory table, and the holder lookup (`:719`) finds no AMER: in the owner's own output AMER's
+opportunity has no wholesaler. `explore/amer_holder.sql` (company in `SET company_id`, 805): every company with
+regions of its own (regions, ZIPs, wholesalers, region labels, teams); what covers the company's opportunity ZIPs (its
+own regions, channel-level regions per label, neither; % of its $); who sells to it in fiscal year 2025 (seller's
+channel and team, whether the seller holds one of its regions; % of its sales $, no amounts). DuckDB test
+(`explore/amer_holder_test.sh`, 14 checks); leaving the company's own regions out of the coverage fails it.
