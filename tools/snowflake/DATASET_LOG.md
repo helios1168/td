@@ -88,6 +88,11 @@ channels."
 - Source 2's old channel in firm 1's names: its own label through Q19, then Q39 read back, BANK → FI, INDEPENDENT →
   IFA, REGIONAL → WH, REGIONAL AGENCY → PRI, NO CHANNEL blank (owner, 2026-10-30: "lets actually implement option (a)
   for the source 2's old channel in source 1's terms item"). Key decision.
+- A sale's old channel is its own recorded channel, as its sales table has it (firm 1: the base sales table's
+  `DIST_CH`), and layer 02's table ties exactly to the sales tables, so every sale stays in it and the firms out of
+  scope are flagged there, not dropped (owner, 2026-10-30: "I want to validate against the original dist_ch at the
+  firm level since that is what we have in [firm 1's base sales table]. ... which we must be able to exactly
+  replicate in this new table").
 - Sales stay with the wholesaler who sold them, in both states; they meet opportunity at the wholesaler, at ZIP
   grain: one row per wholesaler x ZIP x firm x product with the opportunity held (old, new) and the sales credited
   there (owner, 2026-10-30: "sales is tied to the actual wholesaler, not necessarily a cell"; "sales stay fixed to
@@ -849,3 +854,27 @@ IFA, held without the seller, out-of-scope sales kept, net-zero policies in the 
 cleaned, a territory code not read back, the product bucket or firm 2's year not filtered, a split guessed).
 Snowflake: SPLIT_PART (https://docs.snowflake.com/en/sql-reference/functions/split_part) and CROSS JOIN
 (.../constructs/join) read 2026-10-30.
+
+### 2026-10-30: layer 02 carries the sale's own channel and ties to the sales tables
+
+> **Owner, 2026-10-30:** "where did the old channel go? I want to validate against the original dist_ch at the firm level since that is what we have in [firm 1's base sales table]. in [firm 1's base sales table] we get ~$[amount] in sales for product_line2 <> 'FIXED' and dist_ch in ('WH', 'FI', 'IFA'). which we must be able to exactly replicate in this new table"
+
+(The carrier's table name and the sales amount masked.) Settled carries it. The first version grouped the sale's own
+channel away (`TMP_O2_DATASET` kept only the new channel; `TMP_O2_SALES` had it trimmed and upper-cased) and left the
+out-of-scope firms' sales out of the dataset, so the owner's figure could not be rebuilt from it. Now `TMP_O2_DATASET`
+has `OLD_CHANNEL` (on opportunity the cell's, from `TMP_O1_DATASET`; on sales the sale's own as its sales table has
+it, firm 1's `DIST_CH`), `OLD_CHANNEL_S1` and `SCOPE`, and every 2025 sale: `SCOPE` 'OUT: ...' marks the EDJ, AMER
+and AFS firms' sales (`TMP_O1_DATASET` has only in-scope opportunity, so those rows carry sales only); an in-scope cut
+filters `SCOPE = 'IN'`. `TMP_O2_SALES` keeps the sales table's firm (`SALES_FIRM_ID`, `SALES_FIRM`), product and
+channel as they are, for a firm-level check. Both sources' amounts are cast to DECIMAL(38, 6) before the union:
+Snowflake's set operators want one type per column (https://docs.snowflake.com/en/sql-reference/operators-query, read
+2026-10-30), and firm 2's amounts are FLOAT, which would make firm 1's sums inexact. The result set gains `TIE-OUT`
+(the owner's cut: the sales table by fiscal year; the dataset's 2025 by scope) and three must-be-0 checks (the cut,
+sales table minus dataset; each sales table against `TMP_O2_SALES` by firm x channel x product as the table has
+them); `SALES PERIOD` lists firm 1's table by year and product bucket. Sales sit under their recorded channel (λ) in
+`OLD_CHANNEL`, so a channel cut of this table places old-state sales by their recorded label; Q28 stays open for the
+views. A temporary table lives only in the session that made it
+(https://docs.snowflake.com/en/user-guide/tables-temp-transient, read 2026-10-30), so 01 and 02 run in one
+worksheet. DuckDB test `02_sales_test.sh`: 46 checks; 16 mutations each fail it (the earlier ones, with out-of-scope
+sales now dropped instead of kept; plus firm 1's or firm 2's channel cleaned, the AFS company scope matched on a
+firm 2 CRD, wholesaler counts taking out-of-scope sales, firm 2's amounts left FLOAT, the tie-out cut widened).

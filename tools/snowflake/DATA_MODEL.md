@@ -45,7 +45,7 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 |---|---|---|---|
 | credit | sale → W_s | who is credited with a sale (not necessarily who caused it) | given, never changes |
 | κ_s | X → C_s | current channel of a cell: source s's feed channel plus its distributor rules (`s1_opp_sales.sql:459-470`) | given |
-| λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; λ_s = κ_s? Q28 |
+| λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; layer 02's `OLD_CHANNEL` on sales (settled 2026-10-30); λ_s = κ_s in the views? Q28 |
 | ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides); a CRD x broker name is listed if its source 1 rows carry a listed company ID (layer 01) | settled (lists in the log) |
 | ρ_s | C_s → N | the new label a current label carries forward (`s1_opp_sales.sql:707`, `else iwn.dist_ch`) | source 1: the same label; source 2: not used, the route is by firm (Q6 settled) |
 | ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
