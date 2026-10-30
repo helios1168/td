@@ -26,9 +26,9 @@ const sources = [
 ];
 
 const fixedClaims = [
-  "K1 | No carrier name (the table-name prefixes in " + td + "/owner_sql/vars.sql and the companies they stand for) appears under tools/snowflake/ or in notes/2026-10-*; SQL reads a carrier-named table only through IDENTIFIER($name) set by a SET line holding a <...> placeholder | DATASET_LOG.md, Conventions, Table variables and Masking | grep",
-  "K2 | No person's name (wholesaler, RVP, DVP, advisor, colleague) appears under tools/snowflake/ or in notes/2026-10-* | DATASET_LOG.md, Conventions, Masking | grep",
-  "K3 | No sales amount appears next to a firm name under tools/snowflake/ or in notes/2026-10-* | DATASET_LOG.md, Conventions, Masking | grep",
+  "K1 | No carrier name (the table-name prefixes in " + td + "/owner_sql/vars.sql and the companies they stand for) appears under tools/snowflake/ or in notes/*snowflake*; SQL reads a carrier-named table only through IDENTIFIER($name) set by a SET line holding a <...> placeholder | DATASET_LOG.md, Conventions, Table variables and Masking | grep",
+  "K2 | No person's name (wholesaler, RVP, DVP, advisor, colleague) appears under tools/snowflake/ or in notes/*snowflake* | DATASET_LOG.md, Conventions, Masking | grep",
+  "K3 | No sales amount appears next to a firm name under tools/snowflake/ or in notes/*snowflake* | DATASET_LOG.md, Conventions, Masking | grep",
   "K4 | Each Run All file under tools/snowflake/ written after the One result convention ends on one statement that returns every part the owner reads (explore/schema.sql predates it) | DATASET_LOG.md, Conventions, One result | the SQL files",
   "K5 | Every cite into owner_sql/<file>:N quotes or describes that line of the file version the citing entry pins | DATASET_LOG.md, Conventions, Owner's queries | owner_sql + shasum",
   "K6 | Every Q number DATA_MODEL.md names is in DATASET_LOG.md's open index or its Settled section; every index row's 'since' date has a log entry or archived-log entry behind it | DATA_MODEL.md, DATASET_LOG.md | both files",
