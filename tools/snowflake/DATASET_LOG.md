@@ -41,7 +41,9 @@ channels."
   vocabulary is in `DATA_MODEL.md`. A channel is a sales channel, never a "desk".
 - **Audit.** `audit.js` checks this directory's documents against its code: a reader lists the claims of `DATA_MODEL.md`
   (the reference), `README.md` and the log entries since a date, plus fixed convention checks; auditors verify each
-  against the SQL, the owner's queries, the run outputs and the archived log, one row per claim. Run it after a step
+  against the SQL, the owner's queries, the run outputs and the archived log, one row per claim; both on GPT-6.1 Sol,
+  thinking max (agents `reader-sol`, `auditor-sol`; owner, 2026-10-30: "update the models to both be gpt sol 6.1 on
+  max"). Run it after a step
   that changes the model, the log or the SQL, and before the owner runs a new file:
   `subagent({ workflow: "tools/snowflake/audit.js", cwd: "<worktree>", async: true, args: { since: "<first date not
   yet audited>" } })`. Its outcome is a log entry: counts by tag, every Weakened and Falsified row with its fix (owner,

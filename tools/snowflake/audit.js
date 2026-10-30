@@ -4,7 +4,9 @@
 //   subagent({ workflow: "tools/snowflake/audit.js", cwd: "<worktree>", async: true, args: { since: "2026-10-30" } })
 // args: { since: "YYYY-MM-DD" (log entries dated on or after it), td_repo: "/Users/Shared/sv-ntlee/td" (optional),
 //         extra: ["path", ...] (optional files whose claims are checked too, e.g. a handoff note) }
-// Step 1, reader: numbered claims, one per line.  Step 2, auditors in parallel batches of 60: one row per claim.
+// Step 1, reader-sol: numbered claims, one per line.  Step 2, auditor-sol in parallel batches of 60: one row per claim.
+// Both are the reader and auditor agents on openai-codex/gpt-6.1-sol, thinking max (owner, 2026-10-30); their files are
+// in ~/.pi/agent/agents/ (sv-ntlee, agent/pi/agents/).
 // Returns { claims, batches: [{ first, last, ok, output }] }; the session records the outcome as a log entry.
 if (!/^\d{4}-\d{2}-\d{2}$/.test(args.since || "")) throw new Error("audit needs args.since as YYYY-MM-DD");
 const td = args.td_repo || "/Users/Shared/sv-ntlee/td";
@@ -29,7 +31,7 @@ const fixedClaims = [
 ];
 
 const extract = await runs.run("claims", {
-  agent: "reader",
+  agent: "reader-sol",
   task: [
     "Question: which checkable claims do tools/snowflake's documents make? List them; do not judge them.",
     "Read fully: tools/snowflake/DATA_MODEL.md, tools/snowflake/README.md, and tools/snowflake/DATASET_LOG.md",
@@ -52,7 +54,7 @@ for (let i = 0; i < claims.length; i += size) batches.push(claims.slice(i, i + s
 const results = await runs.all(batches.map((b, i) => ({
   key: "audit-" + i,
   label: "Audit claims " + (i * size + 1) + "-" + (i * size + b.length),
-  agent: "auditor",
+  agent: "auditor-sol",
   task: [
     "Audit these claims of tools/snowflake (repo root = cwd). DATA_MODEL.md is the model; where a SQL file or query and",
     "a document disagree, the code decides (DATA_MODEL.md says so). A number is Verified only if the cited CSV or file",
