@@ -231,18 +231,25 @@ LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h2 hn ON hn.channel = x.new_terr_c
 
 --6. The dataset: both sources' cells in scope, one row each; wholesaler names from the territory tables (firm 1:
 --WHSLR_NM; firm 2: the territory's RVP).  OLD_CHANNEL: firm 1's channel after its rules; firm 2's own label.
+--OLD_CHANNEL_S1: the old channel in firm 1's names (owner, 2026-10-30, option (a)): firm 1's own; firm 2's territory
+--channel read back through the Q39 pairs (BK -> FI, FP -> IFA, BD -> WH, RA -> PRI), blank for NO CHANNEL.
 --NEW_CHANNEL_BASIS: how the firm's channel was found (TMP_O1_FIRM.ROUTE_BASIS).  Look at it in the same session, e.g.
 --  SELECT source, new_channel, product, SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset GROUP BY ALL;
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_dataset AS
 WITH
 n1 AS (SELECT CAST(whslr_id AS VARCHAR) AS id, MIN(whslr_nm) AS nm FROM IDENTIFIER($s1_territories) GROUP BY ALL),
 n2 AS (SELECT CAST(territory_id AS VARCHAR) AS id, MIN(rvp) AS nm FROM IDENTIFIER($s2_territories) GROUP BY ALL),
+q39 AS (SELECT terr_channel, MIN(s1_channel) AS s1_channel   -- one row per territory channel: no fan-out (checked in 7)
+        FROM ssdb_integration.lr_strategy.tmp_s1ch_s2terr GROUP BY ALL),
 u AS (
-            SELECT 'S1' AS source, c.*, a.nm AS cur_nm, b.nm AS new_nm FROM ssdb_integration.lr_strategy.tmp_o1_cells_s1 c
+            SELECT 'S1' AS source, c.*, a.nm AS cur_nm, b.nm AS new_nm, c.cur_label AS cur_s1
+            FROM ssdb_integration.lr_strategy.tmp_o1_cells_s1 c
             LEFT JOIN n1 a ON a.id = c.cur_holder LEFT JOIN n1 b ON b.id = c.new_holder
-  UNION ALL SELECT 'S2', c.*, a.nm, b.nm FROM ssdb_integration.lr_strategy.tmp_o1_cells_s2 c
-            LEFT JOIN n2 a ON a.id = c.cur_holder LEFT JOIN n2 b ON b.id = c.new_holder)
-SELECT source, zip, firm_crd, broker_name, product, cur_label AS old_channel, new_label AS new_channel,
+  UNION ALL SELECT 'S2', c.*, a.nm, b.nm, q.s1_channel FROM ssdb_integration.lr_strategy.tmp_o1_cells_s2 c
+            LEFT JOIN n2 a ON a.id = c.cur_holder LEFT JOIN n2 b ON b.id = c.new_holder
+            LEFT JOIN q39 q ON q.terr_channel = c.cur_terr_ch)
+SELECT source, zip, firm_crd, broker_name, product, cur_label AS old_channel, cur_s1 AS old_channel_s1,
+       new_label AS new_channel,
        route_basis AS new_channel_basis, cur_terr_ch AS old_territory_channel, new_terr_ch AS new_territory_channel,
        cur_holder AS old_wholesaler_id, cur_nm AS old_wholesaler, new_holder AS new_wholesaler_id,
        new_nm AS new_wholesaler, amt AS opportunity
@@ -253,8 +260,8 @@ FROM u WHERE scope_out IS NULL;
 --    RECLASSIFIED where they differ.  V2B HOLDER MOVES: same holder, other holder, gains, loses, none in either,
 --    dropped; ITEM2 current -> new territory channel.  V3 COVERAGE: one holder, the lowest of 2+, no holder (no
 --    territory channel: blank or UNMAPPED label, a label with no pair; no holder at the ZIP), dropped.
---  CHECKS: SOURCE MINUS CELLS and CURRENT MINUS NEW (I4) must be 0; FIRM KEYS REPEATED, FIRMS WITH 2+ NEW LABELS
---    must have N_FIRMS 0; the rest are reported: route basis, the override where the route was kept, listed firms
+--  CHECKS: SOURCE MINUS CELLS and CURRENT MINUS NEW (I4) must be 0; FIRM KEYS REPEATED, FIRMS WITH 2+ NEW LABELS,
+--    Q39 TERRITORY CHANNELS ON 2+ FIRM 1 CHANNELS must have N_FIRMS 0; the rest are reported: route basis, the override where the route was kept, listed firms
 --    (label | holder channel | route), firms with no listed label on a CRD where another name has one, cells with
 --    2+ current labels, product unmapped.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_out AS
@@ -332,6 +339,10 @@ FROM st s GROUP BY ALL
 UNION ALL
 SELECT 'CHECKS', NULL, 'FIRM KEYS REPEATED (MUST BE 0)', NULL, NULL, NULL,
        (SELECT COUNT(*) FROM (SELECT firm_crd, broker_name, COUNT(*) AS k FROM ssdb_integration.lr_strategy.tmp_o1_firm
+                              GROUP BY ALL) d WHERE k > 1), NULL, NULL
+UNION ALL
+SELECT 'CHECKS', NULL, 'Q39 TERRITORY CHANNELS ON 2+ FIRM 1 CHANNELS (MUST BE 0)', NULL, NULL, NULL,
+       (SELECT COUNT(*) FROM (SELECT terr_channel, COUNT(*) AS k FROM ssdb_integration.lr_strategy.tmp_s1ch_s2terr
                               GROUP BY ALL) d WHERE k > 1), NULL, NULL
 UNION ALL
 SELECT 'CHECKS', NULL, 'FIRMS WITH 2+ NEW LABELS (MUST BE 0)', NULL, NULL, NULL,

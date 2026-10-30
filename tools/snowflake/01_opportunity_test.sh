@@ -151,6 +151,9 @@ SELECT
  chk('dataset: s1 wholesaler names, lowest ID', (SELECT old_wholesaler || ' ' || new_wholesaler FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE product = 'IOVA'), 'N1 N1'),
  chk('dataset: s2 RVPs, Chase moves', (SELECT old_wholesaler || ' ' || new_wholesaler || ' ' || old_channel || ' ' || new_channel FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE broker_name = 'CHASE' AND source = 'S2'), 'R2 R8 REGIONAL National (Chase)'),
  chk('dataset: s1 by new channel', (SELECT SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S1' AND new_channel = 'Wells WH'), 350),
+ chk('old channel in firm 1 terms, s2 (option a)', (SELECT string_agg(COALESCE(old_channel_s1, '(BLANK)') || '=' || amt, ' ' ORDER BY old_channel_s1 NULLS LAST) FROM (SELECT old_channel_s1, SUM(opportunity) AS amt FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S2' GROUP BY ALL) x), 'FI=43.0 IFA=58.0 PRI=3.0 WH=80.0 (BLANK)=9.0'),
+ chk('old channel in firm 1 terms, s1 = its own', (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S1' AND old_channel_s1 IS DISTINCT FROM old_channel), 0),
+ chk('Q39 pairs one to one', (SELECT n_firms FROM r WHERE name = 'Q39 TERRITORY CHANNELS ON 2+ FIRM 1 CHANNELS (MUST BE 0)'), 0),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name LIKE 'tmp_o1%' AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT '01_opportunity_test: ok';
 SQL
