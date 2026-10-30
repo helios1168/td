@@ -299,7 +299,7 @@ measures where that map and the firm's own route disagree. Statements 1-2 now cl
 
 So firm 1's firm is its company ID, and its channel follows the company ID; the market metrics key (CRD, broker name)
 is coarser wherever firm 1 split a CRD. The archived 2026-10-29 profile of the first-pass master found 28 CRDs split
-into 77 company IDs with the same CRD and broker name (archived log, line 1888): the split is invisible in the market
+into 77 company IDs with the same CRD and broker name (archived log, line 1885): the split is invisible in the market
 metrics firm columns. Source 2's opportunity carries only those columns, ZIP and product, so for a split CRD it can
 follow firm 1's channel only as far as ZIP (or product) shows the split. Q38 restated; Q39, Q40 new.
 
