@@ -48,7 +48,7 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 | λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; λ_s = κ_s? Q28 |
 | ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides) | settled (lists in the log) |
 | ρ_s | C_s → N | the new label a current label carries forward (`s1_opp_sales.sql:707`, `else iwn.dist_ch`) | source 1: the same label; source 2: not used, the route is by firm (Q6 settled) |
-| ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30; the route's level: Q38 |
+| ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
 | τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`); new channels such as National: Q29 |
@@ -78,7 +78,7 @@ share = sales sent through k_s to w ÷ market sent through k_s to w. Which one r
 |---|---|---|
 | I1 | territories fixed: H_s and k_s are the same in both states; new-state holders come only through τ_s (no new assignments) | settled, owner 2026-10-29 |
 | I2 | credit fixed: view 5 uses no κ or ν | settled, owner 2026-10-29 (holds by construction) |
-| I3 | in the new state the channel depends on the distributor only: ν = ν_D ∘ π_D | stakeholder, 2026-10-29; for every distributor by the owner's route (2026-10-30), exactly if it is per CRD x broker name (Q38) |
+| I3 | in the new state the channel depends on the distributor only: ν = ν_D ∘ π_D | stakeholder, 2026-10-29; for every distributor by the owner's route, per CRD x broker name (settled 2026-10-30, Q38) |
 | I4 | each source's market is the same in both states, so views 1-2 total Σ_x M_s(x) in each; a gap means something other than classification changed | proposed (session); the first must-be-zero check |
 
 ## Pipeline
@@ -107,15 +107,15 @@ per cell x = (z, d, p): its market, current channel and holder, new channel and 
 | p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED | the same columns and map; RILA is a VA type here | settled (Q22); the map is the session's for both: the owner's (`s1_opp_sales.sql:453-458`) reads RILA from `PRODUCT_LINE` only, which source 2 leaves VA |
 | κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA) | settled for source 1; source 2's label pairs and NO CHANNEL: Q19 |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
-| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | basis and UNMAPPED settled; level and override: Q38 |
+| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | settled 2026-10-30 (basis, level, the override's role, UNMAPPED) |
 | new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms settled; source 2's pairs: Q39; National: Q29 |
 
 The firm's route (owner, 2026-10-30): firm 1's channel per market metrics firm, for both sources, so the new channels
 match across sources and source 2's own channels serve only its current state. In firm 1's fiscal year 2025 rows every
 CRD x broker name has at most one non-blank channel; a CRD over 2+ channels is spread through its broker names
-(`DATASET_LOG.md`, 2026-10-30, profile). Open (Q38): route per CRD x broker name or per ZIP x CRD x broker name (they
-differ only where firm 1's channel is blank in some ZIPs), and what `crd_dist_override` (at work) does where it
-differs from the route.
+(`DATASET_LOG.md`, 2026-10-30, profile). Settled (Q38): the route is per CRD x broker name; `crd_dist_override`
+(at work) fills only an UNMAPPED, 2+ or absent route, and where it differs the route wins. A split firm stays
+split through its broker names: Wells, below.
 
 Rules keyed on a company ID (κ₁'s, ν_D's, the firm override) reach source 2 only re-keyed to CRD and broker name, read
 off source 1's rows, which carry both. The company ID is the weaker key: missing on 26% of firm 1's $, and 3 company
@@ -144,3 +144,14 @@ Made-up amounts, source 1. Cell x = (z, d, p) with M₁(x) = 10; κ₁(x) = IFA;
   states FI and H₁(FI, z) = {w_c}: reassigned, the 10 goes from w_a to w_c.
 - w_b keeps the 2 in both states (view 5). It is placed on National × z after; now on FI × z by λ₁ or IFA × z by
   κ₁ (Q28).
+
+Wells, a split firm (real; source 1's rules and the owner's lists, no amounts). One CRD carries two market metrics
+broker names. `Wells Fargo Clearing Services, LLC` is WH by the rule `s1_opp_sales.sql:461` and company ID 1822
+(`:475`); `Wells Fargo Clearing Services, LLC - BANK` is company ID 1823 (`:476`) and keeps its feed channel. On the key
+d = CRD x broker name they are two distributors: d_WH and d_BANK.
+
+- κ: each source's cells of d_WH are WH, through the name, in both sources; `crd_dist_override` had FI on d_WH, and the
+  route wins (Q38).
+- ν: the new-channel list breaks both out, ν_D(d_WH) = Wells WH and ν_D(d_BANK) = Wells FI (`:704`-`:705`, from company
+  IDs 1822 and 14, and 1823), so ν_D is keyed on CRD x broker name; keyed on the CRD alone it could not split them.
+- 2a: every cell of either name is reclassified (WH → Wells WH, the bank name's channel → Wells FI).

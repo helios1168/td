@@ -85,6 +85,13 @@ channels."
   each new channel to match across both source firms. so it seems natural to use firm 1's original channel in the
   master firm mapping table"; "we can simply just use firm 1's original channels, without even explicitly mapping
   source firm 2 to source firm 1"). Q6.
+- The route (Q38): both sources' opportunity takes firm 1's channel per CRD x broker name; `crd_dist_override` fills
+  only where that route is UNMAPPED, 2+ or has no firm 1 rows, and where the two disagree the route wins (owner,
+  2026-10-30: "it should land in the route_dist_ch"; the disagreement, the override's FI against the route's WH, 2.48%
+  of source 2's $, is Wells). A split firm keeps its split: Wells' CRD has a WH name and a bank name, which the
+  new-channel list makes Wells WH and Wells FI (owner: "capture the case where we create wells wh, and wells fi. this
+  is an example of that split happening"; `DATA_MODEL.md`, Example). So the new-channel list is keyed on CRD x broker
+  name; its company IDs are re-keyed off source 1's rows.
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
   Masking.
@@ -126,7 +133,6 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q38 | The route's level and the override. The second profile run (2026-10-30) finds one firm 1 channel per CRD x broker name for 99.77% of source 1's $ and 99.71% of source 2's: route per CRD x broker name? Where `crd_dist_override` differs from that route (FI against firm 1's WH, 2.48% of source 2's $), which wins? | 2026-10-30 |
 | Q39 | For each firm 1 channel, which source 2 territory channel holds source 2's opportunity routed to it in the new state? | 2026-10-30 |
 | Q41 | AMER (company 805's channel, 1.39% of source 1's $) has no territory in source 1's table: who holds it, now and in the new state? | 2026-10-30 |
 
@@ -589,3 +595,15 @@ in $ shares, its vendor `DIST_CH`, vendor codes, company IDs and the rules that 
 opportunity, source 2's own labels, opportunity and share, and the override's row count. Firm names and opportunity $
 appear (Conventions, Masking: allowed here). The rules are `profile.sql`'s; the DuckDB test
 (`explore/override_review_test.sh`, 16 checks) fails if the two copies differ, and a flipped status test fails it.
+
+### 2026-10-30: Q38 settled: the route wins; Wells is the split case
+
+> **Owner, 2026-10-30:** "it should land in the route_dist_ch. note that this overall firm is wells and capture the case where we create wells wh, and wells fi. this is an example of that split happening"
+
+Settled (Settled, The route): firm 1's channel per CRD x broker name for both sources, the override only for the gaps;
+Q38 leaves the index. The owner read the cases at work with `explore/override_review.sql`: the disagreement is Wells.
+Wells in the owner's query: the name `Wells Fargo Clearing Services, LLC` is WH by the rule `s1_opp_sales.sql:461` and
+company ID 1822 (`:475`); its `- BANK` name is company ID 1823 (`:476`); the new-channel list sends 1822 and 14 to
+Wells WH and 1823 to Wells FI (`:704`-`:705`). On the shared firm key the two names are two firms with two channels
+and two new labels, so the new-channel list re-keyed to CRD x broker name carries the split; company 14's CRD x
+broker name is read off source 1's rows when the list is built. `DATA_MODEL.md` takes Wells as its second example.
