@@ -29,6 +29,8 @@ channels."
   `IN` / `EXISTS` subqueries go only in `WHERE`; no named `WINDOW` clause.
 - **Words.** "Source firm" (firm_1, firm_2) for the insurers, "distributor" for the broker-dealer; the rest of the
   vocabulary is in `DATA_MODEL.md`. A channel is a sales channel, never a "desk".
+- **Owner's queries.** Kept verbatim in `$TD_REPO/owner_sql/` (git-excluded). A cite into one names the file's
+  sha256 prefix in its log entry; a changed file gets a new entry that re-cites, and old cites stay with their hash.
 - **Masking.** No person, firm or carrier names in the repo, this log or notes; this file gives amounts as
   percentages and counts.
 
@@ -84,6 +86,7 @@ view.
 | Q29 | τ_s for new channels such as National: covered by ZIP, by distributor-tied territories (`mm_query.sql:691` filters them out), or the current holder kept (`mm_query.sql:718`)? Listed distributors: settled 2026-10-28. Folds in Q13. | 2026-10-29 |
 | Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
 | Q32 | Does a source's market include products it does not sell? (Settled before as "the products where it has positive sales"; reopened 2026-10-30.) | 2026-10-30 |
+| Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 
 ## Log
 
@@ -135,3 +138,17 @@ reading source 1's sales (`:583-584`), which is conformance depending on sales; 
 
 Next: the owner pulls the tables' columns from `INFORMATION_SCHEMA`, then the extracts (the start note,
 `notes/2026-10-30_snowflake-v2-start.md`).
+
+### 2026-10-30: the owner's source 1 sales query, before the market metrics transformations
+
+> **Owner, 2026-10-30:** "I have two new queries that supersede mm_query.sql. The first is a sales query for firm 1 that is intended to run before the transformations are applied to the market metrics - based firm data. so both source firms join their opportunity and sales data to territories table through the unified market metrics based firm mapping."
+
+Saved verbatim as `$TD_REPO/owner_sql/s1_sales.sql` (git-excluded, 440 lines, sha256 `92fabcc00478…`). The cites
+below are to that version. Findings from the session's reading; nothing run yet.
+
+| # | finding | lines | becomes |
+|---|---|---|---|
+| 1 | Sales rows can duplicate. `supplemental_dist` keeps one row per policy, product line, MGA code and channel (`:59` `, dco.product_line`), but `base_sales` joins it on policy and MGA code only (`:114` `ON sd.policy_no = srd.policy_no and sd.mga_agent_cd = srd.mga_agent_cd`). Other joins that duplicate if their key repeats: `MGA_MAP` per MGA code (`:66`), `master_firm` per company ID (`:110`), the contact per agent tax ID (`:111`), `WHSLR` per wholesaler ID (`:115`, `:405`-`:409`). | `:59`, `:66`, `:110`-`:115`, `:405`-`:409` | check: filtered raw `SLS_RPT_DETAIL` total = `base_sales` total, per fiscal year; and each join key unique |
+| 2 | Two current labels for split policies: `IFA/IMO` (`:18` `THEN 'IFA/IMO'`) and `FI/IMO` (`:21` `THEN 'FI/IMO'`). The IMO rule tests only `IFA` (`:418` `case when (iw.sales_district_name like 'IMO%' and fo.dist_ch = 'IFA') then 'IMO'`), so it leaves them as they are; a territory lookup on the label finds no holder unless the territories carry them. | `:18`, `:21`, `:418` | Q33 |
+| 3 | The window is two years (`:28`, `:117` `TO_DATE(srd.sales_date) BETWEEN '2024-01-01' and '2025-12-31'`); fiscal year 2025 is kept downstream on `fiscal_yr` (Settled). | `:28`, `:117` | none |
+| 4 | CRD is blank (`:99` `, '' as firmcrd --get firm_crd  --added`); the company ID is the key (`:97`), so source 1's sales reach CRD through `mm_map`, as `DATA_MODEL.md` has it. | `:97`, `:99` | E4 |
