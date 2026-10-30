@@ -308,3 +308,42 @@ opportunity by whether its firm's channels differ within a ZIP or only across ZI
 opportunity by the finest market metrics key at which firm 1's rows give one channel (the same ZIP x CRD x broker name,
 the CRD x broker name, the CRD), else 2+ or none, marked where `crd_dist_override` lists the CRD. DuckDB test: 41
 checks.
+
+### 2026-10-30: can firm 1's market metrics table give firm 2's opportunity its channel? What the queries show
+
+> **Owner, 2026-10-30:** "can you check the queries I shared earlier for any hints on whether we can just pull our wc market metrics opporunity data at the right level of granularity to swap out the original channel in firm 2's opportunity / firm mapping? since firm 2 already conforms to the market metrics data but with a different original channel appended"
+
+Read: `owner_sql/s1_opp_sales.sql` (`6262e2f93bbd…`), the schema run, and the session's 2026-10-25 variants of the
+owner's query (`data/safe/_archive_2026-10/hub_root/mm_query_crd.sql`, `mm_query_crosswalk.sql`: the same query plus
+CRD and broker name carried through; the second builds `crd_cbd_mm` at work).
+
+1. Firm 1's original channel is a column on every row of its market metrics table, read as is unless a rule applies
+   (`:469` `ELSE dist_ch`). The table's rows are finer than firm 2's file: office (`SI_OFFICE_ID`, `MM_ADDRESS_1`-`3`,
+   `CITY`), share class, deposit type, quarter and month, with firm 1's company ID, territory and wholesaler appended.
+2. Firm 2's file has a subset of those columns: ZIP, `FIRM_CRD`, `BROKER_NAME`, `PRODUCT_LINE`, `VA_PRODUCT_TYPE`, its
+   own `DIST_CH`, `OPP`. So the finest grain both share is ZIP x CRD x broker name x product: firm 1's table grouped to
+   it, with the number of channels and the channel where there is one, is the swap table. Product goes through each
+   source's map, not the raw columns: RILA is a VA type in firm 2's file and a product line in firm 1's (archived log,
+   2026-10-25).
+3. The vendor's broker name already carries some channel splits: one name with a " - BANK" suffix has its own company
+   ID (`:476`), and three name variants of another CRD go to one company ID (`:478`). CRD x broker name separates those
+   when the names match exactly.
+4. Firm 1's company ID is not clean on the raw rows: company 0 takes the client firm ID (`:480`), which can be a `|`
+   list resolved by matching firm 1's sales (`:511`-`:594`), and company 0 with none is dropped (`:481`, `:500`). The
+   archived first run found 52.26% of firm 2's opportunity in ZIP x CRD x broker name cells where firm 1's raw rows
+   name 2+ company IDs, before that resolution (archived log, 2026-10-26, `FIRM_KEY`). After it, `crd_cbd_mm` (CRD x
+   broker name -> resolved company ID, fiscal year 2025) had 404 rows, 382 CRDs, 393 company IDs and 13 CRDs with 2+
+   (archived log, 2026-10-25). The channel itself is on the raw row and needs no resolution; the company ID (for the
+   new-channel list, keyed on it) does.
+5. Firm 1's table has quarters and months, and its query reads two fiscal years (`:486`): a cell's channel can change
+   within a year, so the swap reads fiscal year 2025 and counts channels per cell.
+6. This swap was built once, on 2026-10-25 (`mm_query_f2.sql`): 99.72% of firm 2's opportunity found firm 1's rows of
+   the same ZIP x CRD x broker name x product, but where those rows carried 2+ company x channel (50.61%) the largest
+   was taken, and the owner then set firm 2's channel per CRD with manual overrides. The swap without a largest-share
+   step is Q38's finest-first order.
+7. The two opportunity numbers matched within 1 in 6.89% of those cells (archived log, 2026-10-25): firm 2's file is
+   the same schema, not firm 1's rows with another channel (Q23). The keys line up; the amounts do not.
+
+So the swap is possible at ZIP x CRD x broker name x product; what is open is the share of firm 2's opportunity in
+cells where firm 1's rows carry 2+ channels. `S2 ROUTE LEVEL` measures it at ZIP x CRD x broker name; the product level
+waits for firm 2's product labels (the profile's labels part).
