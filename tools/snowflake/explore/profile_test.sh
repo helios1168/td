@@ -40,7 +40,7 @@ INSERT INTO ssdb_integration.lr_strategy.s2_terr_t VALUES
 SQL
 sed -e '/^use secondary roles all;$/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/<S1_TERRITORIES>/s1_terr_t/g' -e 's/<S2_OPP>/s2_opp_t/g' -e 's/<S2_TERRITORIES>/s2_terr_t/g' \
-    -e '/^--7\./,$d' "$here/profile.sql"
+    -e '/^--8\./,$d' "$here/profile.sql"
 cat <<'SQL'
 CREATE TABLE r AS
 SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_cols
@@ -77,6 +77,10 @@ SELECT
  chk('territory table vs regions', (SELECT string_agg(item || '=' || n_rows, ' ' ORDER BY item) FROM r WHERE part='CHECKS' AND col='WHSLR_ZIP_VS_REGIONS'), 'both=2 table only=1'),
  chk('ZIP lost its zero', (SELECT amt FROM r WHERE part='CHECKS' AND ds='S1_OPP' AND col='ZIP_FORM' AND item='under 5 digits'), 500),
  chk('s2 ZIP stored as a number', (SELECT amt FROM r WHERE part='CHECKS' AND ds='S2_OPP' AND col='ZIP_FORM' AND item='under 5 digits'), 40),
+ chk('label x firm channel: one', (SELECT amt FROM r WHERE part='CHECKS' AND col='S2 DIST_CH -> S1 CHANNEL OF THE CRD' AND item='WIRE -> WH'), 60),
+ chk('label x firm channel: 2+, override', (SELECT amt FROM r WHERE part='CHECKS' AND col='S2 DIST_CH -> S1 CHANNEL OF THE CRD' AND item='IND -> 2+ CHANNELS (OVERRIDE)'), 40),
+ chk('label x firm channel: absent', (SELECT amt FROM r WHERE part='CHECKS' AND col='S2 DIST_CH -> S1 CHANNEL OF THE CRD' AND item='IND -> NO SOURCE 1 ROWS'), 25),
+ chk('label x firm channel: no CRD', (SELECT amt FROM r WHERE part='CHECKS' AND col='S2 DIST_CH -> S1 CHANNEL OF THE CRD' AND item='NO CHANNEL -> NO CRD'), 5),
  chk('periods', (SELECT amt FROM r WHERE part='CHECKS' AND col='FISCAL_YR | QUARTER' AND item='2025 | Q2'), 300),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name LIKE 'tmp_prof%' AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT 'profile_test: ok';

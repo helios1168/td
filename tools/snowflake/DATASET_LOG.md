@@ -278,3 +278,13 @@ channel, several, or none, and whether `crd_dist_override` covers it; ZIP forms,
 Source 1's channel is the vendor's `DIST_CH` before the query's rules (they hold names; they become rule tables at
 work). Tested in DuckDB (`explore/profile_test.sh`, 27 checks, one planted case per outcome); a wrong expected value
 stops it.
+
+### 2026-10-30: the profile gains source 2's label x source 1's firm channel
+
+> **Owner, 2026-10-30** (on Q38): "We will want firm 2's original channels to be mapped to firm 1's original channels, routed by firm? help me think through it, at the firm level - we want each new channel to match across both source firms. so it seems natural to use firm 1's original channel in the master firm mapping table, we just need to take care of mapping firm 2's original channels to align"
+
+`explore/profile.sql` statement 7, check `S2 DIST_CH -> S1 CHANNEL OF THE CRD`: source 2's opportunity by its own
+label and the one channel source 1 gives its CRD (or 2+, or no source 1 rows), marked where `crd_dist_override`
+lists the CRD; the archived 2026-10-25 table, by CRD. It is the evidence for a source 2 -> source 1 channel map and
+measures where that map and the firm's own route disagree. Statements 1-2 now clean each source's rows once
+(`tmp_opp_s1`, `tmp_opp_s2`). DuckDB test: 31 checks.

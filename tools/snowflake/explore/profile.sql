@@ -15,26 +15,37 @@
 --(https://docs.snowflake.com/en/sql-reference/constructs/values).
 use secondary roles all;
 
---1. Each dataset as its distinct key combinations, with rows (N) and $ (AMT), in long form: one row per combination x
---column.  KIND K: a key (2 pairs it with the dataset's other keys, 3 matches it across datasets); D: a label (4 lists
---its values); KD: both.  Values: text, trimmed, upper-cased; blank and '0' are missing.  IDs are whole-number text.
+--1. Each source's opportunity, cleaned once and grouped: ZIP padded to 5, IDs as whole-number text, names and
+--channels trimmed and upper-cased.  2 and 7 read these.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s1 AS
+SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, cbd_id, client_firm_id, NULLIF(TRIM(firm_crd), '') AS firm_crd,
+       UPPER(TRIM(broker_name)) AS broker_name, UPPER(TRIM(dist_ch)) AS dist_ch, channel, product_line,
+       va_product_type, COUNT(*) AS n, SUM(global_sales) AS amt
+FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'
+GROUP BY ALL;
+
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s2 AS
+SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
+       CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
+       UPPER(TRIM(dist_ch)) AS dist_ch, CAST(channel AS VARCHAR) AS channel, product_line, va_product_type,
+       COUNT(*) AS n, SUM(opp) AS amt
+FROM ssdb_integration.lr_strategy.<S2_OPP>
+GROUP BY ALL;
+
+--2. Each dataset as its distinct key combinations, with rows (N) and $ (AMT), in long form: one row per combination x
+--column.  KIND K: a key (4 pairs it with the dataset's other keys, 5 matches it across datasets); D: a label (6 lists
+--its values); KD: both.  Values: text, trimmed, upper-cased; blank and '0' are missing.
 --CRD_NAME is CRD | broker name; CH_ZIP is channel | 5-digit ZIP.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof AS
 WITH
-s1 AS (SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, cbd_id, client_firm_id, NULLIF(TRIM(firm_crd), '') AS firm_crd,
-              UPPER(TRIM(broker_name)) AS broker_name, UPPER(TRIM(dist_ch)) AS dist_ch, channel, product_line,
-              va_product_type, global_sales
-       FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'),
-s2 AS (SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
-              CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
-              UPPER(TRIM(dist_ch)) AS dist_ch, CAST(channel AS VARCHAR) AS channel, product_line, va_product_type, opp
-       FROM ssdb_integration.lr_strategy.<S2_OPP>),
+s1 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_opp_s1),
+s2 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_opp_s2),
 s1_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT cbd_id, client_firm_id, firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel,
-         product_line, va_product_type, COUNT(*) AS n, SUM(global_sales) AS amt
+         product_line, va_product_type, SUM(n) AS n, SUM(amt) AS amt
   FROM s1 GROUP BY ALL)),
 s1_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT zip, dist_ch || '|' || zip AS ch_zip, COUNT(*) AS n, SUM(global_sales) AS amt FROM s1 GROUP BY ALL)),
+  SELECT zip, dist_ch || '|' || zip AS ch_zip, SUM(n) AS n, SUM(amt) AS amt FROM s1 GROUP BY ALL)),
 s1_crd_ch AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (   -- one row per CRD x channel
   SELECT DISTINCT firm_crd, dist_ch, 1 AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt FROM s1)),
 s1_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
@@ -44,10 +55,10 @@ s1_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   FROM ssdb_integration.lr_strategy.<S1_TERRITORIES> GROUP BY ALL)),
 s2_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel, product_line,
-         va_product_type, COUNT(*) AS n, SUM(opp) AS amt
+         va_product_type, SUM(n) AS n, SUM(amt) AS amt
   FROM s2 GROUP BY ALL)),
 s2_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT zip, dist_ch || '|' || zip AS ch_zip, COUNT(*) AS n, SUM(opp) AS amt FROM s2 GROUP BY ALL)),
+  SELECT zip, dist_ch || '|' || zip AS ch_zip, SUM(n) AS n, SUM(amt) AS amt FROM s2 GROUP BY ALL)),
 s2_override AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT TRIM(firm_crd) AS firm_crd, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
   FROM ssdb_integration.lr_strategy.crd_dist_override GROUP BY ALL)),
@@ -91,8 +102,8 @@ lng AS (
   UNION ALL SELECT 'S2_TERR', rid, 'D', 'CHANNEL_NAME', channel_name, n, amt FROM s2_terr)
 SELECT ds, rid, kind, col, NULLIF(NULLIF(UPPER(TRIM(CAST(v AS VARCHAR))), ''), '0') AS val, n, amt FROM lng;
 
---2. Every column: rows, distinct values, % of rows and of $ with no value, value lengths, values with a non-digit.
---Statements 2-6 each build one part of the result, all with the same 15 columns; 7 returns them together.
+--3. Every column: rows, distinct values, % of rows and of $ with no value, value lengths, values with a non-digit.
+--Statements 3-7 each build one part of the result, all with the same 15 columns; 8 returns them together.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_cols AS
 SELECT 'COLUMNS' AS part, ds, col, kind AS col2, CAST(NULL AS VARCHAR) AS item,
        COUNT(DISTINCT val) AS n_values, SUM(n) AS n_rows, SUM(amt) AS amt,
@@ -104,7 +115,7 @@ SELECT 'COLUMNS' AS part, ds, col, kind AS col2, CAST(NULL AS VARCHAR) AS item,
 FROM ssdb_integration.lr_strategy.tmp_prof
 GROUP BY ALL;
 
---3. Pairs of keys within a dataset, every link between their values (combinations carrying both) by shape:
+--4. Pairs of keys within a dataset, every link between their values (combinations carrying both) by shape:
 --   1 : 1 the same thing; one A, many B: B nests in A; many A, one B: A nests in B; many : many tangled.
 --   N_VALUES: links; N_ROWS and AMT: the rows and $ on them; PCT_AMT: of the pair's $; N_A, N_B: values of each column.
 --   E.g. S1_OPP_FIRM FIRM_CRD - DIST_CH 'one FIRM_CRD, many DIST_CH': the $ of firms with 2+ channels.
@@ -136,7 +147,7 @@ SELECT 'PAIRS' AS part, ds, a AS col, b AS col2, shape AS item, links AS n_value
        CAST(NULL AS BIGINT) AS min_len, CAST(NULL AS BIGINT) AS max_len, CAST(NULL AS BIGINT) AS n_nondigit, n_a, n_b
 FROM s;
 
---4. Matches across datasets: each value of the left key by how many rows of the right dataset carry it (0, 1, 2+).
+--5. Matches across datasets: each value of the left key by how many rows of the right dataset carry it (0, 1, 2+).
 --   COL2: the right key.  CH_ZIP -> territories: 0 = no holder, 2+ = several holders.  S2 FIRM_CRD -> S1_CRD_CH: 0 = no
 --   source 1 channel for the firm, 1 = one, 2+ = several (crd_dist_override's case).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_matches AS
@@ -171,7 +182,7 @@ SELECT 'MATCHES' AS part, lds AS ds, lcol AS col, r AS col2, outcome AS item, n_
        CAST(NULL AS BIGINT) AS n_a, CAST(NULL AS BIGINT) AS n_b
 FROM o;
 
---5. The labels: each value of every D and KD column with rows and $, the 40 largest per column.
+--6. The labels: each value of every D and KD column with rows and $, the 40 largest per column.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_labels AS
 SELECT 'LABELS' AS part, ds, col, CAST(NULL AS VARCHAR) AS col2, val AS item, CAST(NULL AS BIGINT) AS n_values,
        n_rows, amt, pct_rows, pct_amt,
@@ -185,7 +196,9 @@ FROM (SELECT ds, col, val, n_rows, amt,
             FROM ssdb_integration.lr_strategy.tmp_prof WHERE kind IN ('D', 'KD') GROUP BY ALL) x) y
 WHERE rk <= 40;
 
---6. Checks, each by outcome.  COL: the check.  ZIP_FORM before padding; regions: does source 1's territory table
+--7. Checks, each by outcome.  COL: the check.  S2 DIST_CH -> S1 CHANNEL OF THE CRD: source 2's opportunity by its own
+--label and the one channel source 1 gives its CRD ('2+ CHANNELS', 'NO SOURCE 1 ROWS'), '(OVERRIDE)' where
+--crd_dist_override lists the CRD: the evidence for a source 2 -> source 1 channel map.  ZIP_FORM before padding; regions: does source 1's territory table
 --match the regions it is read from (s1_opp_sales.sql:677-694 reads only START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
 WITH
@@ -202,12 +215,25 @@ zips AS (
   UNION ALL SELECT 'S1_TERR', TRIM(zip), NULL FROM ssdb_integration.lr_strategy.<S1_TERRITORIES>
   UNION ALL SELECT 'S2_TERR', TRIM(zipcode), NULL FROM ssdb_integration.lr_strategy.<S2_TERRITORIES>
   UNION ALL SELECT 'S1_REGION_START', TRIM(start_zip), NULL FROM rgn),
+s1_crd AS (SELECT firm_crd, CASE WHEN COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) = 1
+                                THEN MIN(COALESCE(dist_ch, '(BLANK)')) ELSE '2+ CHANNELS' END AS s1_channel
+           FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
+ovr AS (SELECT DISTINCT TRIM(firm_crd) AS firm_crd FROM ssdb_integration.lr_strategy.crd_dist_override),
 c AS (
-            SELECT ds, 'ZIP_FORM' AS chk,
+            SELECT 'S2_OPP' AS ds, 'S2 DIST_CH -> S1 CHANNEL OF THE CRD' AS chk,
+                   COALESCE(o.dist_ch, '(BLANK)') || ' -> '
+                   || CASE WHEN o.firm_crd IS NULL THEN 'NO CRD' ELSE COALESCE(c1.s1_channel, 'NO SOURCE 1 ROWS') END
+                   || CASE WHEN v.firm_crd IS NOT NULL THEN ' (OVERRIDE)' ELSE '' END AS outcome,
+                   SUM(o.n) AS n, SUM(o.amt) AS amt
+            FROM ssdb_integration.lr_strategy.tmp_opp_s2 o
+            LEFT JOIN s1_crd c1 ON c1.firm_crd = o.firm_crd
+            LEFT JOIN ovr v ON v.firm_crd = o.firm_crd
+            GROUP BY ALL
+  UNION ALL SELECT ds, 'ZIP_FORM',
                    CASE WHEN z IS NULL OR z = '' THEN 'missing' WHEN TRANSLATE(z, '0123456789', '') <> '' THEN 'non-digit'
                         WHEN LENGTH(z) = 5 THEN '5 digits' WHEN LENGTH(z) < 5 THEN 'under 5 digits'
-                        ELSE 'over 5 digits' END AS outcome,
-                   COUNT(*) AS n, SUM(amt) AS amt
+                        ELSE 'over 5 digits' END,
+                   COUNT(*), SUM(amt)
             FROM zips GROUP BY ALL
   UNION ALL SELECT 'S1_REGION', 'START_ZIP_VS_END_ZIP',
                    CASE WHEN end_zip IS NULL THEN 'end missing' WHEN start_zip = end_zip THEN 'same' ELSE 'range' END,
@@ -227,7 +253,7 @@ SELECT 'CHECKS' AS part, ds, chk AS col, CAST(NULL AS VARCHAR) AS col2, outcome 
        CAST(NULL AS BIGINT) AS n_a, CAST(NULL AS BIGINT) AS n_b
 FROM c;
 
---7. Everything, one result set: download as CSV.
+--8. Everything, one result set: download as CSV.
 SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_cols
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_pairs
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_matches
