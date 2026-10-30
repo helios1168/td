@@ -19,6 +19,10 @@ const sources = [
   "  at the version whose sha256 prefix the citing log entry pins (check with `shasum -a 256`)",
   "- run outputs the entries name: " + td + "/data/safe/*.csv (the owner's runs; counts and $ only)",
   "- the archived log: `git show archive/snowflake-2026-10:tools/snowflake/DATASET_LOG.md` (a cite 'archived log, line N')",
+  "- the superseded query " + td + "/mm_query.sql (hub root, no pin) and the archived variants " + td + "/data/safe/_archive_2026-10/hub_root/*.sql",
+  "- owner quotes dated 2026-10-30 or later: the session transcripts (session_search, project td-snowflake-v2); earlier ones: the archived log",
+  "Granted for this task (the supervisor's standing answer; do not ask): read-only local commands, shasum -a 256, wc, nl, sed -n,",
+  "awk or python3 -c over the CSVs, git check-ignore -v in " + td + ". No writes anywhere, no network.",
 ];
 
 const fixedClaims = [
