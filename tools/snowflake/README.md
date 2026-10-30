@@ -8,7 +8,7 @@ Read `DATASET_LOG.md`, Conventions, before writing SQL here: table variables, on
 |---|---|
 | `DATA_MODEL.md` | what the analysis's objects, maps, states and views are |
 | `DATASET_LOG.md` | conventions, settled decisions, open questions, dated findings |
-| `01_opportunity.sql` | layer 01: both sources' opportunity routed by firm, as temporary tables (`TMP_O1_FIRM`, `TMP_O1_CELLS_S1`, `TMP_O1_CELLS_S2`); one result set of views 1, 2a, 2b, 3 by label, scope and checks. Test: `sh 01_opportunity_test.sh` |
+| `01_opportunity.sql` | layer 01: both sources' opportunity routed by firm, as temporary tables (`TMP_O1_FIRM`, `TMP_O1_CELLS_S1`, `TMP_O1_CELLS_S2`, and `TMP_O1_DATASET`, both sources stacked with wholesaler names, the table to look at); one result set of views 1, 2a, 2b, 3 by label, scope and checks. Test: `sh 01_opportunity_test.sh` |
 | `explore/profile.sql` | the opportunity profile: the firm key, firm 1's channel per firm, labels, holders, routing against `crd_dist_override`; one result set. Test: `sh explore/profile_test.sh` |
 | `explore/override_review.sql` | the firms where `crd_dist_override` and firm 1's route disagree, every name of their CRDs (Q38). Test: `sh explore/override_review_test.sh` |
 | `explore/amer_holder.sql` | parked with Q41 (EDJ, AMER out of scope): AMER's holder, a company's own regions, what covers its opportunity ZIPs, who sells to it (`SET company_id`). Test: `sh explore/amer_holder_test.sh` |

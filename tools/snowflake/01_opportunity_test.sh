@@ -69,7 +69,7 @@ sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
-    -e '/^--7\./,$d' "$here/01_opportunity.sql"
+    -e '/^--8\./,$d' "$here/01_opportunity.sql"
 cat <<'SQL'
 CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_o1_out;
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
@@ -146,6 +146,11 @@ SELECT
  chk('product map', (SELECT string_agg(product || '=' || amt, ' ' ORDER BY product) FROM ssdb_integration.lr_strategy.tmp_o1_cells_s2 WHERE firm_crd = '100'), 'INDEX=40.0 RILA=11.0'),
  chk('s1 holder: the lowest ID of two', (SELECT cur_holder FROM ssdb_integration.lr_strategy.tmp_o1_cells_s1 WHERE product = 'IOVA'), 'W1'),
  chk('s2 holder: the lowest ID of two', (SELECT cur_holder FROM ssdb_integration.lr_strategy.tmp_o1_cells_s2 WHERE broker_name = 'KILO'), 'T3'),
+ chk('dataset: in-scope cells, both sources', (SELECT COUNT(*) || ' ' || SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset), '22 1150.0'),
+ chk('dataset: out of scope left out', (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE broker_name IN ('ECHO', 'FOX', 'JULIET')), 0),
+ chk('dataset: s1 wholesaler names, lowest ID', (SELECT old_wholesaler || ' ' || new_wholesaler FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE product = 'IOVA'), 'N1 N1'),
+ chk('dataset: s2 RVPs, Chase moves', (SELECT old_wholesaler || ' ' || new_wholesaler || ' ' || old_channel || ' ' || new_channel FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE broker_name = 'CHASE' AND source = 'S2'), 'R2 R8 REGIONAL National (Chase)'),
+ chk('dataset: s1 by new channel', (SELECT SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S1' AND new_channel = 'Wells WH'), 350),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name LIKE 'tmp_o1%' AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT '01_opportunity_test: ok';
 SQL

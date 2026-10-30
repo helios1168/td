@@ -747,3 +747,16 @@ Choices made in the build (session; each simple, recorded with its reason; the f
 The layer 01 entry gave 0.23% of source 1's $ as the size of the blank-channel choice. The second run says otherwise
 (the entry "the opportunity profile, second run"): blank rows in a firm that has a channel are 2 rows, $0.00B; the
 0.23% is firms with no channel at all, UNMAPPED and without a holder under either choice. Key decisions corrected.
+
+### 2026-10-30: layer 01's dataset; holders stay at channel x ZIP
+
+> **Owner, 2026-10-30:** "that's actually fine lets keep it at the channel x zip level for now. produce final table where I can look at opportunity by source, firm, channel, product, firm, etc"
+
+Settled for now: holders come from the territory tables by channel x ZIP; the opportunity feed's `TERRITORY` and
+`WHOLESALER_NAME` are not used. `01_opportunity.sql` statement 6 builds `TMP_O1_DATASET`: both sources' cells in
+scope, stacked (`SOURCE`), one row per ZIP x CRD x broker name x product x old channel, with the old and new channel,
+territory channel and wholesaler (ID and name: firm 1's `WHSLR_NM`, firm 2's territory `RVP`), how the new channel was
+found, and the opportunity. Firm is CRD x broker name (no parent or display name: those come through the company ID);
+firm 2's old channel is its own label (session defaults, offered 2026-10-30, not objected to). Names stay in Snowflake:
+the CSV that comes here is still the summary. DuckDB test: 74 checks; dropping the scope filter or naming the new
+wholesaler from the old ID fails it.
