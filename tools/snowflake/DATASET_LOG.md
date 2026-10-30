@@ -77,16 +77,17 @@ view.
 |---|---|---|
 | Q2 | What does the opportunity measure: the whole market, or what a source can address? | 2026-10-20 |
 | Q6 | Is N one set of new labels for both sources (ρ₂ for source 2)? | 2026-10-20 |
-| Q7 | Same ZIP basis for opportunity and sales? Source 1's sales ZIP is the advisor's primary address (`mm_query.sql:100`). | 2026-10-20 |
+| Q7 | Same ZIP basis for opportunity and sales? Source 1's sales ZIP is the advisor's primary address (`s1_opp_sales.sql:100`). | 2026-10-20 |
 | Q17 | Sellers with no territory: whose numbers? | 2026-10-21 |
 | Q21 | Opportunity and sales with no distributor (⊥_D): which new channel? | 2026-10-24 |
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
 | Q27 | Which CRDs do the channel rules split by broker name (the split list)? Does I3 hold for every distributor, or only listed ones (the rest carry their current label forward)? Can product split a distributor's new channel? Folds in Q16 and Q20. | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
-| Q29 | τ_s for new channels such as National: covered by ZIP, by distributor-tied territories (`mm_query.sql:691` filters them out), or the current holder kept (`mm_query.sql:718`)? Listed distributors: settled 2026-10-28. Folds in Q13. | 2026-10-29 |
+| Q29 | τ_s for new channels such as National: covered by ZIP, by distributor-tied territories (`s1_opp_sales.sql:692` filters them out), or the current holder kept (`s1_opp_sales.sql:719`)? Listed distributors: settled 2026-10-28. Folds in Q13. | 2026-10-29 |
 | Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
 | Q32 | Does a source's market include products it does not sell? (Settled before as "the products where it has positive sales"; reopened 2026-10-30.) | 2026-10-30 |
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
+| Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 
 ## Log
 
@@ -152,3 +153,57 @@ below are to that version. Findings from the session's reading; nothing run yet.
 | 2 | Two current labels for split policies: `IFA/IMO` (`:18` `THEN 'IFA/IMO'`) and `FI/IMO` (`:21` `THEN 'FI/IMO'`). The IMO rule tests only `IFA` (`:418` `case when (iw.sales_district_name like 'IMO%' and fo.dist_ch = 'IFA') then 'IMO'`), so it leaves them as they are; a territory lookup on the label finds no holder unless the territories carry them. | `:18`, `:21`, `:418` | Q33 |
 | 3 | The window is two years (`:28`, `:117` `TO_DATE(srd.sales_date) BETWEEN '2024-01-01' and '2025-12-31'`); fiscal year 2025 is kept downstream on `fiscal_yr` (Settled). | `:28`, `:117` | none |
 | 4 | CRD is blank (`:99` `, '' as firmcrd --get firm_crd  --added`); the company ID is the key (`:97`), so source 1's sales reach CRD through `mm_map`, as `DATA_MODEL.md` has it. | `:97`, `:99` | E4 |
+
+### 2026-10-30: the owner's source 1 opportunity and sales query; which steps are the shared transformations
+
+> **Owner, 2026-10-30:** "this query is how we currently produce firm 1's opporunity and sales data that feeds the union table. The key item here is to identify which parts of the logic transform opportunity / firm / channel and other relevent items. as these will be the transformations we want to apply to both source firms's market metrics based firm / opportunity data."
+
+Saved verbatim as `$TD_REPO/owner_sql/s1_opp_sales.sql` (git-excluded, 786 lines, sha256 `6262e2f93bbd…`); cites
+below are to that version, and `DATA_MODEL.md` and the open index now cite it instead of `mm_query.sql`. It is
+`mm_query.sql` plus two broker-name → company-ID rows (`:477`-`:479`, dated 10/29 in the file); the rest differs only
+in whitespace. Its lines 1-435 equal `s1_sales.sql` (`92fabcc00478…`) except the commented table name on line 3.
+Reading only; nothing run.
+
+**Each step, by kind.** Layer 1 is conformance per source, layer 3 the rule tables both sources pass through
+(`DATA_MODEL.md`, Pipeline). Names and IDs are counted, not quoted.
+
+| step | lines | acts on | kind | in the rebuild |
+|---|---|---|---|---|
+| sales filters, net-zero policies, split-policy labels, MGA channel, long labels shortened, sales product map, ZIP from the advisor's address, IMO by the seller's district | `:11`-`:435` | source 1 sales | conformance, source 1 | `s1_sales.sql` as is, then `mm_map` to CRD; its label is λ₁ |
+| one company's sales forced to PRI | `:419` | sales channel | κ rule; the same company is in the opportunity rule `:459` | one κ table row, applied to sales and opportunity alike |
+| product: market metrics product line × VA type (`:453` `SELECT CASE WHEN va_product_type = 'IOVA' then 'IOVA'`) | `:453`-`:458` | opportunity product | shared: both sources' opportunity is in this format | product map table |
+| current channel: feed channel overridden by company ID (3 IDs), by broker name (7 names), one feed label renamed; first match wins | `:459`-`:470` | opportunity channel | shared κ rules | κ table on CRD and broker name, with a priority; the company IDs re-keyed to CRD |
+| distributor key: broker name → company ID (4 rows), company 0 → its client firm ID list, company 0 without one → NULL | `:475`-`:483` | opportunity firm | conformance: market metrics → source 1's company ID | dropped: opportunity keeps the market metrics CRD and broker name (if `wc_market_metrics_opportunity` carries CRD; `explore/schema.sql` shows) |
+| opportunity with no company ID dropped (`:500` `WHERE original_cbd_id IS NOT NULL`) | `:500` | opportunity $ | a loss, not reported | kept as ⊥_D, its $ reported |
+| a company-ID list resolved by matching source 1's sales on seven columns, else the first ID | `:511`-`:594` | opportunity firm | conformance that reads sales | dropped with the row above |
+| fiscal year as text; opportunity ZIP padded to 5 (`:599`); sales ZIP `LEFT(a.zip_cd, 5)`, not padded (`:100`) | `:471`-`:472`, `:599`, `:100` | keys | conformance | 5-character ZIP text in every dataset |
+| sales joined to opportunity on fiscal year, ZIP, company, product, channel, state and seller = the feed's `territory` (`:634`-`:640`); opportunity-only rows appended (`:644`-`:675`) | `:439`-`:449`, `:617`-`:675` | both | glue | dropped: stacked, not joined (proposal below) |
+| territories: channel-level regions plus one company's regions, two labels renamed, ZIP `left(gr.start_zip,5)` | `:677`-`:694` | holders | conformance, per source's territory table | territories table (source, channel, ZIP, holder) |
+| new channel by company-ID list (6 IDs, 4 labels), else the current label (`:707` `else iwn.dist_ch`) | `:703`-`:707` | channel | shared ν_D; ρ is the same label | ν_D table on CRD |
+| holder looked up on the current label and ZIP | `:719` | holders | shared mechanism; τ = κ | territories joined on τ_s, the lowest ID where 2+ hold (Settled) |
+| parent and firm names from the master, then fixed names for 14 company IDs | `:722`-`:784` | display | shared; changes no number | display table |
+
+**Sales, against `s1_sales.sql`.** Identical through `:435`; both keep only the `ALL` rows (`:641`). After that this
+query:
+
+1. Gives each sales row the opportunity of its seven-column key (`:633`-`:640`). `opp_final` is unique on those
+   columns, so sales rows do not repeat there, but sales rows also differ by broker name, parent and wholesaler name,
+   so two sales rows on one key both carry the full opportunity. Check: `ALL` sales rows per seven-column key.
+2. Repeats sales and opportunity rows where 2+ wholesalers hold a channel × ZIP (`:719`) or the master has 2+ rows for
+   a company (`:740`). Check: sales total here = `s1_sales.sql`'s, per fiscal year.
+3. Replaces the sale's broker name with the master's (`:727`), keeps the wholesaler's name but not its ID (`:626`),
+   drops the ticket counts.
+4. Puts opportunity and a sale of the same cell on one row only if the sale's label is the opportunity's channel, its
+   seller is the feed's `territory` and its state (the policy's, `:101`) is the opportunity's. The IMO rule, the
+   split-policy labels and the MGA channel on sales, a seller other than the feed's wholesaler, or a policy state
+   that differs each put them on separate rows. Sales have no `IOVA` product (`:315`), so IOVA opportunity never
+   shares a row with a sale.
+
+**Proposal (session; Q34): stack, do not join.** Layer 1, per source: opportunity (source, fiscal year, ZIP, CRD,
+broker name on a split CRD, market metrics product line and VA type, feed channel, $); sales (the same key, λ_s,
+credited seller, $); territories (source, channel, ZIP, holder). Layer 2: one long table, both measures of both
+sources, with `SOURCE` and `MEASURE` columns; nothing is matched row to row. Layer 3: the rule tables joined on the
+key (product map, κ, ν_D, τ, territories, display), so source 2 passes through the same rows. A view puts opportunity
+and sales side by side by grouping on its grain with `SUM(CASE WHEN MEASURE = 'OPP' ...)`: labels that differ cost no
+rows, totals hold by construction (I4), and Q28 becomes which label column a view groups on, not a join condition.
+The feed's `territory` and the state leave the key: holders come from the territories table, and ZIP gives the state.

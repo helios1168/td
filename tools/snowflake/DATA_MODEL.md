@@ -4,7 +4,8 @@ The analysis is rebuilt from this model (owner, 2026-10-29). Every output is a m
 `GROUP BY` the map's value, `SUM`), so the model is complete when every map is defined. Status: **given** (in the
 data), **settled** (rule in `DATASET_LOG.md` Settled), **open** (its question in the log's index), **parked**. A SQL
 file names the symbols it implements; where a query and this file disagree, fix this file. Derivation:
-`notes/2026-10-29_snowflake-conceptual-model-research.md`.
+`notes/2026-10-29_snowflake-conceptual-model-research.md`. `s1_opp_sales.sql:N` cites the owner's query in
+`$TD_REPO/owner_sql/` at the version its `DATASET_LOG.md` entry pins.
 
 The two source firms are analysed separately, each with its own data, on one common market metrics schema (owner,
 2026-10-29 and 2026-10-30). Everything below is per source s; only Z, P, D and N are shared, and nothing adds across
@@ -43,14 +44,14 @@ CRD with 2+ broker names is on it, or every rule treats its names alike).
 | map | type | meaning | status |
 |---|---|---|---|
 | credit | sale → W_s | who is credited with a sale (not necessarily who caused it) | given, never changes |
-| κ_s | X → C_s | current channel of a cell: source s's feed channel plus its distributor rules (`mm_query.sql:461-472`) | given |
-| λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`mm_query.sql:420`, the IMO rule) | given; λ_s = κ_s? Q28 |
-| ν_D | listed D → N | the new label of a listed distributor (`mm_query.sql:701-706`; the firm overrides) | settled (lists in the log) |
-| ρ_s | C_s → N | the new label a current label carries forward (`mm_query.sql:706`, `else iwn.dist_ch`) | given for source 1 (same label); Q6 |
+| κ_s | X → C_s | current channel of a cell: source s's feed channel plus its distributor rules (`s1_opp_sales.sql:459-470`) | given |
+| λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; λ_s = κ_s? Q28 |
+| ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides) | settled (lists in the log) |
+| ρ_s | C_s → N | the new label a current label carries forward (`s1_opp_sales.sql:707`, `else iwn.dist_ch`) | given for source 1 (same label); Q6 |
 | ν | X → N | new channel of a cell: ν_D(d) for a listed d, else ρ_s(κ_s(x)) | I3 for every distributor? Q27 |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
-| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`mm_query.sql:718`); new channels such as National: Q29 |
+| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`); new channels such as National: Q29 |
 
 ## States and views
 
