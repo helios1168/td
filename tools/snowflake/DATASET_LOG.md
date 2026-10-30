@@ -170,7 +170,7 @@ view.
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q42 | Source 2's sales: what is `MM_AMOUNT` beside `SALES_AMOUNT`? (Q36's second half; its first half, the opportunity period, is settled.) | 2026-10-30 |
-| Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
+| Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry; checks: `explore/lpl_checks.sql`)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
@@ -802,3 +802,15 @@ copies `MM_OPP` onto every sales row of a seven-column key. Firm 2's opportunity
 no firm layer, so A1-A4 and B1 cannot arise there. Layer 01 has none of these but B1. Two checks given in chat, tested
 in DuckDB on made-up rows (not committed): LPL's feed rows (by name and by their CRDs) with the company ID `:475-482`
 gives them; every company with regions of its own, with its master name.
+
+### 2026-10-30: the LPL checks committed (`explore/lpl_checks.sql`)
+
+> **Owner, 2026-10-30:** "put these checks in github"
+
+The two checks of the Q43 entry, as one Run All file with one result set (parts `LPL FEED ROWS`, `OWN REGIONS`). One
+change from the chat version: the CRD lookup skips blank CRDs, so an LPL row with a blank CRD no longer pulls in every
+other blank-CRD row of the feed. Snowflake: ILIKE (https://docs.snowflake.com/en/sql-reference/functions/ilike) and
+`SUM(...) OVER ()` (.../functions/sum) read 2026-10-30. DuckDB test `explore/lpl_checks_test.sh`: 15 checks on the
+file's own last statement; nine mutations each fail it (the CRD lookup dropped, company 0 kept instead of dropped, the
+blank-CRD guard removed, the LPL list made case-insensitive, expired wholesaler rows, regions or master names read,
+channel-level regions kept, the regions part left out of the result).
