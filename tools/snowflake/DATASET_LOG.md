@@ -577,3 +577,15 @@ The owner's run of `explore/profile.sql` at `0cd7229`: `$TD_REPO/data/safe/profi
 - **Products.** Source 1: RILA is RILA in both columns; FA and IA carry -77777; VA carries IOVA or TRVA. Source 2: VA
   carries IOVA, RILA or TRVA; FA and IA no VA type. The one map of `DATA_MODEL.md` (p) holds for both.
 - Q38 restated with these numbers; Q41 new.
+
+### 2026-10-30: the override review query
+
+> **Owner, 2026-10-30:** "draft a query so I can see details on the cases in 2"
+
+`explore/override_review.sql`: one row per CRD x broker name of every CRD where `crd_dist_override` and firm 1's route
+disagree (the 2.48% of source 2's $ in the second profile run), all the CRD's names, the disputed ones first: status,
+the override's channel, firm 1's route and whether it came from the name or the CRD, firm 1's channel mix for the name
+in $ shares, its vendor `DIST_CH`, vendor codes, company IDs and the rules that fired, its fiscal year 2025
+opportunity, source 2's own labels, opportunity and share, and the override's row count. Firm names and opportunity $
+appear (Conventions, Masking: allowed here). The rules are `profile.sql`'s; the DuckDB test
+(`explore/override_review_test.sh`, 16 checks) fails if the two copies differ, and a flipped status test fails it.
