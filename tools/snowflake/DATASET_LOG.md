@@ -39,6 +39,13 @@ channels."
   `IN` / `EXISTS` subqueries go only in `WHERE`; no named `WINDOW` clause.
 - **Words.** "Source firm" (firm_1, firm_2) for the insurers, "distributor" for the broker-dealer; the rest of the
   vocabulary is in `DATA_MODEL.md`. A channel is a sales channel, never a "desk".
+- **Audit.** `audit.js` checks this directory's documents against its code: a reader lists the claims of `DATA_MODEL.md`
+  (the reference), `README.md` and the log entries since a date, plus fixed convention checks; auditors verify each
+  against the SQL, the owner's queries, the run outputs and the archived log, one row per claim. Run it after a step
+  that changes the model, the log or the SQL, and before the owner runs a new file:
+  `subagent({ workflow: "tools/snowflake/audit.js", cwd: "<worktree>", async: true, args: { since: "<first date not
+  yet audited>" } })`. Its outcome is a log entry: counts by tag, every Weakened and Falsified row with its fix (owner,
+  2026-10-30: "can we save option 1 as a repeatable workflow for this snowflake-related portion of the project?").
 - **Owner's queries.** Kept verbatim in `$TD_REPO/owner_sql/` (git-excluded). A cite into one names the file's
   sha256 prefix in its log entry; a changed file gets a new entry that re-cites, and old cites stay with their hash.
 - **Masking** (for `tools/snowflake/` only; the repo's `AGENTS.md` rule holds everywhere else). Never a person's name,
