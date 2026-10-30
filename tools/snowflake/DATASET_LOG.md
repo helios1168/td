@@ -107,6 +107,9 @@ channels."
   reassigned; source 2's through Q39 (WH → BD, FI → BK) (owner, 2026-10-30: "in the new state, wells WH, wells FI, and
   National (Chase) should go to the wholesaler who held those firms in their original distribution channel (WH for wells
   WH, FI for wells FI and National (Chase))"). The firm overrides' holder rule stands (2026-10-28). Key decision.
+- Source 2's opportunity table is fiscal year 2025, the same period as source 1's (owner, 2026-10-30: "q36 is 2025").
+- A source's market includes products it does not sell: each source's market is all of its opportunity, every product
+  (owner, 2026-10-30: "q32 yes"; replaces "the products where it has positive sales").
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
   Masking.
@@ -158,11 +161,10 @@ view.
 | Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
 | Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
-| Q32 | Does a source's market include products it does not sell? (Settled before as "the products where it has positive sales"; reopened 2026-10-30.) | 2026-10-30 |
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
-| Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
+| Q42 | Source 2's sales: what is `MM_AMOUNT` beside `SALES_AMOUNT`? (Q36's second half; its first half, the opportunity period, is settled.) | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
@@ -692,3 +694,11 @@ Whether each listed firm's firm 1 route is that channel (Chase's FI, for one) is
 keyed on CRD x broker name in the build. `explore/profile.sql`: `tmp_scope_out` takes a kind (CHANNEL or COMPANY) and
 AFS as company 438; a firm is out if its firm 1 channel or any of its source 1 rows' company IDs is listed. DuckDB
 test: 81 checks.
+
+### 2026-10-30: Q36 (period) and Q32 settled
+
+> **Owner, 2026-10-30:** "q36 is 2025, q32 yes."
+
+Settled: source 2's opportunity table is fiscal year 2025; a source's market includes products it does not sell.
+Q36's second half (what `MM_AMOUNT` is on source 2's sales) is sales, so it continues as Q42. The opportunity
+deliverable now has no open question; Q34 (stack, do not join) bites only when sales come in.

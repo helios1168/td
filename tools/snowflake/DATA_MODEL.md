@@ -16,9 +16,9 @@ are shared, and nothing adds across sources.
 | symbol | meaning | status |
 |---|---|---|
 | S = {1, 2} | source firms (the insurers) | given |
-| Z, P | ZIPs, products | given; a source's products: all, or those it sells? Q32 |
+| Z, P | ZIPs, products | given; a source's market has every product, sold or not (settled 2026-10-30, Q32) |
 | D | distributors, keyed as in the market metrics schema: CRD x broker name; ⊥_D for none | settled key (2026-10-30) |
-| X = Z × D × P | market cells, one period (fiscal year 2025; source 2's period: Q36), with projections π_Z, π_D | given |
+| X = Z × D × P | market cells, one period (fiscal year 2025, both sources; settled 2026-10-30, Q36), with projections π_Z, π_D | given |
 | W_s | wholesalers of source s; *seller* and *holder* are roles, not kinds of person | given |
 | C_s | source s's current channel labels | given |
 | N | the new channel labels | being designed; one set for both sources, in firm 1's channels (settled 2026-10-30, Q6) |
@@ -103,7 +103,7 @@ decision, `DATASET_LOG.md`).
 
 | step | source 1 | source 2 | status |
 |---|---|---|---|
-| M_s | `WC_MARKET_METRICS_OPPORTUNITY.GLOBAL_SALES`, fiscal year 2025 | `…_OPP_ORIGINAL.OPP` | source 2's period: Q36 |
+| M_s | `WC_MARKET_METRICS_OPPORTUNITY.GLOBAL_SALES`, fiscal year 2025 | `…_OPP_ORIGINAL.OPP`, fiscal year 2025 (the table has no year column) | settled 2026-10-30 (Q36, Q32: every product) |
 | z | `ZIP_CODE` (text), padded to 5 | `ZIP_CODE` (a number), padded to 5 | given |
 | d | `FIRM_CRD` x `BROKER_NAME` | the same columns | settled; both full; a CRD over 2+ channels splits by broker name (4 CRDs, 12 names) |
 | p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED | the same columns and map; RILA is a VA type here | settled (Q22); the map is the session's for both: the owner's (`s1_opp_sales.sql:453-458`) reads RILA from `PRODUCT_LINE` only, which source 2 leaves VA |
