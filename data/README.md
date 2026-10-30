@@ -15,6 +15,8 @@ Nothing here is tracked except this file.
   sha256 are in `reference/2025/MANIFEST.json`, which is committed; the files census.gov will
   not serve are listed there as unavailable (`td.geo.UNAVAILABLE`). The HUD crosswalk (td#63,
   G2) will be cached here too.
+- `data/safe/` (gitignored) holds the synthetic table `tools/snowflake/` builds at work
+  (`td_safe.csv.gz`): real ZIPs and channels, every name and number made up.
 - The confidential extract, `instance_descaled*.json.gz`, lives at the hub root on m2 and is
   gitignored. It is produced on the work machine by `export/export_instance.py`; see
   `docs/archive/memory/workflow/confidential-data.md` for what may and may not leave it.
