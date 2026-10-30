@@ -126,8 +126,9 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q38 | The route's level and the override: firm 1's channel per CRD x broker name, or per ZIP x CRD x broker name (they differ where firm 1's channel is blank in some ZIPs)? Where `crd_dist_override` differs from the route, which wins? | 2026-10-30 |
+| Q38 | The route's level and the override. The second profile run (2026-10-30) finds one firm 1 channel per CRD x broker name for 99.77% of source 1's $ and 99.71% of source 2's: route per CRD x broker name? Where `crd_dist_override` differs from that route (FI against firm 1's WH, 2.48% of source 2's $), which wins? | 2026-10-30 |
 | Q39 | For each firm 1 channel, which source 2 territory channel holds source 2's opportunity routed to it in the new state? | 2026-10-30 |
+| Q41 | AMER (company 805's channel, 1.39% of source 1's $) has no territory in source 1's table: who holds it, now and in the new state? | 2026-10-30 |
 
 ## Log
 
@@ -552,3 +553,27 @@ notes only. DuckDB test: 65 checks; undoing the distinct-holder change fails one
 and `6c8e932` (a cite). **Not changed:** K2 (document metadata in another thread's note); the layer-file claims (C167,
 C168, C387: none written yet); the uniqueness claims made before the rules were applied (C32, C103, C119, C120, C579:
 the profile's next run measures them after).
+
+### 2026-10-30: the opportunity profile, second run (firm 1's rules applied)
+
+The owner's run of `explore/profile.sql` at `0cd7229`: `$TD_REPO/data/safe/profile_2026-10-30-0444.csv`, 389 rows.
+
+- **Firm 1's rules.** Vendor code 08 becomes AMER and code 10 PRI through the company-ID rules (6,537 and 14,482 rows,
+  each code's own count); code 13 is the one-firm label (EDJ). The pairs now show it row by row: code 01 and 13 are
+  1 : 1 with their feed labels, code 11 holds FI and WH, codes 08, 10 and NO CHANNEL have no feed label. Corrects the
+  first run's entry: the blank for 08 and 10 was not firm 1's last word; after the rules 0.23% of source 1's $ (1,436
+  rows) has no channel.
+- **One channel per firm.** After the rules every CRD x broker name still has at most one channel (pair shapes); the
+  firm-level route gives one channel to 99.77% of source 1's $ (UNMAPPED 0.23%; a blank row in a firm with a channel:
+  2 rows, $0.00B) and to source 2's $: IFA 42.82%, FI 41.60%, WH 12.71%, PRI 2.58%, UNMAPPED 0.25%, no source 1 rows
+  0.05%. The ZIP-level route adds nothing over it.
+- **The route against `crd_dist_override`** (source 2's $): no override 66.39% (route found 66.22, UNMAPPED 0.12, no
+  source 1 rows 0.05); override = route 31.01%; override FI where the route is WH 2.48% ($4.46B); the override fills an
+  UNMAPPED route 0.13% (IFA 0.08, FI 0.04, WH 0.01). The table has 59 keys, all CRD x broker name, none with 2+
+  channels, none outside source 2; 38 keys repeat (866 rows): a join on it must take distinct keys.
+- **Holders.** Source 1's opportunity finds a holder for 98.28% of its $ on firm 1's channel; 1.49% has none, most of it
+  AMER, a channel with no territory in source 1's table (Q41); 0.23% has no channel. Source 2's territory codes pair
+  1 : 1 with their names (BD broker dealers, BK bank, FP financial planners, RA regional agency).
+- **Products.** Source 1: RILA is RILA in both columns; FA and IA carry -77777; VA carries IOVA or TRVA. Source 2: VA
+  carries IOVA, RILA or TRVA; FA and IA no VA type. The one map of `DATA_MODEL.md` (p) holds for both.
+- Q38 restated with these numbers; Q41 new.
