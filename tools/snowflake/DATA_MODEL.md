@@ -94,6 +94,30 @@ both at once.
    source), display names (shared). A rule list in the owner's query becomes rows of a rule table, with a priority
    where two rows can match one key.
 
+## Opportunity routed by firm (the first deliverable)
+
+Owner, 2026-10-30: opportunity first, routed by firm on the market metrics schema; sales later. Per source, one row
+per cell x = (z, d, p): its market, current channel and holder, new channel and holder (views 1, 2a, 2b, 3).
+
+| step | source 1 | source 2 | status |
+|---|---|---|---|
+| M_s | `WC_MARKET_METRICS_OPPORTUNITY.GLOBAL_SALES`, fiscal year 2025 | `…_OPP_ORIGINAL.OPP` | source 2's period: Q36 |
+| z | `ZIP_CODE` (text), padded to 5 | `ZIP_CODE` (a number), padded to 5 | given |
+| d | `FIRM_CRD`, plus `BROKER_NAME` on a split CRD | the same columns | key settled; how full, which CRDs split: profile, Q27 |
+| p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE` (`s1_opp_sales.sql:453-458`) | the same columns; RILA is a VA type here | settled (Q22); real labels: profile |
+| κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` → source 2's channel; NO CHANNEL dropped | settled (Q19); real labels: profile |
+| current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
+| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else the firm's route | the same tables | the route: Q38 |
+| new holder | H_s(τ_s(x), z) | the same | listed firms settled; new channels such as National: Q29 |
+
+The firm's route (Q38), two readings. (A) A cell carries its own current channel forward, ρ_s(κ_s(x)), each source in
+its own labels; a firm can sit in several channels. (B) One channel per firm for both sources: source 1's κ₁ of the
+CRD where it has one, the owner's `crd_dist_override` (at work) where it has 2+, so I3 holds for every distributor and
+N is in source 1's labels. B is the archived rule for source 2 (owner, 2026-10-25, `DATASET_LOG.md`, 2026-10-30).
+
+Rules keyed on a company ID (κ₁'s, ν_D's, the firm override) reach source 2 only re-keyed to CRD and broker name.
+Source 1's rows carry both, so the re-keying is read off them; the profile's company ID - CRD pairs say how clean it is.
+
 ## Vocabulary
 
 | instead of | say |

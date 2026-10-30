@@ -91,6 +91,7 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
+| Q38 | The firm's route (`DATA_MODEL.md`, Opportunity routed by firm): does a firm off the override list keep each cell's own current channel (A), or take one channel for both sources, source 1's for its CRD with `crd_dist_override` where source 1 gives 2+ (B)? | 2026-10-30 |
 
 ## Log
 
@@ -249,3 +250,31 @@ against the regions, ZIP form per dataset, totals by year). It answers what the 
 they are dropped; the tier-2 extract shrinks to a slice for testing the rebuild's SQL. Tested in DuckDB on made-up
 tables with the real columns, one planted case per outcome (`explore/profile_test.sh`, 30 checks); a wrong expected
 value and a misspelled column each stop it.
+
+### 2026-10-30: opportunity first, routed by firm; the profile narrowed to it
+
+> **Owner, 2026-10-30:** "ok first lets think through the immediate ask. We need to have opportunity data, routed by firm based on the market metrics schema as the top priority. sales can come later. Please first develop a deep understanding of our data model as it relates to opportunity and focus the profiling to the relevent items to get that deliverable done"
+
+`DATA_MODEL.md` has a new section, Opportunity routed by firm: each step for each source with its table, columns and
+status. One rule from the archived log bears on it and is not in this log's Settled; it is Q38 until the owner
+confirms it for the rebuild:
+
+> **Owner, 2026-10-25** (archived log, line 1351): "no, we need to match firm 2 dist_ch based on crd, in perfect alignment with what is done for firm 1, the rest should be flagged for manual review"
+
+The manual review was done and loaded into `ssdb_integration.lr_strategy.crd_dist_override` (`FIRM_CRD`,
+`BROKER_NAME`, `DIST_CH`; a blank broker name covers the whole CRD), archived log line 1380. What the archived runs
+measured, on source 2's opportunity: source 2's file names its channels differently from the vendor table (line
+1299), and each of its labels has a main source 1 channel, with 8.6% of the opportunity at firms whose source 1
+channel is not that main one (line 1339). That 8.6% is roughly where readings A and B of Q38 differ for source 2;
+the profile measures it again, by CRD.
+
+The profile (`explore/profile.sql`) now covers opportunity only; its sales half is in commit `73774ed`. It reads source
+1's market metrics opportunity (fiscal year 2025), source 2's opportunity table, both territory tables,
+`crd_dist_override` and source 1's regions, and answers: how full the firm key is (CRD, broker name, company ID) by $;
+how CRD, broker name and company ID nest (which CRDs split, how cleanly company-ID rules re-key to CRD); whether a firm
+has one channel (CRD - channel pairs, each source); the product and channel labels of both sources and both territory
+tables; which ZIP x channel has 0, 1 or 2+ holders, by $; for source 2's opportunity, whether its CRD has one source 1
+channel, several, or none, and whether `crd_dist_override` covers it; ZIP forms, region ZIP ranges, source 1's periods.
+Source 1's channel is the vendor's `DIST_CH` before the query's rules (they hold names; they become rule tables at
+work). Tested in DuckDB (`explore/profile_test.sh`, 27 checks, one planted case per outcome); a wrong expected value
+stops it.

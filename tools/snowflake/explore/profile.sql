@@ -1,172 +1,98 @@
---Profile of every table the rebuild reads: how each one's keys relate, how the tables join, which labels each uses,
---and the checks the owner's two queries raised (DATASET_LOG.md, 2026-10-30).  Counts, $ and the labels of channel,
---product and flag columns only; no ID or name value leaves the temporary tables.
---EDIT first (Find/Replace): <S1_TERRITORIES>, <S2_OPP>, <S2_SALES>, <S2_CRD_MAP>, <S2_TERRITORIES> are the
---LR_STRATEGY tables ending _TERRITORIES (source 1), _OPP_ORIGINAL, _SALES, _FIRM_CRD, _TERRITORIES (source 2);
---<S1_PRODUCT_4> is the fourth product line of s1_sales.sql:35.
+--Opportunity profile: what routing each source's opportunity by firm needs to know (DATA_MODEL.md, Opportunity routed
+--by firm).  Per source: how full the firm key is (CRD, broker name), whether a firm has one channel, the product and
+--channel labels, which ZIP x channel has 0, 1 or 2+ holders; across sources: whether source 2's firms have a source 1
+--channel.  Counts, $ and the labels of channel and product columns only; no ID or name value leaves the temporary
+--tables.  The sales half of this profile is in git history (73774ed).
+--EDIT first (Find/Replace): <S1_TERRITORIES>, <S2_OPP>, <S2_TERRITORIES> are the LR_STRATEGY tables ending
+--_TERRITORIES (source 1), _OPP_ORIGINAL and _TERRITORIES (source 2).  Reads crd_dist_override (2026-10-25).
 --Run All; download the last statement's result as CSV into $TD_REPO/data/safe/.
---Fiscal year 2025.  Source 1 sales: s1_sales.sql:116-126's filters (its net-zero policy step is not applied).
+--Source 1: fiscal year 2025, the vendor's own DIST_CH (the query's rules, s1_opp_sales.sql:459-470, not applied).
 --Source 2's opportunity table has no year column and is read whole.
 --Snowflake docs read 2026-10-30: GROUP BY ALL groups by every SELECT item without an aggregate, and a GROUP BY name
 --resolves to a table column before a SELECT alias (https://docs.snowflake.com/en/sql-reference/constructs/group-by),
 --so every grouping here is GROUP BY ALL; TRANSLATE drops source characters with no target character
---(https://docs.snowflake.com/en/sql-reference/functions/translate).
+--(https://docs.snowflake.com/en/sql-reference/functions/translate); VALUES takes column aliases
+--(https://docs.snowflake.com/en/sql-reference/constructs/values).
 use secondary roles all;
 
---1. Source 1's sales rows in scope, kept for 2 and the checks.
-CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_s1_sales AS
-SELECT policy_no, agent_tax_id, product_line, actual_sales_amount,
-       CAST(CAST(consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR) AS cbd_id, consol_broker_nm, mga_agent_cd, whslr_id,
-       duplicate_entry_in, src_delete_ind, reversal_cd, credit_type, trans_type
-FROM life_prod.lif_murkylake.sls_rpt_detail
-WHERE fiscal_yr = 2025
-  AND TO_DATE(sales_date) BETWEEN '2024-01-01' AND '2025-12-31'
-  AND bonus_rate <> 0
-  AND init_pay_in = 'Y'
-  AND consol_brkr_dlr_id <> '342'
-  AND life70_co_cd NOT IN ('VV', 'VB')
-  AND agent_tax_id IS NOT NULL
-  AND product_line IN ('RILA', 'INDEX', 'VARIABLE', '<S1_PRODUCT_4>', 'FIXED', 'SPIA/DIA');
-
---2. Each dataset as its distinct key combinations, with rows (N) and $ (AMT), in long form: one row per combination x
---column.  KIND K: a key (4 pairs it with the dataset's other keys, 5 matches it across datasets); KIND D: a label (6
---lists its values).  Values: text, trimmed, upper-cased; blank and '0' are missing.  CH_ZIP is channel | 5-digit ZIP.
+--1. Each dataset as its distinct key combinations, with rows (N) and $ (AMT), in long form: one row per combination x
+--column.  KIND K: a key (2 pairs it with the dataset's other keys, 3 matches it across datasets); D: a label (4 lists
+--its values); KD: both.  Values: text, trimmed, upper-cased; blank and '0' are missing.  IDs are whole-number text.
+--CRD_NAME is CRD | broker name; CH_ZIP is channel | 5-digit ZIP.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof AS
 WITH
-s1_sales AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT cbd_id, consol_broker_nm AS cbd_name, mga_agent_cd, whslr_id, product_line, duplicate_entry_in, src_delete_ind,
-         reversal_cd, credit_type, trans_type, COUNT(*) AS n, SUM(actual_sales_amount) AS amt
-  FROM ssdb_integration.lr_strategy.tmp_prof_s1_sales GROUP BY ALL)),
+s1 AS (SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, cbd_id, client_firm_id, NULLIF(TRIM(firm_crd), '') AS firm_crd,
+              UPPER(TRIM(broker_name)) AS broker_name, UPPER(TRIM(dist_ch)) AS dist_ch, channel, product_line,
+              va_product_type, global_sales
+       FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'),
+s2 AS (SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
+              CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
+              UPPER(TRIM(dist_ch)) AS dist_ch, CAST(channel AS VARCHAR) AS channel, product_line, va_product_type, opp
+       FROM ssdb_integration.lr_strategy.<S2_OPP>),
 s1_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT cbd_id, client_firm_id, firm_crd, broker_name, dist_ch, channel, product_line, va_product_type,
-         COUNT(*) AS n, SUM(global_sales) AS amt
-  FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025' GROUP BY ALL)),
+  SELECT cbd_id, client_firm_id, firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel,
+         product_line, va_product_type, COUNT(*) AS n, SUM(global_sales) AS amt
+  FROM s1 GROUP BY ALL)),
 s1_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, state, territory,
-         dist_ch || '|' || LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS ch_zip, dist_ch, COUNT(*) AS n, SUM(global_sales) AS amt
-  FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025' GROUP BY ALL)),
-mm_map AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT CAST(CAST(cbd_id AS DECIMAL(38, 0)) AS VARCHAR) AS cbd_id,
-         CAST(CAST(firm_client_id AS DECIMAL(38, 0)) AS VARCHAR) AS client_firm_id,
-         CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, broker_name, dist_ch,
-         CAST(CAST(channel AS DECIMAL(38, 0)) AS VARCHAR) AS channel, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM ssdb_integration.lr_strategy.mm_map GROUP BY ALL)),
-crd_to_cbd AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, CAST(CAST(cbd_id AS DECIMAL(38, 0)) AS VARCHAR) AS cbd_id,
-         firm, cbd_nm_best, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM ssdb_integration.lr_strategy.crd_to_cbd GROUP BY ALL)),
-s1_master AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (   -- the rows s1_sales.sql:70-79 keeps
-  SELECT cbd_id, master_id, cbd_name, master_name, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM (SELECT DISTINCT CAST(CAST(consol_brkr_dealer_id AS DECIMAL(38, 0)) AS VARCHAR) AS cbd_id,
-               master_consol_brkr_dealer_id AS master_id, consol_brkr_dealer_name AS cbd_name,
-               master_consol_brkr_dealer_name AS master_name
-        FROM life_prod.lif_murkylake.wc_edw_consol_brkr_dealer_mga_master
-        WHERE expiration_dte = '9999-12-31' AND consol_brkr_dealer_id <> 0 AND consol_brkr_dealer_id IS NOT NULL) m
-  GROUP BY ALL)),
-s1_mga_map AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT mga_agent_cd, channel, channel_calc, channel_override, COUNT(*) AS n, SUM(dollars_total) AS amt
-  FROM ssdb_integration.lr_strategy.mga_map GROUP BY ALL)),
-s1_whslr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT whslr_id, sales_district_id, distch, status_cd, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM life_prod.lif_murkylake.whslr GROUP BY ALL)),
+  SELECT zip, dist_ch || '|' || zip AS ch_zip, COUNT(*) AS n, SUM(global_sales) AS amt FROM s1 GROUP BY ALL)),
+s1_crd_ch AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (   -- one row per CRD x channel
+  SELECT DISTINCT firm_crd, dist_ch, 1 AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt FROM s1)),
 s1_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT whslr_id, new_dist_channel || '|' || LPAD(LEFT(TRIM(zip), 5), 5, '0') AS ch_zip, new_dist_channel,
+  SELECT whslr_id, LPAD(LEFT(TRIM(zip), 5), 5, '0') AS zip,
+         new_dist_channel || '|' || LPAD(LEFT(TRIM(zip), 5), 5, '0') AS ch_zip, new_dist_channel,
          COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
   FROM ssdb_integration.lr_strategy.<S1_TERRITORIES> GROUP BY ALL)),
 s2_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, broker_name,
-         CAST(CAST(channel AS DECIMAL(38, 0)) AS VARCHAR) AS channel, dist_ch, product_line, va_product_type,
-         COUNT(*) AS n, SUM(opp) AS amt
-  FROM ssdb_integration.lr_strategy.<S2_OPP> GROUP BY ALL)),
+  SELECT firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel, product_line,
+         va_product_type, COUNT(*) AS n, SUM(opp) AS amt
+  FROM s2 GROUP BY ALL)),
 s2_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
-         dist_ch || '|' || LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS ch_zip, dist_ch,
-         COUNT(*) AS n, SUM(opp) AS amt
-  FROM ssdb_integration.lr_strategy.<S2_OPP> GROUP BY ALL)),
-s2_sales AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, firm, parent_firm, channel, product, shareclass,
-         COUNT(*) AS n, SUM(sales_amount) AS amt
-  FROM ssdb_integration.lr_strategy.<S2_SALES> WHERE year = 2025 GROUP BY ALL)),
-s2_crd_map AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, firm, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM ssdb_integration.lr_strategy.<S2_CRD_MAP> GROUP BY ALL)),
+  SELECT zip, dist_ch || '|' || zip AS ch_zip, COUNT(*) AS n, SUM(opp) AS amt FROM s2 GROUP BY ALL)),
+s2_override AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
+  SELECT TRIM(firm_crd) AS firm_crd, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
+  FROM ssdb_integration.lr_strategy.crd_dist_override GROUP BY ALL)),
 s2_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT territory_id, rvp, channel || '|' || LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS ch_zip, channel, channel_name,
+  SELECT territory_id, rvp, LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS zip,
+         channel || '|' || LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS ch_zip, channel, channel_name,
          COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
   FROM ssdb_integration.lr_strategy.<S2_TERRITORIES> GROUP BY ALL)),
 lng AS (
-            SELECT 'S1_SALES' AS ds, rid, 'K' AS kind, 'CBD_ID' AS col, cbd_id AS v, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'K', 'CBD_NAME', cbd_name, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'K', 'MGA_AGENT_CD', mga_agent_cd, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'K', 'WHSLR_ID', whslr_id, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'DUPLICATE_ENTRY_IN', duplicate_entry_in, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'SRC_DELETE_IND', src_delete_ind, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'REVERSAL_CD', reversal_cd, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'CREDIT_TYPE', credit_type, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_SALES', rid, 'D', 'TRANS_TYPE', trans_type, n, amt FROM s1_sales
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CBD_ID', cbd_id, n, amt FROM s1_opp_firm
+            SELECT 'S1_OPP_FIRM' AS ds, rid, 'K' AS kind, 'CBD_ID' AS col, cbd_id AS v, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CLIENT_FIRM_ID', client_firm_id, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'BROKER_NAME', broker_name, n, amt FROM s1_opp_firm
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'DIST_CH', dist_ch, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CRD_NAME', crd_name, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'DIST_CH', dist_ch, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'CHANNEL', channel, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'ZIP', zip, n, amt FROM s1_opp_geo
-  UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'STATE', state, n, amt FROM s1_opp_geo
-  UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'TERRITORY', territory, n, amt FROM s1_opp_geo
   UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s1_opp_geo
-  UNION ALL SELECT 'MM_MAP', rid, 'K', 'CBD_ID', cbd_id, n, amt FROM mm_map
-  UNION ALL SELECT 'MM_MAP', rid, 'K', 'CLIENT_FIRM_ID', client_firm_id, n, amt FROM mm_map
-  UNION ALL SELECT 'MM_MAP', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM mm_map
-  UNION ALL SELECT 'MM_MAP', rid, 'K', 'BROKER_NAME', broker_name, n, amt FROM mm_map
-  UNION ALL SELECT 'MM_MAP', rid, 'D', 'DIST_CH', dist_ch, n, amt FROM mm_map
-  UNION ALL SELECT 'MM_MAP', rid, 'D', 'CHANNEL', channel, n, amt FROM mm_map
-  UNION ALL SELECT 'CRD_TO_CBD', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM crd_to_cbd
-  UNION ALL SELECT 'CRD_TO_CBD', rid, 'K', 'CBD_ID', cbd_id, n, amt FROM crd_to_cbd
-  UNION ALL SELECT 'CRD_TO_CBD', rid, 'K', 'FIRM', firm, n, amt FROM crd_to_cbd
-  UNION ALL SELECT 'CRD_TO_CBD', rid, 'K', 'CBD_NM_BEST', cbd_nm_best, n, amt FROM crd_to_cbd
-  UNION ALL SELECT 'S1_MASTER', rid, 'K', 'CBD_ID', cbd_id, n, amt FROM s1_master
-  UNION ALL SELECT 'S1_MASTER', rid, 'K', 'MASTER_ID', master_id, n, amt FROM s1_master
-  UNION ALL SELECT 'S1_MASTER', rid, 'K', 'CBD_NAME', cbd_name, n, amt FROM s1_master
-  UNION ALL SELECT 'S1_MASTER', rid, 'K', 'MASTER_NAME', master_name, n, amt FROM s1_master
-  UNION ALL SELECT 'S1_MGA_MAP', rid, 'K', 'MGA_AGENT_CD', mga_agent_cd, n, amt FROM s1_mga_map
-  UNION ALL SELECT 'S1_MGA_MAP', rid, 'D', 'CHANNEL', channel, n, amt FROM s1_mga_map
-  UNION ALL SELECT 'S1_MGA_MAP', rid, 'D', 'CHANNEL_CALC', channel_calc, n, amt FROM s1_mga_map
-  UNION ALL SELECT 'S1_MGA_MAP', rid, 'D', 'CHANNEL_OVERRIDE', channel_override, n, amt FROM s1_mga_map
-  UNION ALL SELECT 'S1_WHSLR', rid, 'K', 'WHSLR_ID', whslr_id, n, amt FROM s1_whslr
-  UNION ALL SELECT 'S1_WHSLR', rid, 'K', 'SALES_DISTRICT_ID', sales_district_id, n, amt FROM s1_whslr
-  UNION ALL SELECT 'S1_WHSLR', rid, 'D', 'DISTCH', distch, n, amt FROM s1_whslr
-  UNION ALL SELECT 'S1_WHSLR', rid, 'D', 'STATUS_CD', status_cd, n, amt FROM s1_whslr
+  UNION ALL SELECT 'S1_CRD_CH', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s1_crd_ch
   UNION ALL SELECT 'S1_TERR', rid, 'K', 'WHSLR_ID', whslr_id, n, amt FROM s1_terr
+  UNION ALL SELECT 'S1_TERR', rid, 'K', 'ZIP', zip, n, amt FROM s1_terr
   UNION ALL SELECT 'S1_TERR', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s1_terr
   UNION ALL SELECT 'S1_TERR', rid, 'D', 'NEW_DIST_CHANNEL', new_dist_channel, n, amt FROM s1_terr
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'K', 'BROKER_NAME', broker_name, n, amt FROM s2_opp_firm
+  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'K', 'CRD_NAME', crd_name, n, amt FROM s2_opp_firm
+  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'KD', 'DIST_CH', dist_ch, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'CHANNEL', channel, n, amt FROM s2_opp_firm
-  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'DIST_CH', dist_ch, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_GEO', rid, 'K', 'ZIP', zip, n, amt FROM s2_opp_geo
   UNION ALL SELECT 'S2_OPP_GEO', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s2_opp_geo
-  UNION ALL SELECT 'S2_SALES', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_SALES', rid, 'K', 'FIRM', firm, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_SALES', rid, 'K', 'PARENT_FIRM', parent_firm, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_SALES', rid, 'D', 'CHANNEL', channel, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_SALES', rid, 'D', 'PRODUCT', product, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_SALES', rid, 'D', 'SHARECLASS', shareclass, n, amt FROM s2_sales
-  UNION ALL SELECT 'S2_CRD_MAP', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s2_crd_map
-  UNION ALL SELECT 'S2_CRD_MAP', rid, 'K', 'FIRM', firm, n, amt FROM s2_crd_map
+  UNION ALL SELECT 'S2_OVERRIDE', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s2_override
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'TERRITORY_ID', territory_id, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'RVP', rvp, n, amt FROM s2_terr
+  UNION ALL SELECT 'S2_TERR', rid, 'K', 'ZIP', zip, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'D', 'CHANNEL', channel, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'D', 'CHANNEL_NAME', channel_name, n, amt FROM s2_terr)
 SELECT ds, rid, kind, col, NULLIF(NULLIF(UPPER(TRIM(CAST(v AS VARCHAR))), ''), '0') AS val, n, amt FROM lng;
 
---3. Every column: rows, distinct values, % of rows and of $ with no value, value lengths, values with a non-digit.
---Statements 3-7 each build one part of the result, all with the same 15 columns; 8 returns them together.
+--2. Every column: rows, distinct values, % of rows and of $ with no value, value lengths, values with a non-digit.
+--Statements 2-6 each build one part of the result, all with the same 15 columns; 7 returns them together.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_cols AS
 SELECT 'COLUMNS' AS part, ds, col, kind AS col2, CAST(NULL AS VARCHAR) AS item,
        COUNT(DISTINCT val) AS n_values, SUM(n) AS n_rows, SUM(amt) AS amt,
@@ -178,16 +104,17 @@ SELECT 'COLUMNS' AS part, ds, col, kind AS col2, CAST(NULL AS VARCHAR) AS item,
 FROM ssdb_integration.lr_strategy.tmp_prof
 GROUP BY ALL;
 
---4. Pairs of keys within a dataset, every link between their values (combinations carrying both) by shape:
+--3. Pairs of keys within a dataset, every link between their values (combinations carrying both) by shape:
 --   1 : 1 the same thing; one A, many B: B nests in A; many A, one B: A nests in B; many : many tangled.
 --   N_VALUES: links; N_ROWS and AMT: the rows and $ on them; PCT_AMT: of the pair's $; N_A, N_B: values of each column.
+--   E.g. S1_OPP_FIRM FIRM_CRD - DIST_CH 'one FIRM_CRD, many DIST_CH': the $ of firms with 2+ channels.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_pairs AS
 WITH
 l AS (
   SELECT a.ds, a.col AS a, a.val AS a_val, b.col AS b, b.val AS b_val, SUM(a.n) AS n, SUM(a.amt) AS amt
   FROM ssdb_integration.lr_strategy.tmp_prof a
   JOIN ssdb_integration.lr_strategy.tmp_prof b ON b.ds = a.ds AND b.rid = a.rid AND a.col < b.col
-  WHERE a.kind = 'K' AND b.kind = 'K' AND a.val IS NOT NULL AND b.val IS NOT NULL
+  WHERE a.kind IN ('K', 'KD') AND b.kind IN ('K', 'KD') AND a.val IS NOT NULL AND b.val IS NOT NULL
   GROUP BY ALL),
 na AS (SELECT ds, a, b, a_val, COUNT(*) AS k FROM l GROUP BY ALL),
 nb AS (SELECT ds, a, b, b_val, COUNT(*) AS k FROM l GROUP BY ALL),
@@ -209,25 +136,20 @@ SELECT 'PAIRS' AS part, ds, a AS col, b AS col2, shape AS item, links AS n_value
        CAST(NULL AS BIGINT) AS min_len, CAST(NULL AS BIGINT) AS max_len, CAST(NULL AS BIGINT) AS n_nondigit, n_a, n_b
 FROM s;
 
---5. Matches across datasets: each value of the left key by how many rows of the right dataset carry it (0, 1, 2+).
---   A left row whose value has 2+ right rows is repeated by a join on that key; 0 is not covered.  COL2: the right key.
+--4. Matches across datasets: each value of the left key by how many rows of the right dataset carry it (0, 1, 2+).
+--   COL2: the right key.  CH_ZIP -> territories: 0 = no holder, 2+ = several holders.  S2 FIRM_CRD -> S1_CRD_CH: 0 = no
+--   source 1 channel for the firm, 1 = one, 2+ = several (crd_dist_override's case).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_matches AS
 WITH
 m AS (SELECT * FROM (VALUES
-  ('S1_SALES', 'MGA_AGENT_CD', 'S1_MGA_MAP', 'MGA_AGENT_CD'),
-  ('S1_SALES', 'CBD_ID', 'S1_MASTER', 'CBD_ID'),
-  ('S1_SALES', 'WHSLR_ID', 'S1_WHSLR', 'WHSLR_ID'),
-  ('S1_SALES', 'CBD_ID', 'MM_MAP', 'CBD_ID'),
-  ('S1_SALES', 'CBD_ID', 'CRD_TO_CBD', 'CBD_ID'),
-  ('S1_OPP_FIRM', 'FIRM_CRD', 'MM_MAP', 'FIRM_CRD'),
-  ('S1_OPP_FIRM', 'CBD_ID', 'MM_MAP', 'CBD_ID'),
   ('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR', 'CH_ZIP'),
-  ('S1_OPP_GEO', 'TERRITORY', 'S1_WHSLR', 'WHSLR_ID'),
-  ('S2_SALES', 'FIRM_CRD', 'S2_OPP_FIRM', 'FIRM_CRD'),
-  ('S2_SALES', 'FIRM_CRD', 'S2_CRD_MAP', 'FIRM_CRD'),
-  ('S2_OPP_FIRM', 'FIRM_CRD', 'MM_MAP', 'FIRM_CRD'),
-  ('S2_OPP_FIRM', 'FIRM_CRD', 'S1_OPP_FIRM', 'FIRM_CRD'),
-  ('S2_OPP_GEO', 'CH_ZIP', 'S2_TERR', 'CH_ZIP')) AS v (lds, lcol, rds, rcol)),
+  ('S1_OPP_GEO', 'ZIP', 'S1_TERR', 'ZIP'),
+  ('S2_OPP_GEO', 'CH_ZIP', 'S2_TERR', 'CH_ZIP'),
+  ('S2_OPP_GEO', 'ZIP', 'S2_TERR', 'ZIP'),
+  ('S2_OPP_FIRM', 'FIRM_CRD', 'S1_CRD_CH', 'FIRM_CRD'),
+  ('S2_OPP_FIRM', 'FIRM_CRD', 'S2_OVERRIDE', 'FIRM_CRD'),
+  ('S2_OPP_FIRM', 'CRD_NAME', 'S1_OPP_FIRM', 'CRD_NAME'),
+  ('S1_OPP_FIRM', 'FIRM_CRD', 'S2_OPP_FIRM', 'FIRM_CRD')) AS v (lds, lcol, rds, rcol)),
 lv AS (SELECT m.lds, m.lcol, m.rds, m.rcol, p.val, SUM(p.n) AS n, SUM(p.amt) AS amt
        FROM m JOIN ssdb_integration.lr_strategy.tmp_prof p ON p.ds = m.lds AND p.col = m.lcol
        GROUP BY ALL),
@@ -249,7 +171,7 @@ SELECT 'MATCHES' AS part, lds AS ds, lcol AS col, r AS col2, outcome AS item, n_
        CAST(NULL AS BIGINT) AS n_a, CAST(NULL AS BIGINT) AS n_b
 FROM o;
 
---6. The labels: each value of every D column with rows and $, the 40 largest per column.
+--5. The labels: each value of every D and KD column with rows and $, the 40 largest per column.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_labels AS
 SELECT 'LABELS' AS part, ds, col, CAST(NULL AS VARCHAR) AS col2, val AS item, CAST(NULL AS BIGINT) AS n_values,
        n_rows, amt, pct_rows, pct_amt,
@@ -260,17 +182,13 @@ FROM (SELECT ds, col, val, n_rows, amt,
              ROUND(100.0 * amt / NULLIF(SUM(amt) OVER (PARTITION BY ds, col), 0), 2) AS pct_amt,
              ROW_NUMBER() OVER (PARTITION BY ds, col ORDER BY amt DESC NULLS LAST, n_rows DESC, val) AS rk
       FROM (SELECT ds, col, val, SUM(n) AS n_rows, SUM(amt) AS amt
-            FROM ssdb_integration.lr_strategy.tmp_prof WHERE kind = 'D' GROUP BY ALL) x) y
+            FROM ssdb_integration.lr_strategy.tmp_prof WHERE kind IN ('D', 'KD') GROUP BY ALL) x) y
 WHERE rk <= 40;
 
---7. Checks the two queries raised (DATASET_LOG.md, 2026-10-30), each by outcome.  COL: the check.
+--6. Checks, each by outcome.  COL: the check.  ZIP_FORM before padding; regions: does source 1's territory table
+--match the regions it is read from (s1_opp_sales.sql:677-694 reads only START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
 WITH
-pol AS (SELECT policy_no, COUNT(DISTINCT product_line) AS k, SUM(actual_sales_amount) AS amt
-        FROM ssdb_integration.lr_strategy.tmp_prof_s1_sales GROUP BY ALL),
-agt AS (SELECT agent_tax_id, SUM(actual_sales_amount) AS amt
-        FROM ssdb_integration.lr_strategy.tmp_prof_s1_sales GROUP BY ALL),
-con AS (SELECT contact_ssn, COUNT(*) AS k FROM life_prod.lif_murkylake.wc_sbl_contact GROUP BY ALL),
 rgn AS (SELECT rgn_cd, start_zip, end_zip, cbd FROM life_prod.lif_murkylake.geographic_region
         WHERE expir_dt = '9999-12-31'),
 rgn_wz AS (SELECT DISTINCT rw.whslr_id, LEFT(r.start_zip, 5) AS zip
@@ -280,19 +198,17 @@ terr_wz AS (SELECT DISTINCT whslr_id, LEFT(TRIM(zip), 5) AS zip FROM ssdb_integr
 zips AS (
             SELECT 'S1_OPP' AS ds, TRIM(zip_code) AS z, global_sales AS amt
             FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'
-  UNION ALL SELECT 'S1_ADDR', TRIM(zip_cd), NULL FROM life_prod.lif_murkylake.wc_sbl_addr
-  UNION ALL SELECT 'S1_REGION_START', TRIM(start_zip), NULL FROM rgn
-  UNION ALL SELECT 'S1_TERR', TRIM(zip), NULL FROM ssdb_integration.lr_strategy.<S1_TERRITORIES>
   UNION ALL SELECT 'S2_OPP', CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), opp FROM ssdb_integration.lr_strategy.<S2_OPP>
-  UNION ALL SELECT 'S2_SALES', TRIM(zip_code), sales_amount FROM ssdb_integration.lr_strategy.<S2_SALES> WHERE year = 2025
-  UNION ALL SELECT 'S2_TERR', TRIM(zipcode), NULL FROM ssdb_integration.lr_strategy.<S2_TERRITORIES>),
+  UNION ALL SELECT 'S1_TERR', TRIM(zip), NULL FROM ssdb_integration.lr_strategy.<S1_TERRITORIES>
+  UNION ALL SELECT 'S2_TERR', TRIM(zipcode), NULL FROM ssdb_integration.lr_strategy.<S2_TERRITORIES>
+  UNION ALL SELECT 'S1_REGION_START', TRIM(start_zip), NULL FROM rgn),
 c AS (
-            SELECT 'S1_SALES' AS ds, 'POLICY_PRODUCT_LINES' AS chk, CASE WHEN k >= 2 THEN '2+' ELSE '1' END AS outcome,
+            SELECT ds, 'ZIP_FORM' AS chk,
+                   CASE WHEN z IS NULL OR z = '' THEN 'missing' WHEN TRANSLATE(z, '0123456789', '') <> '' THEN 'non-digit'
+                        WHEN LENGTH(z) = 5 THEN '5 digits' WHEN LENGTH(z) < 5 THEN 'under 5 digits'
+                        ELSE 'over 5 digits' END AS outcome,
                    COUNT(*) AS n, SUM(amt) AS amt
-            FROM pol GROUP BY ALL
-  UNION ALL SELECT 'S1_SALES', 'AGENT_CONTACT_ROWS', CASE WHEN con.k IS NULL THEN '0' WHEN con.k = 1 THEN '1' ELSE '2+' END,
-                   COUNT(*), SUM(agt.amt)
-            FROM agt LEFT JOIN con ON con.contact_ssn = agt.agent_tax_id GROUP BY ALL
+            FROM zips GROUP BY ALL
   UNION ALL SELECT 'S1_REGION', 'START_ZIP_VS_END_ZIP',
                    CASE WHEN end_zip IS NULL THEN 'end missing' WHEN start_zip = end_zip THEN 'same' ELSE 'range' END,
                    COUNT(*), NULL
@@ -301,17 +217,7 @@ c AS (
                    CASE WHEN t.whslr_id IS NULL THEN 'regions only' WHEN r.whslr_id IS NULL THEN 'table only' ELSE 'both' END,
                    COUNT(*), NULL
             FROM terr_wz t FULL OUTER JOIN rgn_wz r ON r.whslr_id = t.whslr_id AND r.zip = t.zip GROUP BY ALL
-  UNION ALL SELECT ds, 'ZIP_FORM',
-                   CASE WHEN z IS NULL OR z = '' THEN 'missing' WHEN TRANSLATE(z, '0123456789', '') <> '' THEN 'non-digit'
-                        WHEN LENGTH(z) = 5 THEN '5 digits' WHEN LENGTH(z) < 5 THEN 'under 5 digits'
-                        ELSE 'over 5 digits' END,
-                   COUNT(*), SUM(amt)
-            FROM zips GROUP BY ALL
-  UNION ALL SELECT 'S2_SALES', 'YEAR: SALES_AMOUNT', CAST(year AS VARCHAR), COUNT(*), SUM(sales_amount)
-            FROM ssdb_integration.lr_strategy.<S2_SALES> GROUP BY ALL
-  UNION ALL SELECT 'S2_SALES', 'YEAR: MM_AMOUNT', CAST(year AS VARCHAR), COUNT(*), SUM(mm_amount)
-            FROM ssdb_integration.lr_strategy.<S2_SALES> GROUP BY ALL
-  UNION ALL SELECT 'S1_OPP', 'FISCAL_YR: GLOBAL_SALES', fiscal_yr, COUNT(*), SUM(global_sales)
+  UNION ALL SELECT 'S1_OPP', 'FISCAL_YR | QUARTER', fiscal_yr || ' | ' || quarter, COUNT(*), SUM(global_sales)
             FROM life_prod.lif_murkylake.wc_market_metrics_opportunity GROUP BY ALL)
 SELECT 'CHECKS' AS part, ds, chk AS col, CAST(NULL AS VARCHAR) AS col2, outcome AS item, CAST(NULL AS BIGINT) AS n_values,
        n AS n_rows, amt,
@@ -321,7 +227,7 @@ SELECT 'CHECKS' AS part, ds, chk AS col, CAST(NULL AS VARCHAR) AS col2, outcome 
        CAST(NULL AS BIGINT) AS n_a, CAST(NULL AS BIGINT) AS n_b
 FROM c;
 
---8. Everything, one result set: download as CSV.
+--7. Everything, one result set: download as CSV.
 SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_cols
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_pairs
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_prof_matches
