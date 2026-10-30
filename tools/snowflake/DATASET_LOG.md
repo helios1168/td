@@ -81,6 +81,10 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 
 ## Settled
 
+- The analysis is rebuilt from scratch on `DATA_MODEL.md` (owner, 2026-10-29: "we're starting from scratch"); this
+  reverses "union from scratch dropped" (2026-10-26).
+- Territories stay fixed; a sale stays with the wholesaler credited; opportunity is tied to ZIP and channel (owner,
+  2026-10-29). `DATA_MODEL.md` I1, I2.
 - `SOURCE` is the firm key; `firm_1` holds `MM_OPP`, `firm_2` holds none.
 - Original channel = `DIST_CH` (= `territories.CHANNEL`); target channel = union `CHANNEL`.
 - `SALES_WHOLESALER_TERRITORY_ID` joins `territories.CLEAN_ID`. Sales = `ACTUAL_SALES_AMOUNT`.
@@ -169,6 +173,11 @@ Combine definitions by grouping or filtering on several `DEF_` columns at once.
 | Q24 | Where do `firm_2`'s union `CBD_ID`s come from? (owner: unknown) | 2026-10-25 |
 | Q25 | Does `opp_matched` have `VA_PRODUCT_TYPE` (its export header) rather than `VA_PRODUCT_LINE` (`22`)? | 2026-10-25 |
 | Q26 | Is the union's `ADDRESS_ID` the person's `CLEAN_ID`? `explore/address_id.sql` | 2026-10-26 |
+| Q27 | `DATA_MODEL.md` D, I3: what is one distributor (vendor company ID or registration number)? Can product split its new channel? | 2026-10-29 |
+| Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
+| Q29 | τ_s, k_s: which current channel's territories serve each new channel's ZIPs (National: by ZIP or by distributor)? How does a cell split among 2+ holders? | 2026-10-29 |
+| Q30 | κ_s: when the two estimates' vendor channels differ for a cell, or only the other firm's estimate has it, which label does it take? | 2026-10-29 |
+| Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
 
 ## Log
 
@@ -1855,3 +1864,37 @@ overrides, `UNION_OPP` 0 rows differ either way; every crosswalk check 0; firm_2
 `UNION_OPP` (no company 0.56%, NO CHANNEL 1.98%), firm_1 112.14% (the opportunity override adds). Faults each fail a
 per-firm check: keys lost in placement, a firm_1 amount changed outside the list, keys built from fewer rows, a
 company lookup that duplicates rows. All 121 CTEs described in DuckDB, no repeated column.
+
+### 2026-10-29: starting from scratch; the firm master's shape; the analysis's model
+
+> **Owner, 2026-10-29:** "we're starting from scratch. First we want to take a fresh approach to each domain. firm, channel, territory, opportunity, and sales across both source firms."
+
+**The firm master.** The owner's first-pass master mapping table has `cbd_id`, `firm_client_id`, `firm_crd`,
+`broker_name` (and `dist_ch`); `explore/firm_master_relationships.sql` statement 4, owner's run (counts of distinct
+value pairs, no $; the cells lost in the paste were given by the owner):
+
+| pair | 1 : 1 | one A, many B | many A, one B | many : many |
+|---|---|---|---|---|
+| `broker_name` - `cbd_id` | 357 | 75 links (30 names, 75 `cbd_id`s) | 8 (8 names, 5 `cbd_id`s) | 8 (8 names, 5 `cbd_id`s) |
+| `broker_name` - `firm_client_id` | 356 | | | |
+| `broker_name` - `firm_crd` | 378 | | 10 (10 names, 4 CRDs) | |
+| `cbd_id` - `firm_client_id` | 351 | 5 (2 `cbd_id`s, 5 client IDs) | | |
+| `cbd_id` - `firm_crd` | 350 | 4 (3 `cbd_id`s, 4 CRDs) | 77 (77 `cbd_id`s, 28 CRDs) | 4 (3 `cbd_id`s, 4 CRDs) |
+| `firm_client_id` - `firm_crd` | 354 | | 2 (2 client IDs, 1 CRD) | |
+
+Every name and client ID reaches one CRD; 3 to 6 `cbd_id`s reach 2+ CRDs; 28 CRDs split into 77 `cbd_id`s with the
+same name and CRD, so the split is invisible in the master's own columns. `firm_client_id` is close to 1 : 1 with CRD
+and never groups `cbd_id`s. Statement 6 (is `dist_ch` a property of the firm) is not run yet.
+
+> **Owner, 2026-10-29:** "the focus of this analysis is actually going to be territory and channel level opportunity and sales, we will rarely - if ever - look at firm level data"
+
+> **Stakeholder, via the owner, 2026-10-29:** "we're focused on channel and slicing into territories so we need to know the op for what the territories will be so what op moves to national for example look at the zips for a particular firm and add up the op. It should all be in the same channel when we look at the zips for that same firm and add up the sales, they can come from wholesalers in any channel or any territory we should be able to dice what landed in the channel and zip by who did it, but most importantly is knowing what should be attributed to that new channel in the zip"
+
+> **Owner, 2026-10-29:** "the territories are actually staying fixed, we want to see opportunity under the current state with the current channel definitions, as well as how that opportunity moves after we define the new channels. the sale itself does stay with the wholesaler, but the opportunity is tied to the zip and channel"
+
+**The model.** Framed with three runs of the gromov lens (two with this log's history, one without; the note
+`notes/2026-10-29_snowflake-conceptual-model-research.md`), then written down as `DATA_MODEL.md`: sets, measures,
+maps, two states, five views, four invariants. The owner, on the formal version: "this is a great starting point".
+Its undefined symbols are Q27-Q31. Existing questions it rests on: Q6 (one set of new labels), Q23 (the two
+estimates measure the same thing), Q21 (cells with no distributor, ⊥_D), Q13 (National by distributor).
+
