@@ -347,3 +347,13 @@ CRD and broker name carried through; the second builds `crd_cbd_mm` at work).
 So the swap is possible at ZIP x CRD x broker name x product; what is open is the share of firm 2's opportunity in
 cells where firm 1's rows carry 2+ channels. `S2 ROUTE LEVEL` measures it at ZIP x CRD x broker name; the product level
 waits for firm 2's product labels (the profile's labels part).
+
+### 2026-10-30: source 2's opportunity uses the market metrics broker names, suffixes included
+
+> **Owner, 2026-10-30:** "firm 2 does not use the same suffix convention in their SALEs file but that is why the eqh_firm_crd mapping exists. I beleve source 2's opportunity data does conform to the same market metrics broker_name with the suffixes"
+
+So CRD x broker name keys both sources' opportunity alike, and the vendor's channel suffixes (item 3 of the entry
+before) separate those splits in source 2's opportunity too. The profile's match `S2_OPP_FIRM.CRD_NAME ->
+S1_OPP_FIRM.CRD_NAME` measures it (share of source 2's opportunity whose CRD x broker name source 1's rows carry).
+Source 2's sales reach the broker name through its CRD map, which is CRD -> one name (2026-10-30, schema): a CRD with
+suffixed names stays open there; that is sales, later.
