@@ -702,3 +702,11 @@ test: 81 checks.
 Settled: source 2's opportunity table is fiscal year 2025; a source's market includes products it does not sell.
 Q36's second half (what `MM_AMOUNT` is on source 2's sales) is sales, so it continues as Q42. The opportunity
 deliverable now has no open question; Q34 (stack, do not join) bites only when sales come in.
+
+### 2026-10-30: `audit.js` can start at a log entry
+
+Every entry today shares one date, so `since` would recheck the first audit's ~600 claims. `audit.js` takes `from` (a
+Log heading after `### `) instead: that entry and every one below it. Exactly one of `since` and `from`; a heading with
+no match stops the run. The reader also reads Key decisions now. Checked with a stub `runs` (six argument cases) and
+the runner's validation. The next audit starts at "2026-10-30: the first audit (611 claims); what it corrects": that
+entry's corrections were never audited themselves. Not run yet (owner, 2026-10-30: "do not run the audit yet").

@@ -2,13 +2,18 @@
 // DATA_MODEL.md as the reference (DATASET_LOG.md, Conventions, Audit).  Read-only: it writes nothing.
 // Run from the worktree root:
 //   subagent({ workflow: "tools/snowflake/audit.js", cwd: "<worktree>", async: true, args: { since: "2026-10-30" } })
-// args: { since: "YYYY-MM-DD" (log entries dated on or after it), td_repo: "/Users/Shared/sv-ntlee/td" (optional),
+//   or, to start at a log entry (several share a date): args: { from: "2026-10-30: the first audit (611 claims); what it corrects" }
+// args: { since: "YYYY-MM-DD" (log entries dated on or after it), or from: "<a Log heading after '### '>" (that entry
+//         and every one below it; exactly one of the two), td_repo: "/Users/Shared/sv-ntlee/td" (optional),
 //         extra: ["path", ...] (optional files whose claims are checked too, e.g. a handoff note) }
 // Step 1, reader-sol: numbered claims, one per line.  Step 2, auditor-sol in parallel batches of 60: one row per claim.
 // Both are the reader and auditor agents on openai-codex/gpt-6.1-sol, thinking max (owner, 2026-10-30); their files are
 // in ~/.pi/agent/agents/ (sv-ntlee, agent/pi/agents/).
 // Returns { claims, batches: [{ first, last, ok, output }] }; the session records the outcome as a log entry.
-if (!/^\d{4}-\d{2}-\d{2}$/.test(args.since || "")) throw new Error("audit needs args.since as YYYY-MM-DD");
+if (!args.since === !args.from) throw new Error("audit needs exactly one of args.since and args.from");
+if (args.since && !/^\d{4}-\d{2}-\d{2}$/.test(args.since)) throw new Error("audit needs args.since as YYYY-MM-DD");
+const entries = args.since ? "every Log entry dated " + args.since + " or later"
+  : "the Log entry headed '### " + args.from + "' and every entry below it; if no heading matches exactly, output only the line NO SUCH ENTRY";
 const td = args.td_repo || "/Users/Shared/sv-ntlee/td";
 const extra = Array.isArray(args.extra) ? args.extra : [];
 
@@ -39,7 +44,7 @@ const extract = await runs.run("claims", {
   task: [
     "Question: which checkable claims do tools/snowflake's documents make? List them; do not judge them.",
     "Read fully: tools/snowflake/DATA_MODEL.md, tools/snowflake/README.md, and tools/snowflake/DATASET_LOG.md",
-    "(Conventions, Settled, Parked, Open questions, and every Log entry dated " + args.since + " or later)" +
+    "(Conventions, Settled, Key decisions, Parked, Open questions, and " + entries + ")" +
       (extra.length ? "; also " + extra.join(", ") : "") + ".",
     "A claim is one checkable statement: a fact about the data, a number, a file:line cite and what it says, a status",
     "('settled', 'given', 'open: Q..'), an owner decision with its date, or what a SQL file or test does. Every row of",
@@ -50,6 +55,7 @@ const extract = await runs.run("claims", {
 });
 if (!extract.ok) throw new Error("claim extraction failed: run " + extract.runId);
 const claims = extract.output.split("\n").map((l) => l.trim()).filter((l) => /^C\d+ \|/.test(l)).concat(fixedClaims);
+if (/^NO SUCH ENTRY$/m.test(extract.output)) throw new Error("no Log heading '### " + args.from + "'; run " + extract.runId);
 if (claims.length === fixedClaims.length) throw new Error("the reader returned no C<n> lines; run " + extract.runId);
 
 const size = 60;
