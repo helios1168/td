@@ -69,6 +69,11 @@ channels."
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). Names still stay out of the repo.
 
+- Opportunity or sales with no firm 1 channel takes the channel UNMAPPED: kept, with its $, and flagged as a manual
+  mapping exercise for the project team (owner, 2026-10-30: "give it a new channel on it's own so that we can keep the
+  opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team"). The
+  label is the session's.
+
 ## Parked
 
 Suspended while the sources are analysed separately (owner, 2026-10-30: "yes to park"); each returns with a combined
@@ -431,3 +436,22 @@ Two places, the same in `owner_sql/s1_opp_sales.sql` and `mm_query.sql` (`:470`,
 
 In the profile it is one broker name, one company ID and vendor code 13 (32,482 rows, 5.84% of source 1's $); the
 5.93% of source 1's $ with no holder on the raw label is this rename not yet applied.
+
+### 2026-10-30: the route against `crd_dist_override`; firm 1's rules as a table; UNMAPPED
+
+> **Owner, 2026-10-30:** "for route-level, how does it stack up against our oriting crd_dist override? and did the profiler apply that override? or use the less-transformed data? for opportunity with no firm 1 channel - give it a new channel on it's own so that we can keep the opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team. lets knock those items out first. and then we wil ltackle q19 and q39"
+
+The first run applied neither: source 1's channel was the vendor's `DIST_CH` before the rules of
+`s1_opp_sales.sql:459`-`:470`, and `crd_dist_override` only marked which CRDs it lists. The override was made against
+firm 1's channels after those rules, so the comparison needs them.
+
+- Firm 1's rules are now a table at work, `ssdb_integration.lr_strategy.s1_channel_rule` (`RULE_ORDER`, `CBD_ID`,
+  `BROKER_NAME`, `DIST_CH`, `CHANNEL`: 11 rows from the 6 branches), made by `$TD_REPO/owner_sql/rules_s1.sql`
+  (git-excluded: the rules name firms; generated from those lines). A row matches on the one column it fills; the
+  lowest `RULE_ORDER` wins, as the `CASE` does.
+- `explore/profile.sql` applies it to source 1's rows (`DIST_CH` is firm 1's channel, `FEED_DIST_CH` the vendor's) and
+  adds: the firm-level route per CRD x broker name (the one non-blank firm 1 channel, the CRD's for a name source 1
+  lacks, else UNMAPPED), for both sources; that route against `crd_dist_override` (its CRD x name row, else its CRD
+  row: agrees, differs with the pair, fills a 2+ / UNMAPPED / absent route); the override table's own keys (CRD only or
+  CRD x name, repeated, 2+ channels, matching no source 2 row); whether a region's ZIP range stays within one ZIP.
+- DuckDB test: 62 checks, worked out by hand from the made-up rows; reversing the rule order fails one.

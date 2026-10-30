@@ -107,7 +107,7 @@ per cell x = (z, d, p): its market, current channel and holder, new channel and 
 | p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE` (`s1_opp_sales.sql:453-458`) | the same columns; RILA is a VA type here | settled (Q22); real labels: profile |
 | κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` → source 2's channel; NO CHANNEL dropped | settled (Q19); real labels: profile |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
-| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else the firm's route | the same tables | the route: Q38 |
+| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else the firm's route; UNMAPPED where the firm has no firm 1 channel | the same tables | the route: Q38; UNMAPPED settled |
 | new holder | H_s(τ_s(x), z) | the same | listed firms settled; new channels such as National: Q29 |
 
 The firm's route (Q38), two readings. (A) A cell carries its own current channel forward, ρ_s(κ_s(x)), each source in

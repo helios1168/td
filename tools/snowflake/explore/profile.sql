@@ -3,15 +3,18 @@
 --channel labels, which ZIP x channel has 0, 1 or 2+ holders; across sources: whether source 2's firms have a source 1
 --channel.  Counts, $ and the labels of channel and product columns only; no ID or name value leaves the temporary
 --tables.  The sales half of this profile is in git history (73774ed).
---Reads crd_dist_override (2026-10-25).
+--Reads crd_dist_override (2026-10-25) and s1_channel_rule (firm 1's channel rules, s1_opp_sales.sql:459-470, made by
+--owner_sql/rules_s1.sql; run that once first).
 --Run All; download the last statement's result as CSV into $TD_REPO/data/safe/.
---Source 1: fiscal year 2025, the vendor's own DIST_CH (the query's rules, s1_opp_sales.sql:459-470, not applied).
+--Source 1: fiscal year 2025; DIST_CH is firm 1's channel after its rules, FEED_DIST_CH the vendor's.  A route with no
+--firm 1 channel is UNMAPPED (owner, 2026-10-30).
 --Source 2's opportunity table has no year column and is read whole.
 --Snowflake docs read 2026-10-30: GROUP BY ALL groups by every SELECT item without an aggregate, and a GROUP BY name
 --resolves to a table column before a SELECT alias (https://docs.snowflake.com/en/sql-reference/constructs/group-by),
 --so every grouping here is GROUP BY ALL; TRANSLATE drops source characters with no target character
 --(https://docs.snowflake.com/en/sql-reference/functions/translate); VALUES takes column aliases
---(https://docs.snowflake.com/en/sql-reference/constructs/values).
+--(https://docs.snowflake.com/en/sql-reference/constructs/values); IS NOT DISTINCT FROM is NULL-safe equality
+--(https://docs.snowflake.com/en/sql-reference/functions/is-distinct-from).
 use secondary roles all;
 
 --EDIT once: the tables whose names carry a carrier, as session variables (SET, then IDENTIFIER($name); docs read
@@ -22,13 +25,22 @@ SET s2_opp         = 'ssdb_integration.lr_strategy.<source 2 opportunity, ends _
 SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _TERRITORIES>';
 
 --1. Each source's opportunity, cleaned once and grouped: ZIP padded to 5, IDs as whole-number text, names and
---channels trimmed and upper-cased.  2 and 7 read these.
+--channels trimmed and upper-cased.  Source 1's rows take firm 1's channel rules: the lowest RULE_ORDER whose company
+--ID, broker name or vendor DIST_CH matches, else the vendor's DIST_CH (as the query's CASE).  2 and 7 read these.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s1 AS
-SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, cbd_id, client_firm_id, NULLIF(TRIM(firm_crd), '') AS firm_crd,
-       UPPER(TRIM(broker_name)) AS broker_name, UPPER(TRIM(dist_ch)) AS dist_ch, channel, product_line,
-       va_product_type, COUNT(*) AS n, SUM(global_sales) AS amt
-FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'
-GROUP BY ALL;
+WITH
+o AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS oid FROM (
+  SELECT LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip, NULLIF(TRIM(cbd_id), '') AS cbd_id, client_firm_id,
+         NULLIF(TRIM(firm_crd), '') AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
+         NULLIF(UPPER(TRIM(dist_ch)), '') AS feed_dist_ch, channel, product_line, va_product_type,
+         COUNT(*) AS n, SUM(global_sales) AS amt
+  FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025' GROUP BY ALL)),
+r AS (SELECT o.oid, ru.channel AS rule_channel, ROW_NUMBER() OVER (PARTITION BY o.oid ORDER BY ru.rule_order) AS rk
+      FROM o JOIN ssdb_integration.lr_strategy.s1_channel_rule ru
+        ON ru.cbd_id = o.cbd_id OR ru.broker_name = o.broker_name OR ru.dist_ch = o.feed_dist_ch)
+SELECT o.zip, o.cbd_id, o.client_firm_id, o.firm_crd, o.broker_name, o.feed_dist_ch,
+       COALESCE(r.rule_channel, o.feed_dist_ch) AS dist_ch, o.channel, o.product_line, o.va_product_type, o.n, o.amt
+FROM o LEFT JOIN r ON r.oid = o.oid AND r.rk = 1;
 
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s2 AS
 SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
@@ -47,8 +59,8 @@ WITH
 s1 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_opp_s1),
 s2 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_opp_s2),
 s1_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT cbd_id, client_firm_id, firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel,
-         product_line, va_product_type, SUM(n) AS n, SUM(amt) AS amt
+  SELECT cbd_id, client_firm_id, firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch,
+         feed_dist_ch, channel, product_line, va_product_type, SUM(n) AS n, SUM(amt) AS amt
   FROM s1 GROUP BY ALL)),
 s1_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT zip, dist_ch || '|' || zip AS ch_zip, SUM(n) AS n, SUM(amt) AS amt FROM s1 GROUP BY ALL)),
@@ -80,6 +92,7 @@ lng AS (
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'BROKER_NAME', broker_name, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CRD_NAME', crd_name, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'DIST_CH', dist_ch, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'FEED_DIST_CH', feed_dist_ch, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'CHANNEL', channel, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s1_opp_firm
@@ -202,13 +215,18 @@ FROM (SELECT ds, col, val, n_rows, amt,
             FROM ssdb_integration.lr_strategy.tmp_prof WHERE kind IN ('D', 'KD') GROUP BY ALL) x) y
 WHERE rk <= 40;
 
---7. Checks, each by outcome.  COL: the check.  S2 DIST_CH -> S1 CHANNEL OF THE CRD: source 2's opportunity by its own
---label and the one channel source 1 gives its CRD ('2+ CHANNELS', 'NO SOURCE 1 ROWS'), '(OVERRIDE)' where
---crd_dist_override lists the CRD.  S1 CHANNELS PER ZIP X CRD X NAME: whether source 1's split of a firm into channels
---shows within a ZIP (ZIP CELL 2+) or only across ZIPs.  S2 ROUTE LEVEL: how far the market metrics columns carry
---source 2's opportunity to one source 1 channel, finest first (the same ZIP x CRD x broker name, then the CRD x broker
---name, then the CRD), the vendor's DIST_CH before the query's rules.  ZIP_FORM before padding; regions: does source 1's territory table
---match the regions it is read from (s1_opp_sales.sql:677-694 reads only START_ZIP); periods.
+--7. Checks, each by outcome.  COL: the check.
+--  S2 DIST_CH -> S1 CHANNEL OF THE CRD: source 2's opportunity by its own label and the one channel source 1 gives its
+--    CRD ('2+ CHANNELS', 'NO SOURCE 1 ROWS'), '(OVERRIDE)' where crd_dist_override lists the CRD.
+--  S1 CHANNELS PER ZIP X CRD X NAME: whether firm 1's split of a firm into channels shows within a ZIP or only across.
+--  S2 ROUTE LEVEL: the finest market metrics key at which firm 1's rows give source 2's opportunity one channel (the
+--    same ZIP x CRD x broker name, the CRD x broker name, the CRD); in these three a blank channel counts as one.
+--  ROUTE (CRD X NAME): the firm-level route, the one non-blank firm 1 channel of the CRD x broker name (of the CRD for a
+--    name source 1 lacks), UNMAPPED if none; for source 1 rows also whether the row's own channel is blank.
+--  S2 ROUTE (CRD X NAME) VS OVERRIDE: that route against crd_dist_override (its CRD x broker name row, else its CRD row).
+--  OVERRIDE TABLE KEYS: the override's keys: CRD only or CRD x name, repeated, 2+ channels, matching no source 2 row.
+--  ZIP_FORM before padding; regions: does source 1's territory table match the regions it is read from
+--    (s1_opp_sales.sql:677-694 reads only the first 5 digits of START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
 WITH
 rgn AS (SELECT rgn_cd, start_zip, end_zip, cbd FROM life_prod.lif_murkylake.geographic_region
@@ -228,6 +246,28 @@ s1_crd AS (SELECT firm_crd, CASE WHEN COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)'
                                 THEN MIN(COALESCE(dist_ch, '(BLANK)')) ELSE '2+ CHANNELS' END AS s1_channel
            FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
 ovr AS (SELECT DISTINCT TRIM(firm_crd) AS firm_crd FROM ssdb_integration.lr_strategy.crd_dist_override),
+ovk AS (SELECT TRIM(firm_crd) AS firm_crd, NULLIF(UPPER(TRIM(broker_name)), '') AS broker_name, COUNT(*) AS n_rows,
+               COUNT(DISTINCT NULLIF(UPPER(TRIM(dist_ch)), '')) AS k, MIN(NULLIF(UPPER(TRIM(dist_ch)), '')) AS ch
+        FROM ssdb_integration.lr_strategy.crd_dist_override GROUP BY ALL),
+s1_nr AS (SELECT firm_crd, broker_name, COUNT(DISTINCT dist_ch) AS k, MIN(dist_ch) AS ch
+          FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
+s1_cr AS (SELECT firm_crd, COUNT(DISTINCT dist_ch) AS k, MIN(dist_ch) AS ch
+          FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
+s2_route AS (
+  SELECT o.n, o.amt,
+         CASE WHEN o.firm_crd IS NULL THEN 'NO CRD'
+              WHEN nr.firm_crd IS NOT NULL THEN CASE WHEN nr.k = 0 THEN 'UNMAPPED' WHEN nr.k = 1 THEN nr.ch ELSE '2+' END
+              WHEN cr.firm_crd IS NOT NULL THEN CASE WHEN cr.k = 0 THEN 'UNMAPPED' WHEN cr.k = 1 THEN cr.ch ELSE '2+' END
+              ELSE 'NO SOURCE 1 ROWS' END AS route,
+         COALESCE(v1.k, v0.k) AS ovr_k, COALESCE(v1.ch, v0.ch) AS ovr
+  FROM ssdb_integration.lr_strategy.tmp_opp_s2 o
+  LEFT JOIN s1_nr nr ON nr.firm_crd = o.firm_crd AND nr.broker_name = o.broker_name
+  LEFT JOIN s1_cr cr ON cr.firm_crd = o.firm_crd
+  LEFT JOIN ovk v1 ON v1.firm_crd = o.firm_crd AND v1.broker_name = o.broker_name
+  LEFT JOIN ovk v0 ON v0.firm_crd = o.firm_crd AND v0.broker_name IS NULL),
+ovk_in_s2 AS (SELECT DISTINCT v.firm_crd, v.broker_name
+              FROM ovk v JOIN ssdb_integration.lr_strategy.tmp_opp_s2 o
+                ON o.firm_crd = v.firm_crd AND (v.broker_name IS NULL OR o.broker_name = v.broker_name)),
 s1_cell AS (SELECT zip, firm_crd, broker_name, COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) AS k
             FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
 s1_name AS (SELECT firm_crd, broker_name, COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) AS k
@@ -240,6 +280,33 @@ c AS (
             FROM ssdb_integration.lr_strategy.tmp_opp_s1 o
             LEFT JOIN s1_cell ce ON ce.zip = o.zip AND ce.firm_crd = o.firm_crd AND ce.broker_name = o.broker_name
             LEFT JOIN s1_name nm ON nm.firm_crd = o.firm_crd AND nm.broker_name = o.broker_name
+            GROUP BY ALL
+  UNION ALL SELECT 'S1_OPP', 'S1 ROUTE (CRD X NAME)',
+                   CASE WHEN o.firm_crd IS NULL THEN 'NO CRD' WHEN nr.k = 0 THEN 'UNMAPPED' WHEN nr.k > 1 THEN '2+'
+                        WHEN o.dist_ch IS NULL THEN 'ONE CHANNEL, ROW BLANK' ELSE 'ONE CHANNEL' END,
+                   SUM(o.n), SUM(o.amt)
+            FROM ssdb_integration.lr_strategy.tmp_opp_s1 o
+            LEFT JOIN s1_nr nr ON nr.firm_crd = o.firm_crd AND nr.broker_name = o.broker_name
+            GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 ROUTE (CRD X NAME)', route, SUM(n), SUM(amt) FROM s2_route GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 ROUTE (CRD X NAME) VS OVERRIDE',
+                   CASE WHEN ovr_k IS NULL THEN 'NO OVERRIDE | ROUTE '
+                                                || CASE WHEN route IN ('UNMAPPED', '2+', 'NO SOURCE 1 ROWS', 'NO CRD')
+                                                        THEN route ELSE 'ONE CHANNEL' END
+                        WHEN ovr_k = 0 THEN 'OVERRIDE BLANK'
+                        WHEN ovr_k > 1 THEN 'OVERRIDE HAS 2+ CHANNELS'
+                        WHEN route IN ('UNMAPPED', '2+', 'NO SOURCE 1 ROWS') THEN 'OVERRIDE FILLS ' || route || ': ' || ovr
+                        WHEN route = ovr THEN 'OVERRIDE = ROUTE'
+                        ELSE 'OVERRIDE ' || ovr || ' <> ROUTE ' || route END,
+                   SUM(n), SUM(amt)
+            FROM s2_route GROUP BY ALL
+  UNION ALL SELECT 'S2_OVERRIDE', 'OVERRIDE TABLE KEYS',
+                   CASE WHEN v.broker_name IS NULL THEN 'CRD ONLY' ELSE 'CRD X NAME' END
+                   || CASE WHEN v.n_rows > 1 THEN ', REPEATED' ELSE '' END
+                   || CASE WHEN v.k > 1 THEN ', 2+ CHANNELS' ELSE '' END
+                   || CASE WHEN i.firm_crd IS NULL THEN ', NOT IN S2' ELSE '' END,
+                   COUNT(*), NULL
+            FROM ovk v LEFT JOIN ovk_in_s2 i ON i.firm_crd = v.firm_crd AND i.broker_name IS NOT DISTINCT FROM v.broker_name
             GROUP BY ALL
   UNION ALL SELECT 'S2_OPP', 'S2 ROUTE LEVEL',
                    CASE WHEN o.firm_crd IS NULL THEN '0 NO CRD'
@@ -275,7 +342,9 @@ c AS (
                    COUNT(*), SUM(amt)
             FROM zips GROUP BY ALL
   UNION ALL SELECT 'S1_REGION', 'START_ZIP_VS_END_ZIP',
-                   CASE WHEN end_zip IS NULL THEN 'end missing' WHEN start_zip = end_zip THEN 'same' ELSE 'range' END,
+                   CASE WHEN end_zip IS NULL THEN 'end missing' WHEN start_zip = end_zip THEN 'same'
+                        WHEN LEFT(start_zip, 5) = LEFT(end_zip, 5) THEN 'range within one ZIP'
+                        ELSE 'range across ZIPs' END,
                    COUNT(*), NULL
             FROM rgn GROUP BY ALL
   UNION ALL SELECT 'S1_TERR', 'WHSLR_ZIP_VS_REGIONS',
