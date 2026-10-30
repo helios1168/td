@@ -88,6 +88,9 @@ view.
 | Q32 | Does a source's market include products it does not sell? (Settled before as "the products where it has positive sales"; reopened 2026-10-30.) | 2026-10-30 |
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
+| Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
+| Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
+| Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
 
@@ -207,3 +210,42 @@ key (product map, κ, ν_D, τ, territories, display), so source 2 passes throug
 and sales side by side by grouping on its grain with `SUM(CASE WHEN MEASURE = 'OPP' ...)`: labels that differ cost no
 rows, totals hold by construction (I4), and Q28 becomes which label column a view groups on, not a join condition.
 The feed's `territory` and the state leave the key: holders come from the territories table, and ZIP gives the state.
+
+### 2026-10-30: the tables' columns; the profile replaces the tier-1 extracts
+
+The owner's run of `explore/schema.sql` statement 3: `$TD_REPO/data/safe/scratch_2026-10-30-0221.csv` (18 tables).
+Tables whose names carry a carrier are named here by role and name suffix.
+
+1. Source 1's market metrics opportunity (`WC_MARKET_METRICS_OPPORTUNITY`) carries `FIRM_CRD` (text) beside `CBD_ID`,
+   `CLIENT_FIRM_ID`, `BROKER_NAME`, `FDS_BROKER_ID` and `SI_FIRM_ID`. If `FIRM_CRD` is full, the company-ID steps of
+   `s1_opp_sales.sql:475`-`:594` are not needed (Q34). It also has `CHANNEL` beside `DIST_CH`, `TERRITORY` and
+   `WHOLESALER_NAME`, quarter and month columns, and a column of source 1's own sales as the vendor counts them.
+2. `MM_MAP` has the first-pass master's columns (`DIST_CH`, `CBD_ID`, `CHANNEL`, `FIRM_CLIENT_ID`, `BROKER_NAME`,
+   `FIRM_CRD`): it is the table profiled on 2026-10-29 (archived log). `CRD_TO_CBD` is a second CRD - company ID map
+   (`FIRM_CRD`, `CBD_ID` as floats, two name columns). Q35.
+3. Source 2: opportunity (`…_OPP_ORIGINAL`) has no year and no state column; its ZIP and CRD are numbers (a ZIP loses
+   its leading zero) and `CHANNEL` is a float code beside `DIST_CH`. Sales (`…_SALES`): CRD a float, `YEAR`, ZIP as
+   text, `PRODUCT`, `CHANNEL`, `RVP`, `DVP`, `REGIONIDS`, and `MM_AMOUNT` beside `SALES_AMOUNT`. The CRD map
+   (`…_FIRM_CRD`) is CRD → one name: it cannot choose on a split CRD, as the first 2026-10-30 entry expected.
+   Territories (`…_TERRITORIES`): `TERRITORY_ID`, `RVP`, `ZIPCODE`, `STATE`, `CHANNEL`, `CHANNEL_NAME`. Q36.
+4. Source 1's territories exist as a ZIP-level table (`…_TERRITORIES`: `WHSLR_ID`, `WHSLR_NM`, `ZIP`, `STATE_CD`,
+   `NEW_DIST_CHANNEL`), the columns of `current_territories` (`s1_opp_sales.sql:677`-`:694`). `GEOGRAPHIC_REGION`
+   has `END_ZIP` beside `START_ZIP`; the query reads only `START_ZIP` (`:684` `, left(gr.start_zip,5) as zip`), so a
+   region spanning a range of ZIPs would lose all but its first.
+5. Key types differ by table: CRD is text, number or float; the company ID number, text or float. Every ID is cast to
+   whole-number text (`DECIMAL(38, 0)`, then `VARCHAR`) before a join.
+6. Source 1's sales rows carry `DUPLICATE_ENTRY_IN`, `SRC_DELETE_IND`, `REVERSAL_CD`, `CREDIT_TYPE` and `TRANS_TYPE`,
+   which neither query filters, and `RGN_CD`, the region a sale is credited under.
+7. `MGA_MAP` holds $ per channel per MGA code (bank, wirehouse, independent, IMO, regional, captive, none, total) beside
+   `CHANNEL`, `CHANNEL_CALC` and `CHANNEL_OVERRIDE`. If `CHANNEL_CALC` is the channel with the most $, it is a
+   largest-share rule (Conventions, Rules). Q37.
+
+**The profile.** `explore/profile.sql`: every dataset as its distinct key combinations with rows and $, in long form,
+then five parts in one result set: columns (missing by rows and $, lengths, non-digit values), pairs of keys within a
+dataset by shape (the 2026-10-29 master profile, now with $), matches across datasets (0, 1 or 2+ right rows per left
+value: join repeats and coverage), labels (values of channel, product and flag columns), and checks (the findings of
+the two entries before: policies on 2+ product lines, agents on 2+ contacts, region ZIP ranges, the territory table
+against the regions, ZIP form per dataset, totals by year). It answers what the tier-1 extracts E1-E7 were for, so
+they are dropped; the tier-2 extract shrinks to a slice for testing the rebuild's SQL. Tested in DuckDB on made-up
+tables with the real columns, one planted case per outcome (`explore/profile_test.sh`, 30 checks); a wrong expected
+value and a misspelled column each stop it.
