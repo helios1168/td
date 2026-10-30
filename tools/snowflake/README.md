@@ -1,7 +1,7 @@
 # `tools/snowflake/`: opportunity and sales by channel and territory, both source firms
 
-SQL the owner runs at work in Snowflake, tested first in DuckDB on extracts kept in `data/safe/extract_<date>/`
-(gitignored, never committed). Started fresh on 2026-10-30.
+SQL the owner runs at work in Snowflake, tested first in DuckDB, on made-up tables with the real columns or on extracts
+kept in `data/safe/extract_<date>/` (gitignored, never committed). Started fresh on 2026-10-30.
 Read `DATASET_LOG.md`, Conventions, before writing SQL here: table variables, one result per file, testing.
 
 | file | answers |

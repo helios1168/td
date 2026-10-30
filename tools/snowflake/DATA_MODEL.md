@@ -2,14 +2,14 @@
 
 The analysis is rebuilt from this model (owner, 2026-10-29). Every output is a measure aggregated along a map (SQL:
 `GROUP BY` the map's value, `SUM`), so the model is complete when every map is defined. Status: **given** (in the
-data), **settled** (rule in `DATASET_LOG.md` Settled), **open** (its question in the log's index), **parked**. A SQL
-file names the symbols it implements; where a query and this file disagree, fix this file. Derivation:
+data), **settled** (rule in `DATASET_LOG.md` Settled), **open** (its question in the log's index), **parked**. A layer
+file (`01`, `02`, ...) names the symbols it implements; where a query and this file disagree, fix this file. Derivation:
 `notes/2026-10-29_snowflake-conceptual-model-research.md`. `s1_opp_sales.sql:N` cites the owner's query in
 `$TD_REPO/owner_sql/` at the version its `DATASET_LOG.md` entry pins.
 
 The two source firms are analysed separately, each with its own data, on one common market metrics schema (owner,
-2026-10-29 and 2026-10-30). Everything below is per source s; only Z, P, D and N are shared, and nothing adds across
-sources.
+2026-10-29 and 2026-10-30). Everything below is per source s; only Z, P, D, N and the rules on them (ν_D, display names)
+are shared, and nothing adds across sources.
 
 ## Sets and measures
 
@@ -18,7 +18,7 @@ sources.
 | S = {1, 2} | source firms (the insurers) | given |
 | Z, P | ZIPs, products | given; a source's products: all, or those it sells? Q32 |
 | D | distributors, keyed as in the market metrics schema: CRD x broker name; ⊥_D for none | settled key (2026-10-30) |
-| X = Z × D × P | market cells, one period (fiscal year 2025), with projections π_Z, π_D | given |
+| X = Z × D × P | market cells, one period (fiscal year 2025; source 2's period: Q36), with projections π_Z, π_D | given |
 | W_s | wholesalers of source s; *seller* and *holder* are roles, not kinds of person | given |
 | C_s | source s's current channel labels | given |
 | N | the new channel labels | being designed; one set for both sources, in firm 1's channels (settled 2026-10-30, Q6) |
@@ -104,7 +104,7 @@ per cell x = (z, d, p): its market, current channel and holder, new channel and 
 | M_s | `WC_MARKET_METRICS_OPPORTUNITY.GLOBAL_SALES`, fiscal year 2025 | `…_OPP_ORIGINAL.OPP` | source 2's period: Q36 |
 | z | `ZIP_CODE` (text), padded to 5 | `ZIP_CODE` (a number), padded to 5 | given |
 | d | `FIRM_CRD` x `BROKER_NAME` | the same columns | settled; both full; a CRD over 2+ channels splits by broker name (4 CRDs, 12 names) |
-| p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED (`s1_opp_sales.sql:453-458`) | the same columns and map; RILA is a VA type here | settled (Q22); one map for both from the profile's labels (session) |
+| p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED | the same columns and map; RILA is a VA type here | settled (Q22); the map is the session's for both: the owner's (`s1_opp_sales.sql:453-458`) reads RILA from `PRODUCT_LINE` only, which source 2 leaves VA |
 | κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA) | settled for source 1; source 2's label pairs and NO CHANNEL: Q19 |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
 | ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | basis and UNMAPPED settled; level and override: Q38 |

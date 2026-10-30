@@ -27,7 +27,8 @@ INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
 CREATE TABLE ssdb_integration.lr_strategy.s1_terr_t (whslr_id TEXT, whslr_nm TEXT, zip TEXT, state_cd TEXT,
   new_dist_channel TEXT);
 INSERT INTO ssdb_integration.lr_strategy.s1_terr_t VALUES
-  ('W1','N1','02134','MA','IFA'), ('W3','N3','2134','MA','IFA'), ('W2','N2','10001','NY','WH'), ('W4','N4','60601','IL','EDJ');
+  ('W1','N1','02134','MA','IFA'), ('W3','N3','2134','MA','IFA'), ('W2','N2','10001','NY','WH'),
+  ('W2','N2','10001','NY','WH'), ('W4','N4','60601','IL','EDJ');
 CREATE TABLE life_prod.lif_murkylake.geographic_region (rgn_cd TEXT, start_zip TEXT, end_zip TEXT, cbd INTEGER,
   expir_dt TIMESTAMP);
 INSERT INTO life_prod.lif_murkylake.geographic_region VALUES
@@ -83,6 +84,9 @@ SELECT
  chk('s2 channel label', lab('S2_OPP_FIRM', 'DIST_CH', 'IND'), 65),
  chk('opp cell with 2 holders', m('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR.CH_ZIP', '2+'), 500),
  chk('opp cell with 1 holder, renamed label meets territory', m('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR.CH_ZIP', '1'), 330),
+ chk('vendor code to feed label: one code, two labels', (SELECT amt FROM r WHERE part='PAIRS' AND ds='S1_OPP_FIRM' AND col='CHANNEL' AND col2='FEED_DIST_CH' AND item='one CHANNEL, many FEED_DIST_CH'), 650),
+ chk('vendor code to feed label: 1 : 1', (SELECT amt FROM r WHERE part='PAIRS' AND ds='S1_OPP_FIRM' AND col='CHANNEL' AND col2='FEED_DIST_CH' AND item='1 : 1'), 620),
+ chk('a repeated territory row is one holder', m('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR.CH_ZIP', '2+'), 500),
  chk('opp cell with no holder', m('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR.CH_ZIP', '0'), 440),
  chk('blank channel has no cell', m('S1_OPP_GEO', 'CH_ZIP', 'S1_TERR.CH_ZIP', 'no value'), 30),
  chk('padded ZIP meets territory ZIP', m('S1_OPP_GEO', 'ZIP', 'S1_TERR.ZIP', '2+'), 700),

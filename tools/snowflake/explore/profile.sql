@@ -87,7 +87,7 @@ s1_crd_ch AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (   -- o
 s1_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT whslr_id, LPAD(LEFT(TRIM(zip), 5), 5, '0') AS zip,
          new_dist_channel || '|' || LPAD(LEFT(TRIM(zip), 5), 5, '0') AS ch_zip, new_dist_channel,
-         COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
+         1 AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt   -- distinct rows: a match counts holders, not repeats
   FROM IDENTIFIER($s1_territories) GROUP BY ALL)),
 s2_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel, product_line,
@@ -101,7 +101,7 @@ s2_override AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
 s2_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT territory_id, rvp, LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS zip,
          channel || '|' || LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS ch_zip, channel, channel_name,
-         COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
+         1 AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt   -- distinct rows: a match counts holders, not repeats
   FROM IDENTIFIER($s2_territories) GROUP BY ALL)),
 lng AS (
             SELECT 'S1_OPP_FIRM' AS ds, rid, 'K' AS kind, 'CBD_ID' AS col, cbd_id AS v, n, amt FROM s1_opp_firm
@@ -110,10 +110,10 @@ lng AS (
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'BROKER_NAME', broker_name, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CRD_NAME', crd_name, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'DIST_CH', dist_ch, n, amt FROM s1_opp_firm
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'FEED_DIST_CH', feed_dist_ch, n, amt FROM s1_opp_firm
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'CHANNEL', channel, n, amt FROM s1_opp_firm
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s1_opp_firm
-  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'D', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'FEED_DIST_CH', feed_dist_ch, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'CHANNEL', channel, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'PRODUCT_LINE', product_line, n, amt FROM s1_opp_firm
+  UNION ALL SELECT 'S1_OPP_FIRM', rid, 'KD', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'ZIP', zip, n, amt FROM s1_opp_geo
   UNION ALL SELECT 'S1_OPP_GEO', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s1_opp_geo
   UNION ALL SELECT 'S1_CRD_CH', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s1_crd_ch
@@ -126,8 +126,8 @@ lng AS (
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'K', 'CRD_NAME', crd_name, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'KD', 'DIST_CH', dist_ch, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'CHANNEL', channel, n, amt FROM s2_opp_firm
-  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'PRODUCT_LINE', product_line, n, amt FROM s2_opp_firm
-  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'D', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s2_opp_firm
+  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'KD', 'PRODUCT_LINE', product_line, n, amt FROM s2_opp_firm
+  UNION ALL SELECT 'S2_OPP_FIRM', rid, 'KD', 'VA_PRODUCT_TYPE', va_product_type, n, amt FROM s2_opp_firm
   UNION ALL SELECT 'S2_OPP_GEO', rid, 'K', 'ZIP', zip, n, amt FROM s2_opp_geo
   UNION ALL SELECT 'S2_OPP_GEO', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s2_opp_geo
   UNION ALL SELECT 'S2_OVERRIDE', rid, 'K', 'FIRM_CRD', firm_crd, n, amt FROM s2_override
@@ -135,8 +135,8 @@ lng AS (
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'RVP', rvp, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'ZIP', zip, n, amt FROM s2_terr
   UNION ALL SELECT 'S2_TERR', rid, 'K', 'CH_ZIP', ch_zip, n, amt FROM s2_terr
-  UNION ALL SELECT 'S2_TERR', rid, 'D', 'CHANNEL', channel, n, amt FROM s2_terr
-  UNION ALL SELECT 'S2_TERR', rid, 'D', 'CHANNEL_NAME', channel_name, n, amt FROM s2_terr)
+  UNION ALL SELECT 'S2_TERR', rid, 'KD', 'CHANNEL', channel, n, amt FROM s2_terr
+  UNION ALL SELECT 'S2_TERR', rid, 'KD', 'CHANNEL_NAME', channel_name, n, amt FROM s2_terr)
 SELECT ds, rid, kind, col, NULLIF(NULLIF(UPPER(TRIM(CAST(v AS VARCHAR))), ''), '0') AS val, n, amt FROM lng;
 
 --3. Every column: rows, distinct values, % of rows and of $ with no value, value lengths, values with a non-digit.
@@ -155,7 +155,9 @@ GROUP BY ALL;
 --4. Pairs of keys within a dataset, every link between their values (combinations carrying both) by shape:
 --   1 : 1 the same thing; one A, many B: B nests in A; many A, one B: A nests in B; many : many tangled.
 --   N_VALUES: links; N_ROWS and AMT: the rows and $ on them; PCT_AMT: of the pair's $; N_A, N_B: values of each column.
---   E.g. S1_OPP_FIRM FIRM_CRD - DIST_CH 'one FIRM_CRD, many DIST_CH': the $ of firms with 2+ channels.
+--   E.g. S1_OPP_FIRM FIRM_CRD - DIST_CH 'one FIRM_CRD, many DIST_CH': the $ of firms with 2+ channels; CHANNEL -
+--   FEED_DIST_CH: whether the vendor's code and its channel label are one thing; PRODUCT_LINE - VA_PRODUCT_TYPE and
+--   S2_TERR CHANNEL - CHANNEL_NAME: how those codes pair.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_pairs AS
 WITH
 l AS (

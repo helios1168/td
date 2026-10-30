@@ -29,7 +29,8 @@ channels."
   time"). Each part (report, review list, checks) is its own temporary table with the same columns, and the last
   statement unions them; checks are rows of that result. Pattern: `explore/profile.sql`, statements 3-8 (`PART`,
   `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages).
-- **Columns.** Source columns keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by
+- **Columns** (layer files; an `explore/` profile reports in the long layout of `explore/profile.sql`). Source columns
+  keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by
   what; rankings `RANK_<within>_<by>`; checks `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO`.
 - **Rules.** Assign where unique and flag the rest; no largest-share guesses.
 - **Snowflake.** How a function or clause behaves is settled by the Snowflake docs (page and date read) or by the
@@ -68,7 +69,8 @@ channels."
 - Fiscal year 2025 only (owner, 2026-10-25).
 - Fixed annuity is in scope, both sources (owner, 2026-10-26).
 - Sales = the actual sales amount, not the compensated amount (archived log, Settled).
-- No reassignment: each wholesaler's numbers in the current state and in the new state (owner, 2026-10-21, Q3).
+- No reassignment: each wholesaler's numbers in the current state and in the new state (owner, 2026-10-21, Q3);
+  the firm overrides' holder move (2026-10-28, below) is the exception.
 - Listed distributors break out to new labels that merge into National; WH and FI no longer hold the opportunity or
   sales placed with them (owner, 2026-10-21).
 - Firm overrides: a listed distributor takes a new label on every row, both sources, sales and opportunity. When the
@@ -501,3 +503,52 @@ stay `SET` placeholders. The DuckDB test runs the file's own rules on made-up ro
 - Q40 closed by the profile's first run: the split of a CRD over channels follows the broker name, never the ZIP.
 - `DATA_MODEL.md`: the distributor key and the opportunity steps carry the profile's facts; the route paragraph states
   the owner's basis and what is open. `README.md` lists `explore/`. `explore/schema.sql` marked as run.
+
+### 2026-10-30: the first audit (611 claims); what it corrects
+
+`audit.js`, run `d05bfc35`: `reader-sol` and 11 `auditor-sol` batches, all on `gpt-6.1-sol` thinking max (the run's own
+records). Every log entry dated 2026-10-30, `DATA_MODEL.md`, `README.md` and the handoff note, plus the six fixed
+checks: 611 claims, **508 Verified, 77 Weakened, 26 Falsified**. Claims and rows (they quote the owner's queries):
+`$TD_REPO/data/safe/audit_2026-10-30_claims.md` and `audit_2026-10-30_rows.md`.
+
+**Corrections to entries above** (those entries stay as written; this one corrects them; C = the audit's claim id):
+
+| C | entry | was | is |
+|---|---|---|---|
+| 305 | source 1 opportunity and sales query | `mm_query.sql` plus two broker-name rows, the rest whitespace | also line 3, the commented table name, differs |
+| 359 | the tables' columns, item 2 | `MM_MAP` is the table profiled 2026-10-29 | its columns match that master's (plus `CHANNEL`); the archived entry does not name the table |
+| 371 | the tables' columns, item 4 | the territory table has the columns of `current_territories` | the same grain and label; it has `STATE_CD`, not the CTE's `DISTCH_CHANNEL` and `CBD` |
+| 392, 393 | opportunity first | archived log line 1380 for the override table | its columns: line 1368; the blank broker name rule: 1369-1370 |
+| 438 | swapping firm 2's channel, item 6 | `mm_query_f2.sql` | not on disk; the archived log's 2026-10-25 entries describe it |
+| 440 | same, item 7 | within 1 in 6.89% of those cells | 6.89% of source 2's opportunity $ |
+| 453 | profile, first run | 3 company IDs on 2+ channels: 28.1% of source 1's $ | 19.73% (28.14% was of $ with both a company ID and a channel) |
+| 454 | same | 5 company IDs, 15 names: 29.0% | 21.43% (29.01% left out missing company IDs) |
+| 457 | same | 4 CRDs, 12 names: 28.4% of source 1's $ | 27.20% (28.37% left out blank channels); source 2's 29.3% stands |
+| 459 | same | firm 1 never has 2+ channels within a ZIP x CRD x broker name | 4 rows do ($0.4M, 0.00%), a blank counted as a channel |
+| 467 | same | 0.02% at the CRD only | 0.03% (the unrounded sum) |
+| 486, 494 | same | INDEPENDENT → IFA 21.07; REGIONAL AGENCY → blank 2.59 | 21.08; 2.58 (sums of rounded parts before) |
+| 506 | same | 5.93% has no holder because the one-firm label is renamed | 5.84 points are that label, 0.09 another cause |
+| 542, 543 | the one-firm channel's label | `:692` leaves out the channel-level regions carrying the long label | `distch` there is the wholesaler's (`WHSLR.DISTCH`), not the region's `DISTCH_CHANNEL`: it leaves out company-0 regions whose wholesaler's channel is the long label |
+| 284 | source 1 query, steps table | display changes no number | unless the master has 2+ rows for a company (`:740`), as the sales item 2 says |
+| 334-345 | same, sales against `s1_sales.sql` | cites `:633`-`:640`, `:315` | `opp_final` is unique by its `GROUP BY` (`:607`-`:614`); the amount per row `:628`; no IOVA in sales by the product list (`:34`-`:36`, `:123`-`:124`), not `:315` |
+| 473-478, 545, 595 | profile, first run | vendor code and `DIST_CH` line up row for row | their counts match exactly; rows are not compared yet (the profile now pairs them) |
+| 395 | opportunity first | the 8.6% is where Q38's readings differ | it came from a cell-level choice that took the largest (2026-10-25), not a CRD route |
+| 365, 357, 378, 444 | the tables' columns | `CHANNEL` a code; a vendor own-sales column; `RGN_CD` the credit region; the CRD map is CRD → one name | readings, not schema facts; the CRD map is keyed on CRD alone, its rows per CRD unmeasured |
+| 519, 235, 566 | various | 7.71% of ZIPs; Q30 in the 2026-10-29 entry; the owner declined a rewrite | 7.71% of territory rows; Q30's text is in the archived open index (line 179); the owner waived the slip, no rewrite asked |
+
+The handoff note `notes/2026-10-30_snowflake-opp-routing.md` is write-once: its `DATASET_LOG.md:20` cite holds Table
+variables only; its `/tmp` learning was seen for one file; only the rule-priority mutation was run. The DuckDB test
+has no planted case for a missing `END_ZIP` or a non-digit ZIP (C405).
+
+**Fixed in place** (living documents): `DATA_MODEL.md` (a layer file names its symbols, C6; the shared rules beside the
+shared sets, C11; source 2's period, C18; the product map is the session's, the owner's reads RILA from
+`PRODUCT_LINE` only, C104, K5); Conventions, Columns, scoped to layer files (C175-C180); Settled, no reassignment,
+names the firm overrides' holder move (C209); `README.md` on testing (C142); `explore/profile.sql`: a territory match
+counts distinct rows, so 2+ means 2+ holders (C402), and pairs vendor code with feed label, product line with VA type,
+source 2's territory code with its name (C473-C478, C514, C523-C524); `audit.js`: fixed checks read this thread's
+notes only. DuckDB test: 65 checks; undoing the distinct-holder change fails one.
+
+**Process:** two entries were edited in place against Conventions (C158): `62da7ca` (masking redactions in two quotes)
+and `6c8e932` (a cite). **Not changed:** K2 (document metadata in another thread's note); the layer-file claims (C167,
+C168, C387: none written yet); the uniqueness claims made before the rules were applied (C32, C103, C119, C120, C579:
+the profile's next run measures them after).
