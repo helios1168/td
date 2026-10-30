@@ -367,3 +367,52 @@ before) separate those splits in source 2's opportunity too. The profile's match
 S1_OPP_FIRM.CRD_NAME` measures it (share of source 2's opportunity whose CRD x broker name source 1's rows carry).
 Source 2's sales reach the broker name through its CRD map, which is CRD -> one name (2026-10-30, schema): a CRD with
 suffixed names stays open there; that is sales, later.
+
+### 2026-10-30: the opportunity profile, first run
+
+The owner's run of `explore/profile.sql` (`aa52017` + `6171c8c`): `$TD_REPO/data/safe/profile_2026-10-30-0324.csv`,
+277 rows. Source 1 is fiscal year 2025 ($196.4B); source 2's table is read whole ($179.6B, NO CHANNEL included).
+
+**The firm key.** `FIRM_CRD` and `BROKER_NAME` are on every row of both sources (0% missing). 99.93% of source 2's $
+is at a CRD x broker name that source 1's rows carry; 92.6% of source 1's $ is at CRDs source 2's table has. Source 1's
+company ID is missing (0 or blank) on 26.1% of its $, and 3 company IDs carry 2+ channels (28.1% of its $); 5 company
+IDs hold 15 broker names (29.0%).
+
+**Firm 1's channel per firm.** Every CRD x broker name carries at most one non-blank `DIST_CH` in source 1's rows (pair
+shapes: no broker name or CRD x broker name links to 2+ channels). A CRD spread over channels is spread through its
+broker names: 4 CRDs with 12 names hold 28.4% of source 1's $ and 29.3% of source 2's. Within a ZIP x CRD x broker
+name, firm 1 never has 2+ channels (4 rows, $0.00B); 5.85% of its $ is at firms with a channel in some ZIPs and a blank
+`DIST_CH` in others. So Q40's split follows the broker name, not the place, and the company ID is the weaker key.
+
+**Routing source 2 by firm 1's channel** (`S2 ROUTE LEVEL`, blank counted as a channel): 99.71% of source 2's $ finds
+one channel at the same ZIP x CRD x broker name (33.50 points of it at CRDs `crd_dist_override` lists); 0.21% at the
+CRD x broker name only; 0.02% at the CRD only; 0.00% where the ZIP cell has 2+; 0.05% has no source 1 rows.
+`crd_dist_override` has 866 rows on 51 CRDs; where it and this route disagree is not measured yet.
+
+**Firm 1's channels are the vendor's, mostly.** Source 1's `DIST_CH` and the vendor's `CHANNEL` code line up row for
+row: code 01 is IFA (185,874 rows each), code 13 is the one-firm label the rule `s1_opp_sales.sql:468` renames, code
+11 is FI plus WH (105,121 + 32,531 = 137,652 rows), and codes 08, 10 and NO CHANNEL are a blank `DIST_CH` (25,955 rows,
+5.06% of $). Firm 1's in-house step is the FI / WH split of code 11 and the blank for 08 and 10.
+
+**Source 2's labels against firm 1's channel of the CRD** (% of source 2's $, CRDs with one firm 1 channel; the 4
+split CRDs are '2+'): BANK 44.79 (FI 27.11, 2+ 13.82, IFA 3.70); INDEPENDENT 35.47 (IFA 21.07, 2+ 12.66, WH 1.25);
+REGIONAL 11.31 (WH 7.45, 2+ 2.25, IFA 1.61); REGIONAL AGENCY 5.95 (blank 2.59, IFA 1.94, WH 1.42); NO CHANNEL 2.48.
+3.61% of source 2's $ is at CRDs firm 1 gives only a blank channel, most of it REGIONAL AGENCY.
+
+**Territories.** Source 1: 7 channels (FI, IFA, WH, IMO and three named for one firm or unit), 100 wholesalers, one
+holder per channel x ZIP; each channel covers about 41.6k ZIPs (IMO 29.6k). Source 1's opportunity finds a holder for
+89.02% of its $ on the raw feed label; 5.93% misses because the one-firm label is renamed (`:468`) before the lookup,
+5.06% has a blank channel. The table matches the regions it comes from on 99.28% of wholesaler x ZIP pairs (0.39%
+regions only, 0.34% table only); every region's `START_ZIP` is longer than 5 digits and differs from its `END_ZIP`
+(whether a range crosses a 5-digit ZIP is not measured). Source 2: channels BD, BK, FP, RA (broker dealers, bank,
+financial planners, regional agency), each about 42.3k ZIPs, 196 territory IDs, 74 RVPs, 12 channel x ZIPs with 2
+holders; 7.71% of its ZIPs lost a leading zero (padded in the profile).
+
+**Products.** Both sources use the same codes: `PRODUCT_LINE` FA, IA, VA (and RILA in source 1), `VA_PRODUCT_TYPE`
+IOVA, RILA, TRVA (-77777 in source 1 and blank in source 2 for FA and IA). One map serves both: RILA if either column
+says RILA, IOVA, VARIABLE for TRVA, INDEX, FIXED. Totals, source 1 / source 2 ($B): FA 75.89 / 63.23, RILA 58.22 /
+57.71, IA 30.87 / 29.99, TRVA 28.32 / 25.59, IOVA 3.11 / 3.10.
+
+**Periods.** Source 1's table runs from 2012 Q3 to 2026 Q2, plus fiscal year 1900 rows ($39.7B over Q1-Q3, a filler
+date); fiscal year 2025 is its four quarters. Source 2 has no period (Q36); its product totals sit close to source 1's
+fiscal year 2025.
