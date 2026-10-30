@@ -416,3 +416,18 @@ says RILA, IOVA, VARIABLE for TRVA, INDEX, FIXED. Totals, source 1 / source 2 ($
 **Periods.** Source 1's table runs from 2012 Q3 to 2026 Q2, plus fiscal year 1900 rows ($39.7B over Q1-Q3, a filler
 date); fiscal year 2025 is its four quarters. Source 2 has no period (Q36); its product totals sit close to source 1's
 fiscal year 2025.
+
+### 2026-10-30: how the one-firm channel (vendor code 13) gets its label
+
+> **Owner, 2026-10-30:** "check the queries to see how edward jones is mapped to become EDJ. it should be in one of them - if not even the older mm_query.sql file"
+
+Two places, the same in `owner_sql/s1_opp_sales.sql` and `mm_query.sql` (`:470`, `:677`, `:691` there); none in
+`owner_sql/s1_sales.sql`:
+- Opportunity: the rule renames the feed label (`s1_opp_sales.sql:468`), so the cell's channel is the short label.
+- Territories: company 3's own regions take the short label (`:678` `select distinct case when gr.cbd = '3' then ...`),
+  and the channel-level regions carrying the long label are left out (`:692`: company 0 except that label, or company
+  3). The firm's territories are company 3's regions, not the channel-level ones.
+- Sales: no rule; a sale of this firm takes the MGA map's channel (`s1_sales.sql:56`-`:66`) like any other (Q28).
+
+In the profile it is one broker name, one company ID and vendor code 13 (32,482 rows, 5.84% of source 1's $); the
+5.93% of source 1's $ with no holder on the raw label is this rename not yet applied.
