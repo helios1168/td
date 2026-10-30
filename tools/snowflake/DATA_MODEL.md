@@ -70,7 +70,7 @@ Aggregating μ along f: f_*μ(b) = Σ μ(a) over all a with f(a) = b.
 
 No holder (⊥) has three causes, reported apart: unknown distributor (d = ⊥_D), no bridge (τ_s undefined), no coverage
 (H_s = ∅). A share is defined only when numerator and denominator pass through the same map: a holder's territory
-share = sales sent through k_s to w ÷ market sent through k_s to w. Which one ranks a wholesaler: Q31.
+share = sales sent through k_s to w ÷ market sent through k_s to w. A wholesaler is measured by its credited sales against the opportunity it holds (settled 2026-10-30, Q31): credit never moves (I2), so only held opportunity changes between states; layer 02 reports beside it the credited sales in held cells, the territory share's numerator.
 
 ## Invariants
 

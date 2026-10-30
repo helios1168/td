@@ -88,6 +88,11 @@ channels."
 - Source 2's old channel in firm 1's names: its own label through Q19, then Q39 read back, BANK → FI, INDEPENDENT →
   IFA, REGIONAL → WH, REGIONAL AGENCY → PRI, NO CHANNEL blank (owner, 2026-10-30: "lets actually implement option (a)
   for the source 2's old channel in source 1's terms item"). Key decision.
+- Sales stay with the wholesaler who sold them, in both states; they meet opportunity at the wholesaler, at ZIP
+  grain: one row per wholesaler x ZIP x firm x product with the opportunity held (old, new) and the sales credited
+  there (owner, 2026-10-30: "sales is tied to the actual wholesaler, not necessarily a cell"; "sales stay fixed to
+  whoever actually sold"; "no we also want sales at the zip grain"). So Q31: a wholesaler is measured by its credited
+  sales against the opportunity it holds; only the held opportunity changes between states (I2).
 - One set of new channels for both sources, in firm 1's channels: both sources' opportunity is routed by firm 1's
   channel per market metrics firm; source 2's own channels serve its current state only (owner, 2026-10-30: "we want
   each new channel to match across both source firms. so it seems natural to use firm 1's original channel in the
@@ -137,6 +142,8 @@ decision point, and we should be able to easily come back and look at the number
 | Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
 | source 2's old channel in firm 1's names | (a) its own label translated, Q19 then Q39 read back: agrees with its old wholesaler | (b) the channel firm 1 gives the firm (the route): agrees with the new channel | label and route disagree on at least ~10% of source 2's $ (the profile, second run) | `01_opportunity.sql` 6, the `q39` join of `TMP_O1_DATASET` | `TMP_O1_DATASET.OLD_CHANNEL_S1` |
+| firm 1's sales: company ID to firm | the firms whose market metrics rows carry the company, derived as `s1_opp_sales.sql:475-482` (the link the owner's output uses, LPL's 10/29 names included); a client firm ID list counts only for a company no row carries alone | `MM_MAP` or `CRD_TO_CBD` (Q35) | not yet measured: the Q35 part of `02_sales.sql` compares both maps with the firm found here, by sales $ | `02_sales.sql` 2, `tmp_o2_company_firm` | `02_sales.sql` `SALES FIRM BASIS`, `Q35` |
+| a company or CRD on 2+ firms (sales) | the firm whose firm 1 channel is the sale's (firm 1's IMO and split-policy labels on their base channel; firm 2's CHANNEL through Q19 and Q39); none or 2+: no firm, flagged | every split left without a firm | company 8 carries all three LPL broker names (`s1_opp_sales.sql:478`) | `02_sales.sql` 1 `tmp_s1_sale_channel`, 3-4 the `m` joins | `02_sales.sql` `SALES FIRM BASIS` (`SPLIT, ...`) |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
@@ -165,7 +172,6 @@ view.
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
 | Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
-| Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
@@ -814,3 +820,32 @@ other blank-CRD row of the feed. Snowflake: ILIKE (https://docs.snowflake.com/en
 file's own last statement; nine mutations each fail it (the CRD lookup dropped, company 0 kept instead of dropped, the
 blank-CRD guard removed, the LPL list made case-insensitive, expired wholesaler rows, regions or master names read,
 channel-level regions kept, the regions part left out of the result).
+
+### 2026-10-30: layer 02, sales credited to the seller beside held opportunity (`02_sales.sql`)
+
+> **Owner, 2026-10-30:** "lets think about this though, sales is tied to the actual wholesaler, not necessarily a cell"
+
+> **Owner, 2026-10-30:** "sales stay fixed to whoever actually sold"
+
+> **Owner, 2026-10-30:** "no we also want sales at the zip grain"
+
+Settled and Key decisions carry it; Q31 leaves the index. The session's first proposal (a sale takes its cell's
+holder) is withdrawn: credit never moves. `02_sales.sql` runs after `01_opportunity.sql` in the same session and
+builds `TMP_O2_SALES` (each source's 2025 sales with the firm each reaches, how, scope, and whether the seller holds
+that ZIP x firm x product, old and new) and `TMP_O2_DATASET` (one row per source x wholesaler x ZIP x firm x product x
+new channel: opportunity held old and new, sales credited, the part sold in held cells). Firm 1's wholesaler is its
+ID; firm 2's is the RVP, since its 196 territory IDs are seats held by 74 RVPs. Inputs: firm 1's sales are the table
+`owner_sql/s1_sales.sql` makes (its first CREATE line and last line uncommented), checked against `SLS_RPT_DETAIL`
+under that file's row filters and non-zero policies (must be 0); firm 2's sales table, `YEAR` 2025. Two new table
+variables, `s1_sales` and `s2_sales`.
+
+Session defaults, each simple and recorded (the first two in Key decisions): firm 1's company-to-firm link; splits by
+channel; `SALES` is firm 1's actual sales (`DATA_MODEL.md`, σ) and firm 2's `SALES_AMOUNT`, with comp'd sales and
+`MM_AMOUNT` as `SALES_ALT` until Q42; products by `s1_sales.sql:315-317` and the market metrics codes, VA sales as
+VARIABLE (sales carry no VA type); EDJ, AMER and AFS firms' sales out. Q28 waits for a channel cut of sales: no sale
+is placed on a channel here. Sellers with no territory (Q17) show as `SELLS, HOLDS NO OPPORTUNITY`. DuckDB test
+`02_sales_test.sh` runs 01 then 02: 33 checks; ten mutations each fail it (a list over a direct company, IMO not on
+IFA, held without the seller, out-of-scope sales kept, net-zero policies in the raw check, firm 2's RVP key not
+cleaned, a territory code not read back, the product bucket or firm 2's year not filtered, a split guessed).
+Snowflake: SPLIT_PART (https://docs.snowflake.com/en/sql-reference/functions/split_part) and CROSS JOIN
+(.../constructs/join) read 2026-10-30.
