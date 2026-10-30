@@ -1,4 +1,5 @@
 --The columns of every table the analysis reads, from INFORMATION_SCHEMA.  Run All; send statement 3's output (text).
+--Run 2026-10-30 ($TD_REPO/data/safe/scratch_2026-10-30-0221.csv); its <...> placeholders predate the SET convention.
 --Snowflake docs, read 2026-10-30 (https://docs.snowflake.com/en/sql-reference/info-schema, .../info-schema/tables,
 --.../info-schema/columns): one INFORMATION_SCHEMA per database; unquoted names are stored in uppercase, so filter in
 --uppercase; only objects the current role can access are returned; a query without a selective enough filter fails

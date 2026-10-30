@@ -54,8 +54,8 @@ channels."
   2026-10-29). `DATA_MODEL.md` I1, I2.
 - The two source firms are analysed separately, each with its own datasets, mapped to the common market metrics
   schema (owner, 2026-10-29 and 2026-10-30). Each source's market is its own opportunity estimate.
-- The distributor key is the market metrics schema's: CRD, plus broker name on a CRD a rule splits (session, on the
-  owner's 2026-10-30 description; the split list is Q27).
+- The distributor key is the market metrics schema's: CRD x broker name (session, on the owner's 2026-10-30
+  description; both full in both sources' opportunity, profile 2026-10-30).
 - Fiscal year 2025 only (owner, 2026-10-25).
 - Fixed annuity is in scope, both sources (owner, 2026-10-26).
 - Sales = the actual sales amount, not the compensated amount (archived log, Settled).
@@ -68,7 +68,12 @@ channels."
   (owner, 2026-10-26 and 2026-10-28). `DATA_MODEL.md` τ_s and k_s for listed distributors.
 - Source 2's file channel maps one-to-one onto four of source 2's channels; its fifth value is no channel and those
   rows drop (owner, 2026-10-25, Q19). Its product line x VA type maps onto products (owner, 2026-10-24, Q22). The coded
-  version is in the tag; the real labels go here from the new extract.
+  version is in the tag; the real labels and their pairs: Q19 (reopened 2026-10-30); products: `DATA_MODEL.md`, p.
+- One set of new channels for both sources, in firm 1's channels: both sources' opportunity is routed by firm 1's
+  channel per market metrics firm; source 2's own channels serve its current state only (owner, 2026-10-30: "we want
+  each new channel to match across both source firms. so it seems natural to use firm 1's original channel in the
+  master firm mapping table"; "we can simply just use firm 1's original channels, without even explicitly mapping
+  source firm 2 to source firm 1"). Q6.
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
   Masking.
@@ -95,12 +100,12 @@ view.
 | Q | question | since |
 |---|---|---|
 | Q2 | What does the opportunity measure: the whole market, or what a source can address? | 2026-10-20 |
-| Q6 | Is N one set of new labels for both sources (ρ₂ for source 2)? | 2026-10-20 |
 | Q7 | Same ZIP basis for opportunity and sales? Source 1's sales ZIP is the advisor's primary address (`s1_opp_sales.sql:100`). | 2026-10-20 |
 | Q17 | Sellers with no territory: whose numbers? | 2026-10-21 |
-| Q21 | Opportunity and sales with no distributor (⊥_D): which new channel? | 2026-10-24 |
+| Q19 | Source 2's file labels to its territory channels: BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA (the archived coded map, O2_01-04 → D2_01-04, with the real labels; the pairs are the session's reading)? NO CHANNEL: still dropped (2026-10-25), or routed by firm 1's channel like the rest? | 2026-10-25 |
+| Q21 | Opportunity and sales with no distributor (⊥_D): which new channel? Moot for opportunity (CRD on every row); for sales UNMAPPED is the session's reading. | 2026-10-24 |
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
-| Q27 | Which CRDs do the channel rules split by broker name (the split list)? Does I3 hold for every distributor, or only listed ones (the rest carry their current label forward)? Can product split a distributor's new channel? Folds in Q16 and Q20. | 2026-10-29 |
+| Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
 | Q29 | τ_s for new channels such as National: covered by ZIP, by distributor-tied territories (`s1_opp_sales.sql:692` filters them out), or the current holder kept (`s1_opp_sales.sql:719`)? Listed distributors: settled 2026-10-28. Folds in Q13. | 2026-10-29 |
 | Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
@@ -110,9 +115,8 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q38 | New-state routing for both sources by firm 1's channel per market metrics firm (owner's direction, 2026-10-30). Firm 1 splits a CRD into company IDs by in-house logic, so for source 2's opportunity of a split CRD: the channel of the same ZIP x CRD x broker name in firm 1's rows, then the CRD x broker name's, then `crd_dist_override` (finest first); or the CRD's, then `crd_dist_override` (the 2026-10-25 rule)? |  2026-10-30 |
+| Q38 | The route's level and the override: firm 1's channel per CRD x broker name, or per ZIP x CRD x broker name (they differ where firm 1's channel is blank in some ZIPs)? Where `crd_dist_override` differs from the route, which wins? | 2026-10-30 |
 | Q39 | For each firm 1 channel, which source 2 territory channel holds source 2's opportunity routed to it in the new state? | 2026-10-30 |
-| Q40 | What decides which company ID a CRD's business goes to when firm 1 splits the CRD: office or branch (place), product, the advisor, or the vendor's client-firm list? | 2026-10-30 |
 
 ## Log
 
@@ -476,3 +480,15 @@ same 11 rows, generated from `s1_opp_sales.sql:459`-`:470`), so nothing has to r
 `s1_channel_rule` of the entry before is not needed and `owner_sql/rules_s1.sql` is removed. The carrier-named tables
 stay `SET` placeholders. The DuckDB test runs the file's own rules on made-up rows that use two of their values
 (company 685 with an IFA-rule broker name: the company rule wins; the one-firm feed label): 62 checks.
+
+### 2026-10-30: housekeeping; Q6 settled, Q19 reopened, Q40 closed
+
+> **Owner, 2026-10-30:** "before I run the latest profile.sql script. lets do some housekeeping an ensure all relevent files/docs etc are up to date with what we've made progress on so far."
+
+- Q6 settled from the owner's words of 2026-10-30 (Settled). Q27 narrowed to product; Q38 restated as the route's level
+  and the override's role; Q21 annotated (moot for opportunity).
+- Q19 back in the index: its settled form has coded labels only; the profile gave the real ones, and the label pairs
+  are the session's reading until the owner confirms them; NO CHANNEL's drop (2026-10-25) predates the firm route.
+- Q40 closed by the profile's first run: the split of a CRD over channels follows the broker name, never the ZIP.
+- `DATA_MODEL.md`: the distributor key and the opportunity steps carry the profile's facts; the route paragraph states
+  the owner's basis and what is open. `README.md` lists `explore/`. `explore/schema.sql` marked as run.
