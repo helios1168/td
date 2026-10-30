@@ -1,7 +1,7 @@
 # Opportunity and sales by channel and territory: conventions, decisions, questions, history
 
-One file for what we track. Sections: **Conventions**, **Settled** (decisions in force), **Parked** (suspended, not
-reversed), **Open questions** (index), **Log** (dated findings, append-only). The model is `DATA_MODEL.md`.
+One file for what we track. Sections: **Conventions**, **Settled** (decisions in force), **Key decisions** (settled
+answers that move the numbers, and how to rerun them another way), **Parked** (suspended, not reversed), **Open questions** (index), **Log** (dated findings, append-only). The model is `DATA_MODEL.md`.
 
 - Log entries are never rewritten. A wrong finding is corrected by a later entry that names it.
 - An owner answer goes under its question in the log (quoted, dated), its rule into Settled, and the question leaves
@@ -77,9 +77,14 @@ channels."
   override changes the current channel (source 1: the override's channel; source 2: its own channel, stated in the
   list), the opportunity goes to the holder of ZIP x that channel, the lowest ID where 2+ hold it; sellers stay
   (owner, 2026-10-26 and 2026-10-28). `DATA_MODEL.md` τ_s and k_s for listed distributors.
-- Source 2's file channel maps one-to-one onto four of source 2's channels; its fifth value is no channel and those
-  rows drop (owner, 2026-10-25, Q19). Its product line x VA type maps onto products (owner, 2026-10-24, Q22). The coded
-  version is in the tag; the real labels and their pairs: Q19 (reopened 2026-10-30); products: `DATA_MODEL.md`, p.
+- Source 2's own labels go to its territory channels BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA
+  (Q19; owner, 2026-10-25 for the one-to-one map, 2026-10-30 for these pairs: "go with your recommendation"). NO
+  CHANNEL is kept: no territory channel in the current state, routed by firm 1's channel in the new state (owner,
+  2026-10-30; reverses the drop of 2026-10-25). Its product line x VA type maps onto products (owner, 2026-10-24, Q22;
+  `DATA_MODEL.md`, p). Key decision.
+- Source 2's new-state holder: the source 2 territory channel of firm 1's channel, IFA → FP, FI → BK, WH → BD, PRI → RA
+  (Q39; owner, 2026-10-30, "go with your recommendation"); EDJ and AMER carry none of source 2's opportunity. Key
+  decision.
 - One set of new channels for both sources, in firm 1's channels: both sources' opportunity is routed by firm 1's
   channel per market metrics firm; source 2's own channels serve its current state only (owner, 2026-10-30: "we want
   each new channel to match across both source firms. so it seems natural to use firm 1's original channel in the
@@ -101,6 +106,19 @@ channels."
   opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team"). The
   label is the session's.
 
+## Key decisions
+
+Settled answers whose alternative would move the numbers. Each names where it lives in the SQL; change it there, rerun,
+and the named report shows the new numbers beside the logged ones (owner, 2026-10-30: "be sure to flag this as a key
+decision point, and we should be able to easily come back and look at the numbers if we changed our answers here").
+
+| decision | chosen | alternative | evidence when chosen | change it in | report |
+|---|---|---|---|---|---|
+| Q38: route against `crd_dist_override` | firm 1's route per CRD x broker name wins; the override fills gaps | the override wins | they differ on 2.48% of source 2's $ (Wells: FI against WH); fills 0.13% | the route and override join of the build (`profile.sql` 7, `s2_route`) | `explore/override_review.sql`; profile `S2 ROUTE (CRD X NAME) VS OVERRIDE` |
+| Q19: source 2's labels to its territory channels | BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA | other pairs | the names; firm 1's channel for those firms: BANK FI 27.18, INDEPENDENT IFA 21.26, REGIONAL WH 7.45 of source 2's $ | `profile.sql` 1, `tmp_s2_label_terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE`; matches `S2_OPP_GEO.CH_ZIP` |
+| source 2's NO CHANNEL rows | kept: no current holder, routed in the new state | dropped (2026-10-25) | 2.48% of source 2's $; under the route IFA 1.29, FI 0.44, split firms 0.57, UNMAPPED or absent 0.17 | `profile.sql` 1, `tmp_s2_label_terr.KEEP_NEW` | profile `S2 HOLDER MOVES` (`DROPPED`) |
+| Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
+
 ## Parked
 
 Suspended while the sources are analysed separately (owner, 2026-10-30: "yes to park"); each returns with a combined
@@ -120,7 +138,6 @@ view.
 | Q2 | What does the opportunity measure: the whole market, or what a source can address? | 2026-10-20 |
 | Q7 | Same ZIP basis for opportunity and sales? Source 1's sales ZIP is the advisor's primary address (`s1_opp_sales.sql:100`). | 2026-10-20 |
 | Q17 | Sellers with no territory: whose numbers? | 2026-10-21 |
-| Q19 | Source 2's file labels to its territory channels: BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA (the archived coded map, O2_01-04 → D2_01-04, with the real labels; the pairs are the session's reading)? NO CHANNEL: still dropped (2026-10-25), or routed by firm 1's channel like the rest? | 2026-10-25 |
 | Q21 | Opportunity and sales with no distributor (⊥_D): which new channel? Moot for opportunity (CRD on every row); for sales UNMAPPED is the session's reading. | 2026-10-24 |
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
 | Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
@@ -133,7 +150,6 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q39 | For each firm 1 channel, which source 2 territory channel holds source 2's opportunity routed to it in the new state? | 2026-10-30 |
 | Q41 | AMER (company 805's channel, 1.39% of source 1's $) has no territory in source 1's table: who holds it, now and in the new state? | 2026-10-30 |
 
 ## Log
@@ -607,3 +623,22 @@ company ID 1822 (`:475`); its `- BANK` name is company ID 1823 (`:476`); the new
 Wells WH and 1823 to Wells FI (`:704`-`:705`). On the shared firm key the two names are two firms with two channels
 and two new labels, so the new-channel list re-keyed to CRD x broker name carries the split; company 14's CRD x
 broker name is read off source 1's rows when the list is built. `DATA_MODEL.md` takes Wells as its second example.
+
+### 2026-10-30: Q19 and Q39 settled; NO CHANNEL kept; key decisions flagged
+
+> **Owner, 2026-10-30:** "go with your recommendation but be sure to flag this as a key decision point, and we should be able to easily come back and look at the numbers if we changed our answers here"
+
+The recommendations (second run's cross-tab of source 2's label against firm 1's channel of the CRD, % of source 2's
+$): Q19 BANK → BK, INDEPENDENT → FP (by elimination; firm 1 sees it as IFA, 21.26 of 35.47), REGIONAL → BD (by
+elimination; WH, 7.45 of 11.31), REGIONAL AGENCY → RA; NO CHANNEL kept and routed (IFA 1.29, FI 0.44, split firms
+0.57, UNMAPPED or absent 0.17); Q39 IFA → FP, FI → BK, WH → BD, PRI → RA (PRI's 2.58 is all REGIONAL AGENCY). Where label
+and route disagree, source 2's opportunity changes holder in the new state: at least ~10% of its $ by the CRD-level
+cross-tab (BANK as IFA 3.70, REGIONAL AGENCY as IFA 1.94, REGIONAL as IFA 1.61, REGIONAL AGENCY as WH 1.42, INDEPENDENT
+as WH 1.30), more inside the split firms.
+
+New section Key decisions: Q38, Q19, NO CHANNEL, Q39, each with its alternative, evidence, the SQL to change and the
+report. `explore/profile.sql` statement 1 holds the three answers as tables (`tmp_s2_label_terr` with `KEEP_NEW`,
+`tmp_s1ch_s2terr`); statement 7 gains `S2 HOLDER MOVES` (source 2's opportunity from its current territory, by label and
+Q19, to its new-state territory, by route and Q39, the lowest territory ID where 2+: same, other, none, dropped) and
+`... BY LABEL AND ROUTE`; source 2's coverage match now goes through Q19. DuckDB test: 76 checks; switching NO CHANNEL to
+dropped fails it.

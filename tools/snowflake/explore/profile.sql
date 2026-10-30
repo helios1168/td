@@ -45,6 +45,29 @@ FROM (VALUES
   (6, NULL, NULL, 'EDWARD JONES', 'EDJ')
 ) AS v (rule_order, cbd_id, broker_name, dist_ch, channel);
 
+--KEY DECISIONS (DATASET_LOG.md, Key decisions): change a row and rerun; statement 7's S2 HOLDER MOVES shows the effect.
+--Q19: source 2's own label -> its territory channel (current-state holders); TERR_CHANNEL NULL: none.  KEEP_NEW: the
+--rows go on into the new state, routed by firm 1's channel (NO CHANNEL kept, owner 2026-10-30; FALSE drops them).
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s2_label_terr AS
+SELECT CAST(label AS VARCHAR) AS label, CAST(terr_channel AS VARCHAR) AS terr_channel, CAST(keep_new AS BOOLEAN) AS keep_new
+FROM (VALUES
+  ('BANK', 'BK', TRUE),
+  ('INDEPENDENT', 'FP', TRUE),
+  ('REGIONAL', 'BD', TRUE),
+  ('REGIONAL AGENCY', 'RA', TRUE),
+  ('NO CHANNEL', NULL, TRUE)
+) AS v (label, terr_channel, keep_new);
+
+--Q39: firm 1's channel (the route) -> the source 2 territory channel that holds it in the new state.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1ch_s2terr AS
+SELECT CAST(s1_channel AS VARCHAR) AS s1_channel, CAST(terr_channel AS VARCHAR) AS terr_channel
+FROM (VALUES
+  ('IFA', 'FP'),
+  ('FI', 'BK'),
+  ('WH', 'BD'),
+  ('PRI', 'RA')
+) AS v (s1_channel, terr_channel);
+
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s1 AS
 WITH
 o AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS oid FROM (
@@ -93,8 +116,9 @@ s2_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel, product_line,
          va_product_type, SUM(n) AS n, SUM(amt) AS amt
   FROM s2 GROUP BY ALL)),
-s2_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
-  SELECT zip, dist_ch || '|' || zip AS ch_zip, SUM(n) AS n, SUM(amt) AS amt FROM s2 GROUP BY ALL)),
+s2_opp_geo AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (   -- channel: the Q19 territory channel
+  SELECT s2.zip, lm.terr_channel || '|' || s2.zip AS ch_zip, SUM(s2.n) AS n, SUM(s2.amt) AS amt
+  FROM s2 LEFT JOIN ssdb_integration.lr_strategy.tmp_s2_label_terr lm ON lm.label = s2.dist_ch GROUP BY ALL)),
 s2_override AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT TRIM(firm_crd) AS firm_crd, COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
   FROM ssdb_integration.lr_strategy.crd_dist_override GROUP BY ALL)),
@@ -245,6 +269,9 @@ WHERE rk <= 40;
 --    name source 1 lacks), UNMAPPED if none; for source 1 rows also whether the row's own channel is blank.
 --  S2 ROUTE (CRD X NAME) VS OVERRIDE: that route against crd_dist_override (its CRD x broker name row, else its CRD row).
 --  OVERRIDE TABLE KEYS: the override's keys: CRD only or CRD x name, repeated, 2+ channels, matching no source 2 row.
+--  S2 HOLDER MOVES: source 2's opportunity from its current holder (its label, Q19, the territory at the ZIP) to its
+--    new-state holder (the route, Q39, the territory at the ZIP; the lowest TERRITORY_ID where 2+): same territory,
+--    other territory, no holder, dropped; ... BY LABEL AND ROUTE: label | route | current -> new territory channel.
 --  ZIP_FORM before padding; regions: does source 1's territory table match the regions it is read from
 --    (s1_opp_sales.sql:677-694 reads only the first 5 digits of START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
@@ -274,7 +301,7 @@ s1_nr AS (SELECT firm_crd, broker_name, COUNT(DISTINCT dist_ch) AS k, MIN(dist_c
 s1_cr AS (SELECT firm_crd, COUNT(DISTINCT dist_ch) AS k, MIN(dist_ch) AS ch
           FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
 s2_route AS (
-  SELECT o.n, o.amt,
+  SELECT o.n, o.amt, o.zip, o.dist_ch AS label,
          CASE WHEN o.firm_crd IS NULL THEN 'NO CRD'
               WHEN nr.firm_crd IS NOT NULL THEN CASE WHEN nr.k = 0 THEN 'UNMAPPED' WHEN nr.k = 1 THEN nr.ch ELSE '2+' END
               WHEN cr.firm_crd IS NOT NULL THEN CASE WHEN cr.k = 0 THEN 'UNMAPPED' WHEN cr.k = 1 THEN cr.ch ELSE '2+' END
@@ -285,6 +312,17 @@ s2_route AS (
   LEFT JOIN s1_cr cr ON cr.firm_crd = o.firm_crd
   LEFT JOIN ovk v1 ON v1.firm_crd = o.firm_crd AND v1.broker_name = o.broker_name
   LEFT JOIN ovk v0 ON v0.firm_crd = o.firm_crd AND v0.broker_name IS NULL),
+s2_terr_k AS (SELECT channel, LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS zip, MIN(territory_id) AS territory_id
+              FROM IDENTIFIER($s2_territories) GROUP BY ALL),   -- the lowest ID where 2+ hold (Settled)
+s2_moves AS (
+  SELECT r.n, r.amt, r.label, r.route, lm.label AS mapped_label, lm.terr_channel AS cur_ch,
+         COALESCE(lm.keep_new, TRUE) AS keep_new, nm.terr_channel AS new_ch,
+         tc.territory_id AS cur_t, tn.territory_id AS new_t
+  FROM s2_route r
+  LEFT JOIN ssdb_integration.lr_strategy.tmp_s2_label_terr lm ON lm.label = r.label
+  LEFT JOIN ssdb_integration.lr_strategy.tmp_s1ch_s2terr nm ON nm.s1_channel = r.route
+  LEFT JOIN s2_terr_k tc ON tc.channel = lm.terr_channel AND tc.zip = r.zip
+  LEFT JOIN s2_terr_k tn ON tn.channel = nm.terr_channel AND tn.zip = r.zip),
 ovk_in_s2 AS (SELECT DISTINCT v.firm_crd, v.broker_name
               FROM ovk v JOIN ssdb_integration.lr_strategy.tmp_opp_s2 o
                 ON o.firm_crd = v.firm_crd AND (v.broker_name IS NULL OR o.broker_name = v.broker_name)),
@@ -320,6 +358,18 @@ c AS (
                         ELSE 'OVERRIDE ' || ovr || ' <> ROUTE ' || route END,
                    SUM(n), SUM(amt)
             FROM s2_route GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 HOLDER MOVES',
+                   CASE WHEN NOT keep_new THEN 'DROPPED' WHEN new_ch IS NULL THEN 'NO NEW CHANNEL (' || route || ')'
+                        WHEN new_t IS NULL THEN 'NO NEW HOLDER' WHEN cur_t IS NULL THEN 'NO CURRENT HOLDER, NEW HOLDER'
+                        WHEN cur_t = new_t THEN 'SAME TERRITORY' ELSE 'OTHER TERRITORY' END,
+                   SUM(n), SUM(amt)
+            FROM s2_moves GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 HOLDER MOVES BY LABEL AND ROUTE',
+                   COALESCE(label, '(BLANK)') || ' | ' || route || ' | '
+                   || CASE WHEN mapped_label IS NULL THEN 'NOT IN Q19 MAP' ELSE COALESCE(cur_ch, 'NONE') END
+                   || ' -> ' || CASE WHEN NOT keep_new THEN 'DROPPED' ELSE COALESCE(new_ch, 'NONE') END,
+                   SUM(n), SUM(amt)
+            FROM s2_moves GROUP BY ALL
   UNION ALL SELECT 'S2_OVERRIDE', 'OVERRIDE TABLE KEYS',
                    CASE WHEN v.broker_name IS NULL THEN 'CRD ONLY' ELSE 'CRD X NAME' END
                    || CASE WHEN v.n_rows > 1 THEN ', REPEATED' ELSE '' END

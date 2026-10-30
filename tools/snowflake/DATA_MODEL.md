@@ -105,10 +105,10 @@ per cell x = (z, d, p): its market, current channel and holder, new channel and 
 | z | `ZIP_CODE` (text), padded to 5 | `ZIP_CODE` (a number), padded to 5 | given |
 | d | `FIRM_CRD` x `BROKER_NAME` | the same columns | settled; both full; a CRD over 2+ channels splits by broker name (4 CRDs, 12 names) |
 | p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED | the same columns and map; RILA is a VA type here | settled (Q22); the map is the session's for both: the owner's (`s1_opp_sales.sql:453-458`) reads RILA from `PRODUCT_LINE` only, which source 2 leaves VA |
-| κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA) | settled for source 1; source 2's label pairs and NO CHANNEL: Q19 |
+| κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA) | settled; source 2's pairs and NO CHANNEL kept: key decision (`DATASET_LOG.md`, Key decisions) |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
 | ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | settled 2026-10-30 (basis, level, the override's role, UNMAPPED) |
-| new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms settled; source 2's pairs: Q39; National: Q29 |
+| new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms settled; source 2's pairs (IFA → FP, FI → BK, WH → BD, PRI → RA): key decision; National: Q29 |
 
 The firm's route (owner, 2026-10-30): firm 1's channel per market metrics firm, for both sources, so the new channels
 match across sources and source 2's own channels serve only its current state. In firm 1's fiscal year 2025 rows every
