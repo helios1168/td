@@ -198,7 +198,10 @@ WHERE rk <= 40;
 
 --7. Checks, each by outcome.  COL: the check.  S2 DIST_CH -> S1 CHANNEL OF THE CRD: source 2's opportunity by its own
 --label and the one channel source 1 gives its CRD ('2+ CHANNELS', 'NO SOURCE 1 ROWS'), '(OVERRIDE)' where
---crd_dist_override lists the CRD: the evidence for a source 2 -> source 1 channel map.  ZIP_FORM before padding; regions: does source 1's territory table
+--crd_dist_override lists the CRD.  S1 CHANNELS PER ZIP X CRD X NAME: whether source 1's split of a firm into channels
+--shows within a ZIP (ZIP CELL 2+) or only across ZIPs.  S2 ROUTE LEVEL: how far the market metrics columns carry
+--source 2's opportunity to one source 1 channel, finest first (the same ZIP x CRD x broker name, then the CRD x broker
+--name, then the CRD), the vendor's DIST_CH before the query's rules.  ZIP_FORM before padding; regions: does source 1's territory table
 --match the regions it is read from (s1_opp_sales.sql:677-694 reads only START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
 WITH
@@ -219,12 +222,42 @@ s1_crd AS (SELECT firm_crd, CASE WHEN COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)'
                                 THEN MIN(COALESCE(dist_ch, '(BLANK)')) ELSE '2+ CHANNELS' END AS s1_channel
            FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
 ovr AS (SELECT DISTINCT TRIM(firm_crd) AS firm_crd FROM ssdb_integration.lr_strategy.crd_dist_override),
+s1_cell AS (SELECT zip, firm_crd, broker_name, COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) AS k
+            FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
+s1_name AS (SELECT firm_crd, broker_name, COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) AS k
+            FROM ssdb_integration.lr_strategy.tmp_opp_s1 WHERE firm_crd IS NOT NULL GROUP BY ALL),
 c AS (
-            SELECT 'S2_OPP' AS ds, 'S2 DIST_CH -> S1 CHANNEL OF THE CRD' AS chk,
+            SELECT 'S1_OPP' AS ds, 'S1 CHANNELS PER ZIP X CRD X NAME, PER CRD X NAME' AS chk,
+                   CASE WHEN o.firm_crd IS NULL THEN 'NO CRD' WHEN ce.k > 1 THEN 'ZIP CELL 2+'
+                        WHEN nm.k > 1 THEN 'ZIP CELL 1, FIRM 2+' ELSE 'ZIP CELL 1, FIRM 1' END AS outcome,
+                   SUM(o.n) AS n, SUM(o.amt) AS amt
+            FROM ssdb_integration.lr_strategy.tmp_opp_s1 o
+            LEFT JOIN s1_cell ce ON ce.zip = o.zip AND ce.firm_crd = o.firm_crd AND ce.broker_name = o.broker_name
+            LEFT JOIN s1_name nm ON nm.firm_crd = o.firm_crd AND nm.broker_name = o.broker_name
+            GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 ROUTE LEVEL',
+                   CASE WHEN o.firm_crd IS NULL THEN '0 NO CRD'
+                        WHEN ce.k = 1 THEN '1 SAME ZIP X CRD X NAME: ONE CHANNEL'
+                        WHEN ce.k > 1 THEN '2 SAME ZIP X CRD X NAME: 2+ CHANNELS'
+                        WHEN nm.k = 1 THEN '3 SAME CRD X NAME: ONE CHANNEL'
+                        WHEN nm.k > 1 THEN '4 SAME CRD X NAME: 2+ CHANNELS'
+                        WHEN c1.s1_channel = '2+ CHANNELS' THEN '6 SAME CRD, OTHER NAME: 2+ CHANNELS'
+                        WHEN c1.firm_crd IS NOT NULL THEN '5 SAME CRD, OTHER NAME: ONE CHANNEL'
+                        ELSE '7 NO SOURCE 1 ROWS' END
+                   || CASE WHEN v.firm_crd IS NOT NULL THEN ' (OVERRIDE)' ELSE '' END,
+                   SUM(o.n), SUM(o.amt)
+            FROM ssdb_integration.lr_strategy.tmp_opp_s2 o
+            LEFT JOIN s1_cell ce ON ce.zip = o.zip AND ce.firm_crd = o.firm_crd AND ce.broker_name = o.broker_name
+            LEFT JOIN s1_name nm ON nm.firm_crd = o.firm_crd AND nm.broker_name = o.broker_name
+            LEFT JOIN s1_crd c1 ON c1.firm_crd = o.firm_crd
+            LEFT JOIN ovr v ON v.firm_crd = o.firm_crd
+            GROUP BY ALL
+  UNION ALL
+            SELECT 'S2_OPP', 'S2 DIST_CH -> S1 CHANNEL OF THE CRD',
                    COALESCE(o.dist_ch, '(BLANK)') || ' -> '
                    || CASE WHEN o.firm_crd IS NULL THEN 'NO CRD' ELSE COALESCE(c1.s1_channel, 'NO SOURCE 1 ROWS') END
-                   || CASE WHEN v.firm_crd IS NOT NULL THEN ' (OVERRIDE)' ELSE '' END AS outcome,
-                   SUM(o.n) AS n, SUM(o.amt) AS amt
+                   || CASE WHEN v.firm_crd IS NOT NULL THEN ' (OVERRIDE)' ELSE '' END,
+                   SUM(o.n), SUM(o.amt)
             FROM ssdb_integration.lr_strategy.tmp_opp_s2 o
             LEFT JOIN s1_crd c1 ON c1.firm_crd = o.firm_crd
             LEFT JOIN ovr v ON v.firm_crd = o.firm_crd

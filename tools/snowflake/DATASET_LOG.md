@@ -91,7 +91,9 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q38 | The firm's route (`DATA_MODEL.md`, Opportunity routed by firm): does a firm off the override list keep each cell's own current channel (A), or take one channel for both sources, source 1's for its CRD with `crd_dist_override` where source 1 gives 2+ (B)? | 2026-10-30 |
+| Q38 | New-state routing for both sources by firm 1's channel per market metrics firm (owner's direction, 2026-10-30). Firm 1 splits a CRD into company IDs by in-house logic, so for source 2's opportunity of a split CRD: the channel of the same ZIP x CRD x broker name in firm 1's rows, then the CRD x broker name's, then `crd_dist_override` (finest first); or the CRD's, then `crd_dist_override` (the 2026-10-25 rule)? |  2026-10-30 |
+| Q39 | For each firm 1 channel, which source 2 territory channel holds source 2's opportunity routed to it in the new state? | 2026-10-30 |
+| Q40 | What decides which company ID a CRD's business goes to when firm 1 splits the CRD: office or branch (place), product, the advisor, or the vendor's client-firm list? | 2026-10-30 |
 
 ## Log
 
@@ -288,3 +290,21 @@ label and the one channel source 1 gives its CRD (or 2+, or no source 1 rows), m
 lists the CRD; the archived 2026-10-25 table, by CRD. It is the evidence for a source 2 -> source 1 channel map and
 measures where that map and the firm's own route disagree. Statements 1-2 now clean each source's rows once
 (`tmp_opp_s1`, `tmp_opp_s2`). DuckDB test: 31 checks.
+
+### 2026-10-30: firm 1's company ID exists to split a CRD by channel
+
+> **Owner, 2026-10-30:** "think about it though, each source firm applies their own inhouse logic to produce their original channels. But if both source's firm data is in the unified market metrics schema, then we can simply just use firm 1's original channels, without even explicitly mapping source firm 2 to source firm 1. instead allowing the market metrics firm data route things appropriately"
+
+> **Owner, 2026-10-30:** "firm 1 does indeed split the same firm_crd's into multiple dist_ch's which is purely in-house logic specific to firm 1. the creation of cbd_id was actually to resolve this issue in the first place..."
+
+So firm 1's firm is its company ID, and its channel follows the company ID; the market metrics key (CRD, broker name)
+is coarser wherever firm 1 split a CRD. The archived 2026-10-29 profile of the first-pass master found 28 CRDs split
+into 77 company IDs with the same CRD and broker name (archived log, line 1888): the split is invisible in the market
+metrics firm columns. Source 2's opportunity carries only those columns, ZIP and product, so for a split CRD it can
+follow firm 1's channel only as far as ZIP (or product) shows the split. Q38 restated; Q39, Q40 new.
+
+`explore/profile.sql` statement 7 gains two checks. `S1 CHANNELS PER ZIP X CRD X NAME, PER CRD X NAME`: firm 1's
+opportunity by whether its firm's channels differ within a ZIP or only across ZIPs. `S2 ROUTE LEVEL`: source 2's
+opportunity by the finest market metrics key at which firm 1's rows give one channel (the same ZIP x CRD x broker name,
+the CRD x broker name, the CRD), else 2+ or none, marked where `crd_dist_override` lists the CRD. DuckDB test: 41
+checks.
