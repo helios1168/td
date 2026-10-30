@@ -133,7 +133,7 @@ decision point, and we should be able to easily come back and look at the number
 | scope: EDJ, AMER, AFS | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `profile.sql` 1, `tmp_scope_out` (by channel or company) | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
 | Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
-| source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (0.23% of source 1's $ has no channel, second run) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity.sql` V2B `GAINS A HOLDER` |
+| source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
 
@@ -741,3 +741,9 @@ Choices made in the build (session; each simple, recorded with its reason; the f
 - Q29 in source 2: the listed firms keep the holder of their holder channel's Q39 pair (FI → BK, WH → BD); where source
   2's own label points at another territory channel (Chase on a REGIONAL row) the cell moves holder, as any firm's does.
   "Reclassified, not reassigned" holds for source 1.
+
+### 2026-10-30: correction, the blank-channel key decision's size
+
+The layer 01 entry gave 0.23% of source 1's $ as the size of the blank-channel choice. The second run says otherwise
+(the entry "the opportunity profile, second run"): blank rows in a firm that has a channel are 2 rows, $0.00B; the
+0.23% is firms with no channel at all, UNMAPPED and without a holder under either choice. Key decisions corrected.
