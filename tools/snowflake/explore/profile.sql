@@ -68,6 +68,12 @@ FROM (VALUES
   ('PRI', 'RA')
 ) AS v (s1_channel, terr_channel);
 
+--Scope: firm 1 channels out of the exercise for now (owner, 2026-10-30): a firm whose firm 1 channel is one of these
+--is left out, both sources, both states; statement 7 reports it apart (SCOPE) and S2 HOLDER MOVES tags it.  Delete a
+--row to bring the channel back.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_scope_out AS
+SELECT CAST(channel AS VARCHAR) AS channel FROM (VALUES ('EDJ'), ('AMER')) AS v (channel);
+
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_opp_s1 AS
 WITH
 o AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS oid FROM (
@@ -269,9 +275,10 @@ WHERE rk <= 40;
 --    name source 1 lacks), UNMAPPED if none; for source 1 rows also whether the row's own channel is blank.
 --  S2 ROUTE (CRD X NAME) VS OVERRIDE: that route against crd_dist_override (its CRD x broker name row, else its CRD row).
 --  OVERRIDE TABLE KEYS: the override's keys: CRD only or CRD x name, repeated, 2+ channels, matching no source 2 row.
+--  S1 SCOPE, S2 SCOPE: each source's opportunity in scope or out by tmp_scope_out (a firm's firm 1 channel).
 --  S2 HOLDER MOVES: source 2's opportunity from its current holder (its label, Q19, the territory at the ZIP) to its
 --    new-state holder (the route, Q39, the territory at the ZIP; the lowest TERRITORY_ID where 2+): same territory,
---    other territory, no holder, dropped; ... BY LABEL AND ROUTE: label | route | current -> new territory channel.
+--    other territory, no holder, dropped, out of scope; ... BY LABEL AND ROUTE: label | route | current -> new territory channel.
 --  ZIP_FORM before padding; regions: does source 1's territory table match the regions it is read from
 --    (s1_opp_sales.sql:677-694 reads only the first 5 digits of START_ZIP); periods.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_prof_checks AS
@@ -317,8 +324,9 @@ s2_terr_k AS (SELECT channel, LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS zip, MIN(t
 s2_moves AS (
   SELECT r.n, r.amt, r.label, r.route, lm.label AS mapped_label, lm.terr_channel AS cur_ch,
          COALESCE(lm.keep_new, TRUE) AS keep_new, nm.terr_channel AS new_ch,
-         tc.territory_id AS cur_t, tn.territory_id AS new_t
+         tc.territory_id AS cur_t, tn.territory_id AS new_t, so.channel AS out_ch
   FROM s2_route r
+  LEFT JOIN ssdb_integration.lr_strategy.tmp_scope_out so ON so.channel = r.route
   LEFT JOIN ssdb_integration.lr_strategy.tmp_s2_label_terr lm ON lm.label = r.label
   LEFT JOIN ssdb_integration.lr_strategy.tmp_s1ch_s2terr nm ON nm.s1_channel = r.route
   LEFT JOIN s2_terr_k tc ON tc.channel = lm.terr_channel AND tc.zip = r.zip
@@ -359,10 +367,19 @@ c AS (
                    SUM(n), SUM(amt)
             FROM s2_route GROUP BY ALL
   UNION ALL SELECT 'S2_OPP', 'S2 HOLDER MOVES',
-                   CASE WHEN NOT keep_new THEN 'DROPPED' WHEN new_ch IS NULL THEN 'NO NEW CHANNEL (' || route || ')'
+                   CASE WHEN out_ch IS NOT NULL THEN 'OUT OF SCOPE (' || out_ch || ')'
+                        WHEN NOT keep_new THEN 'DROPPED' WHEN new_ch IS NULL THEN 'NO NEW CHANNEL (' || route || ')'
                         WHEN new_t IS NULL THEN 'NO NEW HOLDER' WHEN cur_t IS NULL THEN 'NO CURRENT HOLDER, NEW HOLDER'
                         WHEN cur_t = new_t THEN 'SAME TERRITORY' ELSE 'OTHER TERRITORY' END,
                    SUM(n), SUM(amt)
+            FROM s2_moves GROUP BY ALL
+  UNION ALL SELECT 'S1_OPP', 'S1 SCOPE',
+                   CASE WHEN so.channel IS NOT NULL THEN 'OUT: ' || so.channel ELSE 'IN' END, SUM(o.n), SUM(o.amt)
+            FROM ssdb_integration.lr_strategy.tmp_opp_s1 o
+            LEFT JOIN s1_nr nr ON nr.firm_crd = o.firm_crd AND nr.broker_name = o.broker_name
+            LEFT JOIN ssdb_integration.lr_strategy.tmp_scope_out so ON so.channel = CASE WHEN nr.k = 1 THEN nr.ch END
+            GROUP BY ALL
+  UNION ALL SELECT 'S2_OPP', 'S2 SCOPE', CASE WHEN out_ch IS NOT NULL THEN 'OUT: ' || out_ch ELSE 'IN' END, SUM(n), SUM(amt)
             FROM s2_moves GROUP BY ALL
   UNION ALL SELECT 'S2_OPP', 'S2 HOLDER MOVES BY LABEL AND ROUTE',
                    COALESCE(label, '(BLANK)') || ' | ' || route || ' | '

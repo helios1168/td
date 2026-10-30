@@ -97,6 +97,10 @@ channels."
   new-channel list makes Wells WH and Wells FI (owner: "capture the case where we create wells wh, and wells fi. this
   is an example of that split happening"; `DATA_MODEL.md`, Example). So the new-channel list is keyed on CRD x broker
   name; its company IDs are re-keyed off source 1's rows.
+- EDJ and AMER are out of scope for now: a firm whose firm 1 channel is EDJ (company 3) or AMER (company 805) is left
+  out, both sources, both states, opportunity now and sales later, and reported apart (owner, 2026-10-30: "drop EDJ,
+  AMER, from the exercise all together. they are out of scpoe for now but again record this decision as we will likely
+  return to include them"). Key decision.
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
   Masking.
@@ -117,6 +121,7 @@ decision point, and we should be able to easily come back and look at the number
 | Q38: route against `crd_dist_override` | firm 1's route per CRD x broker name wins; the override fills gaps | the override wins | they differ on 2.48% of source 2's $ (Wells: FI against WH); fills 0.13% | the route and override join of the build (`profile.sql` 7, `s2_route`) | `explore/override_review.sql`; profile `S2 ROUTE (CRD X NAME) VS OVERRIDE` |
 | Q19: source 2's labels to its territory channels | BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA | other pairs | the names; firm 1's channel for those firms: BANK FI 27.18, INDEPENDENT IFA 21.26, REGIONAL WH 7.45 of source 2's $ | `profile.sql` 1, `tmp_s2_label_terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE`; matches `S2_OPP_GEO.CH_ZIP` |
 | source 2's NO CHANNEL rows | kept: no current holder, routed in the new state | dropped (2026-10-25) | 2.48% of source 2's $; under the route IFA 1.29, FI 0.44, split firms 0.57, UNMAPPED or absent 0.17 | `profile.sql` 1, `tmp_s2_label_terr.KEEP_NEW` | profile `S2 HOLDER MOVES` (`DROPPED`) |
+| scope: EDJ and AMER | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%; no source 2 $ routes to either | `profile.sql` 1, `tmp_scope_out` | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
 
 ## Parked
@@ -130,6 +135,9 @@ view.
 - The cross-source firm key (owner, 2026-10-26).
 - Name matching by geography (owner, 2026-10-21).
 - Q4, Q8, Q10, Q12, Q14, Q18, Q30 (texts in the tag; Q30 in the 2026-10-29 entry there).
+- With EDJ and AMER out of scope (Settled, 2026-10-30): Q41, who holds AMER (company 805's channel, no territory in
+  source 1's table; the territory step keeps only company 0's and company 3's regions, `s1_opp_sales.sql:692`), and
+  EDJ's holders (company 3's regions). `explore/amer_holder.sql` is ready for when they return.
 
 ## Open questions
 
@@ -150,7 +158,6 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q36 | Source 2: which period is the opportunity table (it has no year column), and what is `MM_AMOUNT` on the sales rows? | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
-| Q41 | AMER (company 805's channel, 1.39% of source 1's $) has no territory in source 1's table: who holds it, now and in the new state? | 2026-10-30 |
 
 ## Log
 
@@ -655,3 +662,14 @@ regions of its own (regions, ZIPs, wholesalers, region labels, teams); what cove
 own regions, channel-level regions per label, neither; % of its $); who sells to it in fiscal year 2025 (seller's
 channel and team, whether the seller holds one of its regions; % of its sales $, no amounts). DuckDB test
 (`explore/amer_holder_test.sh`, 14 checks); leaving the company's own regions out of the coverage fails it.
+
+### 2026-10-30: EDJ and AMER out of scope; Q41 parked
+
+> **Owner, 2026-10-30:** "drop EDJ, AMER, from the exercise all together. they are out of scpoe for now but again record this decision as we will likely return to include them"
+
+Settled, Key decisions and Parked carry it; Q41 leaves the index for Parked with EDJ's holders. Out of scope is by
+firm: a CRD x broker name whose firm 1 channel is EDJ or AMER (both are whole firms after the rules: each CRD x broker
+name has one channel). In the second run that is 5.84% (EDJ) and 1.39% (AMER) of source 1's $, and none of source 2's.
+`explore/profile.sql` statement 1 holds the scope as `tmp_scope_out` (delete a row to bring a channel back); statement
+7 reports `S1 SCOPE` and `S2 SCOPE` and tags `OUT OF SCOPE (...)` in `S2 HOLDER MOVES`. DuckDB test: 80 checks; taking
+EDJ off the list fails it.
