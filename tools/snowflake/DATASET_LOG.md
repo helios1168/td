@@ -17,6 +17,10 @@ channels."
 ## Conventions
 
 - **Database.** Every reference uses the full `database.schema.table` path; CTEs are exempt.
+- **Table variables.** A table whose name carries a carrier is a session variable, set once at the top of the file
+  (`SET s2_opp = 'db.schema.<...>'`) and read as `IDENTIFIER($s2_opp)`; the owner types the names there, never a
+  find and replace (owner, 2026-10-30: "from now on, instead of using find and replace, set it up so I can just define
+  snowflake SQL variables"). The real `SET` lines are in `$TD_REPO/owner_sql/vars.sql`.
 - **Files.** One Run All file per layer, numbered from `01`; intermediates are temporary tables, only the layer's
   final table is kept; the checks grid is the last statement. One-off digging: `explore/<topic>.sql`.
 - **Columns.** Source columns keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by

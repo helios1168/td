@@ -3,8 +3,7 @@
 --channel labels, which ZIP x channel has 0, 1 or 2+ holders; across sources: whether source 2's firms have a source 1
 --channel.  Counts, $ and the labels of channel and product columns only; no ID or name value leaves the temporary
 --tables.  The sales half of this profile is in git history (73774ed).
---EDIT first (Find/Replace): <S1_TERRITORIES>, <S2_OPP>, <S2_TERRITORIES> are the LR_STRATEGY tables ending
---_TERRITORIES (source 1), _OPP_ORIGINAL and _TERRITORIES (source 2).  Reads crd_dist_override (2026-10-25).
+--Reads crd_dist_override (2026-10-25).
 --Run All; download the last statement's result as CSV into $TD_REPO/data/safe/.
 --Source 1: fiscal year 2025, the vendor's own DIST_CH (the query's rules, s1_opp_sales.sql:459-470, not applied).
 --Source 2's opportunity table has no year column and is read whole.
@@ -14,6 +13,13 @@
 --(https://docs.snowflake.com/en/sql-reference/functions/translate); VALUES takes column aliases
 --(https://docs.snowflake.com/en/sql-reference/constructs/values).
 use secondary roles all;
+
+--EDIT once: the tables whose names carry a carrier, as session variables (SET, then IDENTIFIER($name); docs read
+--2026-10-30: https://docs.snowflake.com/en/sql-reference/session-variables, .../identifier-literal: a fully
+--qualified name is allowed, a variable lasts for the session).  A name left as <...> fails loudly.
+SET s1_territories = 'ssdb_integration.lr_strategy.<source 1 territories, ends _TERRITORIES>';
+SET s2_opp         = 'ssdb_integration.lr_strategy.<source 2 opportunity, ends _OPP_ORIGINAL>';
+SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _TERRITORIES>';
 
 --1. Each source's opportunity, cleaned once and grouped: ZIP padded to 5, IDs as whole-number text, names and
 --channels trimmed and upper-cased.  2 and 7 read these.
@@ -29,7 +35,7 @@ SELECT LPAD(CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), 5, '0') AS zip,
        CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
        UPPER(TRIM(dist_ch)) AS dist_ch, CAST(channel AS VARCHAR) AS channel, product_line, va_product_type,
        COUNT(*) AS n, SUM(opp) AS amt
-FROM ssdb_integration.lr_strategy.<S2_OPP>
+FROM IDENTIFIER($s2_opp)
 GROUP BY ALL;
 
 --2. Each dataset as its distinct key combinations, with rows (N) and $ (AMT), in long form: one row per combination x
@@ -52,7 +58,7 @@ s1_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT whslr_id, LPAD(LEFT(TRIM(zip), 5), 5, '0') AS zip,
          new_dist_channel || '|' || LPAD(LEFT(TRIM(zip), 5), 5, '0') AS ch_zip, new_dist_channel,
          COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM ssdb_integration.lr_strategy.<S1_TERRITORIES> GROUP BY ALL)),
+  FROM IDENTIFIER($s1_territories) GROUP BY ALL)),
 s2_opp_firm AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT firm_crd, broker_name, firm_crd || '|' || broker_name AS crd_name, dist_ch, channel, product_line,
          va_product_type, SUM(n) AS n, SUM(amt) AS amt
@@ -66,7 +72,7 @@ s2_terr AS (SELECT *, ROW_NUMBER() OVER (ORDER BY n DESC) AS rid FROM (
   SELECT territory_id, rvp, LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS zip,
          channel || '|' || LPAD(LEFT(TRIM(zipcode), 5), 5, '0') AS ch_zip, channel, channel_name,
          COUNT(*) AS n, CAST(NULL AS DECIMAL(38, 2)) AS amt
-  FROM ssdb_integration.lr_strategy.<S2_TERRITORIES> GROUP BY ALL)),
+  FROM IDENTIFIER($s2_territories) GROUP BY ALL)),
 lng AS (
             SELECT 'S1_OPP_FIRM' AS ds, rid, 'K' AS kind, 'CBD_ID' AS col, cbd_id AS v, n, amt FROM s1_opp_firm
   UNION ALL SELECT 'S1_OPP_FIRM', rid, 'K', 'CLIENT_FIRM_ID', client_firm_id, n, amt FROM s1_opp_firm
@@ -210,13 +216,13 @@ rgn AS (SELECT rgn_cd, start_zip, end_zip, cbd FROM life_prod.lif_murkylake.geog
 rgn_wz AS (SELECT DISTINCT rw.whslr_id, LEFT(r.start_zip, 5) AS zip
            FROM life_prod.lif_murkylake.rgn_whslr rw JOIN rgn r ON r.rgn_cd = rw.rgn_cd
            WHERE rw.expir_dt = '9999-12-31' AND r.cbd IN (0, 3)),
-terr_wz AS (SELECT DISTINCT whslr_id, LEFT(TRIM(zip), 5) AS zip FROM ssdb_integration.lr_strategy.<S1_TERRITORIES>),
+terr_wz AS (SELECT DISTINCT whslr_id, LEFT(TRIM(zip), 5) AS zip FROM IDENTIFIER($s1_territories)),
 zips AS (
             SELECT 'S1_OPP' AS ds, TRIM(zip_code) AS z, global_sales AS amt
             FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'
-  UNION ALL SELECT 'S2_OPP', CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), opp FROM ssdb_integration.lr_strategy.<S2_OPP>
-  UNION ALL SELECT 'S1_TERR', TRIM(zip), NULL FROM ssdb_integration.lr_strategy.<S1_TERRITORIES>
-  UNION ALL SELECT 'S2_TERR', TRIM(zipcode), NULL FROM ssdb_integration.lr_strategy.<S2_TERRITORIES>
+  UNION ALL SELECT 'S2_OPP', CAST(CAST(zip_code AS DECIMAL(38, 0)) AS VARCHAR), opp FROM IDENTIFIER($s2_opp)
+  UNION ALL SELECT 'S1_TERR', TRIM(zip), NULL FROM IDENTIFIER($s1_territories)
+  UNION ALL SELECT 'S2_TERR', TRIM(zipcode), NULL FROM IDENTIFIER($s2_territories)
   UNION ALL SELECT 'S1_REGION_START', TRIM(start_zip), NULL FROM rgn),
 s1_crd AS (SELECT firm_crd, CASE WHEN COUNT(DISTINCT COALESCE(dist_ch, '(BLANK)')) = 1
                                 THEN MIN(COALESCE(dist_ch, '(BLANK)')) ELSE '2+ CHANNELS' END AS s1_channel

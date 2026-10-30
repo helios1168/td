@@ -41,8 +41,10 @@ CREATE TABLE ssdb_integration.lr_strategy.s2_terr_t (rvp TEXT, territory_id TEXT
 INSERT INTO ssdb_integration.lr_strategy.s2_terr_t VALUES
   ('RVP1','T1','02134','MA','IND','Independent'), ('RVP2','T2','10001','NY','WIRE','Wirehouse');
 SQL
-sed -e '/^use secondary roles all;$/d' -e 's/TEMPORARY TABLE/TABLE/' \
-    -e 's/<S1_TERRITORIES>/s1_terr_t/g' -e 's/<S2_OPP>/s2_opp_t/g' -e 's/<S2_TERRITORIES>/s2_terr_t/g' \
+sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+    -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
+    -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
+    -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e '/^--8\./,$d' "$here/profile.sql"
 cat <<'SQL'
 CREATE TABLE r AS
