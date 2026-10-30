@@ -22,7 +22,13 @@ channels."
   find and replace (owner, 2026-10-30: "from now on, instead of using find and replace, set it up so I can just define
   snowflake SQL variables"). The real `SET` lines are in `$TD_REPO/owner_sql/vars.sql`.
 - **Files.** One Run All file per layer, numbered from `01`; intermediates are temporary tables, only the layer's
-  final table is kept; the checks grid is the last statement. One-off digging: `explore/<topic>.sql`.
+  final table is kept. One-off digging: `explore/<topic>.sql`.
+- **One result.** A file ends on one query that returns everything the owner reads, so a Run All gives one result
+  set and one CSV, saved into `$TD_REPO/data/safe/` (owner, 2026-10-30: "only one single query to run at the end to
+  see all relevent output, as opposed to having to manually run multiple queries step by step and check one at a
+  time"). Each part (report, review list, checks) is its own temporary table with the same columns, and the last
+  statement unions them; checks are rows of that result. Pattern: `explore/profile.sql`, statements 3-8 (`PART`,
+  `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages).
 - **Columns.** Source columns keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by
   what; rankings `RANK_<within>_<by>`; checks `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO`.
 - **Rules.** Assign where unique and flag the rest; no largest-share guesses.
