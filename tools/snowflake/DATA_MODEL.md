@@ -51,7 +51,7 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 | ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
-| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`); new channels such as National: Q29 |
+| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29) |
 
 ## States and views
 
@@ -98,7 +98,8 @@ both at once.
 
 Owner, 2026-10-30: opportunity first, routed by firm on the market metrics schema; sales later. Per source, one row
 per cell x = (z, d, p): its market, current channel and holder, new channel and holder (views 1, 2a, 2b, 3). Out of
-scope for now: the firms whose firm 1 channel is EDJ or AMER, both sources and states (key decision, `DATASET_LOG.md`).
+scope for now: the firms whose firm 1 channel is EDJ or AMER, and AFS's (company 438), both sources and states (key
+decision, `DATASET_LOG.md`).
 
 | step | source 1 | source 2 | status |
 |---|---|---|---|
@@ -109,7 +110,7 @@ scope for now: the firms whose firm 1 channel is EDJ or AMER, both sources and s
 | κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA) | settled; source 2's pairs and NO CHANNEL kept: key decision (`DATASET_LOG.md`, Key decisions) |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
 | ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | settled 2026-10-30 (basis, level, the override's role, UNMAPPED) |
-| new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms settled; source 2's pairs (IFA → FP, FI → BK, WH → BD, PRI → RA): key decision; National: Q29 |
+| new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms and the new labels settled (Q29: original channel's holder); source 2's pairs (IFA → FP, FI → BK, WH → BD, PRI → RA): key decision |
 
 The firm's route (owner, 2026-10-30): firm 1's channel per market metrics firm, for both sources, so the new channels
 match across sources and source 2's own channels serve only its current state. In firm 1's fiscal year 2025 rows every

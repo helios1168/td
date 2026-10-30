@@ -97,10 +97,16 @@ channels."
   new-channel list makes Wells WH and Wells FI (owner: "capture the case where we create wells wh, and wells fi. this
   is an example of that split happening"; `DATA_MODEL.md`, Example). So the new-channel list is keyed on CRD x broker
   name; its company IDs are re-keyed off source 1's rows.
-- EDJ and AMER are out of scope for now: a firm whose firm 1 channel is EDJ (company 3) or AMER (company 805) is left
-  out, both sources, both states, opportunity now and sales later, and reported apart (owner, 2026-10-30: "drop EDJ,
-  AMER, from the exercise all together. they are out of scpoe for now but again record this decision as we will likely
-  return to include them"). Key decision.
+- EDJ, AMER and AFS are out of scope for now: a firm whose firm 1 channel is EDJ (company 3) or AMER (company 805), or
+  whose rows carry company 438 (the new-channel list's AFS, `s1_opp_sales.sql:706`), is left out, both sources, both
+  states, opportunity now and sales later, and reported apart (owner, 2026-10-30: "drop EDJ, AMER, from the exercise
+  all together. they are out of scpoe for now but again record this decision as we will likely return to include
+  them"; then "we can drop AFS as well"). Key decision.
+- The new channels' holders (Q29): in the new state Wells WH, Wells FI and National (Chase) stay with the holder of the
+  firm's original channel at the ZIP, WH for Wells WH and FI for the other two, so those cells are reclassified, not
+  reassigned; source 2's through Q39 (WH → BD, FI → BK) (owner, 2026-10-30: "in the new state, wells WH, wells FI, and
+  National (Chase) should go to the wholesaler who held those firms in their original distribution channel (WH for wells
+  WH, FI for wells FI and National (Chase))"). The firm overrides' holder rule stands (2026-10-28). Key decision.
 - Extracts may carry real values; the owner includes only relevant non-sensitive columns (owner, 2026-10-30: "do not
   worry about masking I will only include relevent non-sensitive columns"). What may enter the repo: Conventions,
   Masking.
@@ -121,7 +127,8 @@ decision point, and we should be able to easily come back and look at the number
 | Q38: route against `crd_dist_override` | firm 1's route per CRD x broker name wins; the override fills gaps | the override wins | they differ on 2.48% of source 2's $ (Wells: FI against WH); fills 0.13% | the route and override join of the build (`profile.sql` 7, `s2_route`) | `explore/override_review.sql`; profile `S2 ROUTE (CRD X NAME) VS OVERRIDE` |
 | Q19: source 2's labels to its territory channels | BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA | other pairs | the names; firm 1's channel for those firms: BANK FI 27.18, INDEPENDENT IFA 21.26, REGIONAL WH 7.45 of source 2's $ | `profile.sql` 1, `tmp_s2_label_terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE`; matches `S2_OPP_GEO.CH_ZIP` |
 | source 2's NO CHANNEL rows | kept: no current holder, routed in the new state | dropped (2026-10-25) | 2.48% of source 2's $; under the route IFA 1.29, FI 0.44, split firms 0.57, UNMAPPED or absent 0.17 | `profile.sql` 1, `tmp_s2_label_terr.KEEP_NEW` | profile `S2 HOLDER MOVES` (`DROPPED`) |
-| scope: EDJ and AMER | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%; no source 2 $ routes to either | `profile.sql` 1, `tmp_scope_out` | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
+| scope: EDJ, AMER, AFS | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `profile.sql` 1, `tmp_scope_out` (by channel or company) | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
+| Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
 
 ## Parked
@@ -150,7 +157,6 @@ view.
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
 | Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
-| Q29 | τ_s for new channels such as National: covered by ZIP, by distributor-tied territories (`s1_opp_sales.sql:692` filters them out), or the current holder kept (`s1_opp_sales.sql:719`)? Listed distributors: settled 2026-10-28. Folds in Q13. | 2026-10-29 |
 | Q31 | A wholesaler's market share: territory share (sales placed in held cells ÷ their market) or credited sales ÷ held market? | 2026-10-29 |
 | Q32 | Does a source's market include products it does not sell? (Settled before as "the products where it has positive sales"; reopened 2026-10-30.) | 2026-10-30 |
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
@@ -673,3 +679,16 @@ name has one channel). In the second run that is 5.84% (EDJ) and 1.39% (AMER) of
 `explore/profile.sql` statement 1 holds the scope as `tmp_scope_out` (delete a row to bring a channel back); statement
 7 reports `S1 SCOPE` and `S2 SCOPE` and tags `OUT OF SCOPE (...)` in `S2 HOLDER MOVES`. DuckDB test: 80 checks; taking
 EDJ off the list fails it.
+
+### 2026-10-30: Q29 settled for Wells WH, Wells FI, National (Chase); AFS out of scope
+
+> **Owner, 2026-10-30:** "in the new state, wells WH, wells FI, and National (Chase) should go to the wholesaler who held those firms in their original distribution channel (WH for wells WH, FI for wells FI and National (Chase))"
+
+> **Owner, 2026-10-30:** "we can drop AFS as well"
+
+Settled and Key decisions carry both; Q29 leaves the index (its last label, AFS, is out of scope). For those three
+labels τ_s is the firm's original channel: the new label changes, the holder does not (view 2a reclassified, not 2b).
+Whether each listed firm's firm 1 route is that channel (Chase's FI, for one) is measured when the new-channel list is
+keyed on CRD x broker name in the build. `explore/profile.sql`: `tmp_scope_out` takes a kind (CHANNEL or COMPANY) and
+AFS as company 438; a firm is out if its firm 1 channel or any of its source 1 rows' company IDs is listed. DuckDB
+test: 81 checks.
