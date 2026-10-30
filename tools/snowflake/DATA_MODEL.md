@@ -46,12 +46,12 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 | credit | sale → W_s | who is credited with a sale (not necessarily who caused it) | given, never changes |
 | κ_s | X → C_s | current channel of a cell: source s's feed channel plus its distributor rules (`s1_opp_sales.sql:459-470`) | given |
 | λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; λ_s = κ_s? Q28 |
-| ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides) | settled (lists in the log) |
+| ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides); a CRD x broker name is listed if its source 1 rows carry a listed company ID (layer 01) | settled (lists in the log) |
 | ρ_s | C_s → N | the new label a current label carries forward (`s1_opp_sales.sql:707`, `else iwn.dist_ch`) | source 1: the same label; source 2: not used, the route is by firm (Q6 settled) |
 | ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
-| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29) |
+| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`), and a source 1 row with no channel takes its firm's route (key decision, layer 01); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29) |
 
 ## States and views
 

@@ -133,6 +133,7 @@ decision point, and we should be able to easily come back and look at the number
 | scope: EDJ, AMER, AFS | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `profile.sql` 1, `tmp_scope_out` (by channel or company) | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
 | Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
+| source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (0.23% of source 1's $ has no channel, second run) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
 
@@ -710,3 +711,33 @@ Log heading after `### `) instead: that entry and every one below it. Exactly on
 no match stops the run. The reader also reads Key decisions now. Checked with a stub `runs` (six argument cases) and
 the runner's validation. The next audit starts at "2026-10-30: the first audit (611 claims); what it corrects": that
 entry's corrections were never audited themselves. Not run yet (owner, 2026-10-30: "do not run the audit yet").
+
+### 2026-10-30: layer 01, opportunity routed by firm (`01_opportunity.sql`)
+
+> **Owner, 2026-10-30:** "yes do that and create them as temporary tables for now"
+
+`01_opportunity.sql` builds, per source, the opportunity cells with their current and new label and holder, from the
+settled decisions; its four decision tables are `explore/profile.sql`'s row for row (the test compares them). Tables:
+`TMP_O1_FIRM` (one row per CRD x broker name either source carries), `TMP_O1_CELLS_S1`, `TMP_O1_CELLS_S2`. The result
+set: views 1, 2a, 2b, 3 summed by label, the scope, and checks (source total minus cells and current minus new must be
+0; firm keys and listed labels must be single; the rest reported). DuckDB test `01_opportunity_test.sh`: 69 checks;
+ten mutations each fail it (override over route, Q29 holder, client firm ID, scope by company, a decision table that
+drifts from the profile's, NO CHANNEL dropped, highest holder for lowest in each source, the new-channel list keyed on
+the CRD, cells with 2+ labels never counted). Snowflake: reserved keywords read 2026-10-30
+(https://docs.snowflake.com/en/sql-reference/reserved-keywords), none used as a name; no `HAVING` beside `GROUP BY
+ALL` (the GROUP BY page, read 2026-10-30, shows neither together), so both counts filter a grouped subquery.
+
+Choices made in the build (session; each simple, recorded with its reason; the first is a key decision):
+
+- Source 1's blank-channel rows take the holder of their firm's route in the new state (Key decisions).
+- The new-channel list re-keyed: a CRD x broker name takes a listed label if any of its source 1 rows carries the
+  listed company ID, derived as the owner's query does (`s1_opp_sales.sql:475-482`: the pinned names' IDs, then company
+  0 → client firm ID). A source 2 name source 1 lacks gets no listed label; the check `NO LISTED LABEL, ANOTHER NAME OF
+  THE CRD HAS ONE` reports its $.
+- A cell is ZIP x CRD x broker name x product x current label: a firm's rows with a channel and without stay apart
+  (`CELLS WITH 2+ CURRENT LABELS` reports them), so no $ moves between labels.
+- A row with no CRD has no firm: UNMAPPED in the new state (`ROUTE BASIS` `NO CRD`). A product the map does not cover
+  stays, product blank (`PRODUCT UNMAPPED`).
+- Q29 in source 2: the listed firms keep the holder of their holder channel's Q39 pair (FI → BK, WH → BD); where source
+  2's own label points at another territory channel (Chase on a REGIONAL row) the cell moves holder, as any firm's does.
+  "Reclassified, not reassigned" holds for source 1.
