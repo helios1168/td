@@ -6,9 +6,10 @@
 --  TMP_O1_CELLS_S1, TMP_O1_CELLS_S2: one row per ZIP x CRD x broker name x product x current label, fiscal year 2025:
 --    the opportunity, the current label, territory channel and holder, the new label, territory channel and holder.
 --    Holders are IDs (wholesaler ID, territory ID), the lowest where 2+ hold (N_HOLDERS says how many).
---  TMP_O1_DATASET: the cells in scope, both sources stacked, with the wholesalers' names: the table to look at
---    opportunity by source, firm, channel, product, wholesaler, ZIP (statement 6 shows a query).
---The last statement returns views 1, 2a, 2b, 3 summed by label, the scope and the checks: no ID or name.  Download it as
+--  TMP_O1_DATASET: every cell, both sources stacked, with the wholesalers' names and SCOPE (the firms out of scope
+--    flagged, filtered out afterwards): the table to look at opportunity by source, firm, channel, product,
+--    wholesaler, ZIP (statement 6 shows a query).
+--The last statement returns views 1, 2a, 2b, 3 summed by label (in scope), the scope and the checks: no ID or name.  Download it as
 --CSV into $TD_REPO/data/safe/.  The decisions are the tables in 1 (DATASET_LOG.md, Settled and Key decisions): change a
 --row and rerun.
 --Snowflake docs read 2026-10-30: GROUP BY ALL (https://docs.snowflake.com/en/sql-reference/constructs/group-by), VALUES
@@ -229,12 +230,15 @@ FROM x
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h2 hc ON hc.channel = x.cur_terr_ch AND hc.zip = x.zip
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h2 hn ON hn.channel = x.new_terr_ch AND hn.zip = x.zip;
 
---6. The dataset: both sources' cells in scope, one row each; wholesaler names from the territory tables (firm 1:
---WHSLR_NM; firm 2: the territory's RVP).  OLD_CHANNEL: firm 1's channel after its rules; firm 2's own label.
+--6. The dataset: both sources' cells, every one, one row each; SCOPE is 'IN', or 'OUT: <label>' for a firm out of
+--scope (tmp_scope_out), kept so there is one master table, filtered afterwards (owner, 2026-10-30: "lets actually keep
+--EDJ, AMER, and AFS in first so we have a single master table across all cases which we then filter down
+--afterwards").  Wholesaler names from the territory tables (firm 1: WHSLR_NM; firm 2: the territory's RVP).  OLD_CHANNEL: firm 1's channel after its rules; firm 2's own label.
 --OLD_CHANNEL_S1: the old channel in firm 1's names (owner, 2026-10-30, option (a)): firm 1's own; firm 2's territory
 --channel read back through the Q39 pairs (BK -> FI, FP -> IFA, BD -> WH, RA -> PRI), blank for NO CHANNEL.
 --NEW_CHANNEL_BASIS: how the firm's channel was found (TMP_O1_FIRM.ROUTE_BASIS).  Look at it in the same session, e.g.
---  SELECT source, new_channel, product, SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset GROUP BY ALL;
+--  SELECT source, new_channel, product, SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset
+--  WHERE scope = 'IN' GROUP BY ALL;
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_dataset AS
 WITH
 n1 AS (SELECT CAST(whslr_id AS VARCHAR) AS id, MIN(whslr_nm) AS nm FROM IDENTIFIER($s1_territories) GROUP BY ALL),
@@ -250,10 +254,11 @@ u AS (
             LEFT JOIN q39 q ON q.terr_channel = c.cur_terr_ch)
 SELECT source, zip, firm_crd, broker_name, product, cur_label AS old_channel, cur_s1 AS old_channel_s1,
        new_label AS new_channel,
-       route_basis AS new_channel_basis, cur_terr_ch AS old_territory_channel, new_terr_ch AS new_territory_channel,
+       route_basis AS new_channel_basis, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END AS scope,
+       cur_terr_ch AS old_territory_channel, new_terr_ch AS new_territory_channel,
        cur_holder AS old_wholesaler_id, cur_nm AS old_wholesaler, new_holder AS new_wholesaler_id,
        new_nm AS new_wholesaler, amt AS opportunity
-FROM u WHERE scope_out IS NULL;
+FROM u;
 
 --7. Views and checks, one table.  Views and SCOPE: in-scope cells only (SCOPE: all); PCT_AMT: of PART x SOURCE x NAME.
 --  V1 CHANNEL: $ by label, NAME = the state.  V2A RECLASSIFIED: current label -> new label; ITEM2 (source 1):

@@ -110,11 +110,14 @@ channels."
   new-channel list makes Wells WH and Wells FI (owner: "capture the case where we create wells wh, and wells fi. this
   is an example of that split happening"; `DATA_MODEL.md`, Example). So the new-channel list is keyed on CRD x broker
   name; its company IDs are re-keyed off source 1's rows.
-- EDJ, AMER and AFS are out of scope for now: a firm whose firm 1 channel is EDJ (company 3) or AMER (company 805), or
-  whose rows carry company 438 (the new-channel list's AFS, `s1_opp_sales.sql:706`), is left out, both sources, both
-  states, opportunity now and sales later, and reported apart (owner, 2026-10-30: "drop EDJ, AMER, from the exercise
-  all together. they are out of scpoe for now but again record this decision as we will likely return to include
-  them"; then "we can drop AFS as well"). Key decision.
+- EDJ, AMER and AFS are out of the analysis for now but stay in the master tables: a firm whose firm 1 channel is EDJ
+  (company 3) or AMER (company 805), or whose rows carry company 438 (the new-channel list's AFS,
+  `s1_opp_sales.sql:706`), keeps its opportunity and sales in `TMP_O1_DATASET` and `TMP_O2_DATASET`, both sources,
+  both states, flagged by `SCOPE` ('OUT: EDJ', ...), and every view and in-scope cut filters `SCOPE = 'IN'` (owner,
+  2026-10-30: "drop EDJ, AMER, from the exercise all together. they are out of scpoe for now but again record this
+  decision as we will likely return to include them"; then "we can drop AFS as well"; then "lets actually keep EDJ,
+  AMER, and AFS in first so we have a single master table across all cases which we then filter down afterwards").
+  Key decision.
 - The new channels' holders (Q29): in the new state Wells WH, Wells FI and National (Chase) stay with the holder of the
   firm's original channel at the ZIP, WH for Wells WH and FI for the other two, so those cells are reclassified, not
   reassigned; source 2's through Q39 (WH → BD, FI → BK) (owner, 2026-10-30: "in the new state, wells WH, wells FI, and
@@ -143,7 +146,7 @@ decision point, and we should be able to easily come back and look at the number
 | Q38: route against `crd_dist_override` | firm 1's route per CRD x broker name wins; the override fills gaps | the override wins | they differ on 2.48% of source 2's $ (Wells: FI against WH); fills 0.13% | the route and override join of the build (`profile.sql` 7, `s2_route`) | `explore/override_review.sql`; profile `S2 ROUTE (CRD X NAME) VS OVERRIDE` |
 | Q19: source 2's labels to its territory channels | BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA | other pairs | the names; firm 1's channel for those firms: BANK FI 27.18, INDEPENDENT IFA 21.26, REGIONAL WH 7.45 of source 2's $ | `profile.sql` 1, `tmp_s2_label_terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE`; matches `S2_OPP_GEO.CH_ZIP` |
 | source 2's NO CHANNEL rows | kept: no current holder, routed in the new state | dropped (2026-10-25) | 2.48% of source 2's $; under the route IFA 1.29, FI 0.44, split firms 0.57, UNMAPPED or absent 0.17 | `profile.sql` 1, `tmp_s2_label_terr.KEEP_NEW` | profile `S2 HOLDER MOVES` (`DROPPED`) |
-| scope: EDJ, AMER, AFS | out, both sources, both states, reported apart | in | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `profile.sql` 1, `tmp_scope_out` (by channel or company) | profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
+| scope: EDJ, AMER, AFS | kept in the master tables, flagged by `SCOPE`; the views and in-scope cuts filter them out | dropped from the tables (the first answer, 2026-10-30); or kept in the analysis | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `tmp_scope_out` (by channel or company) in `01_opportunity.sql` 1 and `profile.sql` 1 (the test keeps them equal); a cut's `scope = 'IN'` | 01 `SCOPE`; 02 `SALES SCOPE`, `TIE-OUT`; profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
 | Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
 | source 2's old channel in firm 1's names | (a) its own label translated, Q19 then Q39 read back: agrees with its old wholesaler | (b) the channel firm 1 gives the firm (the route): agrees with the new channel | label and route disagree on at least ~10% of source 2's $ (the profile, second run) | `01_opportunity.sql` 6, the `q39` join of `TMP_O1_DATASET` | `TMP_O1_DATASET.OLD_CHANNEL_S1` |
@@ -164,7 +167,8 @@ view.
 - Q4, Q8, Q10, Q12, Q14, Q18, Q30 (texts in the tag; Q30 in the 2026-10-29 entry there).
 - With EDJ and AMER out of scope (Settled, 2026-10-30): Q41, who holds AMER (company 805's channel, no territory in
   source 1's table; the territory step keeps only company 0's and company 3's regions, `s1_opp_sales.sql:692`), and
-  EDJ's holders (company 3's regions). `explore/amer_holder.sql` is ready for when they return.
+  EDJ's holders (company 3's regions). `explore/amer_holder.sql` is ready for when they return. Also AFS's new-state
+  holder: its row in the new-channel list has no holder channel, so in the master tables its cells have none.
 
 ## Open questions
 
@@ -878,3 +882,17 @@ views. A temporary table lives only in the session that made it
 worksheet. DuckDB test `02_sales_test.sh`: 46 checks; 16 mutations each fail it (the earlier ones, with out-of-scope
 sales now dropped instead of kept; plus firm 1's or firm 2's channel cleaned, the AFS company scope matched on a
 firm 2 CRD, wholesaler counts taking out-of-scope sales, firm 2's amounts left FLOAT, the tie-out cut widened).
+
+### 2026-10-30: EDJ, AMER and AFS stay in the master tables, filtered afterwards
+
+> **Owner, 2026-10-30:** "lets actually keep EDJ, AMER, and AFS in first so we have a single master table across all cases which we then filter down afterwards"
+
+Settled, Key decisions and Parked carry it; the scope list (`tmp_scope_out`) is unchanged and now sets a flag, not a
+filter. `TMP_O1_DATASET` keeps every cell with `SCOPE` ('IN', 'OUT: EDJ', 'OUT: AMER', 'OUT: AFS'); `TMP_O2_DATASET`
+takes its opportunity rows' `SCOPE` from it (the last entry's "only in-scope opportunity" no longer holds) and already
+kept every sale. Still filtered to `SCOPE = 'IN'`: 01's views 1, 2a, 2b, 3; 02's `SALES ON CELLS` and `WHOLESALERS`.
+In the master tables the three carry what the settled rules give them, no more: EDJ's cells (firm 1) take the EDJ
+territories' holder in both states; AMER's have none (no AMER territory, Q41, parked); AFS's take their channel's
+holder in the old state and none in the new. DuckDB tests: 01 79 checks, 02 47; dropping the out-of-scope cells
+again, a `SCOPE` that is always 'IN' (in 01 or in 02), and wholesaler counts or views that take out-of-scope rows each
+fail them, and every earlier mutation still does.

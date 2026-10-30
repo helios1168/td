@@ -98,8 +98,8 @@ both at once.
 
 Owner, 2026-10-30: opportunity first, routed by firm on the market metrics schema; sales later. Per source, one row
 per cell x = (z, d, p): its market, current channel and holder, new channel and holder (views 1, 2a, 2b, 3). Out of
-scope for now: the firms whose firm 1 channel is EDJ or AMER, and AFS's (company 438), both sources and states (key
-decision, `DATASET_LOG.md`).
+scope for now: the firms whose firm 1 channel is EDJ or AMER, and AFS's (company 438), both sources and states; they
+stay in the master tables, flagged by `SCOPE`, and the views filter them out (key decision, `DATASET_LOG.md`).
 
 | step | source 1 | source 2 | status |
 |---|---|---|---|

@@ -10,9 +10,11 @@
 --    firm x product in the old and the new state.
 --  TMP_O2_DATASET: the table to look at.  One row per source x wholesaler x ZIP x firm x product x old channel x new
 --    channel x scope: the opportunity the wholesaler holds there, old and new (TMP_O1_DATASET), and the sales
---    credited to them there.  Sales never move between states; only held opportunity does.  Every 2025 sale is in it,
---    so it ties to the sales tables (owner, 2026-10-30: "which we must be able to exactly replicate in this new
---    table"); SCOPE flags the firms out of scope, and an in-scope cut filters SCOPE = 'IN'.
+--    credited to them there.  Sales never move between states; only held opportunity does.  Every 2025 sale and
+--    every opportunity cell is in it, so it ties to the sales tables (owner, 2026-10-30: "which we must be able to
+--    exactly replicate in this new table") and is the one master table (owner, 2026-10-30: "a single master table
+--    across all cases which we then filter down afterwards"); SCOPE flags the firms out of scope, and an in-scope
+--    cut filters SCOPE = 'IN'.
 --The last statement returns sizes, the tie-out and checks, no ID or name: download it as CSV into $TD_REPO/data/safe/.
 --The decisions are the tables in 1 and the joins named in DATASET_LOG.md, Key decisions: change one and rerun.
 --Snowflake docs read 2026-10-30: SPLIT_PART gives '' past the last part (.../functions/split_part); CROSS JOIN takes
@@ -171,13 +173,14 @@ LEFT JOIN ho ON ho.source = u.source AND ho.zip = u.zip AND ho.firm_crd = u.firm
 LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm_crd
                AND hn.broker_name = u.broker_name AND hn.product = p.product AND hn.w = u.seller_key;
 
---6. The dataset: every 2025 sale and the in-scope opportunity (TMP_O1_DATASET), each under its wholesaler.
+--6. The dataset: every 2025 sale and every opportunity cell (TMP_O1_DATASET), each under its wholesaler.
 --OLD_CHANNEL: on opportunity, the cell's old channel (TMP_O1_DATASET); on sales, the sale's own channel as its sales
 --table has it (firm 1's DIST_CH), so SUM(SALES) for a cut on PRODUCT and OLD_CHANNEL is the sales table's for the same
 --cut on its product (PRODUCT_LINE2 maps 1 : 1) and channel (owner, 2026-10-30: "I want to validate against the
 --original dist_ch").  A sale shares a row with its cell's opportunity where the two old channels agree.
 --OLD_CHANNEL_S1: firm 1's is OLD_CHANNEL; firm 2's is in firm 1's names (Q19, then Q39 read back).  SCOPE: 'IN', or
---'OUT: <label>' on sales of a firm out of scope (TMP_O1_DATASET has only in-scope opportunity).  OPP_HELD_OLD,
+--'OUT: <label>' for a firm out of scope: TMP_O1_DATASET's on opportunity, the firm's (or firm 1's company 438) on
+--sales.  OPP_HELD_OLD,
 --OPP_HELD_NEW: TMP_O1_DATASET's opportunity under its old and its new wholesaler.  SALES: credited to the seller (firm
 --1's actual sales, firm 2's SALES_AMOUNT); SALES_ALT: firm 1's comp'd sales, firm 2's MM_AMOUNT (Q42).
 --SALES_IN_HELD_CELLS_OLD and _NEW: the part of SALES whose seller holds that ZIP x firm x product in that state.
@@ -186,7 +189,7 @@ LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm
 --firm.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_dataset AS
 WITH
-ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_channel_s1, new_channel, opportunity,
+ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_channel_s1, new_channel, scope, opportunity,
               CASE WHEN source = 'S1' THEN TRIM(old_wholesaler_id) ELSE UPPER(TRIM(old_wholesaler)) END AS old_key,
               old_wholesaler AS old_nm,
               CASE WHEN source = 'S1' THEN TRIM(new_wholesaler_id) ELSE UPPER(TRIM(new_wholesaler)) END AS new_key,
@@ -194,11 +197,11 @@ ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_chan
        FROM ssdb_integration.lr_strategy.tmp_o1_dataset),
 f AS (
             SELECT source, old_key AS w_key, old_nm AS w_nm, zip, firm_crd, broker_name, product, old_channel,
-                   old_channel_s1, new_channel, CAST('IN' AS VARCHAR) AS scope, opportunity AS opp_old, 0 AS opp_new,
+                   old_channel_s1, new_channel, scope, opportunity AS opp_old, 0 AS opp_new,
                    0 AS sales, 0 AS sales_alt, 0 AS held_old, 0 AS held_new
             FROM ds
   UNION ALL SELECT source, new_key, new_nm, zip, firm_crd, broker_name, product, old_channel, old_channel_s1,
-                   new_channel, 'IN', 0, opportunity, 0, 0, 0, 0
+                   new_channel, scope, 0, opportunity, 0, 0, 0, 0
             FROM ds
   UNION ALL SELECT source, seller_key, seller, zip, firm_crd, broker_name, product, old_channel, old_channel_s1,
                    new_channel, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END, 0, 0, sales,
