@@ -365,7 +365,7 @@ waits for firm 2's product labels (the profile's labels part).
 
 ### 2026-10-30: source 2's opportunity uses the market metrics broker names, suffixes included
 
-> **Owner, 2026-10-30:** "firm 2 does not use the same suffix convention in their SALEs file but that is why the eqh_firm_crd mapping exists. I beleve source 2's opportunity data does conform to the same market metrics broker_name with the suffixes"
+> **Owner, 2026-10-30:** "firm 2 does not use the same suffix convention in their SALEs file but that is why the [source 2's CRD map] mapping exists. I beleve source 2's opportunity data does conform to the same market metrics broker_name with the suffixes"
 
 So CRD x broker name keys both sources' opportunity alike, and the vendor's channel suffixes (item 3 of the entry
 before) separate those splits in source 2's opportunity too. The profile's match `S2_OPP_FIRM.CRD_NAME ->
@@ -424,7 +424,7 @@ fiscal year 2025.
 
 ### 2026-10-30: how the one-firm channel (vendor code 13) gets its label
 
-> **Owner, 2026-10-30:** "check the queries to see how edward jones is mapped to become EDJ. it should be in one of them - if not even the older mm_query.sql file"
+> **Owner, 2026-10-30:** "check the queries to see how [the one-firm feed label] is mapped to become [its short label]. it should be in one of them - if not even the older mm_query.sql file"
 
 Two places, the same in `owner_sql/s1_opp_sales.sql` and `mm_query.sql` (`:470`, `:677`, `:691` there); none in
 `owner_sql/s1_sales.sql`:

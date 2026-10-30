@@ -19,18 +19,18 @@ INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
   ('2025','Q3','50',NULL,'5000','BD FIVE','IFA','01','IA',NULL,'90210',50),
   ('2025','Q3','51',NULL,'5000','BD FIVE','FI','11','IA',NULL,'90211',50),
   ('2025','Q4','685',NULL,'6000','BD SIX','IFA','01','IA',NULL,'60601',40),
-  ('2025','Q4','70',NULL,'7000','BD SEVEN','EDWARD JONES','13','IA',NULL,'60601',30),
+  ('2025','Q4','70',NULL,'7000','BD SEVEN','ONE FIRM','13','IA',NULL,'60601',30),
   ('2025','Q4','30',NULL,'3000','BD THREE','','08','IA',NULL,'10002',20),
   ('2025','Q4','80',NULL,'8000','BD EIGHT','','10','IA',NULL,'30301',10),
   ('2024','Q4','10',NULL,'1000','BD ONE','IFA','01','VA','IOVA','2134',9999);
 CREATE TABLE ssdb_integration.lr_strategy.s1_channel_rule (rule_order INTEGER, cbd_id VARCHAR, broker_name VARCHAR,
   dist_ch VARCHAR, channel VARCHAR);
 INSERT INTO ssdb_integration.lr_strategy.s1_channel_rule VALUES
-  (1, '685', NULL, NULL, 'PRI'), (3, NULL, 'BD SIX', NULL, 'WH'), (6, NULL, NULL, 'EDWARD JONES', 'EDJ');
+  (1, '685', NULL, NULL, 'XA'), (3, NULL, 'BD SIX', NULL, 'WH'), (6, NULL, NULL, 'ONE FIRM', 'XB');
 CREATE TABLE ssdb_integration.lr_strategy.s1_terr_t (whslr_id TEXT, whslr_nm TEXT, zip TEXT, state_cd TEXT,
   new_dist_channel TEXT);
 INSERT INTO ssdb_integration.lr_strategy.s1_terr_t VALUES
-  ('W1','N1','02134','MA','IFA'), ('W3','N3','2134','MA','IFA'), ('W2','N2','10001','NY','WH'), ('W4','N4','60601','IL','EDJ');
+  ('W1','N1','02134','MA','IFA'), ('W3','N3','2134','MA','IFA'), ('W2','N2','10001','NY','WH'), ('W4','N4','60601','IL','XB');
 CREATE TABLE life_prod.lif_murkylake.geographic_region (rgn_cd TEXT, start_zip TEXT, end_zip TEXT, cbd INTEGER,
   expir_dt TIMESTAMP);
 INSERT INTO life_prod.lif_murkylake.geographic_region VALUES
@@ -78,9 +78,9 @@ SELECT
  chk('broker name variants merge', (SELECT n_values FROM r WHERE part='COLUMNS' AND ds='S1_OPP_FIRM' AND col='BROKER_NAME'), 7),
  chk('firms on 2 channels', (SELECT amt FROM r WHERE part='PAIRS' AND ds='S1_OPP_FIRM' AND col='DIST_CH' AND col2='FIRM_CRD' AND item='many : many'), 800),
  chk('CRD on 2 company IDs', (SELECT amt FROM r WHERE part='PAIRS' AND ds='S1_OPP_FIRM' AND col='CBD_ID' AND col2='FIRM_CRD' AND item='many CBD_ID, one FIRM_CRD'), 800),
- chk('rule by company ID beats rule by name', lab('S1_OPP_FIRM', 'DIST_CH', 'PRI'), 40),
- chk('rule by feed label', lab('S1_OPP_FIRM', 'DIST_CH', 'EDJ'), 30),
- chk('feed label kept', lab('S1_OPP_FIRM', 'FEED_DIST_CH', 'EDWARD JONES'), 30),
+ chk('rule by company ID beats rule by name', lab('S1_OPP_FIRM', 'DIST_CH', 'XA'), 40),
+ chk('rule by feed label', lab('S1_OPP_FIRM', 'DIST_CH', 'XB'), 30),
+ chk('feed label kept', lab('S1_OPP_FIRM', 'FEED_DIST_CH', 'ONE FIRM'), 30),
  chk('channel labels upper-cased', lab('S1_OPP_FIRM', 'DIST_CH', 'FI'), 350),
  chk('IOVA label', lab('S1_OPP_FIRM', 'VA_PRODUCT_TYPE', 'IOVA'), 500),
  chk('s2 channel label', lab('S2_OPP_FIRM', 'DIST_CH', 'IND'), 65),
