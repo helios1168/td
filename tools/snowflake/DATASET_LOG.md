@@ -170,6 +170,7 @@ view.
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q42 | Source 2's sales: what is `MM_AMOUNT` beside `SALES_AMOUNT`? (Q36's second half; its first half, the opportunity period, is settled.) | 2026-10-30 |
+| Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
@@ -780,3 +781,24 @@ The owner also asked whether a full outer join across sources could put the two 
 session proposed a pivot of `TMP_O1_DATASET` instead (`SUM(CASE WHEN source = ...)` on ZIP x firm x product x new
 channel; old channels and wholesalers as per-side columns): no fan-out, NULL keys kept, totals by construction (Q34).
 Not built: the key and the go are the owner's.
+
+### 2026-10-30: firm 1's LPL opportunity does not tie out (Q43)
+
+> **Owner, 2026-10-30:** "an issue we see with firm 1 at-least is that in aggregate we seem to be ~$500MM from what we see in aggregate for LPL, but then at the individual wholesaler level we see their lpl opportunity being too high. interestingly enough it is only for source 1, with source 2 actually tieing out almost exactly. what could be driving this?"
+
+> **Owner, 2026-10-30:** "its $500MM under in aggregate"
+
+> **Owner, 2026-10-30:** "this is for opportunity only not sales"
+
+The owner's current output, from `s1_opp_sales.sql`; not layer 01. The session's reading: two effects in opposite
+directions. Total short: A1 `:478` sends three exact names to company 8, and Snowflake compares strings by their Unicode
+codes unless a collation is set (https://docs.snowflake.com/en/sql-reference/collation, read 2026-10-30), so any other
+LPL spelling falls through; A2 such a row with company 0 and no client firm ID gets NULL (`:481`) and `:500` deletes
+it; A3 with a client firm ID list, `:511-594` picks the sales-matched ID or the first; A4 picked out by name, company 8
+is not in `:745-772`'s fixed names, and 1385 is Wayne Hummer at the firm level. Too high per wholesaler: B1 `:692`
+drops firm-specific regions, so an LPL team's ZIPs go to the channel-level holder; B2 a channel x ZIP with 2+ rows in
+the territory CTE (`:678-687`, distinct over six columns) copies the opportunity; B3 on rows with sales, `:633-640`
+copies `MM_OPP` onto every sales row of a seven-column key. Firm 2's opportunity has no company ID and its territories
+no firm layer, so A1-A4 and B1 cannot arise there. Layer 01 has none of these but B1. Two checks given in chat, tested
+in DuckDB on made-up rows (not committed): LPL's feed rows (by name and by their CRDs) with the company ID `:475-482`
+gives them; every company with regions of its own, with its master name.
