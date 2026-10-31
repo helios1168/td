@@ -981,3 +981,17 @@ one row per source x sales-table key (firm ID, firm name, channel, product as th
 NULL-safe join for each sales table; wholesaler key and ZIP are formulas, not rows. No sales $ in it. DuckDB test: 20
 checks; the map is one row per key, and the documented joins of both sales tables reproduce every 2025 sale (firm 1
 63 over 13 rows, firm 2 26 over 11); a map key altered from the table's value (the firm name upper-cased) fails it.
+
+### 2026-10-30: NULL-safe equality as EQUAL_NULL
+
+> **Owner, 2026-10-30:** "can't we use null_equal for null safe stuff instead of casting"; "yes update the code"
+
+Every `IS [NOT] DISTINCT FROM` in the SQL is now `[NOT] EQUAL_NULL(a, b)`, Snowflake's NULL-safe equality
+(https://docs.snowflake.com/en/sql-reference/functions/equal_null, read 2026-10-30: TRUE for two NULLs, FALSE for one,
+else `=`): `01_opportunity_sales.sql` (V2A), `explore/profile.sql` (override keys), `explore/sales_crosswalk.sql` (the
+documented joins, the out-of-window filter), `explore/transfers.sql` (the transfer filter). Same results. The ID casts
+stay: they align type and form (firm 1's numeric company ID to the map's text, company 0 to none; firm 2's FLOAT CRD to
+text through DECIMAL(38, 0)), not NULLs. DuckDB has no EQUAL_NULL, so the profile, 01 and 02 harnesses define it as a
+macro (the transfers and crosswalk tests read 02's). Plain `=` / `<>` in place of EQUAL_NULL fails the transfers,
+profile and crosswalk tests; the crosswalk test gained a firm 1 row with no product bucket for that, so a NULL bucket
+must land in OUT OF WINDOW. In 01's V2A line `=` would give the same answer (firm 1's new channel is never NULL).

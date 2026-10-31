@@ -15,6 +15,9 @@ INSERT INTO ssdb_integration.lr_strategy.s2_opp_t VALUES (NULL,'INDEPENDENT',213
   (NULL,'REGIONAL',10001,100,'ALPHA','IA',NULL,5);
 INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Alpha Inc',100.0,'REGIONAL','NY','A','x','R2','D1',2025,2,2,'10001','IA');
+-- and a firm 1 row with no product bucket: outside the window, and it must be listed there
+INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
+  (2025,3,3,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1',NULL,1,1,1);
 SQL
 sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
@@ -38,7 +41,7 @@ CREATE MACRO x(s, f, ch, pr) AS (SELECT CAST(sales AS INTEGER) || ' ' || n_selle
 SELECT
  chk('crosswalk keys per source', (SELECT string_agg(source || '=' || n, ' ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n FROM r WHERE part = 'CROSSWALK' GROUP BY ALL) z), 'S1=12 S2=11'),
  chk('crosswalk $ = the 2025 window', (SELECT string_agg(source || '=' || CAST(a AS INTEGER), ' ' ORDER BY source) FROM (SELECT source, SUM(sales) AS a FROM r WHERE part = 'CROSSWALK' GROUP BY ALL) z), 'S1=63 S2=26'),
- chk('out of window', (SELECT string_agg(source || ' ' || item || '=' || CAST(sales AS INTEGER), '; ' ORDER BY source, item) FROM r WHERE part = 'OUT OF WINDOW'), 'S1 FISCAL_YR 2024 | BUCKET ALL=100; S1 FISCAL_YR 2025 | BUCKET RIVA=50; S2 YEAR 2024=9'),
+ chk('out of window', (SELECT string_agg(source || ' ' || item || '=' || CAST(sales AS INTEGER), '; ' ORDER BY source, item) FROM r WHERE part = 'OUT OF WINDOW'), 'S1 FISCAL_YR 2024 | BUCKET ALL=100; S1 FISCAL_YR 2025 | BUCKET (NULL)=3; S1 FISCAL_YR 2025 | BUCKET RIVA=50; S2 YEAR 2024=9'),
  chk('firm 1, one firm, two sellers', x('S1', 'ALPHA BD', 'IFA', 'INDEX'), '15 2 ONE FIRM ALPHA IFA IFA 1'),
  chk('firm 1, the channel keeps its spelling', x('S1', 'ALPHA BD', 'ifa ', 'INDEX'), '2 1 ONE FIRM ALPHA IFA IFA 1'),
  chk('firm 1, split matched by channel', x('S1', 'LPL', 'FI', 'INDEX'), '7 1 SPLIT, MATCHED BY CHANNEL LPL FINANCIAL LLC - BANK FI FI 3'),
@@ -52,8 +55,8 @@ SELECT
  chk('held old', (SELECT CAST(sales_in_held_cells_old AS INTEGER) FROM r WHERE part = 'CROSSWALK' AND sales_firm = 'ALPHA BD' AND raw_channel = 'IFA'), 10),
  chk('checks: 8 rows, all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(check_value)) AS INTEGER) FROM r WHERE part = 'CHECKS'), '8 0'),
  chk('map: one row per sales-table key', (SELECT string_agg(source || '=' || n || '/' || k, ' ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n, COUNT(DISTINCT COALESCE(sales_firm_id, '-') || '|' || COALESCE(sales_firm, '-') || '|' || COALESCE(raw_channel, '-') || '|' || COALESCE(raw_product, '-')) AS k FROM ssdb_integration.lr_strategy.tmp_sales_map GROUP BY ALL) z), 'S1=12/12 S2=11/11'),
- chk('map: the documented firm 1 join reproduces every 2025 sale', (SELECT CAST(SUM(b.actual_agent_dollars) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s1_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S1' AND m.sales_firm_id IS NOT DISTINCT FROM NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0') AND m.sales_firm IS NOT DISTINCT FROM b.consol_broker_nm AND m.raw_channel IS NOT DISTINCT FROM b.dist_ch AND m.raw_product IS NOT DISTINCT FROM b.product_line2 WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL'), '63 13'),
- chk('map: the firm 2 join reproduces every 2025 sale', (SELECT CAST(SUM(b.sales_amount) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s2_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S2' AND m.sales_firm_id IS NOT DISTINCT FROM CAST(CAST(b.firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AND m.sales_firm IS NOT DISTINCT FROM b.firm AND m.raw_channel IS NOT DISTINCT FROM b.channel AND m.raw_product IS NOT DISTINCT FROM b.product WHERE b.year = 2025), '26 11'),
+ chk('map: the documented firm 1 join reproduces every 2025 sale', (SELECT CAST(SUM(b.actual_agent_dollars) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s1_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S1' AND EQUAL_NULL(m.sales_firm_id, NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0')) AND EQUAL_NULL(m.sales_firm, b.consol_broker_nm) AND EQUAL_NULL(m.raw_channel, b.dist_ch) AND EQUAL_NULL(m.raw_product, b.product_line2) WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL'), '63 13'),
+ chk('map: the firm 2 join reproduces every 2025 sale', (SELECT CAST(SUM(b.sales_amount) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s2_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S2' AND EQUAL_NULL(m.sales_firm_id, CAST(CAST(b.firm_crd AS DECIMAL(38, 0)) AS VARCHAR)) AND EQUAL_NULL(m.sales_firm, b.firm) AND EQUAL_NULL(m.raw_channel, b.channel) AND EQUAL_NULL(m.raw_product, b.product) WHERE b.year = 2025), '26 11'),
  chk('map: a split resolved', (SELECT firm_basis || ' ' || broker_name || ' ' || new_channel FROM ssdb_integration.lr_strategy.tmp_sales_map WHERE source = 'S1' AND sales_firm = 'LPL' AND raw_channel = 'FI'), 'SPLIT, MATCHED BY CHANNEL LPL FINANCIAL LLC - BANK FI'),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name IN ('r', 'tmp_xw', 'tmp_xw_checks', 'tmp_xw_cand') AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT 'sales_crosswalk_test: ok';

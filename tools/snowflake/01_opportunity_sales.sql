@@ -30,7 +30,7 @@
 --the tie-out and the checks: no ID or name.  Download it as CSV into $TD_REPO/data/safe/.  The decisions are the
 --tables in 1 and 8 and the joins named in DATASET_LOG.md, Key decisions: change one and rerun.
 --Snowflake docs read 2026-10-30: GROUP BY ALL (https://docs.snowflake.com/en/sql-reference/constructs/group-by), VALUES
---with column aliases (.../constructs/values), IS NOT DISTINCT FROM (.../functions/is-distinct-from), session variables
+--with column aliases (.../constructs/values), EQUAL_NULL, NULL-safe equality (.../functions/equal_null), session variables
 --and IDENTIFIER (.../session-variables, .../identifier-literal); SPLIT_PART gives '' past the last part
 --(.../functions/split_part); CROSS JOIN takes no ON (.../constructs/join); a set operator wants each column's type the
 --same in all its inputs, so both sources' sales amounts are cast to one exact type, DECIMAL(38, 6)
@@ -310,7 +310,7 @@ v AS (
             FROM st WHERE kept
   UNION ALL SELECT 'V2A RECLASSIFIED', source, NULL,
                    COALESCE(cur_label, '(BLANK)') || ' -> ' || CASE WHEN keep_new THEN new_label ELSE '(DROPPED)' END,
-                   CASE WHEN source = 'S1' THEN CASE WHEN cur_label IS NOT DISTINCT FROM new_label THEN 'SAME'
+                   CASE WHEN source = 'S1' THEN CASE WHEN EQUAL_NULL(cur_label, new_label) THEN 'SAME'
                                                      ELSE 'RECLASSIFIED' END END,
                    zip, firm_crd, broker_name, NULL, amt
             FROM cells

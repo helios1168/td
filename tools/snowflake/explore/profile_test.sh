@@ -8,6 +8,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 {
 cat <<'SQL'
 ATTACH ':memory:' AS life_prod; CREATE SCHEMA life_prod.lif_murkylake;
+-- DuckDB has no EQUAL_NULL (Snowflake's NULL-safe equality)
+CREATE MACRO equal_null(a, b) AS a IS NOT DISTINCT FROM b;
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
 CREATE TABLE life_prod.lif_murkylake.wc_market_metrics_opportunity (fiscal_yr TEXT, quarter TEXT, cbd_id TEXT,
   client_firm_id TEXT, firm_crd TEXT, broker_name TEXT, dist_ch TEXT, channel TEXT, product_line TEXT,

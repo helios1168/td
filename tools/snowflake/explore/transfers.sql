@@ -11,8 +11,8 @@
 --    of one RVP is no transfer).
 --  BOOKS: each wholesaler's held opportunity before and after, the change, and the sales credited to them (which never
 --    move).  The changes net to 0 within a source.
---Snowflake docs read 2026-10-30: GROUP BY ALL (https://docs.snowflake.com/en/sql-reference/constructs/group-by), IS
---DISTINCT FROM (.../functions/is-distinct-from), a set operator's columns one type each (.../operators-query).
+--Snowflake docs read 2026-10-30: GROUP BY ALL (https://docs.snowflake.com/en/sql-reference/constructs/group-by), EQUAL_NULL,
+--NULL-safe equality (.../functions/equal_null), a set operator's columns one type each (.../operators-query).
 use secondary roles all;
 
 --1. Transfers.
@@ -33,7 +33,7 @@ SELECT 'TRANSFERS' AS part, source, from_key AS wholesaler_key,
        CAST(SUM(opp) AS DOUBLE) AS opp, CAST(NULL AS DOUBLE) AS old_book, CAST(NULL AS DOUBLE) AS new_book,
        CAST(NULL AS DOUBLE) AS change, CAST(NULL AS DECIMAL(38, 6)) AS sales
 FROM c
-WHERE from_key IS DISTINCT FROM to_key
+WHERE NOT EQUAL_NULL(from_key, to_key)
 GROUP BY ALL;
 
 --2. Books.

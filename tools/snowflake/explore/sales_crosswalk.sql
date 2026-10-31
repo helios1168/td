@@ -22,15 +22,15 @@
 --      FROM IDENTIFIER($s1_sales) b
 --      JOIN ssdb_integration.lr_strategy.tmp_sales_map m
 --        ON m.source = 'S1'
---       AND m.sales_firm_id IS NOT DISTINCT FROM NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0')
---       AND m.sales_firm IS NOT DISTINCT FROM b.consol_broker_nm
---       AND m.raw_channel IS NOT DISTINCT FROM b.dist_ch AND m.raw_product IS NOT DISTINCT FROM b.product_line2
+--       AND EQUAL_NULL(m.sales_firm_id, NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0'))
+--       AND EQUAL_NULL(m.sales_firm, b.consol_broker_nm)
+--       AND EQUAL_NULL(m.raw_channel, b.dist_ch) AND EQUAL_NULL(m.raw_product, b.product_line2)
 --      WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL';
 --    firm 2: FIRM_CRD as CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), FIRM, CHANNEL, PRODUCT, YEAR = 2025.  The other
 --    two keys are formulas, not table rows: WHOLESALER_KEY is TRIM(WHSLR_ID) (firm 1) or UPPER(TRIM(RVP)) (firm 2);
 --    ZIP is LPAD(LEFT(TRIM(zip), 5), 5, '0'), blank or 'BLANK' none.
 --Snowflake docs read 2026-10-30: FULL OUTER JOIN (https://docs.snowflake.com/en/sql-reference/constructs/join), GROUP
---BY ALL (.../constructs/group-by), IS DISTINCT FROM (.../functions/is-distinct-from).  LISTAGG(DISTINCT ...) WITHIN
+--BY ALL (.../constructs/group-by), EQUAL_NULL, NULL-safe equality (.../functions/equal_null).  LISTAGG(DISTINCT ...) WITHIN
 --GROUP ran at work (archived explore/firm_master_relationships.sql, 2026-10-29).
 use secondary roles all;
 
@@ -106,11 +106,11 @@ ow AS (
                    || COALESCE(product_bucket, '(NULL)') AS item, COUNT(*) AS n_rows,
                    SUM(CAST(actual_agent_dollars AS DECIMAL(38, 6))) AS a1, SUM(CAST(compd_agent_dollars AS DECIMAL(38, 6))) AS a2
             FROM IDENTIFIER($s1_sales)
-            WHERE fiscal_yr IS DISTINCT FROM 2025 OR product_bucket IS DISTINCT FROM 'ALL'
+            WHERE NOT EQUAL_NULL(fiscal_yr, 2025) OR NOT EQUAL_NULL(product_bucket, 'ALL')
             GROUP BY ALL
   UNION ALL SELECT 'S2', 'YEAR ' || COALESCE(CAST(year AS VARCHAR), '(NULL)'), COUNT(*),
                    SUM(CAST(sales_amount AS DECIMAL(38, 6))), SUM(CAST(mm_amount AS DECIMAL(38, 6)))
-            FROM IDENTIFIER($s2_sales) WHERE year IS DISTINCT FROM 2025
+            FROM IDENTIFIER($s2_sales) WHERE NOT EQUAL_NULL(year, 2025)
             GROUP BY ALL),
 whole AS (
             SELECT 'S1' AS source, SUM(CAST(actual_agent_dollars AS DECIMAL(38, 6))) AS a1 FROM IDENTIFIER($s1_sales)

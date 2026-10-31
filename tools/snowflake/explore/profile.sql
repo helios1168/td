@@ -12,7 +12,7 @@
 --resolves to a table column before a SELECT alias (https://docs.snowflake.com/en/sql-reference/constructs/group-by),
 --so every grouping here is GROUP BY ALL; TRANSLATE drops source characters with no target character
 --(https://docs.snowflake.com/en/sql-reference/functions/translate); VALUES takes column aliases
---(https://docs.snowflake.com/en/sql-reference/constructs/values); IS NOT DISTINCT FROM is NULL-safe equality
+--(https://docs.snowflake.com/en/sql-reference/constructs/values); EQUAL_NULL is NULL-safe equality
 --(https://docs.snowflake.com/en/sql-reference/functions/is-distinct-from).
 use secondary roles all;
 
@@ -403,7 +403,7 @@ c AS (
                    || CASE WHEN v.k > 1 THEN ', 2+ CHANNELS' ELSE '' END
                    || CASE WHEN i.firm_crd IS NULL THEN ', NOT IN S2' ELSE '' END,
                    COUNT(*), NULL
-            FROM ovk v LEFT JOIN ovk_in_s2 i ON i.firm_crd = v.firm_crd AND i.broker_name IS NOT DISTINCT FROM v.broker_name
+            FROM ovk v LEFT JOIN ovk_in_s2 i ON i.firm_crd = v.firm_crd AND EQUAL_NULL(i.broker_name, v.broker_name)
             GROUP BY ALL
   UNION ALL SELECT 'S2_OPP', 'S2 ROUTE LEVEL',
                    CASE WHEN o.firm_crd IS NULL THEN '0 NO CRD'
