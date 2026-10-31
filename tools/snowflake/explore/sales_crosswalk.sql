@@ -14,6 +14,21 @@
 --  CHECKS (CHECK_VALUE must be 0, per source): RAW KEYS VS CROSSWALK (keys whose $ differ; SALES: the $ apart); RAW
 --    KEYS ON 2+ OUTPUTS; CROSSWALK VS TMP_O2_DATASET by firm x product x old channel x new channel; RAW TABLE MINUS
 --    CROSSWALK AND OUT OF WINDOW.
+--  TMP_SALES_MAP (statement 3, owner, 2026-10-30: "produce the mapping table we use to map the [firm 2] sales and
+--    [firm 1] sales tables to the o2_dataset table"): the crosswalk's keys and outputs without amounts, one row per
+--    sales-table key (RAW KEYS ON 2+ OUTPUTS must be 0).  Join a sales table to it on SOURCE and the four keys, the
+--    firm ID cast as below, NULL-safe; e.g. firm 1:
+--      SELECT b.*, m.firm_crd, m.broker_name, m.product, m.old_channel_s1, m.new_channel, m.firm_basis
+--      FROM IDENTIFIER($s1_sales) b
+--      JOIN ssdb_integration.lr_strategy.tmp_sales_map m
+--        ON m.source = 'S1'
+--       AND m.sales_firm_id IS NOT DISTINCT FROM NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0')
+--       AND m.sales_firm IS NOT DISTINCT FROM b.consol_broker_nm
+--       AND m.raw_channel IS NOT DISTINCT FROM b.dist_ch AND m.raw_product IS NOT DISTINCT FROM b.product_line2
+--      WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL';
+--    firm 2: FIRM_CRD as CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), FIRM, CHANNEL, PRODUCT, YEAR = 2025.  The other
+--    two keys are formulas, not table rows: WHOLESALER_KEY is TRIM(WHSLR_ID) (firm 1) or UPPER(TRIM(RVP)) (firm 2);
+--    ZIP is LPAD(LEFT(TRIM(zip), 5), 5, '0'), blank or 'BLANK' none.
 --Snowflake docs read 2026-10-30: FULL OUTER JOIN (https://docs.snowflake.com/en/sql-reference/constructs/join), GROUP
 --BY ALL (.../constructs/group-by), IS DISTINCT FROM (.../functions/is-distinct-from).  LISTAGG(DISTINCT ...) WITHIN
 --GROUP ran at work (archived explore/firm_master_relationships.sql, 2026-10-29).
@@ -48,7 +63,13 @@ FROM ssdb_integration.lr_strategy.tmp_o2_sales s
 LEFT JOIN ssdb_integration.lr_strategy.tmp_xw_cand c ON c.source = s.source AND c.firm_id = s.sales_firm_id
 GROUP BY ALL;
 
---3. Out of window and checks.
+--3. The mapping table: the crosswalk's keys and outputs, no amounts.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_sales_map AS
+SELECT source, sales_firm_id, sales_firm, raw_channel, raw_product, firm_basis, firm_crd, broker_name, product,
+       old_channel_s1, match_channel, new_channel
+FROM ssdb_integration.lr_strategy.tmp_xw;
+
+--4. Out of window and checks.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_xw_checks AS
 WITH
 raw AS (
@@ -124,7 +145,7 @@ SELECT 'CHECKS', item, source, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N
        NULL, amt, NULL, NULL, NULL, NULL, NULL, NULL, v
 FROM c;
 
---4. Everything, one result set (read at work).
+--5. Everything, one result set (read at work).
 SELECT * FROM ssdb_integration.lr_strategy.tmp_xw
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_xw_checks
 ORDER BY part, source, sales DESC NULLS LAST, sales_firm_id, raw_channel, raw_product;

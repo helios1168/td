@@ -970,3 +970,14 @@ variants merge; the out-of-window rows missing other buckets; the raw side keyed
 check without the old channel; candidates joined across sources; held taken from the new state). The session's first
 hand value for the held check was wrong (that sale is on a split CRD with two IFA names, so no firm); the check now
 uses a one-name firm.
+
+### 2026-10-30: the sales mapping table (`TMP_SALES_MAP`)
+
+> **Owner, 2026-10-30:** "now can you produce the mapping table we use to map the [firm 2] sales and [firm 1] sales tables to the o2_dataset table"
+
+`explore/sales_crosswalk.sql` statement 3 keeps the crosswalk's keys and outputs without amounts as `TMP_SALES_MAP`:
+one row per source x sales-table key (firm ID, firm name, channel, product as the table has them) -> firm basis, firm
+(CRD x broker name), product, old channel in firm 1's names, match channel, new channel. The file's header gives the
+NULL-safe join for each sales table; wholesaler key and ZIP are formulas, not rows. No sales $ in it. DuckDB test: 20
+checks; the map is one row per key, and the documented joins of both sales tables reproduce every 2025 sale (firm 1
+63 over 13 rows, firm 2 26 over 11); a map key altered from the table's value (the firm name upper-cased) fails it.
