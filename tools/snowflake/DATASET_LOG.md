@@ -933,3 +933,19 @@ Wells WH → WH, Wells FI → FI, National (Chase) → FI), and a listed firm ta
 override (`TAU`, statement 3); the route serves only unlisted firms. Probe on a copy of the DuckDB fixture: a
 company-14 firm recorded IFA moves from its IFA wholesaler to the WH wholesaler. The session's suggestion of the firm's
 own route as the holder channel is withdrawn: it would keep an IFA-origin Wells WH firm with its IFA wholesaler.
+
+### 2026-10-30: the transfers script (`explore/transfers.sql`)
+
+> **Owner, 2026-10-30:** "now using this tables format, are we able to easily see how opportunity is transfered between wholesalers as it relates to the channel swaps?"; "no in the new combined dataset"; "push these queries to github in a single script"
+
+`TMP_O2_DATASET` holds each opportunity cell twice, under its old and its new wholesaler, on the same ZIP x firm x
+product x old channel x new channel key; `explore/transfers.sql` groups on that key to pair giver and receiver.
+One result set: `TRANSFERS` (from -> to wholesaler by old channel in firm 1's names and new channel; (NO HOLDER) for a
+side with none) and `BOOKS` (each wholesaler's held opportunity old and new, the change, its credited sales). Firm 2
+compares RVPs. Wholesaler names appear, so it is read at work and never brought here. DuckDB test
+`explore/transfers_test.sh` (02_sales_test.sh's fixture plus one row: a blank-channel cell beside an IFA cell of the
+same firm, ZIP and product): 9 checks; the transfers equal the cell-level old -> new wholesaler of `TMP_O1_DATASET`
+(0 mismatches) and the books net to 0 per source. Five mutations fail it (pairing on `<>`, so moves to or from no
+holder vanish; the receiver read from the old column; the old channel dropped from the pairing key; the books part left
+out; the old book read from the new column). Dropping only `OLD_CHANNEL` from the key survives: `OLD_CHANNEL_S1`
+carries it one to one, except where firm 2's NO CHANNEL and an unlisted label would both be blank.
