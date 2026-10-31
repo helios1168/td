@@ -1,5 +1,5 @@
 #!/bin/sh
-# Runs 01_opportunity.sql, then 02_sales.sql, in DuckDB on made-up tables with the real column names, and checks
+# Runs all of 01_opportunity_sales.sql (opportunity, then sales) in DuckDB on made-up tables with the real column names, and checks
 # 02's tables and its result set, the file's own last statement (answers worked out by hand from the rows below).
 # Prints "02_sales_test: ok" or stops at the first failed check.  DuckDB has no TO_DATE: a macro casts to DATE.
 # Run from anywhere: sh 02_sales_test.sh
@@ -101,12 +101,11 @@ sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
-    -e '/^--8\./,$d' "$here/01_opportunity.sql"
-sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
-    -e 's/^SELECT part, source, name, item, n_rows, n_wholesalers, n_firms, amt,$/CREATE TABLE r AS SELECT part, source, name, item, n_rows, n_wholesalers, n_firms, amt,/' \
-    "$here/02_sales.sql"
+    -e "s/^SELECT 'OPPORTUNITY' AS layer,/CREATE TABLE full_result AS SELECT 'OPPORTUNITY' AS layer,/" \
+    "$here/01_opportunity_sales.sql"
+echo "CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_out;"
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
@@ -165,6 +164,8 @@ SELECT
  chk('wholesalers s1 old', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S1' AND name = 'OLD'), 'HOLDS OPPORTUNITY AND SELLS=5/54 SELLS, HOLDS NO OPPORTUNITY=2/9'),
  chk('wholesalers s2 new', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S2' AND name = 'NEW'), 'HOLDS OPPORTUNITY AND SELLS=2/18 SELLS, HOLDS NO OPPORTUNITY=1/6'),
  chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '10 0 0'),
+ chk('the last statement: both halves, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true),
+ chk('the last statement: sales $ intact', (SELECT CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'TIE-OUT' AND name LIKE 'DATASET%ACTUAL'), 46),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name LIKE 'tmp_o2%' AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT '02_sales_test: ok';
 SQL

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Runs 01_opportunity.sql in DuckDB on made-up tables with the real column names, one planted case per outcome, and
+# Runs 01_opportunity_sales.sql's opportunity half (statements 1-7) in DuckDB on made-up tables with the real column names, one planted case per outcome, and
 # checks the answers (worked out by hand from the rows below); first checks that its four decision tables are
 # explore/profile.sql's, row for row.  Prints "01_opportunity_test: ok" or stops at the first failed check.
 # Run from anywhere: sh 01_opportunity_test.sh
@@ -7,7 +7,7 @@ set -e
 here=$(cd "$(dirname "$0")" && pwd)
 block() { sed -n "/^CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.$2 AS\$/,/ AS v (/p" "$1"; }
 for t in tmp_s1_channel_rule tmp_s2_label_terr tmp_s1ch_s2terr; do
-  [ -n "$(block "$here/01_opportunity.sql" $t)" ] && [ "$(block "$here/01_opportunity.sql" $t)" = "$(block "$here/explore/profile.sql" $t)" ] \
+  [ -n "$(block "$here/01_opportunity_sales.sql" $t)" ] && [ "$(block "$here/01_opportunity_sales.sql" $t)" = "$(block "$here/explore/profile.sql" $t)" ] \
     || { echo "01_opportunity_test: $t differs from explore/profile.sql's"; exit 1; }
 done
 {
@@ -69,7 +69,7 @@ sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
-    -e '/^--8\./,$d' "$here/01_opportunity.sql"
+    -e '/^--SALES: /,$d' "$here/01_opportunity_sales.sql"
 cat <<'SQL'
 CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_o1_out;
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
