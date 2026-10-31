@@ -995,3 +995,14 @@ text through DECIMAL(38, 0)), not NULLs. DuckDB has no EQUAL_NULL, so the profil
 macro (the transfers and crosswalk tests read 02's). Plain `=` / `<>` in place of EQUAL_NULL fails the transfers,
 profile and crosswalk tests; the crosswalk test gained a firm 1 row with no product bucket for that, so a NULL bucket
 must land in OUT OF WINDOW. In 01's V2A line `=` would give the same answer (firm 1's new channel is never NULL).
+
+### 2026-10-30: CBD_ID in the sales mapping table
+
+> **Owner, 2026-10-30:** "and cbd_id needs to be in the mapping table"
+
+`TMP_SALES_MAP` gains `CBD_ID` and `N_CBD_ID`: the company ID(s) the mapped market metrics firm (CRD x broker name)
+carries on firm 1's opportunity rows, as `s1_opp_sales.sql:475-482` derives it (the pinned names, company 0 to the
+client firm ID), ' | ' between 2+; for both sources, so firm 2's sales reach a company ID through their firm. Firm 1's
+own sales-table cbd_id stays `SALES_FIRM_ID`. None where no firm was chosen. Session reading: the owner may have meant
+the sales table's own cbd_id, which `SALES_FIRM_ID` already is (said so in the reply). DuckDB test: 24 checks; joining
+by CRD alone (so a split CRD's names share company IDs) fails it.

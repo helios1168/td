@@ -16,7 +16,10 @@
 --    CROSSWALK AND OUT OF WINDOW.
 --  TMP_SALES_MAP (statement 3, owner, 2026-10-30: "produce the mapping table we use to map the [firm 2] sales and
 --    [firm 1] sales tables to the o2_dataset table"): the crosswalk's keys and outputs without amounts, one row per
---    sales-table key (RAW KEYS ON 2+ OUTPUTS must be 0).  Join a sales table to it on SOURCE and the four keys, the
+--    sales-table key (RAW KEYS ON 2+ OUTPUTS must be 0).  SALES_FIRM_ID is firm 1's own CBD_ID (CONSOL_BRKR_DLR_ID);
+--    CBD_ID is the company ID the mapped firm (FIRM_CRD x BROKER_NAME) carries on firm 1's opportunity rows, as
+--    s1_opp_sales.sql:475-482 derives it, ' | ' between 2+ (N_CBD_ID), for both sources; none where no firm was
+--    chosen or its rows carry none.  Join a sales table to it on SOURCE and the four keys, the
 --    firm ID cast as below, NULL-safe; e.g. firm 1:
 --      SELECT b.*, m.firm_crd, m.broker_name, m.product, m.old_channel_s1, m.new_channel, m.firm_basis
 --      FROM IDENTIFIER($s1_sales) b
@@ -65,9 +68,15 @@ GROUP BY ALL;
 
 --3. The mapping table: the crosswalk's keys and outputs, no amounts.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_sales_map AS
-SELECT source, sales_firm_id, sales_firm, raw_channel, raw_product, firm_basis, firm_crd, broker_name, product,
-       old_channel_s1, match_channel, new_channel
-FROM ssdb_integration.lr_strategy.tmp_xw;
+WITH cb AS (SELECT firm_crd, broker_name, COUNT(DISTINCT company_id) AS n_cbd_id,
+                   LISTAGG(DISTINCT company_id, ' | ') WITHIN GROUP (ORDER BY company_id) AS cbd_id
+            FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1
+            WHERE firm_crd IS NOT NULL AND company_id IS NOT NULL
+            GROUP BY ALL)
+SELECT x.source, x.sales_firm_id, x.sales_firm, x.raw_channel, x.raw_product, x.firm_basis, x.firm_crd, x.broker_name,
+       cb.cbd_id, cb.n_cbd_id, x.product, x.old_channel_s1, x.match_channel, x.new_channel
+FROM ssdb_integration.lr_strategy.tmp_xw x
+LEFT JOIN cb ON cb.firm_crd = x.firm_crd AND cb.broker_name = x.broker_name;
 
 --4. Out of window and checks.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_xw_checks AS
