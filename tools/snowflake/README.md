@@ -13,7 +13,7 @@ Read `DATASET_LOG.md`, Conventions, before writing SQL here: table variables, on
 | `explore/profile.sql` | the opportunity profile: the firm key, firm 1's channel per firm, labels, holders, routing against `crd_dist_override`; one result set. Test: `sh explore/profile_test.sh` |
 | `explore/override_review.sql` | the firms where `crd_dist_override` and firm 1's route disagree, every name of their CRDs (Q38). Test: `sh explore/override_review_test.sh` |
 | `explore/lpl_checks.sql` | Q43, firm 1's LPL opportunity not tying out: LPL's feed rows with the company ID the owner's query gives them (A1-A3), and every company with regions of its own (B1); one result set. Test: `sh explore/lpl_checks_test.sh` |
-| `explore/amer_holder.sql` | Q41 and Q44: a company's own regions (`SET company_id`: 805 AMER, 438 AFS), what covers its opportunity ZIPs, who sells to it (`SET company_id`). Test: `sh explore/amer_holder_test.sh` |
+| `explore/amer_holder.sql` | Q41 and Q44: a company's own regions (`SET company_id`: 805 AMER, 438 AFS), what covers its opportunity ZIPs, who sells to it. Test: `sh explore/amer_holder_test.sh` |
 | `explore/schema.sql` | the source tables' columns (run 2026-10-30) |
 | `audit.js` | the audit workflow: the documents' claims checked against the code, `DATA_MODEL.md` the reference (`DATASET_LOG.md`, Conventions, Audit) |
 | `$TD_REPO/owner_sql/` (git-excluded, never committed) | the owner's queries, verbatim (`s1_sales.sql`, `s1_opp_sales.sql`; they supersede `$TD_REPO/mm_query.sql`), and `vars.sql`, the real `SET` lines for the table variables |
