@@ -2,15 +2,17 @@
 --Implements M_s, p, d, kappa_s, nu_D (re-keyed to CRD x broker name), nu, tau_s, H_s with k_s (the lowest ID).
 --Builds temporary tables (owner, 2026-10-30: "create them as temporary tables for now"), queried in the same session:
 --  TMP_O1_FIRM: one row per CRD x broker name either source carries: firm 1's route, how it was found, the new label
---    (the new-channel list re-keyed from company IDs), the holder channel in the new state (TAU), scope.
+--    (the new-channel list re-keyed from company IDs), the holder channel in the new state (TAU).
 --  TMP_O1_CELLS_S1, TMP_O1_CELLS_S2: one row per ZIP x CRD x broker name x product x current label, fiscal year 2025:
 --    the opportunity, the current label, territory channel and holder, the new label, territory channel and holder.
 --    Holders are IDs (wholesaler ID, territory ID), the lowest where 2+ hold (N_HOLDERS says how many).
---  TMP_O1_DATASET: every cell, both sources stacked, with the wholesalers' names and SCOPE (the firms out of scope
---    flagged, filtered out afterwards): the table to look at opportunity by source, firm, channel, product,
---    wholesaler, ZIP (statement 6 shows a query).
---The last statement returns views 1, 2a, 2b, 3 summed by label (in scope), the scope and the checks: no ID or name.  Download it as
---CSV into $TD_REPO/data/safe/.  The decisions are the tables in 1 (DATASET_LOG.md, Settled and Key decisions): change a
+--  TMP_O1_DATASET: every cell, both sources stacked, with the wholesalers' names: the table to look at opportunity by
+--    source, firm, channel, product, wholesaler, ZIP (statement 6 shows a query).
+--EDJ, AMER and AFS are channels like the others: EDJ and AMER come from firm 1's rules (old and new), AFS from the
+--new-channel list (new only); a cut without them filters NEW_CHANNEL (owner, 2026-10-30: "should edj, amer, and afs
+--just be considered like their own channels?").
+--The last statement returns views 1, 2a, 2b, 3 summed by label and the checks: no ID or name.  Download it as CSV into
+--$TD_REPO/data/safe/.  The decisions are the tables in 1 (DATASET_LOG.md, Settled and Key decisions): change a
 --row and rerun.
 --Snowflake docs read 2026-10-30: GROUP BY ALL (https://docs.snowflake.com/en/sql-reference/constructs/group-by), VALUES
 --with column aliases (.../constructs/values), IS NOT DISTINCT FROM (.../functions/is-distinct-from), session variables
@@ -23,7 +25,7 @@ SET s1_territories = 'ssdb_integration.lr_strategy.<source 1 territories, ends _
 SET s2_opp         = 'ssdb_integration.lr_strategy.<source 2 opportunity, ends _OPP_ORIGINAL>';
 SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _TERRITORIES>';
 
---1. Rules and decisions as tables.  The first four are profile.sql's, row for row (the test compares them).
+--1. Rules and decisions as tables.  The first three are profile.sql's, row for row (the test compares them).
 --Firm 1's channel rules, s1_opp_sales.sql:459-470 (sha256 6262e2f93bbd...): a row matches on the one column it fills;
 --the lowest RULE_ORDER that matches wins.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1_channel_rule AS
@@ -65,11 +67,6 @@ FROM (VALUES
   ('PRI', 'RA')
 ) AS v (s1_channel, terr_channel);
 
---Scope (owner, 2026-10-30): a firm whose route is a CHANNEL row, or whose source 1 rows carry a COMPANY row's ID, is out.
-CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_scope_out AS
-SELECT CAST(kind AS VARCHAR) AS kind, CAST(value AS VARCHAR) AS value, CAST(label AS VARCHAR) AS label
-FROM (VALUES ('CHANNEL', 'EDJ', 'EDJ'), ('CHANNEL', 'AMER', 'AMER'), ('COMPANY', '438', 'AFS')) AS v (kind, value, label);
-
 --Company ID by broker name, s1_opp_sales.sql:475-479: these names take this ID whatever the row carries; otherwise
 --company 0 takes the client firm ID, as the query's ORIGINAL_CBD_ID does.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1_company_by_name AS
@@ -85,7 +82,7 @@ FROM (VALUES
 
 --The new-channel list (nu_D), s1_opp_sales.sql:703-706, by company ID; a firm (CRD x broker name) takes the label if
 --its source 1 rows carry the ID.  HOLDER_CHANNEL: the firm 1 channel whose holder keeps it in the new state (Q29,
---owner 2026-10-30); AFS is out of scope and has none.
+--owner 2026-10-30); AFS has none: its new-state holder is not decided (Q44).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_new_label AS
 SELECT CAST(company_id AS VARCHAR) AS company_id, CAST(new_label AS VARCHAR) AS new_label,
        CAST(holder_channel AS VARCHAR) AS holder_channel
@@ -139,7 +136,7 @@ GROUP BY ALL;
 --3. The firm table.  Route (Q38): the one non-blank firm 1 channel of the CRD x broker name in source 1's rows, of the
 --CRD where source 1 lacks the name (a source 2 name); crd_dist_override (distinct keys; its CRD x name row, else its CRD row) fills only a
 --route with no channel, 2+ channels or no source 1 rows; else UNMAPPED.  NEW_LABEL: the new-channel list's label, else
---the route.  TAU: the list's holder channel, else the route.  SCOPE_OUT: the scope row's label.
+--the route.  TAU: the list's holder channel, else the route.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_firm AS
 WITH
 s1 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1 WHERE firm_crd IS NOT NULL),
@@ -155,22 +152,18 @@ ov AS (SELECT firm_crd, broker_name, COUNT(DISTINCT ch) AS k, MIN(ch) AS ch FROM
 nu AS (SELECT s1.firm_crd, s1.broker_name, COUNT(DISTINCT nl.new_label) AS k, MIN(nl.new_label) AS label,
               MIN(nl.holder_channel) AS holder_ch
        FROM s1 JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON nl.company_id = s1.company_id GROUP BY ALL),
-sc AS (SELECT s1.firm_crd, s1.broker_name, MIN(so.label) AS label
-       FROM s1 JOIN ssdb_integration.lr_strategy.tmp_scope_out so ON so.kind = 'COMPANY' AND so.value = s1.company_id
-       GROUP BY ALL),
 r AS (SELECT k.firm_crd, k.broker_name,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.k ELSE cr.k END AS s1_k,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.ch ELSE cr.ch END AS s1_ch,
              CASE WHEN nr.firm_crd IS NOT NULL THEN 'NAME' ELSE 'CRD' END AS s1_level,
              COALESCE(v1.k, v0.k) AS ov_k, COALESCE(v1.ch, v0.ch) AS ov_ch,
-             nu.k AS nu_k, nu.label AS nu_label, nu.holder_ch, sc.label AS out_company
+             nu.k AS nu_k, nu.label AS nu_label, nu.holder_ch
       FROM k
       LEFT JOIN nr ON nr.firm_crd = k.firm_crd AND nr.broker_name = k.broker_name
       LEFT JOIN cr ON cr.firm_crd = k.firm_crd
       LEFT JOIN ov v1 ON v1.firm_crd = k.firm_crd AND v1.broker_name = k.broker_name
       LEFT JOIN ov v0 ON v0.firm_crd = k.firm_crd AND v0.broker_name IS NULL
-      LEFT JOIN nu ON nu.firm_crd = k.firm_crd AND nu.broker_name = k.broker_name
-      LEFT JOIN sc ON sc.firm_crd = k.firm_crd AND sc.broker_name = k.broker_name),
+      LEFT JOIN nu ON nu.firm_crd = k.firm_crd AND nu.broker_name = k.broker_name),
 g AS (SELECT r.*,
              CASE WHEN s1_k = 1 THEN s1_ch WHEN ov_k = 1 THEN ov_ch ELSE 'UNMAPPED' END AS route,
              CASE WHEN s1_k = 1 THEN s1_level
@@ -180,9 +173,8 @@ g AS (SELECT r.*,
       FROM r)
 SELECT g.firm_crd, g.broker_name, g.route, g.route_basis, g.ov_ch,
        g.nu_k, CASE WHEN g.nu_k > 1 THEN '2+ NEW LABELS' WHEN g.nu_k = 1 THEN g.nu_label ELSE g.route END AS new_label,
-       CASE WHEN g.nu_k > 1 THEN NULL WHEN g.nu_k = 1 THEN g.holder_ch ELSE g.route END AS tau,
-       COALESCE(g.out_company, so.label) AS scope_out
-FROM g LEFT JOIN ssdb_integration.lr_strategy.tmp_scope_out so ON so.kind = 'CHANNEL' AND so.value = g.route;
+       CASE WHEN g.nu_k > 1 THEN NULL WHEN g.nu_k = 1 THEN g.holder_ch ELSE g.route END AS tau
+FROM g;
 
 --4. Holders per territory channel x ZIP, each source: the lowest ID where 2+ hold (Settled, 2026-10-28).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_h1 AS
@@ -204,7 +196,7 @@ SELECT c.zip, c.firm_crd, c.broker_name, c.product, c.cur_label, c.cur_label AS 
        hc.holder AS cur_holder, hc.n_holders AS cur_n_holders,
        COALESCE(f.route_basis, 'NO CRD') AS route_basis, TRUE AS keep_new,
        COALESCE(f.new_label, 'UNMAPPED') AS new_label, NULLIF(f.tau, 'UNMAPPED') AS new_terr_ch,
-       hn.holder AS new_holder, hn.n_holders AS new_n_holders, f.scope_out, c.n_rows, c.amt
+       hn.holder AS new_holder, hn.n_holders AS new_n_holders, c.n_rows, c.amt
 FROM c
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = c.firm_crd AND f.broker_name = c.broker_name
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h1 hc ON hc.channel = c.cur_label AND hc.zip = c.zip
@@ -216,7 +208,7 @@ c AS (SELECT zip, firm_crd, broker_name, product, cur_label, SUM(n) AS n_rows, S
       FROM ssdb_integration.lr_strategy.tmp_o1_rows_s2 GROUP BY ALL),
 x AS (SELECT c.*, lm.terr_channel AS cur_terr_ch, COALESCE(lm.keep_new, TRUE) AS keep_new,
              COALESCE(f.route_basis, 'NO CRD') AS route_basis, COALESCE(f.new_label, 'UNMAPPED') AS new_label,
-             nm.terr_channel AS new_terr_ch, f.scope_out
+             nm.terr_channel AS new_terr_ch
       FROM c
       LEFT JOIN ssdb_integration.lr_strategy.tmp_s2_label_terr lm ON lm.label = c.cur_label
       LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = c.firm_crd AND f.broker_name = c.broker_name
@@ -225,20 +217,19 @@ SELECT x.zip, x.firm_crd, x.broker_name, x.product, x.cur_label, x.cur_terr_ch,
        hc.holder AS cur_holder, hc.n_holders AS cur_n_holders, x.route_basis, x.keep_new,
        CASE WHEN x.keep_new THEN x.new_label END AS new_label, CASE WHEN x.keep_new THEN x.new_terr_ch END AS new_terr_ch,
        CASE WHEN x.keep_new THEN hn.holder END AS new_holder, CASE WHEN x.keep_new THEN hn.n_holders END AS new_n_holders,
-       x.scope_out, x.n_rows, x.amt
+       x.n_rows, x.amt
 FROM x
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h2 hc ON hc.channel = x.cur_terr_ch AND hc.zip = x.zip
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_h2 hn ON hn.channel = x.new_terr_ch AND hn.zip = x.zip;
 
---6. The dataset: both sources' cells, every one, one row each; SCOPE is 'IN', or 'OUT: <label>' for a firm out of
---scope (tmp_scope_out), kept so there is one master table, filtered afterwards (owner, 2026-10-30: "lets actually keep
---EDJ, AMER, and AFS in first so we have a single master table across all cases which we then filter down
---afterwards").  Wholesaler names from the territory tables (firm 1: WHSLR_NM; firm 2: the territory's RVP).  OLD_CHANNEL: firm 1's channel after its rules; firm 2's own label.
+--6. The dataset: both sources' cells, every one, one row each: the master table, filtered afterwards (owner,
+--2026-10-30: "a single master table across all cases which we then filter down afterwards").  Wholesaler names from
+--the territory tables (firm 1: WHSLR_NM; firm 2: the territory's RVP).  OLD_CHANNEL: firm 1's channel after its
+--rules; firm 2's own label.
 --OLD_CHANNEL_S1: the old channel in firm 1's names (owner, 2026-10-30, option (a)): firm 1's own; firm 2's territory
 --channel read back through the Q39 pairs (BK -> FI, FP -> IFA, BD -> WH, RA -> PRI), blank for NO CHANNEL.
 --NEW_CHANNEL_BASIS: how the firm's channel was found (TMP_O1_FIRM.ROUTE_BASIS).  Look at it in the same session, e.g.
---  SELECT source, new_channel, product, SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset
---  WHERE scope = 'IN' GROUP BY ALL;
+--  SELECT source, new_channel, product, SUM(opportunity) FROM ssdb_integration.lr_strategy.tmp_o1_dataset GROUP BY ALL;
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_dataset AS
 WITH
 n1 AS (SELECT CAST(whslr_id AS VARCHAR) AS id, MIN(whslr_nm) AS nm FROM IDENTIFIER($s1_territories) GROUP BY ALL),
@@ -254,13 +245,12 @@ u AS (
             LEFT JOIN q39 q ON q.terr_channel = c.cur_terr_ch)
 SELECT source, zip, firm_crd, broker_name, product, cur_label AS old_channel, cur_s1 AS old_channel_s1,
        new_label AS new_channel,
-       route_basis AS new_channel_basis, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END AS scope,
-       cur_terr_ch AS old_territory_channel, new_terr_ch AS new_territory_channel,
+       route_basis AS new_channel_basis, cur_terr_ch AS old_territory_channel, new_terr_ch AS new_territory_channel,
        cur_holder AS old_wholesaler_id, cur_nm AS old_wholesaler, new_holder AS new_wholesaler_id,
        new_nm AS new_wholesaler, amt AS opportunity
 FROM u;
 
---7. Views and checks, one table.  Views and SCOPE: in-scope cells only (SCOPE: all); PCT_AMT: of PART x SOURCE x NAME.
+--7. Views and checks, one table, over every cell; PCT_AMT: of PART x SOURCE x NAME.
 --  V1 CHANNEL: $ by label, NAME = the state.  V2A RECLASSIFIED: current label -> new label; ITEM2 (source 1):
 --    RECLASSIFIED where they differ.  V2B HOLDER MOVES: same holder, other holder, gains, loses, none in either,
 --    dropped; ITEM2 current -> new territory channel.  V3 COVERAGE: one holder, the lowest of 2+, no holder (no
@@ -274,12 +264,11 @@ WITH
 cells AS (
             SELECT 'S1' AS source, * FROM ssdb_integration.lr_strategy.tmp_o1_cells_s1
   UNION ALL SELECT 'S2', * FROM ssdb_integration.lr_strategy.tmp_o1_cells_s2),
-ins AS (SELECT * FROM cells WHERE scope_out IS NULL),
 st AS (
             SELECT source, 'CURRENT' AS state, cur_label AS label, cur_terr_ch AS terr_ch, cur_holder AS holder,
-                   cur_n_holders AS n_holders, TRUE AS kept, zip, firm_crd, broker_name, amt FROM ins
+                   cur_n_holders AS n_holders, TRUE AS kept, zip, firm_crd, broker_name, amt FROM cells
   UNION ALL SELECT source, 'NEW', new_label, new_terr_ch, new_holder, new_n_holders, keep_new, zip, firm_crd,
-                   broker_name, amt FROM ins),
+                   broker_name, amt FROM cells),
 raw AS (
             SELECT 'S1' AS source, SUM(global_sales) AS amt
             FROM life_prod.lif_murkylake.wc_market_metrics_opportunity WHERE fiscal_yr = '2025'
@@ -301,7 +290,7 @@ v AS (
                    CASE WHEN source = 'S1' THEN CASE WHEN cur_label IS NOT DISTINCT FROM new_label THEN 'SAME'
                                                      ELSE 'RECLASSIFIED' END END,
                    zip, firm_crd, broker_name, NULL, amt
-            FROM ins
+            FROM cells
   UNION ALL SELECT 'V2B HOLDER MOVES', source, NULL,
                    CASE WHEN NOT keep_new THEN 'DROPPED'
                         WHEN cur_holder IS NULL AND new_holder IS NULL THEN 'NO HOLDER IN EITHER'
@@ -309,16 +298,13 @@ v AS (
                         WHEN cur_holder = new_holder THEN 'SAME HOLDER' ELSE 'OTHER HOLDER' END,
                    COALESCE(cur_terr_ch, '(NONE)') || ' -> ' || COALESCE(new_terr_ch, '(NONE)'),
                    zip, firm_crd, broker_name, NULL, amt
-            FROM ins
+            FROM cells
   UNION ALL SELECT 'V3 COVERAGE', source, state,
                    CASE WHEN NOT kept THEN 'DROPPED' WHEN terr_ch IS NULL THEN 'NO HOLDER: NO TERRITORY CHANNEL'
                         WHEN holder IS NULL THEN 'NO HOLDER: NONE AT THE ZIP'
                         WHEN n_holders = 1 THEN 'ONE HOLDER' ELSE 'LOWEST OF 2+ HOLDERS' END,
                    NULL, zip, firm_crd, broker_name, holder, amt
             FROM st
-  UNION ALL SELECT 'SCOPE', source, NULL, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END,
-                   NULL, zip, firm_crd, broker_name, NULL, amt
-            FROM cells
   UNION ALL SELECT 'CHECKS', source, 'ROUTE BASIS', route_basis, NULL, zip, firm_crd, broker_name, NULL, amt FROM cells
   UNION ALL SELECT 'CHECKS', source, 'OVERRIDE <> ROUTE, ROUTE KEPT', ov_ch || ' <> ' || route, NULL, zip, firm_crd,
                    broker_name, NULL, amt

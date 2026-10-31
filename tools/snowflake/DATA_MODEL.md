@@ -51,7 +51,7 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 | ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
-| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`), and a source 1 row with no channel takes its firm's route (key decision, layer 01); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29) |
+| τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`), and a source 1 row with no channel takes its firm's route (key decision, layer 01); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29); AFS: Q44 |
 
 ## States and views
 
@@ -97,9 +97,9 @@ both at once.
 ## Opportunity routed by firm (the first deliverable)
 
 Owner, 2026-10-30: opportunity first, routed by firm on the market metrics schema; sales later. Per source, one row
-per cell x = (z, d, p): its market, current channel and holder, new channel and holder (views 1, 2a, 2b, 3). Out of
-scope for now: the firms whose firm 1 channel is EDJ or AMER, and AFS's (company 438), both sources and states; they
-stay in the master tables, flagged by `SCOPE`, and the views filter them out (key decision, `DATASET_LOG.md`).
+per cell x = (z, d, p): its market, current channel and holder, new channel and holder (views 1, 2a, 2b, 3). EDJ,
+AMER and AFS are channels like the others, and a cut without them filters `NEW_CHANNEL` (key decision,
+`DATASET_LOG.md`); who holds AMER (Q41) and AFS in the new state (Q44) is open.
 
 | step | source 1 | source 2 | status |
 |---|---|---|---|

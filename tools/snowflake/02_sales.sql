@@ -6,15 +6,15 @@
 --  TMP_O2_SALES: each source's fiscal year 2025 sales, one row per seller x ZIP x the sales table's firm x product x
 --    the sale's own channel, those three as the sales table has them (SALES_FIRM_ID and SALES_FIRM: firm 1's company
 --    ID and name, firm 2's CRD and firm name; RAW_PRODUCT; OLD_CHANNEL), with the market metrics firm (CRD x broker
---    name) it reaches and how (FIRM_BASIS), the firm's new channel, scope, and whether the seller holds that ZIP x
---    firm x product in the old and the new state.
+--    name) it reaches and how (FIRM_BASIS), the firm's new channel, and whether the seller holds that ZIP x firm x
+--    product in the old and the new state.
 --  TMP_O2_DATASET: the table to look at.  One row per source x wholesaler x ZIP x firm x product x old channel x new
---    channel x scope: the opportunity the wholesaler holds there, old and new (TMP_O1_DATASET), and the sales
---    credited to them there.  Sales never move between states; only held opportunity does.  Every 2025 sale and
---    every opportunity cell is in it, so it ties to the sales tables (owner, 2026-10-30: "which we must be able to
---    exactly replicate in this new table") and is the one master table (owner, 2026-10-30: "a single master table
---    across all cases which we then filter down afterwards"); SCOPE flags the firms out of scope, and an in-scope
---    cut filters SCOPE = 'IN'.
+--    channel: the opportunity the wholesaler holds there, old and new (TMP_O1_DATASET), and the sales credited to
+--    them there.  Sales never move between states; only held opportunity does.  Every 2025 sale and every
+--    opportunity cell is in it, so it ties to the sales tables (owner, 2026-10-30: "which we must be able to exactly
+--    replicate in this new table") and is the one master table (owner, 2026-10-30: "a single master table across all
+--    cases which we then filter down afterwards"); EDJ, AMER and AFS are channels like the others, and a cut without
+--    them filters NEW_CHANNEL.
 --The last statement returns sizes, the tie-out and checks, no ID or name: download it as CSV into $TD_REPO/data/safe/.
 --The decisions are the tables in 1 and the joins named in DATASET_LOG.md, Key decisions: change one and rerun.
 --Snowflake docs read 2026-10-30: SPLIT_PART gives '' past the last part (.../functions/split_part); CROSS JOIN takes
@@ -142,8 +142,7 @@ JOIN sc ON sc.sid = s.sid
 LEFT JOIN k ON k.sid = s.sid
 LEFT JOIN m ON m.sid = s.sid;
 
---5. Both sources' sales with the firm's new channel and scope (a firm out, or source 1's company out), where the sale
---lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
+--5. Both sources' sales with the firm's new channel, where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
 --in the old and the new state (source 1 by wholesaler ID, source 2 by RVP: its territory IDs are seats, not people).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_sales AS
 WITH
@@ -157,15 +156,13 @@ ho AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, old_key AS w
 hn AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, new_key AS w FROM h WHERE new_key IS NOT NULL)
 SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.zip, u.raw_product, p.product,
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
-       COALESCE(f.new_label, 'UNMAPPED') AS new_channel, COALESCE(f.scope_out, so.label) AS scope_out,
+       COALESCE(f.new_label, 'UNMAPPED') AS new_channel,
        CASE WHEN u.firm_crd IS NULL THEN 'NO FIRM' WHEN u.zip IS NULL THEN 'NO ZIP' WHEN p.product IS NULL THEN 'NO PRODUCT'
             WHEN ce.source IS NULL THEN 'NO OPPORTUNITY CELL' ELSE 'ON A CELL WITH OPPORTUNITY' END AS cell_status,
        ho.w IS NOT NULL AS held_old, hn.w IS NOT NULL AS held_new, u.n_rows, u.sales, u.sales_alt
 FROM u
 LEFT JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(u.raw_product))
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = u.firm_crd AND f.broker_name = u.broker_name
-LEFT JOIN ssdb_integration.lr_strategy.tmp_scope_out so
-  ON so.kind = 'COMPANY' AND so.value = u.sales_firm_id AND u.source = 'S1'
 LEFT JOIN cell ce ON ce.source = u.source AND ce.zip = u.zip AND ce.firm_crd = u.firm_crd
                  AND ce.broker_name = u.broker_name AND ce.product = p.product
 LEFT JOIN ho ON ho.source = u.source AND ho.zip = u.zip AND ho.firm_crd = u.firm_crd
@@ -178,9 +175,7 @@ LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm
 --table has it (firm 1's DIST_CH), so SUM(SALES) for a cut on PRODUCT and OLD_CHANNEL is the sales table's for the same
 --cut on its product (PRODUCT_LINE2 maps 1 : 1) and channel (owner, 2026-10-30: "I want to validate against the
 --original dist_ch").  A sale shares a row with its cell's opportunity where the two old channels agree.
---OLD_CHANNEL_S1: firm 1's is OLD_CHANNEL; firm 2's is in firm 1's names (Q19, then Q39 read back).  SCOPE: 'IN', or
---'OUT: <label>' for a firm out of scope: TMP_O1_DATASET's on opportunity, the firm's (or firm 1's company 438) on
---sales.  OPP_HELD_OLD,
+--OLD_CHANNEL_S1: firm 1's is OLD_CHANNEL; firm 2's is in firm 1's names (Q19, then Q39 read back).  OPP_HELD_OLD,
 --OPP_HELD_NEW: TMP_O1_DATASET's opportunity under its old and its new wholesaler.  SALES: credited to the seller (firm
 --1's actual sales, firm 2's SALES_AMOUNT); SALES_ALT: firm 1's comp'd sales, firm 2's MM_AMOUNT (Q42).
 --SALES_IN_HELD_CELLS_OLD and _NEW: the part of SALES whose seller holds that ZIP x firm x product in that state.
@@ -189,7 +184,7 @@ LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm
 --firm.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_dataset AS
 WITH
-ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_channel_s1, new_channel, scope, opportunity,
+ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_channel_s1, new_channel, opportunity,
               CASE WHEN source = 'S1' THEN TRIM(old_wholesaler_id) ELSE UPPER(TRIM(old_wholesaler)) END AS old_key,
               old_wholesaler AS old_nm,
               CASE WHEN source = 'S1' THEN TRIM(new_wholesaler_id) ELSE UPPER(TRIM(new_wholesaler)) END AS new_key,
@@ -197,32 +192,33 @@ ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_chan
        FROM ssdb_integration.lr_strategy.tmp_o1_dataset),
 f AS (
             SELECT source, old_key AS w_key, old_nm AS w_nm, zip, firm_crd, broker_name, product, old_channel,
-                   old_channel_s1, new_channel, scope, opportunity AS opp_old, 0 AS opp_new,
+                   old_channel_s1, new_channel, opportunity AS opp_old, 0 AS opp_new,
                    0 AS sales, 0 AS sales_alt, 0 AS held_old, 0 AS held_new
             FROM ds
   UNION ALL SELECT source, new_key, new_nm, zip, firm_crd, broker_name, product, old_channel, old_channel_s1,
-                   new_channel, scope, 0, opportunity, 0, 0, 0, 0
+                   new_channel, 0, opportunity, 0, 0, 0, 0
             FROM ds
   UNION ALL SELECT source, seller_key, seller, zip, firm_crd, broker_name, product, old_channel, old_channel_s1,
-                   new_channel, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END, 0, 0, sales,
-                   sales_alt, CASE WHEN held_old THEN sales ELSE 0 END, CASE WHEN held_new THEN sales ELSE 0 END
+                   new_channel, 0, 0, sales, sales_alt, CASE WHEN held_old THEN sales ELSE 0 END,
+                   CASE WHEN held_new THEN sales ELSE 0 END
             FROM ssdb_integration.lr_strategy.tmp_o2_sales)
 SELECT source, w_key AS wholesaler_key, MIN(w_nm) AS wholesaler, zip, firm_crd, broker_name, product, old_channel,
-       old_channel_s1, new_channel, scope, SUM(opp_old) AS opp_held_old, SUM(opp_new) AS opp_held_new, SUM(sales) AS sales, SUM(sales_alt) AS sales_alt,
+       old_channel_s1, new_channel, SUM(opp_old) AS opp_held_old, SUM(opp_new) AS opp_held_new, SUM(sales) AS sales,
+       SUM(sales_alt) AS sales_alt,
        SUM(held_old) AS sales_in_held_cells_old, SUM(held_new) AS sales_in_held_cells_new
 FROM f
 GROUP BY ALL;
 
 --7. Sizes, the tie-out and checks, one table; AMT is sales $ unless the name says otherwise.  PCT_AMT: of PART x
 --SOURCE x NAME.
---  SALES FIRM BASIS, SALES SCOPE, SALES PRODUCT (value -> product), SALES CHANNEL (the sale's channel -> the firm 1
---    channel that picks its firm): all of a source's 2025 sales.  SALES ON CELLS: in scope; CELL, and SOLD BY THE
+--  SALES FIRM BASIS, SALES PRODUCT (value -> product), SALES CHANNEL (the sale's channel -> the firm 1 channel that
+--    picks its firm): all of a source's 2025 sales.  SALES ON CELLS: CELL, and SOLD BY THE
 --    CELL'S HOLDER (old, new).  Q35: source 1's sales by how MM_MAP and CRD_TO_CBD map their company ID against the
 --    firm found here.  SALES PERIOD: each sales table by year, firm 1's also by product bucket (s1_sales.sql keeps only
---    ALL, :439), before the 2025 filter.  WHOLESALERS: per source and state, in scope, wholesalers (N_WHOLESALERS) that
+--    ALL, :439), before the 2025 filter.  WHOLESALERS: per source and state, wholesalers (N_WHOLESALERS) that
 --    hold opportunity and sell, sell holding none, hold some with no sales; AMT their sales.
 --  TIE-OUT: the owner's cut of firm 1's sales (PRODUCT_LINE2 <> 'FIXED' AND DIST_CH IN ('WH', 'FI', 'IFA')), actual and
---    comp'd: the sales table by fiscal year, and TMP_O2_DATASET's 2025 by SCOPE (PRODUCT, OLD_CHANNEL).
+--    comp'd: the sales table by fiscal year, and TMP_O2_DATASET's 2025 (PRODUCT, OLD_CHANNEL).
 --  CHECKS (MUST BE 0): source 1's sales table against SLS_RPT_DETAIL under s1_sales.sql's row filters (:117-126) and
 --    non-zero policies (:137-148), fiscal year 2025; each sales table against TMP_O2_SALES by firm x channel x product
 --    as the sales table has them (N_ROWS: groups that differ; AMT: their $); the tie-out, sales table minus dataset;
@@ -251,14 +247,14 @@ mk AS (SELECT map, company_id, COUNT(DISTINCT crd) AS k, MIN(crd) AS crd FROM ma
        WHERE company_id IS NOT NULL AND crd IS NOT NULL GROUP BY ALL),
 mn AS (SELECT DISTINCT map FROM maps),
 dw AS (SELECT source, wholesaler_key, SUM(opp_held_old) AS o_old, SUM(opp_held_new) AS o_new, SUM(sales) AS sl
-       FROM ssdb_integration.lr_strategy.tmp_o2_dataset WHERE wholesaler_key IS NOT NULL AND scope = 'IN' GROUP BY ALL),
+       FROM ssdb_integration.lr_strategy.tmp_o2_dataset WHERE wholesaler_key IS NOT NULL GROUP BY ALL),
 tb AS (SELECT CAST(fiscal_yr AS VARCHAR) AS fy, COUNT(*) AS n, SUM(actual_agent_dollars) AS act,
               SUM(compd_agent_dollars) AS comp
        FROM IDENTIFIER($s1_sales)
        WHERE product_bucket = 'ALL' AND product_line2 <> 'FIXED' AND dist_ch IN ('WH', 'FI', 'IFA')
        GROUP BY ALL),
-td AS (SELECT scope, SUM(sales) AS act, SUM(sales_alt) AS comp FROM ssdb_integration.lr_strategy.tmp_o2_dataset
-       WHERE source = 'S1' AND product <> 'FIXED' AND old_channel IN ('WH', 'FI', 'IFA') GROUP BY ALL),
+td AS (SELECT SUM(sales) AS act, SUM(sales_alt) AS comp FROM ssdb_integration.lr_strategy.tmp_o2_dataset
+       WHERE source = 'S1' AND product <> 'FIXED' AND old_channel IN ('WH', 'FI', 'IFA')),
 am AS (SELECT * FROM (VALUES ('ACTUAL'), ('COMP''D')) AS x (amount)),
 gd AS (SELECT source, firm_id, channel, product, SUM(a1) AS d1, SUM(a2) AS d2 FROM (
             SELECT 'S1' AS source, NULLIF(CAST(CAST(consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0') AS firm_id,
@@ -275,19 +271,17 @@ v AS (
             SELECT 'SALES FIRM BASIS' AS part, source, CAST(NULL AS VARCHAR) AS name, firm_basis AS item,
                    seller_key, firm_crd, broker_name, n_rows, sales AS amt
             FROM s
-  UNION ALL SELECT 'SALES SCOPE', source, NULL, CASE WHEN scope_out IS NULL THEN 'IN' ELSE 'OUT: ' || scope_out END,
-                   seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'SALES PRODUCT', source, NULL, COALESCE(raw_product, '(BLANK)') || ' -> ' || COALESCE(product, 'UNMAPPED'),
                    seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'SALES CHANNEL', source, NULL,
                    COALESCE(old_channel, '(BLANK)') || ' -> ' || COALESCE(match_channel, '(NONE)'),
                    seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'SALES ON CELLS', source, 'CELL', cell_status, seller_key, firm_crd, broker_name, n_rows, sales
-            FROM s WHERE scope_out IS NULL
+            FROM s
   UNION ALL SELECT 'SALES ON CELLS', source, 'SOLD BY THE CELL''S HOLDER, OLD', CASE WHEN held_old THEN 'YES' ELSE 'NO' END,
-                   seller_key, firm_crd, broker_name, n_rows, sales FROM s WHERE scope_out IS NULL
+                   seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'SALES ON CELLS', source, 'SOLD BY THE CELL''S HOLDER, NEW', CASE WHEN held_new THEN 'YES' ELSE 'NO' END,
-                   seller_key, firm_crd, broker_name, n_rows, sales FROM s WHERE scope_out IS NULL
+                   seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'Q35', s.source, mn.map,
                    CASE WHEN mk.company_id IS NULL THEN 'NOT IN THE MAP' WHEN mk.k > 1 THEN 'MAP: 2+ CRDS'
                         WHEN s.firm_crd IS NULL THEN 'MAP: ONE CRD, NONE FOUND HERE'
@@ -318,7 +312,7 @@ SELECT 'TIE-OUT', 'S1', 'SALES TABLE: PRODUCT_LINE2 <> FIXED, DIST_CH IN (WH, FI
        NULL, NULL, CASE WHEN am.amount = 'ACTUAL' THEN tb.act ELSE tb.comp END
 FROM tb CROSS JOIN am
 UNION ALL
-SELECT 'TIE-OUT', 'S1', 'DATASET 2025: PRODUCT <> FIXED, OLD_CHANNEL IN (WH, FI, IFA), ' || am.amount, td.scope, NULL,
+SELECT 'TIE-OUT', 'S1', 'DATASET: PRODUCT <> FIXED, OLD_CHANNEL IN (WH, FI, IFA), ' || am.amount, '2025', NULL,
        NULL, NULL, CASE WHEN am.amount = 'ACTUAL' THEN td.act ELSE td.comp END
 FROM td CROSS JOIN am
 UNION ALL

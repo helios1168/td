@@ -89,8 +89,7 @@ channels."
   IFA, REGIONAL → WH, REGIONAL AGENCY → PRI, NO CHANNEL blank (owner, 2026-10-30: "lets actually implement option (a)
   for the source 2's old channel in source 1's terms item"). Key decision.
 - A sale's old channel is its own recorded channel, as its sales table has it (firm 1: the base sales table's
-  `DIST_CH`), and layer 02's table ties exactly to the sales tables, so every sale stays in it and the firms out of
-  scope are flagged there, not dropped (owner, 2026-10-30: "I want to validate against the original dist_ch at the
+  `DIST_CH`), and layer 02's table ties exactly to the sales tables, so every sale stays in it (owner, 2026-10-30: "I want to validate against the original dist_ch at the
   firm level since that is what we have in [firm 1's base sales table]. ... which we must be able to exactly
   replicate in this new table").
 - Sales stay with the wholesaler who sold them, in both states; they meet opportunity at the wholesaler, at ZIP
@@ -110,14 +109,14 @@ channels."
   new-channel list makes Wells WH and Wells FI (owner: "capture the case where we create wells wh, and wells fi. this
   is an example of that split happening"; `DATA_MODEL.md`, Example). So the new-channel list is keyed on CRD x broker
   name; its company IDs are re-keyed off source 1's rows.
-- EDJ, AMER and AFS are out of the analysis for now but stay in the master tables: a firm whose firm 1 channel is EDJ
-  (company 3) or AMER (company 805), or whose rows carry company 438 (the new-channel list's AFS,
-  `s1_opp_sales.sql:706`), keeps its opportunity and sales in `TMP_O1_DATASET` and `TMP_O2_DATASET`, both sources,
-  both states, flagged by `SCOPE` ('OUT: EDJ', ...), and every view and in-scope cut filters `SCOPE = 'IN'` (owner,
+- EDJ, AMER and AFS are channels like the others, in every table and view: EDJ and AMER come from firm 1's rules
+  (`s1_opp_sales.sql:468`, `:460`), old and new; AFS from the new-channel list (`:706`), new only, its firms' cells
+  sitting in their original channel in the old state. A cut that leaves them out filters `NEW_CHANNEL` (owner,
   2026-10-30: "drop EDJ, AMER, from the exercise all together. they are out of scpoe for now but again record this
-  decision as we will likely return to include them"; then "we can drop AFS as well"; then "lets actually keep EDJ,
-  AMER, and AFS in first so we have a single master table across all cases which we then filter down afterwards").
-  Key decision.
+  decision as we will likely return to include them"; "we can drop AFS as well"; "lets actually keep EDJ, AMER, and
+  AFS in first so we have a single master table across all cases which we then filter down afterwards"; "should edj,
+  amer, and afs just be considered like their own channels?"; and, to the session's drop of the `SCOPE` column,
+  "yes to 1"). Their holders are open: Q41 (AMER), Q44 (AFS, new state). Key decision.
 - The new channels' holders (Q29): in the new state Wells WH, Wells FI and National (Chase) stay with the holder of the
   firm's original channel at the ZIP, WH for Wells WH and FI for the other two, so those cells are reclassified, not
   reassigned; source 2's through Q39 (WH → BD, FI → BK) (owner, 2026-10-30: "in the new state, wells WH, wells FI, and
@@ -146,7 +145,7 @@ decision point, and we should be able to easily come back and look at the number
 | Q38: route against `crd_dist_override` | firm 1's route per CRD x broker name wins; the override fills gaps | the override wins | they differ on 2.48% of source 2's $ (Wells: FI against WH); fills 0.13% | the route and override join of the build (`profile.sql` 7, `s2_route`) | `explore/override_review.sql`; profile `S2 ROUTE (CRD X NAME) VS OVERRIDE` |
 | Q19: source 2's labels to its territory channels | BANK → BK, INDEPENDENT → FP, REGIONAL → BD, REGIONAL AGENCY → RA | other pairs | the names; firm 1's channel for those firms: BANK FI 27.18, INDEPENDENT IFA 21.26, REGIONAL WH 7.45 of source 2's $ | `profile.sql` 1, `tmp_s2_label_terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE`; matches `S2_OPP_GEO.CH_ZIP` |
 | source 2's NO CHANNEL rows | kept: no current holder, routed in the new state | dropped (2026-10-25) | 2.48% of source 2's $; under the route IFA 1.29, FI 0.44, split firms 0.57, UNMAPPED or absent 0.17 | `profile.sql` 1, `tmp_s2_label_terr.KEEP_NEW` | profile `S2 HOLDER MOVES` (`DROPPED`) |
-| scope: EDJ, AMER, AFS | kept in the master tables, flagged by `SCOPE`; the views and in-scope cuts filter them out | dropped from the tables (the first answer, 2026-10-30); or kept in the analysis | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | `tmp_scope_out` (by channel or company) in `01_opportunity.sql` 1 and `profile.sql` 1 (the test keeps them equal); a cut's `scope = 'IN'` | 01 `SCOPE`; 02 `SALES SCOPE`, `TIE-OUT`; profile `S1 SCOPE`, `S2 SCOPE`, `S2 HOLDER MOVES` (`OUT OF SCOPE`) |
+| EDJ, AMER, AFS | channels like the others, in every table and view; a cut without them filters `NEW_CHANNEL` | out of the tables (the first answer, 2026-10-30), then kept but flagged by a `SCOPE` column | firm 1's $ (second run): EDJ 5.84%, AMER 1.39%, AFS not yet measured; no source 2 $ routes to EDJ or AMER | a cut's `new_channel NOT IN ('EDJ', 'AMER', 'AFS')` | 01 `V1 CHANNEL` (their rows); profile `S1 SCOPE`, `S2 SCOPE` (its own list) |
 | Q29: holders of Wells WH, Wells FI, National (Chase) | the holder of the firm's original channel: WH, FI, FI (reclassified, not reassigned) | a national or firm-tied team; another channel's holder | not measured: the firms' $ and route channels come with the new-channel list on CRD x broker name | the build's new-label table (label → holder channel) | view 2b of the build |
 | Q39: firm 1's channel to source 2's territory channel | IFA → FP, FI → BK, WH → BD, PRI → RA | other pairs | source 2's $ by route: IFA 42.82, FI 41.60, WH 12.71, PRI 2.58 (all REGIONAL AGENCY); label and route disagree on at least ~10% | `profile.sql` 1, `tmp_s1ch_s2terr` | profile `S2 HOLDER MOVES`, `... BY LABEL AND ROUTE` |
 | source 2's old channel in firm 1's names | (a) its own label translated, Q19 then Q39 read back: agrees with its old wholesaler | (b) the channel firm 1 gives the firm (the route): agrees with the new channel | label and route disagree on at least ~10% of source 2's $ (the profile, second run) | `01_opportunity.sql` 6, the `q39` join of `TMP_O1_DATASET` | `TMP_O1_DATASET.OLD_CHANNEL_S1` |
@@ -165,10 +164,6 @@ view.
 - The cross-source firm key (owner, 2026-10-26).
 - Name matching by geography (owner, 2026-10-21).
 - Q4, Q8, Q10, Q12, Q14, Q18, Q30 (texts in the tag; Q30 in the 2026-10-29 entry there).
-- With EDJ and AMER out of scope (Settled, 2026-10-30): Q41, who holds AMER (company 805's channel, no territory in
-  source 1's table; the territory step keeps only company 0's and company 3's regions, `s1_opp_sales.sql:692`), and
-  EDJ's holders (company 3's regions). `explore/amer_holder.sql` is ready for when they return. Also AFS's new-state
-  holder: its row in the new-channel list has no holder channel, so in the master tables its cells have none.
 
 ## Open questions
 
@@ -186,6 +181,8 @@ view.
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q42 | Source 2's sales: what is `MM_AMOUNT` beside `SALES_AMOUNT`? (Q36's second half; its first half, the opportunity period, is settled.) | 2026-10-30 |
 | Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry; checks: `explore/lpl_checks.sql`)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
+| Q41 | Who holds AMER (company 805's channel, `s1_opp_sales.sql:460`)? Firm 1's territory step keeps company 0's regions and company 3's (`:692`), so AMER has no territory and no holder in either state. Evidence: `explore/amer_holder.sql`. | 2026-10-30 |
+| Q44 | Who holds AFS (company 438, `s1_opp_sales.sql:706`) in the new state? The new-channel list gives it no holder channel, so its cells keep their channel's holder in the old state and have none in the new. | 2026-10-30 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
@@ -896,3 +893,21 @@ territories' holder in both states; AMER's have none (no AMER territory, Q41, pa
 holder in the old state and none in the new. DuckDB tests: 01 79 checks, 02 47; dropping the out-of-scope cells
 again, a `SCOPE` that is always 'IN' (in 01 or in 02), and wholesaler counts or views that take out-of-scope rows each
 fail them, and every earlier mutation still does.
+
+### 2026-10-30: EDJ, AMER and AFS are channels; the SCOPE column is gone
+
+> **Owner, 2026-10-30:** "wait what is scope column? should edj, amer, and afs just be considered like their own channels?"
+
+> **Owner, 2026-10-30:** "yes to 1, and lets work and think through 2 now"
+
+("1" is the session's "drop `SCOPE`, and the scope list behind it, from 01 and 02"; "2" the views showing the three as
+their own channels, with their holders.) Settled and Key decisions carry it; Q41 and Q44 move from Parked to the open
+index. The flag repeated `NEW_CHANNEL`: in the DuckDB fixture every opportunity row it marked out had new channel EDJ,
+AMER or AFS, and no other row did. EDJ and AMER are firm 1 channels in both states; AFS exists only in the new state,
+so a cut leaves them out by `NEW_CHANNEL`, never by `OLD_CHANNEL`. 01 and 02 lose `tmp_scope_out`, the `SCOPE`
+columns and the in-scope filters: views 1, 2a, 2b, 3 and 02's `SALES ON CELLS` and `WHOLESALERS` cover every cell and
+sale, the three as their own rows; the CSVs' `SCOPE` and `SALES SCOPE` parts are gone; the tie-out's dataset side is
+one total. `explore/profile.sql` keeps its own scope list for its reports. What the flag caught and the channel does
+not: firm 1 sales of company 438 that reach no market metrics firm have new channel UNMAPPED (the session proposed
+applying the company-ID list to firm 1's sales directly; not approved yet). DuckDB tests: 01 81 checks, 02 44; views
+or sales summaries that hide the three, AFS dropped from the new-channel list, and every earlier mutation fail them.
