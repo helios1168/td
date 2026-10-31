@@ -923,3 +923,13 @@ statement 15 returns both summaries in one result set under `LAYER` (OPPORTUNITY
 fixtures and point at the one file: `01_opportunity_test.sh` runs statements 1-7 (81 checks), `02_sales_test.sh` the
 whole file including statement 15 (46 checks: two new, that the last statement carries every row of both halves and
 the sales tie-out intact; dropping the sales half fails it).
+
+### 2026-10-30: Q29's holder channels are fixed, not the firm's route
+
+> **Owner, 2026-10-30:** "for wells fargo, we have cases where they are originally in IFA, but are then split and mapped to wells WH or wells FI. in those cases, wells WH should go to the WH wholesaler. dont write any new code but just very and check if this is implemented"
+
+Verified, no code changed. `01_opportunity_sales.sql` pins each listed label's holder channel (`tmp_new_label`:
+Wells WH → WH, Wells FI → FI, National (Chase) → FI), and a listed firm takes it whatever its own channel or the
+override (`TAU`, statement 3); the route serves only unlisted firms. Probe on a copy of the DuckDB fixture: a
+company-14 firm recorded IFA moves from its IFA wholesaler to the WH wholesaler. The session's suggestion of the firm's
+own route as the holder channel is withdrawn: it would keep an IFA-origin Wells WH firm with its IFA wholesaler.
