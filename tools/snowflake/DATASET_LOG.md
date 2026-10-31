@@ -949,3 +949,24 @@ same firm, ZIP and product): 9 checks; the transfers equal the cell-level old ->
 holder vanish; the receiver read from the old column; the old channel dropped from the pairing key; the books part left
 out; the old book read from the new column). Dropping only `OLD_CHANNEL` from the key survives: `OLD_CHANNEL_S1`
 carries it one to one, except where firm 2's NO CHANNEL and an unlisted label would both be blank.
+
+### 2026-10-30: the sales crosswalk (`explore/sales_crosswalk.sql`)
+
+> **Owner, 2026-10-30:** "ok doing validation work now. I need to validate at the sales level for each source firm a complete cross walk across our mappings from [firm 2's sales table] and [firm 1's base sales table] to what is in o2_dataset"
+
+One row per source x the sales table's own key as the table has it (firm 1: `CONSOL_BRKR_DLR_ID`, `CONSOL_BROKER_NM`,
+`DIST_CH`, `PRODUCT_LINE2`; firm 2: `FIRM_CRD`, `FIRM`, `CHANNEL`, `PRODUCT`), fiscal year 2025 (firm 1: bucket ALL),
+with each step's output from `TMP_O2_SALES`: the channel in firm 1's names, the channel that picks the firm on a split,
+the candidate market metrics firms (CRD, broker name, firm 1 route), the firm basis and firm chosen, product, new
+channel; and rows, sellers, ZIPs, sales, sales alt, no-ZIP, no-seller, on-cell and held old/new $. Rows outside the
+window are listed apart, and four must-be-0 checks per source tie it together: the raw table's keys against the
+crosswalk, a raw key on 2+ outputs, the crosswalk against `TMP_O2_DATASET` by firm x product x old channel x new
+channel, and the raw table minus crosswalk and out-of-window rows. Run after `01_opportunity_sales.sql` in the same
+worksheet; it reads that file's session variables (no SET lines of its own, so an unset one fails loudly). Firm names
+and sales $ sit together, so it is read at work only (Conventions, Masking). DuckDB test
+`explore/sales_crosswalk_test.sh` (02_sales_test.sh's fixture plus three rows: a firm 2 CRD equal to a firm 1 company
+ID, and a firm 2 cell and sale that move from R2 to R1): 16 checks. Six mutations each fail it (the channel cleaned so
+variants merge; the out-of-window rows missing other buckets; the raw side keyed without the firm name; the dataset
+check without the old channel; candidates joined across sources; held taken from the new state). The session's first
+hand value for the held check was wrong (that sale is on a split CRD with two IFA names, so no firm); the check now
+uses a one-name firm.
