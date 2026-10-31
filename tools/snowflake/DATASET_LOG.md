@@ -183,6 +183,7 @@ view.
 | Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry; checks: `explore/lpl_checks.sql`)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
 | Q41 | Who holds AMER (company 805's channel, `s1_opp_sales.sql:460`)? Firm 1's territory step keeps company 0's regions and company 3's (`:692`), so AMER has no territory and no holder in either state. Evidence: `explore/amer_holder.sql`. | 2026-10-30 |
 | Q44 | Who holds AFS (company 438, `s1_opp_sales.sql:706`) in the new state? The new-channel list gives it no holder channel, so its cells keep their channel's holder in the old state and have none in the new. | 2026-10-30 |
+| Q45 | Firm 1's MGA agent code in the sales and `TMP_O2_DATASET`: a column only, or also a key that picks a sale's market metrics firm (a split such as company 8's three LPL names) or its channel (`MGA_MAP`, Q37)? Who changes `owner_sql/s1_sales.sql` to keep it? | 2026-10-31 |
 | Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
@@ -1006,3 +1007,18 @@ client firm ID), ' | ' between 2+; for both sources, so firm 2's sales reach a c
 own sales-table cbd_id stays `SALES_FIRM_ID`. None where no firm was chosen. Session reading: the owner may have meant
 the sales table's own cbd_id, which `SALES_FIRM_ID` already is (said so in the reply). DuckDB test: 24 checks; joining
 by CRD alone (so a split CRD's names share company IDs) fails it.
+
+### 2026-10-31: next, firm 1's sales mapping and the MGA agent code (Q45)
+
+> **Owner, 2026-10-31:** "We are actually going to first take a close look at how we handle our sales mapping for [firm 1] to the market metrics firm master layout and what we will do is in the [firm 1's base sales] table. We are going to add an additional column called MGA agent code, which is at a finer level of granularity than the current cell. We have in the [firm 1] base sales table and what we will want to do is essentially bring in that new MGA_agent code field into a TMP_O2_data set."
+
+(Carrier names masked.) Not built yet; Q45 opens. Where the code stands: firm 1's sales reach a market metrics firm
+(CRD x broker name) through their company ID alone (`01_opportunity_sales.sql` statements 9-10; Key decisions); a
+company on 2+ firms is split by the sale's channel, and the rest is flagged, not guessed. The MGA agent code is a
+column of `SLS_RPT_DETAIL` (beside `MGA_AGENT_NAME`), `MGA_MAP` and `GEOGRAPHIC_REGION`; the broker-dealer master has
+`MGA_ID` and `AGENCY_CMP_CD` (schema run, `data/safe/scratch_2026-10-30-0221.csv`). `owner_sql/s1_sales.sql` (sha256
+`92fabcc00478…`) reads it (`:44` `, srd.mga_agent_cd`), joins `MGA_MAP` on it for the channel (`:66`) and joins on it
+again (`:114`), but its `base_sales` (`:86`) and the groupings after it (`:158`, `:200`, `:282`, `:307`, `:369`,
+`:413`) keep no MGA column, so the base sales table has none today. Carrying it into `TMP_O2_DATASET` touches
+statements 10, 12 and 13 and the DuckDB fixture of firm 1's sales (`02_sales_test.sh`); opportunity has no MGA code,
+so its rows would carry none.
