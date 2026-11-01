@@ -127,15 +127,18 @@ FROM (VALUES
 
 --The owner's firm channels: a CRD x broker name takes this channel as its route, over firm 1's rows and
 --crd_dist_override, so both sources' new state and the sales rules use it (owner, 2026-11-01: "when firm and written
---channel disagree, we need to override the actual channel for that firm and crd").  Matched trimmed and upper-cased.
+--channel disagree, we need to override the actual channel for that firm and crd").  Matched trimmed and upper-cased;
+--a NULL broker name = every name on the CRD (a row with the name wins).
 --CHECKS (statement 7): a firm on 2+ channels (not applied), a firm not in the data, a channel no firm 1 territory has.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_firm_route_override AS
-SELECT TRIM(CAST(firm_crd AS VARCHAR)) AS firm_crd, UPPER(TRIM(CAST(broker_name AS VARCHAR))) AS broker_name,
+SELECT TRIM(CAST(firm_crd AS VARCHAR)) AS firm_crd, NULLIF(UPPER(TRIM(CAST(broker_name AS VARCHAR))), '') AS broker_name,
        UPPER(TRIM(CAST(route AS VARCHAR))) AS route
 FROM (VALUES
   -- owner routes: begin
   -- 2026-11-01, from the owner's review workbook: the channel written beside the chosen firm
   ('13572', 'CETERA WEALTH SERVICES, LLC', 'FI'),
+  -- 2026-11-01, owner: "for cetera investment services crd: 15340 we are overriding to be FI" (every name on the CRD)
+  ('15340', NULL, 'FI'),
   -- owner routes: end
   ('', '', '')   -- placeholder, keep it last
 ) AS v (firm_crd, broker_name, route)
@@ -201,7 +204,7 @@ nu AS (SELECT s1.firm_crd, s1.broker_name, COUNT(DISTINCT nl.new_label) AS k, MI
        FROM s1 JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON nl.company_id = s1.company_id GROUP BY ALL),
 fo AS (SELECT firm_crd, broker_name, COUNT(DISTINCT route) AS k, MIN(route) AS route
        FROM ssdb_integration.lr_strategy.tmp_firm_route_override GROUP BY ALL),
-r AS (SELECT k.firm_crd, k.broker_name, fo.route AS owner_route,
+r AS (SELECT k.firm_crd, k.broker_name, COALESCE(fo.route, f0.route) AS owner_route,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.k ELSE cr.k END AS s1_k,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.ch ELSE cr.ch END AS s1_ch,
              CASE WHEN nr.firm_crd IS NOT NULL THEN 'NAME' ELSE 'CRD' END AS s1_level,
@@ -213,7 +216,8 @@ r AS (SELECT k.firm_crd, k.broker_name, fo.route AS owner_route,
       LEFT JOIN ov v1 ON v1.firm_crd = k.firm_crd AND v1.broker_name = k.broker_name
       LEFT JOIN ov v0 ON v0.firm_crd = k.firm_crd AND v0.broker_name IS NULL
       LEFT JOIN nu ON nu.firm_crd = k.firm_crd AND nu.broker_name = k.broker_name
-      LEFT JOIN fo ON fo.firm_crd = k.firm_crd AND fo.broker_name = UPPER(k.broker_name) AND fo.k = 1),
+      LEFT JOIN fo ON fo.firm_crd = k.firm_crd AND fo.broker_name = UPPER(k.broker_name) AND fo.k = 1
+      LEFT JOIN fo f0 ON f0.firm_crd = k.firm_crd AND f0.broker_name IS NULL AND f0.k = 1),
 g0 AS (SELECT r.*,
               CASE WHEN s1_k = 1 THEN s1_ch WHEN ov_k = 1 THEN ov_ch ELSE 'UNMAPPED' END AS derived_route,
               CASE WHEN s1_k = 1 THEN s1_level
@@ -401,7 +405,7 @@ UNION ALL
 SELECT 'CHECKS', NULL, 'OWNER ROUTES: FIRM NOT IN THE DATA (MUST BE 0)', NULL, NULL, NULL,
        (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_firm_route_override o
         LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f
-          ON f.firm_crd = o.firm_crd AND UPPER(f.broker_name) = o.broker_name
+          ON f.firm_crd = o.firm_crd AND UPPER(f.broker_name) = COALESCE(o.broker_name, UPPER(f.broker_name))
         WHERE f.firm_crd IS NULL), NULL, NULL
 UNION ALL
 SELECT 'CHECKS', NULL, 'OWNER ROUTES: NO FIRM 1 TERRITORY CHANNEL (MUST BE 0)', NULL, NULL, NULL,
