@@ -167,6 +167,9 @@ decision point, and we should be able to easily come back and look at the number
 | source 2's old channel in firm 1's names | (a) its own label translated, Q19 then Q39 read back: agrees with its old wholesaler | (b) the channel firm 1 gives the firm (the route): agrees with the new channel | label and route disagree on at least ~10% of source 2's $ (the profile, second run) | `01_opportunity_sales.sql` 6, the `q39` join of `TMP_O1_DATASET` | `TMP_O1_DATASET.OLD_CHANNEL_S1` |
 | firm 1's sales: company ID to firm | the firms whose market metrics rows carry the company, derived as `s1_opp_sales.sql:475-482` (the link the owner's output uses, LPL's 10/29 names included); a client firm ID list counts only for a company no row carries alone | `MM_MAP` or `CRD_TO_CBD` (Q35) | not yet measured: the Q35 part of `01_opportunity_sales.sql` compares both maps with the firm found here, by sales $ | `01_opportunity_sales.sql` 9, `tmp_o2_company_firm` | `01_opportunity_sales.sql` `SALES FIRM BASIS`, `Q35` |
 | a company or CRD on 2+ firms (sales) | the firm whose firm 1 channel is the sale's (firm 1's IMO and split-policy labels on their base channel; firm 2's CHANNEL through Q19 and Q39); none or 2+: no firm, flagged | every split left without a firm | company 8 carries all three LPL broker names (`s1_opp_sales.sql:478`) | `01_opportunity_sales.sql` 8 `tmp_s1_sale_channel`, 10-11 the `m` joins | `01_opportunity_sales.sql` `SALES FIRM BASIS` (`SPLIT, ...`) |
+| a split with 2+ channel matches (sales, both sources) | the one of them with opportunity at the sale's ZIP x product (`SPLIT, MATCHED BY ZIP`) | no firm, UNMAPPED | run 2026-10-31: $492.1MM of firm 1's $671.6MM had one such candidate; firm 2's 2+ was $1,746.2MM, unmeasured | `01_opportunity_sales.sql` 10-11, CTE `z` | `SALES FIRM BASIS` |
+| a split still 2+ after ZIP (firm 1 sales) | the one name the company's sales under the same MGA code and channel matched by ZIP (`SPLIT, MATCHED BY MGA CODE`) | no firm | run 2026-10-31: $95.1MM of split $ in codes whose ZIP matches agree | `01_opportunity_sales.sql` 10, CTE `cz` | `SALES FIRM BASIS` |
+| a firm 1 sale with no firm, company on the new-channel list | the list's new channel, firm blank | UNMAPPED | run 2026-10-31: company 14, $302.3MM (Wells WH) | `01_opportunity_sales.sql` 12, join `nl` | `SALES FIRM BASIS` (firm), `TMP_O2_SALES.NEW_CHANNEL` |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
@@ -1146,3 +1149,16 @@ sales table and in `TMP_O2_DATASET` (comp'd $7,731.1MM), the owner's ~$7.7B. Fir
   whose sales agree on one name by ZIP (AGREE); $576.1MM CONFLICT, LPL's codes mostly (its two IFA names both appear
   under one code). Sales with exactly one candidate at their own ZIP x product: $492.1MM (AMT_ZIP), LPL $392.5MM.
 - Firm 2: SPLIT, 2+ CHANNEL MATCHES $1,746.2MM (14.5% of its sales), not looked at yet.
+
+### 2026-10-31: sales rules 1-3: split by ZIP, then by MGA code; the new-channel list for sales with no firm
+
+Owner, 2026-10-31, on the run's reading (rules 1-3 offered, and options for the marketing organizations' $3.7B): "ignore
+the imo firms for now", so those stay UNMAPPED. Built in `01_opportunity_sales.sql`, each a Key decisions row:
+statements 10-11 `SPLIT, MATCHED BY ZIP` (both sources: the same rule; firm 2 changes by up to its $1,746.2MM 2+);
+statement 10 `SPLIT, MATCHED BY MGA CODE` (firm 1, after ZIP); statement 12 the new-channel list for a firm 1 sale
+with no firm (company 14; AFS, 438, too). Also: statements 10-11 numbered sales rows by `sales DESC` alone, so rows
+with equal $ could be numbered differently each time the CTE is read; the order now runs through the whole row key.
+Tests: expected values in `02_sales_test.sh`, `sales_mga_test.sh` and `sales_crosswalk_test.sh` moved, each traced to
+a test sale the rules now resolve; new checks in `02_sales_test.sh` and `sales_unmapped_test.sh`; 9 mutations fail them
+(2 survived until a candidate with opportunity only in another product and firm 2's CRD 438 were tested). Not run in
+Snowflake.
