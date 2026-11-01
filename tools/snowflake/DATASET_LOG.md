@@ -1384,3 +1384,10 @@ the owner's routes, a new row for ν on sales), `README.md` (one script; `explor
 tables; `s1_sales_v2.sql`). Q33 and Q45 moved to Settled with the owner's words, Q37 to Parked (no access). Scans: no
 carrier name, no wholesaler name (the 40 names of the review extracts, against the tracked files and the branch's
 history), no person's name. All ten DuckDB tests pass. Handoff note `notes/2026-11-01_snowflake-decision-dataset.md`.
+
+### 2026-11-01: correction, test check counts
+
+Counted from the tests' output on 2026-11-01 (one `ok` per check): `sales_review_test.sh` has 28 checks and
+`02_sales_test.sh` 54. The 2026-11-01 entries that give `sales_review_test.sh` 27, 30, 31, 33 or 34 checks, and the
+handoff note `notes/2026-11-01_snowflake-decision-dataset.md` (34 and 50), carried running estimates, not counts. The
+mutation results in those entries were run and stand.
