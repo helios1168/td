@@ -155,6 +155,16 @@ channels."
 - Q42: firm 2's `MM_AMOUNT` is not used anywhere (owner, 2026-10-31: "for q42 mm_amount is not to be used in the
   queries it is an irrelevant and incorrect column"); firm 2's SALES_ALT is NULL.
 
+- Q33: `IFA/IMO` and `FI/IMO` are sales labels only; no territory holds them and firm 1's opportunity has none (profiles
+  2026-10-30). On sales: a split sale picks its firm on the base channel (IFA, FI); the owner sets them as a sale's new
+  channel where wanted, opportunity unchanged (owner, 2026-11-01: "ok the only update the sales side to /IMO and keep
+  the opp side as it is"); with no market metrics firm they are marketing organizations, new channel IMO (owner,
+  2026-11-01: "yes relabel as IMO").
+- Q45: the MGA agent code comes in through the base sales table (owner, 2026-10-31, sending the updated query; "the
+  _Temp one"), is a column of `TMP_O2_SALES` only (`TMP_O2_DATASET` sums over it), and picks a split sale's firm only
+  as the MGA code rule, after the ZIP rule (owner, 2026-10-31: "how do we leverage the mga addition to improve any of
+  our matches where it makes sense"; the run: $37.9MM by code).
+
 ## Key decisions
 
 Settled answers whose alternative would move the numbers. Each names where it lives in the SQL; change it there, rerun,
@@ -195,6 +205,9 @@ view.
 - Name matching by geography (owner, 2026-10-21).
 - Q4, Q8, Q10, Q12, Q14, Q18, Q30 (texts in the tag; Q30 in the 2026-10-29 entry there).
 
+- Q37 (how `MGA_MAP.CHANNEL_CALC` is set): the owner cannot read the MGA tables (owner, 2026-10-31: "i don't have
+  access to to those tables directly only through what is in [firm 1's base sales _temp table]").
+
 ## Open questions
 
 | Q | question | since |
@@ -206,14 +219,11 @@ view.
 | Q23 | Does source 2's file match the market metrics data on the cells both have? (now a conformance check) | 2026-10-24 |
 | Q27 | Can product split a firm's channel? (The split list: the profile, 2026-10-30; I3 for every firm: the owner's route, Q6.) | 2026-10-29 |
 | Q28 | λ_s vs κ_s: in the current state, is a sale placed by its recorded label (which can depend on the seller) or by its cell's channel? | 2026-10-29 |
-| Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
 | Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry; checks: `explore/lpl_checks.sql`)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
 | Q41 | Who holds AMER (company 805's channel, `s1_opp_sales.sql:460`)? Firm 1's territory step keeps company 0's regions and company 3's (`:692`), so AMER has no territory and no holder in either state. Evidence: `explore/amer_holder.sql`. | 2026-10-30 |
 | Q44 | Who holds AFS (company 438, `s1_opp_sales.sql:706`) in the new state? The new-channel list gives it no holder channel, so its cells keep their channel's holder in the old state and have none in the new. | 2026-10-30 |
-| Q45 | Firm 1's MGA agent code in the sales and `TMP_O2_DATASET`: a column only, or also a key that picks a sale's market metrics firm (a split such as company 8's three LPL names) or its channel (`MGA_MAP`, Q37)? Who changes `owner_sql/s1_sales.sql` to keep it? | 2026-10-31 |
-| Q37 | How is `MGA_MAP.CHANNEL_CALC` set: the channel with the most $ per MGA code, or a rule? | 2026-10-30 |
 
 ## Log
 
@@ -1365,3 +1375,12 @@ rows (`OWNER OVERRIDE: <old> -> FI`). Not built: Citizens (39550) and HSBC (1958
 territory channel, so as a route it would leave their opportunity with no holder (the check NO FIRM 1 TERRITORY
 CHANNEL flags it), unlike Raymond James's sales-side IFA/IMO. `sales_review_test.sh` 34 checks; 4 mutations fail it;
 one hand-worked value missed the test's own $1 of FIXED opportunity. Not run in Snowflake.
+
+### 2026-11-01: cleanup before the next step
+
+Owner, 2026-11-01: "lets go ahead and clean up the repo, update relevent state files etc. whatever we do before
+moving on to a new next big step". Prose brought to the code: `DATA_MODEL.md` (the sales distributor-key rows, ν with
+the owner's routes, a new row for ν on sales), `README.md` (one script; `explore/` files as references; the owner's
+tables; `s1_sales_v2.sql`). Q33 and Q45 moved to Settled with the owner's words, Q37 to Parked (no access). Scans: no
+carrier name, no wholesaler name (the 40 names of the review extracts, against the tracked files and the branch's
+history), no person's name. All ten DuckDB tests pass. Handoff note `notes/2026-11-01_snowflake-decision-dataset.md`.

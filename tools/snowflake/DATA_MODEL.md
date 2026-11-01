@@ -30,9 +30,9 @@ are shared, and nothing adds across sources.
 | source | dataset | carries | path to D | checks |
 |---|---|---|---|---|
 | 1 | opportunity | `FIRM_CRD`, `BROKER_NAME` on every row; company ID (missing on 26% of $) and client firm ID | native: CRD x broker name | one firm 1 channel per CRD x broker name (profile, 2026-10-30) |
-| 1 | sales | `cbd_id`, firm name, no CRD | `mm_map`: `cbd_id` → CRD (→ broker name on a split CRD) | single-valued: 3-6 `cbd_id`s reach 2+ CRDs in the first-pass master |
+| 1 | sales | company ID (`CONSOL_BRKR_DLR_ID`), firm name, MGA code, no CRD | the firms whose firm 1 opportunity rows carry the company; on 2+, the one with the sale's channel, then the one with opportunity at its ZIP x product, the one its MGA code's other sales matched, the one with the most opportunity there; the rest by the owner's manual assignments (`01_opportunity_sales.sql` 8-12) | `SALES FIRM BASIS` $ per rule; every sale left without a firm on the review list (15-16) |
 | 2 | opportunity | CRD, broker name (the market metrics names, suffixes included), product line, VA type | native | 99.93% of $ at a CRD x broker name source 1 carries |
-| 2 | sales | CRD, its own firm name | CRD native; on a split CRD, (CRD, sales firm name) → broker name | a CRD → broker name table cannot choose on a split CRD |
+| 2 | sales | CRD, its own firm name | CRD native; on a split CRD, the same channel, ZIP and most-opportunity rules (no MGA code); then manual | as source 1 |
 
 Every path, per source and dataset: **unique** (each mapping key once: rows and $ never duplicate), **total** (every
 row reaches D, or ⊥_D with its reason: no CRD, company 0, CRD not in the market data; % of $ reported), **$ preserved**
@@ -48,7 +48,8 @@ name is the market metrics name; source 2's sales reach it through its CRD map).
 | λ_s | X × W_s → C_s | the label recorded on a sale; can depend on the seller (`s1_opp_sales.sql:418`, the IMO rule) | given; layer 02's `OLD_CHANNEL` on sales (settled 2026-10-30); λ_s = κ_s in the views? Q28 |
 | ν_D | listed D → N | the new label of a listed distributor (`s1_opp_sales.sql:703-707`; the firm overrides); a CRD x broker name is listed if its source 1 rows carry a listed company ID (layer 01) | settled (lists in the log) |
 | ρ_s | C_s → N | the new label a current label carries forward (`s1_opp_sales.sql:707`, `else iwn.dist_ch`) | source 1: the same label; source 2: not used, the route is by firm (Q6 settled) |
-| ν | X → N | new channel of a cell: ν_D(d) for a listed d, else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps) |
+| ν | X → N | new channel of a cell: ν_D(d) for a listed d, else d's route: the owner's route for d (CRD x broker name, or the whole CRD), else firm 1's channel of d (UNMAPPED if none), both sources | settled 2026-10-30 (Q38: per CRD x broker name; the override only fills gaps); the owner's routes 2026-11-01 |
+| ν on sales | sale → N | ν of the sale's firm; a sale with no firm or a manual one: the owner's sales channel (IFA/IMO, FI/IMO, IMO), else ν_D by its company ID, else IMO for firm 1's marketing organizations (no firm, recorded IMO, IFA/IMO, FI/IMO), else UNMAPPED | settled 2026-11-01 (log) |
 | H_s | C_s × Z → subsets of W_s | holders of a current channel × ZIP: 0, 1 or 2+ (coverage; may overlap) | given |
 | k_s | each (c, z) → weights over H_s(c, z) summing to 1 | how a cell splits among its holders | settled: all on the lowest ID (2026-10-28) |
 | τ_s | X → C_s | the current channel whose territories serve a cell in the new state (the bridge) | override-listed distributors: the channel the override states (settled 2026-10-28); otherwise κ_s(x), holder unchanged (`s1_opp_sales.sql:719`), and a source 1 row with no channel takes its firm's route (key decision, layer 01); Wells WH, Wells FI, National (Chase): the firm's original channel, WH, FI, FI (settled 2026-10-30, Q29); AFS: Q44 |
@@ -109,7 +110,7 @@ AMER and AFS are channels like the others, and a cut without them filters `NEW_C
 | p | `PRODUCT_LINE` × `VA_PRODUCT_TYPE`: RILA if either says RILA, VA type IOVA → IOVA, TRVA → VARIABLE, IA → INDEX, FA → FIXED | the same columns and map; RILA is a VA type here | settled (Q22); the map is the session's for both: the owner's (`s1_opp_sales.sql:453-458`) reads RILA from `PRODUCT_LINE` only, which source 2 leaves VA |
 | κ_s | feed `DIST_CH`, then the rules `s1_opp_sales.sql:459-470` (company ID, broker name, feed label) | the file's `DIST_CH` (BANK, INDEPENDENT, REGIONAL, REGIONAL AGENCY, NO CHANNEL) → source 2's territory channel (BK, FP, BD, RA); in firm 1's names, Q39 read back (BK → FI, FP → IFA, BD → WH, RA → PRI; layer 01's `OLD_CHANNEL_S1`) | settled; source 2's pairs and NO CHANNEL kept: key decision (`DATASET_LOG.md`, Key decisions) |
 | current holder | H₁(κ₁(x), z), lowest ID | H₂(κ₂(x), z), lowest ID | settled |
-| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | settled 2026-10-30 (basis, level, the override's role, UNMAPPED) |
+| ν | ν_D(d) for a listed firm (`s1_opp_sales.sql:703-707`, the firm overrides), else the owner's route for the firm, else firm 1's channel of the firm; UNMAPPED where it has none | the same tables | settled 2026-10-30 (basis, level, the override's role, UNMAPPED); the owner's routes 2026-11-01 |
 | new holder | H_s(τ_s(x), z) | H₂ of the source 2 channel that holds each firm 1 channel | listed firms and the new labels settled (Q29: original channel's holder); source 2's pairs (IFA → FP, FI → BK, WH → BD, PRI → RA): key decision |
 
 The firm's route (owner, 2026-10-30): firm 1's channel per market metrics firm, for both sources, so the new channels
