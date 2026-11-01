@@ -1132,3 +1132,17 @@ earlier". `explore/sales_unmapped.sql` (previous entry) is now `01_opportunity_s
 unmapped columns added to the result. The explore file and its test are deleted; `sales_unmapped_test.sh` (14 checks)
 runs the whole file; 6 mutations fail it. `02_sales_test.sh` counts the third layer. Convention One result rewritten:
 one script to run, `explore/` files are references.
+
+### 2026-10-31: first run of the one script (`data/safe/opp_sales_2026-10-31-2142.csv`)
+
+The owner's run of `01_opportunity_sales.sql` with `s1_sales` on the `_temp` table: 742 rows; every CHECKS row 0
+(opportunity 7, sales 8, unmapped 1). TIE-OUT: firm 1's FY2025 actual sales in the owner's cut are $7,730.0MM in the
+sales table and in `TMP_O2_DATASET` (comp'd $7,731.1MM), the owner's ~$7.7B. Firm 1's sales without a firm: $4,747.9MM.
+- NO MARKET METRICS FIRM, $4,076.3MM, 303 companies: no lead for $4,072.2MM; neither map knows the company for
+  $3,765.8MM (`MM_MAP`) / $3,770.9MM (`CRD_TO_CBD`). The top companies are marketing organizations, not broker-dealers
+  (names carry "(MSG)", "(ADV INS)", "(LIBRA)"; top 25 = 79%), so no CRD x broker name exists for them in this data.
+  Company 14 ($302.3MM) is on the new-channel list (Wells WH). Map or name leads that agree: $4.0MM.
+- SPLIT, 2+ CHANNEL MATCHES, $671.6MM, 4 companies (8 $527.7MM, 6 $58.7MM, 107 $45.7MM, 222 $39.6MM): $95.1MM in codes
+  whose sales agree on one name by ZIP (AGREE); $576.1MM CONFLICT, LPL's codes mostly (its two IFA names both appear
+  under one code). Sales with exactly one candidate at their own ZIP x product: $492.1MM (AMT_ZIP), LPL $392.5MM.
+- Firm 2: SPLIT, 2+ CHANNEL MATCHES $1,746.2MM (14.5% of its sales), not looked at yet.
