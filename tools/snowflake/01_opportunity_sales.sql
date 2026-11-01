@@ -766,8 +766,8 @@ LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm
 --1's actual sales, firm 2's SALES_AMOUNT); SALES_ALT: firm 1's comp'd sales, NULL for firm 2 (Q42).
 --SALES_IN_HELD_CELLS_OLD and _NEW: the part of SALES whose seller holds that ZIP x firm x product in that state.
 --WHOLESALER_KEY: firm 1's wholesaler ID, firm 2's RVP.  No key: opportunity no one holds, or sales with no seller.
---Sales with no market metrics firm sit under a blank firm, new channel UNMAPPED; TMP_O2_SALES has their sales table's
---firm.
+--Sales with no market metrics firm sit under a blank firm, new channel as statement 12 sets it (the owner's, the
+--new-channel list's, IMO for firm 1's marketing organizations, else UNMAPPED); TMP_O2_SALES has their sales table's firm.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_dataset AS
 WITH
 ds AS (SELECT source, zip, firm_crd, broker_name, product, old_channel, old_channel_s1, new_channel, opportunity,
