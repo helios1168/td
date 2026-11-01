@@ -1309,3 +1309,17 @@ WHERE as supported (user-guide/querying-subqueries, read 2026-11-01) but this fo
 it, so the tests missed it. Both checks now LEFT JOIN a distinct sales-key CTE (`sk`) and count override rows with no
 match. Same results in the tests; 4 mutations fail them. Convention Testing gains the rule. `explore/amer_holder.sql`
 keeps a correlated NOT EXISTS on plain equality (not runnable at work anyway: it reads SLS_RPT_DETAIL).
+
+### 2026-11-01: run with the owner's assignments (`data/safe/opp_sales_2026-11-01-1346.csv`)
+
+23 of 25 checks 0; TIE-OUT unchanged ($7,730.0MM). Not 0, 3 each: MANUAL FIRMS NOT IN TMP_O1_FIRM and OWNER ROUTES:
+FIRM NOT IN THE DATA. The three are the typed firms that stay on the review list with no candidate: Nobles & Richards
+(146870, $5.9MM), PHX Financial (144403, $0.8MM), Van Clemens (6914, $0.8MM); their CRDs have no market metrics
+opportunity rows, so no firm or route can apply. The other typed firms applied (Baird, M. S. Howells, Cetera Wealth
+"- INDEPENDENT"). MANUAL: firm 1 $367.6MM, firm 2 $494.4MM; SPLIT, MOST OPPORTUNITY AT ZIP (rule 4): $104.2MM, $527.6MM.
+Left without a firm: firm 1 $3,746.3MM (the marketing organizations, $3,745.1MM, and Cetera Advisors 88232, $1.2MM),
+firm 2 $80.0MM (Halo, left unmapped by the owner, $68.1MM; the three above; Alliance Global, held; Unassigned; Triad;
+Cetera Wealth BK $2.3MM, newly 2+ because the base name is FI now). Owner routes: Cetera Wealth Services, LLC IFA -> FI
+moves opportunity $418.2MM (firm 1) and $395.7MM (firm 2) to FI in the new state, and moved firm 2's Cetera FP sales
+to the "- INDEPENDENT" name by channel; Gold Coast UNMAPPED -> IFA moves $4.3MM (firm 2). Ameriprise's $176.1MM (firm
+2, assigned to 6363, route AMER) is in AMER, which has no holder (Q41).
