@@ -36,8 +36,8 @@
 --(.../functions/split_part); CROSS JOIN takes no ON (.../constructs/join); a set operator wants each column's type the
 --same in all its inputs, so both sources' sales amounts are cast to one exact type, DECIMAL(38, 6)
 --(.../operators-query); a temporary table exists only in the session that made it
---(.../user-guide/tables-temp-transient).  TO_DATE, HAVING after GROUP BY and a comma join are s1_sales.sql's and
---s1_opp_sales.sql's, run at work.
+--(.../user-guide/tables-temp-transient).  A comma join is s1_opp_sales.sql's, run at work.  Firm 1's sales are read only
+--through the base sales table (no SLS_RPT_DETAIL or MGA tables: the owner has no access; owner, 2026-10-31).
 use secondary roles all;
 
 --EDIT once: the tables whose names carry a carrier (paste the SET lines from owner_sql/vars.sql).  A name left as <...>
@@ -559,24 +559,12 @@ GROUP BY ALL;
 --    hold opportunity and sell, sell holding none, hold some with no sales; AMT their sales.
 --  TIE-OUT: the owner's cut of firm 1's sales (PRODUCT_LINE2 <> 'FIXED' AND DIST_CH IN ('WH', 'FI', 'IFA')), actual and
 --    comp'd: the sales table by fiscal year, and TMP_O2_DATASET's 2025 (PRODUCT, OLD_CHANNEL).
---  CHECKS (MUST BE 0): source 1's sales table against SLS_RPT_DETAIL under s1_sales.sql's row filters (:117-126) and
---    non-zero policies (:137-148), fiscal year 2025; each sales table against TMP_O2_SALES by firm x MGA code x channel x product
+--  CHECKS (MUST BE 0): each sales table against TMP_O2_SALES by firm x MGA code x channel x product
 --    as the sales table has them (N_ROWS: groups that differ; AMT: their $); the tie-out, sales table minus dataset;
 --    the dataset's opportunity and sales against their sources; company lists over 10 parts.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_out AS
 WITH
 s AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_sales),
-b AS (SELECT policy_no, fiscal_yr, actual_sales_amount, sales_amount
-      FROM life_prod.lif_murkylake.sls_rpt_detail
-      WHERE TO_DATE(sales_date) BETWEEN '2024-01-01' AND '2025-12-31'
-        AND bonus_rate <> 0 AND init_pay_in = 'Y' AND consol_brkr_dlr_id <> '342'
-        AND life70_co_cd NOT IN ('VV', 'VB') AND agent_tax_id IS NOT NULL
-        AND product_line IN ('RILA', 'INDEX', 'VARIABLE', 'ASSURED EDGE', 'FIXED', 'SPIA/DIA')),
-nz AS (SELECT policy_no FROM b GROUP BY policy_no HAVING SUM(sales_amount) <> 0),
-raw1 AS (SELECT SUM(b.actual_sales_amount) AS act, SUM(b.sales_amount) AS comp
-         FROM b JOIN nz ON nz.policy_no = b.policy_no WHERE b.fiscal_yr = 2025),
-base1 AS (SELECT SUM(actual_agent_dollars) AS act, SUM(compd_agent_dollars) AS comp
-          FROM IDENTIFIER($s1_sales) WHERE fiscal_yr = 2025 AND product_bucket = 'ALL'),
 maps AS (
             SELECT 'MM_MAP' AS map, CAST(CAST(CASE WHEN cbd_id = 0 THEN firm_client_id ELSE cbd_id END AS DECIMAL(38, 0))
                                          AS VARCHAR) AS company_id, CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS crd
@@ -665,12 +653,6 @@ SELECT 'CHECKS', source, 'SALES TABLE MINUS TMP_O2_SALES BY FIRM X MGA X CHANNEL
        SUM(CASE WHEN ROUND(COALESCE(d1, 0), 2) <> 0 OR ROUND(COALESCE(d2, 0), 2) <> 0 THEN 1 ELSE 0 END), NULL, NULL,
        ROUND(SUM(ABS(COALESCE(d1, 0)) + ABS(COALESCE(d2, 0))), 2)
 FROM gd GROUP BY ALL
-UNION ALL
-SELECT 'CHECKS', 'S1', 'SALES TABLE MINUS SLS_RPT_DETAIL, 2025 ACTUAL (MUST BE 0)', NULL, NULL, NULL, NULL,
-       ROUND(base1.act - raw1.act, 2) FROM base1 CROSS JOIN raw1
-UNION ALL
-SELECT 'CHECKS', 'S1', 'SALES TABLE MINUS SLS_RPT_DETAIL, 2025 COMP''D (MUST BE 0)', NULL, NULL, NULL, NULL,
-       ROUND(base1.comp - raw1.comp, 2) FROM base1 CROSS JOIN raw1
 UNION ALL
 SELECT 'CHECKS', o.source, 'DATASET OPPORTUNITY MINUS TMP_O1_DATASET, OLD | NEW (MUST BE 0)', NULL, NULL, NULL, NULL,
        ROUND(ABS(o.o_old - o.opp) + ABS(o.o_new - o.opp), 2)

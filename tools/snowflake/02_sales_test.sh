@@ -1,7 +1,7 @@
 #!/bin/sh
 # Runs all of 01_opportunity_sales.sql (opportunity, then sales) in DuckDB on made-up tables with the real column names, and checks
 # 02's tables and its result set, the file's own last statement (answers worked out by hand from the rows below).
-# Prints "02_sales_test: ok" or stops at the first failed check.  DuckDB has no TO_DATE: a macro casts to DATE.
+# Prints "02_sales_test: ok" or stops at the first failed check.
 # Run from anywhere: sh 02_sales_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -11,7 +11,6 @@ ATTACH ':memory:' AS life_prod; CREATE SCHEMA life_prod.lif_murkylake;
 -- DuckDB has no EQUAL_NULL (Snowflake's NULL-safe equality)
 CREATE MACRO equal_null(a, b) AS a IS NOT DISTINCT FROM b;
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
-CREATE MACRO to_date(x) AS CAST(x AS DATE);
 CREATE TABLE life_prod.lif_murkylake.wc_market_metrics_opportunity (fiscal_yr TEXT, quarter TEXT, cbd_id TEXT,
   client_firm_id TEXT, firm_crd TEXT, broker_name TEXT, dist_ch TEXT, channel TEXT, product_line TEXT,
   va_product_type TEXT, zip_code TEXT, global_sales DECIMAL(18,2));
@@ -65,17 +64,6 @@ INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
   (2024,100,100,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,'M1'),
   (2025,50,50,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','RIVA',1,1,1,'M1'),
   (2025,2,2,'INDEX','ifa ','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,' ');
-CREATE TABLE life_prod.lif_murkylake.sls_rpt_detail (policy_no TEXT, fiscal_yr INTEGER, sales_date TIMESTAMP,
-  bonus_rate DECIMAL(9,4), init_pay_in TEXT, consol_brkr_dlr_id DECIMAL(38,0), life70_co_cd TEXT, agent_tax_id TEXT,
-  product_line TEXT, actual_sales_amount DECIMAL(18,2), sales_amount DECIMAL(18,2));
-INSERT INTO life_prod.lif_murkylake.sls_rpt_detail VALUES
-  ('PA',2025,'2025-03-01',1,'Y',10,'AA','T1','INDEX',40,41), ('PB',2025,'2025-06-01',1,'Y',8,'AA','T2','FIXED',21,22),
-  ('PC',2025,'2025-06-01',0,'Y',8,'AA','T3','INDEX',500,500), ('PD',2025,'2025-06-01',1,'Y',342,'AA','T4','INDEX',500,500),
-  ('PE',2025,'2025-06-01',1,'Y',8,'AA','T5','INDEX',30,20), ('PE',2025,'2025-07-01',1,'Y',8,'AA','T5','INDEX',-10,-20),
-  ('PF',2025,'2025-06-01',1,'Y',8,'VV','T6','INDEX',500,500), ('PG',2025,'2025-06-01',1,'Y',8,'AA',NULL,'INDEX',500,500),
-  ('PH',2025,'2025-06-01',1,'Y',8,'AA','T7','TERM',500,500), ('PI',2025,'2026-01-15',1,'Y',8,'AA','T8','INDEX',500,500),
-  ('PJ',2024,'2024-05-01',1,'Y',8,'AA','T9','INDEX',100,100), ('PK',2025,'2025-06-01',1,'N',8,'AA','T10','INDEX',500,500),
-  ('PL',2025,'2025-08-01',1,'Y',10,'AA','T11','INDEX',2,2);
 CREATE TABLE ssdb_integration.lr_strategy.s2_sales_t (parent_firm TEXT, firm TEXT, firm_crd DOUBLE, channel TEXT,
   state TEXT, shareclass TEXT, regionids TEXT, rvp TEXT, dvp TEXT, year INTEGER, sales_amount DOUBLE, mm_amount DOUBLE,
   zip_code TEXT, product TEXT);
@@ -166,7 +154,7 @@ SELECT
  chk('tie-out: dataset comp''d', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'TIE-OUT' AND name LIKE 'DATASET%COMP''D'), 48),
  chk('wholesalers s1 old', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S1' AND name = 'OLD'), 'HOLDS OPPORTUNITY AND SELLS=5/54 SELLS, HOLDS NO OPPORTUNITY=2/9'),
  chk('wholesalers s2 new', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S2' AND name = 'NEW'), 'HOLDS OPPORTUNITY AND SELLS=2/18 SELLS, HOLDS NO OPPORTUNITY=1/6'),
- chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '10 0 0'),
+ chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '8 0 0'),
  chk('the last statement: both halves, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true),
  chk('the last statement: sales $ intact', (SELECT CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'TIE-OUT' AND name LIKE 'DATASET%ACTUAL'), 46),
  chk('mga: firm 1 sales per code, blank as NULL', (SELECT string_agg(COALESCE(mga_agent_cd, '-') || '=' || CAST(sl AS INTEGER), ' ' ORDER BY mga_agent_cd NULLS FIRST) FROM (SELECT mga_agent_cd, SUM(sales) AS sl FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' GROUP BY ALL) x), '-=3 M1=14 M2=4 M3=16 M4=4 M5=2 M6=6 M7=1 M8=8 M9=5'),

@@ -17,6 +17,10 @@ channels."
 ## Conventions
 
 - **Database.** Every reference uses the full `database.schema.table` path; CTEs are exempt.
+- **Access.** Firm 1's sales are read only through the base sales table (`s1_sales`, the `_temp` table with
+  `MGA_AGENT_CD`); a file the owner runs never reads `SLS_RPT_DETAIL` or the MGA tables (`MGA_MAP`, the MGA master)
+  (owner, 2026-10-31: "be sure you aren't querying sls_Rpt or mga directly as i don't have access to to those tables
+  directly only through what is in [firm 1's base sales _temp table]").
 - **Session header.** Every new SQL file starts with `use role rl_ssdb_Integration_Lr_Strategy_Rw;`, `use database
   ssdb_Integration;`, `use schema lr_strategy;` (owner, 2026-10-31: "be sure to include use role
   rl_ssdb_Integration_Lr_Strategy_Rw; use database ssdb_Integration; use schema lr_strategy; at the top of all new sql
@@ -1093,3 +1097,15 @@ policy carries 2+ MGA codes in one year and channel; the owner's confirmation sa
 table `00_base_sales.sql` wrote and the table the build reads, running it would have replaced the table that is not
 to be changed: it now writes the session temporary table `ssdb_integration.lr_strategy.tmp_s1_base_sales` (fixed name,
 no variable) and is a fallback only.
+
+### 2026-10-31: no reads of SLS_RPT_DETAIL or the MGA tables; the sales table's tie to SLS_RPT_DETAIL is gone
+
+Owner, 2026-10-31, on which table `s1_sales` names: "the _Temp one. and yes just be sure you aren't querying sls_Rpt or
+mga directly as i don't have access to to those tables directly only through what is in [firm 1's base sales _temp
+table]". New convention, Access. `01_opportunity_sales.sql` statement 14 read `SLS_RPT_DETAIL` for its two checks
+`SALES TABLE MINUS SLS_RPT_DETAIL` (actual, comp'd); both are removed, so the owner's Run All no longer stops there
+(the 2026-10-31 run very likely stopped at statement 14: `sales_mga.sql` then needed only statement 12's table). The
+base table's soundness rests on the owner's word (previous entry). `02_sales_test.sh` checks 8 checks, all 0; its
+`SLS_RPT_DETAIL` fixture and `TO_DATE` macro are gone; `sales_mga_test.sh` checks 01's 8 checks inside its result.
+Not runnable as is, flagged in the README: `explore/amer_holder.sql` (reads `SLS_RPT_DETAIL`), `explore/lpl_checks.sql`
+(the MGA master), and `00_base_sales.sql` (both; a fallback for someone with access). Local `vars.sql` names `_temp`.

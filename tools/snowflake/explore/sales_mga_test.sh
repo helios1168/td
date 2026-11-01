@@ -45,7 +45,7 @@ SELECT
  chk('company x code: every sale', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'COMPANY X CODE'), 65),
  chk('pct: of part, of item in spans', (SELECT CAST(SUM(pct_amt) AS INTEGER) FROM r WHERE part = 'SPANS' AND item = 'CODES ON FIRMS') || ' ' || (SELECT CAST(ROUND(SUM(pct_amt)) AS INTEGER) FROM r WHERE part = 'CODES'), '100 100'),
  chk('one result: this file and all of 01''s', (SELECT string_agg(file || '=' || n, ' ' ORDER BY file) FROM (SELECT file, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = '01 OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' 01 SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' SALES_MGA=' || (SELECT COUNT(*) FROM r), true),
- chk('one result: 01''s checks in it (this test''s own row is not in SLS_RPT_DETAIL: 2 actual + 2 comp''d)', (SELECT string_agg(name || '=' || CAST(amt AS INTEGER), ', ' ORDER BY name) FROM full_result WHERE file = '01 SALES' AND part = 'CHECKS' AND amt <> 0), 'SALES TABLE MINUS SLS_RPT_DETAIL, 2025 ACTUAL (MUST BE 0)=2, SALES TABLE MINUS SLS_RPT_DETAIL, 2025 COMP''D (MUST BE 0)=2'),
+ chk('one result: 01''s checks in it, all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) FROM full_result WHERE file = '01 SALES' AND part = 'CHECKS'), '8 0'),
  chk('no firm 2 rows', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'COMPANY X CODE' AND item LIKE '100 |%'), NULL);
 SELECT 'sales_mga_test: ok';
 SQL
