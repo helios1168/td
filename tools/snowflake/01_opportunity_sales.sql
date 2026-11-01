@@ -136,10 +136,6 @@ FROM (VALUES
   -- owner routes: begin
   -- 2026-11-01, from the owner's review workbook: the channel written beside the chosen firm
   ('13572', 'CETERA WEALTH SERVICES, LLC', 'FI'),
-  ('110925', 'GOLD COAST SECURITIES, INC.', 'IFA'),
-  ('146870', 'NOBLES & RICHARDS, INC', 'IFA'),
-  ('144403', 'PHX FINANCIAL, INC.', 'IFA'),
-  ('6914', 'VAN CLEMENS & CO. INCORPORATED', 'IFA'),
   -- owner routes: end
   ('', '', '')   -- placeholder, keep it last
 ) AS v (firm_crd, broker_name, route)
@@ -427,8 +423,9 @@ SELECT CAST(value AS VARCHAR) AS value, CAST(product AS VARCHAR) AS product
 FROM (VALUES ('RILA', 'RILA'), ('INDEX', 'INDEX'), ('VARIABLE', 'VARIABLE'), ('FIXED', 'FIXED'), ('IOVA', 'IOVA'),
              ('IA', 'INDEX'), ('VA', 'VARIABLE'), ('FA', 'FIXED')) AS v (value, product);
 
---Source 1's sale channels in firm 1's channel names, used only to pick the firm where a company has 2+: IMO and the
+--Source 1's sale channels in firm 1's channel names, used to pick the firm where a company has 2+: IMO and the
 --split-policy labels sell on their base channel (s1_sales.sql:18, :21, :418).  Any other label stands for itself.
+--Statement 12: a sale with one of these labels and no market metrics firm is a marketing organization, new channel IMO.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1_sale_channel AS
 SELECT CAST(label AS VARCHAR) AS label, CAST(s1_channel AS VARCHAR) AS s1_channel
 FROM (VALUES ('IMO', 'IFA'), ('IFA/IMO', 'IFA'), ('FI/IMO', 'FI')) AS v (label, s1_channel);
@@ -475,8 +472,6 @@ FROM (VALUES
   ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '44AJM', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
   ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '11162', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
   ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '33AJM', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
-  ('S2', NULL, 'Nobles & Richards, Inc', 'FP', NULL, '146870', 'Nobles & Richards, Inc'),
-  ('S2', NULL, 'PHX Financial, Inc.', 'FP', NULL, '144403', 'PHX Financial, Inc.'),
   ('S1', '6', 'RAYMOND JAMES', 'IFA', '88186', '705', 'RAYMOND JAMES & ASSOCIATES, INC.'),
   ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', '11346', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
   ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', '33AKR', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
@@ -485,7 +480,6 @@ FROM (VALUES
   ('S1', '222', 'STIFEL NICOLAUS & CO INC', 'WH', '11182', '793', 'STIFEL, NICOLAUS & COMPANY, INCORPORATED'),
   ('S1', '100', 'THE INVESTMENT CENTER, INC.', 'IFA', '88544', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
   ('S2', NULL, 'U.S. Bancorp Advisors, LLC', 'BK', NULL, '17868', 'U.S. BANCORP INVESTMENTS, INC.'),
-  ('S2', '6914', 'Van Clemens & Co. Inc', 'BD', NULL, '6914', 'VAN CLEMENS & CO. INCORPORATED'),
   ('S2', NULL, 'VOYA FINANCIAL ADVISORS,INC', 'RA', NULL, '2882', 'VOYA FINANCIAL ADVISORS, INC.'),
   ('S2', NULL, 'VOYA FINANCIAL ADVISORS,INC', 'FP', NULL, '2882', 'VOYA FINANCIAL ADVISORS, INC.'),
   ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '33ABN', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
@@ -690,7 +684,8 @@ LEFT JOIN z ON z.sid = s.sid
 LEFT JOIN zo ON zo.sid = s.sid;
 
 --12. Both sources' sales with the firm's new channel (a firm 1 sale with no firm: its company's on the new-channel
---list, else UNMAPPED; a sale still without a firm takes the manual assignment, FIRM_BASIS MANUAL, and the owner's
+--list, else IMO for firm 1's marketing organizations (owner, 2026-11-01: "yes relabel as IMO"), else UNMAPPED; a sale still
+--without a firm takes the manual assignment, FIRM_BASIS MANUAL, and the owner's
 --sales channel where one is set), where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
 --in the old and the new state (source 1 by wholesaler ID, source 2 by RVP: its territory IDs are seats, not people).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_sales AS
@@ -732,13 +727,16 @@ SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.mga_ag
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
        COALESCE(CASE WHEN (u.firm_basis = 'MANUAL' OR u.firm_crd IS NULL) AND COALESCE(ce1.k, ca1.k) = 1
                      THEN COALESCE(ce1.ch, ca1.ch) END,
-                f.new_label, nl.new_label, 'UNMAPPED') AS new_channel,
+                f.new_label, nl.new_label,
+                CASE WHEN u.source = 'S1' AND u.firm_basis = 'NO MARKET METRICS FIRM' AND sl.label IS NOT NULL THEN 'IMO' END,
+                'UNMAPPED') AS new_channel,
        CASE WHEN u.firm_crd IS NULL THEN 'NO FIRM' WHEN u.zip IS NULL THEN 'NO ZIP' WHEN p.product IS NULL THEN 'NO PRODUCT'
             WHEN ce.source IS NULL THEN 'NO OPPORTUNITY CELL' ELSE 'ON A CELL WITH OPPORTUNITY' END AS cell_status,
        ho.w IS NOT NULL AS held_old, hn.w IS NOT NULL AS held_new, u.n_rows, u.sales, u.sales_alt
 FROM u
 LEFT JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(u.raw_product))
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = u.firm_crd AND f.broker_name = u.broker_name
+LEFT JOIN ssdb_integration.lr_strategy.tmp_s1_sale_channel sl ON sl.label = UPPER(TRIM(u.old_channel))
 LEFT JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON u.source = 'S1' AND u.firm_crd IS NULL
                                                        AND nl.company_id = u.sales_firm_id
 LEFT JOIN co ce1 ON ce1.source = u.source AND EQUAL_NULL(ce1.sales_firm_id, u.sales_firm_id)
@@ -959,9 +957,9 @@ FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1 WHERE SPLIT_PART(company_id, '|
 --15. The review list for manual assignments (TMP_SALES_REVIEW): every 2025 sale still without a market metrics firm,
 --both sources, one row per review key x candidate firm.  Key: SOURCE, SALES_FIRM_ID (firm 1 CONSOL_BRKR_DLR_ID,
 --firm 2 FIRM_CRD), SALES_FIRM (CONSOL_BROKER_NM, FIRM), RAW_CHANNEL (DIST_CH, CHANNEL), MGA_AGENT_CD, as the sales
---table has them.  IS_IMO: firm 1's marketing organizations (no market metrics firm, recorded IMO, IFA/IMO or FI/IMO:
---tmp_s1_sale_channel's labels) and sales the owner set to IMO (tmp_sales_channel_override), kept here with no
---candidates and left out of the REVIEW part (owner, 2026-10-31: "imo's stay out").  Candidates: one of the company's firms (firm 1: its opportunity rows carry the company; firm 2:
+--table has them.  IS_IMO: the key's sales have new channel IMO (firm 1's marketing organizations, statement 12, and
+--sales the owner set to IMO), kept here with no candidates and left out of the REVIEW part (owner, 2026-10-31:
+--"imo's stay out").  Candidates: one of the company's firms (firm 1: its opportunity rows carry the company; firm 2:
 --a name on the CRD), a map's (MM_MAP, CRD_TO_CBD: firm 1's company to the firm's CRD), or one of the 5 market metrics
 --names most like the sales firm name (JAROWINKLER_SIMILARITY 85 or more).  Evidence, 1 or 0: EV_COMPANY, EV_MM_MAP,
 --EV_CRD_TO_CBD, EV_CHANNEL (the firm's route is the sale's channel); EV_NAME: name similarity, 0-1 (1 = the same name).
@@ -980,9 +978,7 @@ g AS (SELECT x.*, ROW_NUMBER() OVER (ORDER BY source, sales_firm_id, sales_firm,
                    SUM(n_rows) AS n_rows, COUNT(DISTINCT seller_key) AS n_wholesalers, COUNT(DISTINCT zip) AS n_zips,
                    SUM(sales) AS amt, SUM(sales_alt) AS amt_alt, MAX(CASE WHEN new_channel = 'IMO' THEN 1 ELSE 0 END) AS any_imo
             FROM u GROUP BY ALL) x),
-gi AS (SELECT g.*, (g.source = 'S1' AND g.firm_basis = 'NO MARKET METRICS FIRM' AND sl.label IS NOT NULL)
-                    OR g.any_imo = 1 AS is_imo
-       FROM g LEFT JOIN ssdb_integration.lr_strategy.tmp_s1_sale_channel sl ON sl.label = UPPER(TRIM(g.raw_channel))),
+gi AS (SELECT g.*, g.any_imo = 1 AS is_imo FROM g),
 ug AS (SELECT u.*, g.kid
        FROM u JOIN g ON g.source = u.source AND EQUAL_NULL(g.sales_firm_id, u.sales_firm_id)
                     AND EQUAL_NULL(g.sales_firm, u.sales_firm) AND EQUAL_NULL(g.raw_channel, u.old_channel)

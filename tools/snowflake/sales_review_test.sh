@@ -14,7 +14,8 @@ cat <<'SQL'
 -- name by ZIP); the plain LPL name with FIXED opportunity at 10001 (another product); firm 2 'Delta', a CRD not in the
 -- market metrics data, named like a firm; Echo with FIXED opportunity at 02134 (no ZIP evidence for an INDEX sale);
 -- code M13 at 94105, where the two IFA names have opportunity 9 and 4 (rule 4); company 99, a marketing organization
--- (IMO) named exactly like a market metrics firm; firm 2 'Foxtrot Inc' with no CRD (fuzzy names 93 and 92)
+-- (IMO) named exactly like a market metrics firm; firm 2 'Foxtrot Inc' with no CRD (fuzzy names 93 and 92); an LPL
+-- sale recorded IMO at 30301 under a new code (2+ IFA names, equal opportunity: stays split, not a marketing organization)
 INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
   ('2025','Q1','0',NULL,'200','LPL Financial LLC','IFA','01','FA','-77777','10001',5),
   ('2025','Q2','3',NULL,'500','Echo','EDWARD JONES','13','FA','-77777','02134',1),
@@ -30,7 +31,8 @@ INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
   (2025,3,3,'INDEX','IFA','Echo',92,'P','','02134','MA','W1','N1','ALL',1,1,1,'M11'),
   (2025,2,2,'INDEX','IFA','LPL',8,'P','','02134','MA','W1','N1','ALL',1,1,1,'M3'),
   (2025,2,2,'INDEX','IFA','LPL',8,'P','','94105','CA','W6','N6','ALL',1,1,1,'M13'),
-  (2025,7,7,'INDEX','IMO','Alpha',99,'P','','02134','MA','W1','N1','ALL',1,1,1,'M14');
+  (2025,7,7,'INDEX','IMO','Alpha',99,'P','','02134','MA','W1','N1','ALL',1,1,1,'M14'),
+  (2025,1,1,'INDEX','IMO','LPL',8,'P','','30301','GA','W6','N6','ALL',1,1,1,'M15');
 INSERT INTO ssdb_integration.lr_strategy.mm_map VALUES ('WH',91,11,NULL,'Delta',400), ('IFA',92,1,NULL,'Echo',100);
 INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Delta',999.0,'REGIONAL','NY','A','x','R2','D1',2025,4,4,'10001','IA'),
@@ -73,11 +75,12 @@ SELECT
  chk('review: map, name, channel and ZIP evidence, firm 1', ev('S1', 'Delta'), 'N3 1 0 1 1 0 100 6 400'),
  chk('review: firm 2 by name, its wholesaler by name', ev('S2', 'Delta'), 'R2 1 0 1 0 0 100 0 200'),
  chk('review: fuzzy names, ranked with the channel', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(ev_name * 100 AS INTEGER) || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Foxtrot Inc'), '1 FOXTROT 93 193, 2 FOXTROT 2 92 192'),
+ chk('marketing organization: new channel IMO; a split recorded IMO is not one', (SELECT new_channel || ' ' || firm_basis FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND sales_firm_id = '99') || ' | ' || (SELECT new_channel || ' ' || firm_basis FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND mga_agent_cd = 'M15'), 'IMO NO MARKET METRICS FIRM | UNMAPPED SPLIT, 2+ CHANNEL MATCHES'),
  chk('review: IMO kept out, no candidates looked for', (SELECT COUNT(*) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm_id = '99') || ' ' || (SELECT n_candidates || ' ' || is_imo FROM ssdb_integration.lr_strategy.tmp_sales_review WHERE sales_firm_id = '99'), '0 0 true'),
  chk('review: keys with no candidate, one row each, ranked by $ in the source', (SELECT string_agg(source || ' ' || COALESCE(sales_firm_id, '-') || ' ' || rank_key_by_amt || ' ' || rank_in_key, ', ' ORDER BY source, rank_key_by_amt) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND cand_firm_crd IS NULL), 'S1 438 2 1, S1 - 4 1, S2 - 3 1, S2 888 4 1'),
  chk('review: the new-channel list', (SELECT new_list_label FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm_id = '438'), 'AFS'),
- chk('review: AMT counts each key once', (SELECT string_agg(source || ' ' || n || ' ' || CAST(a AS INTEGER), ', ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n, SUM(amt) AS a FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' GROUP BY ALL) x), 'S1 5 15, S2 5 12'),
- chk('summary', (SELECT string_agg(source || ' | ' || firm_basis || ' | ' || item || '=' || n_keys || '/' || CAST(amt AS INTEGER), ', ' ORDER BY source, firm_basis, item) FROM full_result WHERE layer = 'REVIEW' AND part = 'SUMMARY'), 'S1 | NO COMPANY | NO CANDIDATE=1/1, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP=1/3, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP NAME=1/6, S1 | NO MARKET METRICS FIRM | IMO, LEFT OUT=2/15, S1 | NO MARKET METRICS FIRM | NO CANDIDATE=1/5, S2 | NO CRD | CHANNEL FUZZY NAME=1/5, S2 | NO CRD | NO CANDIDATE=1/2, S2 | NO MARKET METRICS FIRM | CHANNEL NAME=1/4, S2 | NO MARKET METRICS FIRM | NO CANDIDATE=1/1'),
+ chk('review: AMT counts each key once', (SELECT string_agg(source || ' ' || n || ' ' || CAST(a AS INTEGER), ', ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n, SUM(amt) AS a FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' GROUP BY ALL) x), 'S1 8 16, S2 5 12'),
+ chk('summary', (SELECT string_agg(source || ' | ' || firm_basis || ' | ' || item || '=' || n_keys || '/' || CAST(amt AS INTEGER), ', ' ORDER BY source, firm_basis, item) FROM full_result WHERE layer = 'REVIEW' AND part = 'SUMMARY'), 'S1 | NO COMPANY | NO CANDIDATE=1/1, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP=1/3, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP NAME=1/6, S1 | NO MARKET METRICS FIRM | IMO, LEFT OUT=2/15, S1 | NO MARKET METRICS FIRM | NO CANDIDATE=1/5, S1 | SPLIT, 2+ CHANNEL MATCHES | COMPANY CHANNEL ZIP MM_MAP CRD_TO_CBD=1/1, S2 | NO CRD | CHANNEL FUZZY NAME=1/5, S2 | NO CRD | NO CANDIDATE=1/2, S2 | NO MARKET METRICS FIRM | CHANNEL NAME=1/4, S2 | NO MARKET METRICS FIRM | NO CANDIDATE=1/1'),
  chk('review check 0', (SELECT string_agg(source || '=' || CAST(amt AS INTEGER), ' ' ORDER BY source) FROM full_result WHERE layer = 'REVIEW' AND part = 'CHECKS'), 'S1=0 S2=0'),
  chk('owner route: the firm takes it, new state and route basis', (SELECT route || ' ' || route_basis || ' ' || new_label || ' ' || tau FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE firm_crd = '601'), 'IFA OWNER OVERRIDE: FI -> IFA IFA IFA'),
  chk('owner route: a firm on 2+ channels keeps its own', (SELECT route || ' ' || route_basis FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE firm_crd = '300'), 'IFA NAME'),

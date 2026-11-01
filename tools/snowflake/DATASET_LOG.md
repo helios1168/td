@@ -179,7 +179,7 @@ decision point, and we should be able to easily come back and look at the number
 | a firm's channel the owner sets | the owner's channel is the CRD x broker name's route, before firm 1's rows and crd_dist_override; both sources' new state and the sales rules (owner, 2026-11-01: "when firm and written channel disagree, we need to override the actual channel for that firm and crd") | firm 1's rows (Q38) | the owner's review workbook, 2026-11-01 | `01_opportunity_sales.sql` 1 `tmp_firm_route_override`, 3 `fo` | opportunity CHECKS `ROUTE BASIS` (OWNER OVERRIDE), `OWNER ROUTES ...` |
 | a sale's channel the owner sets | a sale the manual table assigns, or one left without a firm, takes the owner's NEW_CHANNEL; IMO = pure IMO, out of the review list, filtered out at the end (owner, 2026-11-01: "we treat them as pure imo and filter out in the end"); the firm's route, opportunity and holders are unchanged (owner, 2026-11-01: "ok the only update the sales side to /IMO and keep the opp side as it is") | every sale of the key, or the firm's route | `IFA/IMO` and `FI/IMO` are sales labels only: firm 1's opportunity feed and territories have none (profiles 2026-10-30; `s1_opp_sales.sql:18`, `:21` label sales policies) | `01_opportunity_sales.sql` 8 `tmp_sales_channel_override`, 12 `co` | `SALES NEW CHANNEL`, CHECKS `SALES CHANNELS ...` |
 | a split still 2+ after the ZIP and MGA code rules (sales, both sources) | the one with the most opportunity at the sale's ZIP x product, a strict maximum (`SPLIT, MOST OPPORTUNITY AT ZIP`); all are on the sale's route, so channel and holder do not depend on it (owner, 2026-10-31: "yes to 4 rules"; an exception to Rules' "no largest-share guesses") | no firm | run 2026-10-31: ~$900MM of ties, base name beside a variant on one route | `01_opportunity_sales.sql` 10-11, CTE `zo` | `SALES FIRM BASIS` |
-| firm 1's marketing organizations (sales) | left out of the review extract, UNMAPPED (owner, 2026-10-31: "imo's stay out"); IMO = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 15 `gi.is_imo` (labels: 8 `tmp_s1_sale_channel`) | REVIEW SUMMARY `IMO, LEFT OUT` |
+| firm 1's marketing organizations (sales) | new channel IMO, left out of the review extract (owner, 2026-10-31: "imo's stay out"; 2026-11-01: "yes relabel as IMO"); a marketing organization = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | UNMAPPED; reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 12 join `sl` (labels: 8 `tmp_s1_sale_channel`), 15 `gi.is_imo` | `SALES NEW CHANNEL` IMO, REVIEW SUMMARY `IMO, LEFT OUT` |
 | review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 
@@ -1323,3 +1323,18 @@ Cetera Wealth BK $2.3MM, newly 2+ because the base name is FI now). Owner routes
 moves opportunity $418.2MM (firm 1) and $395.7MM (firm 2) to FI in the new state, and moved firm 2's Cetera FP sales
 to the "- INDEPENDENT" name by channel; Gold Coast UNMAPPED -> IFA moves $4.3MM (firm 2). Ameriprise's $176.1MM (firm
 2, assigned to 6363, route AMER) is in AMER, which has no holder (Q41).
+
+### 2026-11-01: typed firms left unmapped; Cetera's route kept; Gold Coast's route removed; marketing organizations IMO
+
+Owner, 2026-11-01, on the run's two failed checks and three questions: "yes remove them. and the cetera remap is
+expected do not treat it as raymond james", then "for 1. leave unmapped, for 2 keep the route override, 3. remove it,
+4. yes relabel as IMO". So: the manual and route rows for Nobles & Richards (146870), PHX Financial (144403) and Van
+Clemens (6914) are removed, and their sales stay unmapped on the review list (51 manual rows; the two failed checks
+should be 0); `CETERA WEALTH SERVICES, LLC` stays FI (its $814MM of opportunity moves to FI in the new state, as
+intended); Gold Coast's route row is removed (its firm assignment and its sale's IMO stay; its $4.3MM of firm 2
+opportunity returns to UNMAPPED). Statement 12: a firm 1 sale with no market metrics firm and a recorded IMO, IFA/IMO
+or FI/IMO gets new channel IMO, after the firm's and the new-channel list's; statement 15's IS_IMO is now "the key's
+sales are IMO" (one rule for both kinds). `sales_review_test.sh` 33 checks, a split LPL sale recorded IMO added (it
+stays split); 4 of 5 mutations fail it; the fifth, dropping the firm 1 condition, survives: firm 2's channels never
+carry these labels. One hand-worked value was wrong: the AMT check counts review rows, so the new key added 3, not 1.
+Not run in Snowflake.
