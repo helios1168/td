@@ -4,19 +4,20 @@ use schema lr_strategy;
 
 --Firm 1's base sales table with MGA_AGENT_CD (the owner's query of 2026-10-31, sha256
 --428f51472a97..., saved as owner_sql/s1_sales_v2.sql).  Changed only where a line says EDIT
---(session, 2026-10-31): the table name as the SET variable s1_sales, two names masked, ok_policies back to policy grain, and MGA in final_output's join to agent_ticket.  Checks: the base table's
---2025 totals must equal SLS_RPT_DETAIL's (01_opportunity_sales.sql, SALES TABLE MINUS SLS_RPT_DETAIL, MUST BE 0).
+--(session, 2026-10-31): a temporary table under a fixed name, two names masked, ok_policies back to policy grain,
+--and MGA in final_output's join to agent_ticket.  Not needed now: the base sales table with MGA in use at work is
+--confirmed free of duplicates (owner, 2026-10-31: "there is already confirmed no duplicates or issues with the current
+--[firm 1's base sales] table with mga") and is not to be changed.  This file is a fallback that touches no shared table: run
+--it first in the worksheet, then SET s1_sales = 'ssdb_integration.lr_strategy.tmp_s1_base_sales' for
+--01_opportunity_sales.sql, whose two SALES TABLE MINUS SLS_RPT_DETAIL checks must be 0 on it.
 /*select sum(sales_amount)/1000000 amt from LIFE_PROD.LIF_MURKYLAKE.sls_rpt_Detail m  where m.mga_agent_cd  = 'WNL0BD4400000000000'
 and fiscal_yr =2025 */
 
 use secondary roles all;
 
--- EDIT (session, 2026-10-31): the table name comes from a SET variable (masking: no carrier name in the repo), the
---same s1_sales that 01_opportunity_sales.sql reads.  It names the _temp table: this statement REPLACES whatever it
---names, so never the old base sales table.  Then 01_opportunity_sales.sql's two SALES TABLE MINUS SLS_RPT_DETAIL
---checks must be 0 on it.
-SET s1_sales = 'ssdb_integration.lr_strategy.<firm 1 base sales, _temp>';
-CREATE OR REPLACE TABLE IDENTIFIER($s1_sales) AS (
+-- EDIT (session, 2026-10-31): a session temporary table under a fixed name (no carrier name, no variable), so this
+--statement can never replace a shared table.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s1_base_sales AS (
 /*=========================================================
   1) Distribution channel manual assignments
   If a policy is split across exactly IFA + IMO, and only

@@ -1082,3 +1082,14 @@ under `FILE` (test 16 checks: both files' rows, 01's checks inside; two mutation
 "01's checks all 0", was wrong: the test's own extra sale is not in `SLS_RPT_DETAIL`, so those two checks show 2 each).
 `explore/sales_crosswalk.sql` may now be shared (no wholesaler names); `explore/transfers.sql` still has them, at work
 only. Not changed: the repo's `AGENTS.md` masking rule and the global agent rules, which cover other threads.
+
+### 2026-10-31: the base sales table with MGA is confirmed clean; `00_base_sales.sql` becomes a temporary-table fallback
+
+Owner, 2026-10-31: "we are not able to make any changes to [firm 1's base sales table] that has the mga field at this point", then
+"there is already confirmed no duplicates or issues with the current [firm 1's base sales] table with mga". So `s1_sales`
+names that table as it is, and the two join edits in `00_base_sales.sql` change nothing there (they matter only where a
+policy carries 2+ MGA codes in one year and channel; the owner's confirmation says the table has no duplicates).
+`sales_mga.sql`'s 2026-10-31 run (858 codes, $21.94B) stands as measured. Because one variable now names both the
+table `00_base_sales.sql` wrote and the table the build reads, running it would have replaced the table that is not
+to be changed: it now writes the session temporary table `ssdb_integration.lr_strategy.tmp_s1_base_sales` (fixed name,
+no variable) and is a fallback only.
