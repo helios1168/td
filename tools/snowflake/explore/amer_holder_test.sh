@@ -36,7 +36,7 @@ INSERT INTO life_prod.lif_murkylake.sls_rpt_detail VALUES
   (2025,805,'W5',70,1,'Y','A1'), (2025,805,'W1',30,1,'Y','A2'), (2025,805,'W1',999,0,'Y','A3'),
   (2025,10,'W1',500,1,'Y','A4'), (2024,805,'W5',999,1,'Y','A5');
 SQL
-sed -E -e '/^use secondary roles all;$/d' -e '/^SET company_id/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -E -e '/^use /d' -e '/^SET company_id/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e "s/\\\$company_id/'805'/g" \
     -e "s/LISTAGG\(DISTINCT ([a-z_]+), ('[^']*')\) WITHIN GROUP \(ORDER BY [a-z_]+\)/string_agg(DISTINCT \1, \2 ORDER BY \1)/g" \
     -e '/^--5\./,$d' "$here/amer_holder.sql"

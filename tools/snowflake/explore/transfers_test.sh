@@ -13,14 +13,14 @@ cat <<'SQL'
 INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
   ('2025','Q4','10',NULL,'100','Alpha','','01','IA','-77777','02134',15);
 SQL
-sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
     -e '/^--15\./,$d' "$top/01_opportunity_sales.sql"
-sed -e '/^use secondary roles all;$/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/^SELECT \* FROM ssdb_integration.lr_strategy.tmp_xfer_moves$/CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_xfer_moves/' \
     "$here/transfers.sql"
 cat <<'SQL'

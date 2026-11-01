@@ -21,7 +21,8 @@ channels."
   `MGA_AGENT_CD`); a file the owner runs never reads `SLS_RPT_DETAIL` or the MGA tables (`MGA_MAP`, the MGA master)
   (owner, 2026-10-31: "be sure you aren't querying sls_Rpt or mga directly as i don't have access to to those tables
   directly only through what is in [firm 1's base sales _temp table]").
-- **Session header.** Every new SQL file starts with `use role rl_ssdb_Integration_Lr_Strategy_Rw;`, `use database
+- **Session header.** Every new SQL file, and `01_opportunity_sales.sql` (the one script the owner runs; owner,
+  2026-10-31: "you forgot to include the top three use statements at top of file"), starts with `use role rl_ssdb_Integration_Lr_Strategy_Rw;`, `use database
   ssdb_Integration;`, `use schema lr_strategy;` (owner, 2026-10-31: "be sure to include use role
   rl_ssdb_Integration_Lr_Strategy_Rw; use database ssdb_Integration; use schema lr_strategy; at the top of all new sql
   files and add this as a convention or rule"). The DuckDB tests drop `use` lines.

@@ -40,7 +40,7 @@ CREATE TABLE life_prod.lif_murkylake.wc_edw_consol_brkr_dealer_mga_master (conso
 INSERT INTO life_prod.lif_murkylake.wc_edw_consol_brkr_dealer_mga_master VALUES
   (8,'LPL FINANCIAL LLC','9999-12-31'), (8,'AAA OLD NAME','2020-01-01'), (3,'EDWARD JONES','9999-12-31');
 SQL
-sed -e '/^use secondary roles all;$/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/^SELECT \* FROM ssdb_integration.lr_strategy.tmp_lpl_feed$/CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_lpl_feed/' \
     "$here/lpl_checks.sql"
 cat <<'SQL'

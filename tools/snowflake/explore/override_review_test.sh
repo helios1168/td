@@ -27,7 +27,7 @@ INSERT INTO ssdb_integration.lr_strategy.crd_dist_override VALUES
   ('3000','BD THREE','FI'), ('3000','BD THREE','FI'), ('3000','BD THREE - BANK','FI'), ('3000','BD THREE - NEW','FI'),
   ('1000','BD ONE','IFA'), ('8000','BD EIGHT','IFA');
 SQL
-sed -E -e '/^use secondary roles all;$/d' -e '/^SET s2_opp/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -E -e '/^use /d' -e '/^SET s2_opp/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER\(\$s2_opp\)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e "s/LISTAGG\(DISTINCT ([a-z_]+), ('[^']*')\) WITHIN GROUP \(ORDER BY [a-z_]+\)/string_agg(DISTINCT \1, \2 ORDER BY \1)/g" \
     -e "s/LISTAGG\(([a-z_]+), ('[^']*')\) WITHIN GROUP \(ORDER BY ([^)]+)\)/string_agg(\1, \2 ORDER BY \3)/g" \

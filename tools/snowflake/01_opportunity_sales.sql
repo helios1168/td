@@ -1,3 +1,7 @@
+use role rl_ssdb_Integration_Lr_Strategy_Rw;
+use database ssdb_Integration;
+use schema lr_strategy;
+
 --Layers 01 and 02 in one Run All file (owner, 2026-10-30: "combine the opp and sales query into a single query").
 --Statements 1-7, opportunity routed by firm, both sources (DATA_MODEL.md, Opportunity routed by firm; views 1, 2a, 2b,
 --3): M_s, p, d, kappa_s, nu_D (re-keyed to CRD x broker name), nu, tau_s, H_s with k_s (the lowest ID).  Statements

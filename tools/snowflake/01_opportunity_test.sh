@@ -67,7 +67,7 @@ INSERT INTO ssdb_integration.lr_strategy.s2_terr_t VALUES
   ('R3','T3','10001','NY','BK','x'), ('R7','T7','10001','NY','BK','x'), ('R8','T8','60601','IL','BK','x'),
   ('R6','T6','30301','GA','FP','x'), ('R4','T4','30301','GA','RA','x');
 SQL
-sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \

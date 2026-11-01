@@ -88,7 +88,7 @@ CREATE TABLE ssdb_integration.lr_strategy.crd_to_cbd (firm TEXT, firm_crd DOUBLE
 INSERT INTO ssdb_integration.lr_strategy.crd_to_cbd VALUES
   ('Alpha',100.0,10.0,'ALPHA'), ('LPL',200.0,8.0,'LPL'), ('Delta',400.0,30.0,'DELTA');
 SQL
-sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
