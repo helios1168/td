@@ -1113,10 +1113,12 @@ FROM v;
 --    the new channel; CHANNEL: owner_sql/uni_latest.sql's CASE on it.  STATE: ZIP_STATE_MAP's, the lowest of a ZIP's.
 --  MM_OPP: the cell's opportunity; ACTUAL_SALES_AMOUNT: the sales; SALES_AMOUNT NULL (owner: "actual sales amount will
 --    be our sales. drop sales_alt and set sales amount to null").
---  TERR_WHOLESALER_CLEAN_NAME: OLD_TERR_WHOLESALER; SALES_WHOLESALER_CLEAN_NAME: the seller as the territory table
+--  TERR_WHOLESALER_CLEAN_NAME: NEW_TERR_WHOLESALER, the holder that goes with CHANNEL (owner, 2026-11-01, asked
+--    which wholesaler to map to it: "yes make the changes"); SALES_WHOLESALER_CLEAN_NAME: the seller as the territory table
 --    names that wholesaler key, else SALES_WHOLESALER, so one wholesaler has one name in both (owner, 2026-11-01: "make
 --    sure terr_wholesaler_clean name, and sales_whoelsaler clean name are mapped appropriately").
---  *_TERRITORY_ID: the wholesaler keys (firm 1's ID, firm 2's RVP); the address IDs and the HAS_TERRITORY flags
+--  *_TERRITORY_ID: the wholesaler keys (firm 1's ID, firm 2's RVP): the seller's, and the new holder's with
+--    TERR_WHOLESALER_CLEAN_NAME; the address IDs and the HAS_TERRITORY flags
 --    NULL (owner: "we do not need to replicate any of the name matching logic"; "set those ... flags to null").
 --  No filter (owner: "do not propagate any filters as we are implementing them in our override instead").
 --TMP_UNION holds the same rows with this script's types; look at it in the same session.
@@ -1183,14 +1185,14 @@ zs AS (SELECT LPAD(TRIM(CAST(zip_code AS VARCHAR)), 5, '0') AS zip, MIN(state) A
        FROM ssdb_integration.lr_strategy.zip_state_map GROUP BY ALL),
 nm AS (SELECT DISTINCT source, w_key, w_nm FROM h)
 SELECT 2025 AS fiscal_yr, CASE x.source WHEN 'S1' THEN $s1_source WHEN 'S2' THEN $s2_source END AS source,
-       x.old_nm AS old_terr_wholesaler, x.sales_wh AS sales_wholesaler, x.old_nm AS terr_wholesaler_clean_name,
+       x.old_nm AS old_terr_wholesaler, x.sales_wh AS sales_wholesaler, x.new_nm AS terr_wholesaler_clean_name,
        COALESCE(nm.w_nm, x.sales_wh) AS sales_wholesaler_clean_name, x.firm_crd AS cbd_id, x.broker_name AS firm,
        CAST(NULL AS VARCHAR) AS parent, x.dist_ch, x.new_dist,
        CASE WHEN x.new_dist IN ('PRI', 'AFS') THEN 'pri_afs'
             WHEN x.new_dist IN ('Wells WH', 'National (Chase)', 'Wells FI') THEN 'National' ELSE x.new_dist END AS channel,
        zs.state, x.zip AS zip_code, x.product AS product_v2, x.mm_opp, x.sales AS actual_sales_amount,
        CAST(NULL AS DECIMAL(38, 6)) AS sales_amount, x.sales_key AS sales_wholesaler_territory_id,
-       CAST(NULL AS VARCHAR) AS sales_wholesaler_address_id, x.old_key AS territory_wholesaler_territory_id,
+       CAST(NULL AS VARCHAR) AS sales_wholesaler_address_id, x.new_key AS territory_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS territory_wholesaler_address_id, CAST(NULL AS INTEGER) AS sales_wholesaler_has_territory,
        CAST(NULL AS INTEGER) AS territory_wholesaler_has_territory, x.new_nm AS new_terr_wholesaler
 FROM x LEFT JOIN zs ON zs.zip = x.zip LEFT JOIN nm ON nm.source = x.source AND nm.w_key = x.sales_key;

@@ -38,7 +38,8 @@ SELECT
  chk('clean names: the territory table''s name for the seller''s key (firm 1 by ID, firm 2 by RVP)',
      (SELECT string_agg(source || '|' || sales_wholesaler || '|' || sales_wholesaler_clean_name || '|' || COALESCE(terr_wholesaler_clean_name, '-'), ', ' ORDER BY source)
       FROM v WHERE (source = 'SRC1' AND sales_wholesaler = 'N7 AS SOLD') OR (source = 'SRC2' AND sales_wholesaler = 'r1 ')),
-     'SRC1|N7 AS SOLD|N7|N7, SRC2|r1 |R1|-'),
+     'SRC1|N7 AS SOLD|N7|N7, SRC2|r1 |R1|R1'),
+ chk('TERR_WHOLESALER_CLEAN_NAME is the new holder on every row', (SELECT COUNT(*) FROM v WHERE terr_wholesaler_clean_name IS DISTINCT FROM new_terr_wholesaler), 0),
  chk('a sale''s old territory is its own channel''s, the new its firm''s',
      (SELECT old_terr_wholesaler || '|' || new_terr_wholesaler || '|' || dist_ch || '|' || CAST(actual_sales_amount AS INTEGER)
       FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), 'N9|N1|IMO|4'),
@@ -68,7 +69,7 @@ SELECT
       OR territory_wholesaler_has_territory IS NOT NULL), 0),
  chk('layout: clean names and territory IDs as they are',
      (SELECT terr_wholesaler_clean_name || ' ' || sales_wholesaler_clean_name || ' ' || territory_wholesaler_territory_id
-             || ' ' || sales_wholesaler_territory_id FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), 'N9 N9 W9 W9'),
+             || ' ' || sales_wholesaler_territory_id FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), 'N1 N9 W1 W9'),
  chk('channel: uni_latest.sql''s CASE (AFS to pri_afs)', (SELECT CAST(SUM(actual_sales_amount) AS INTEGER) FROM v WHERE channel = 'pri_afs'), 5),
  chk('no filter: UNMAPPED, EDJ kept', (SELECT string_agg(DISTINCT channel, ' ' ORDER BY channel) FROM v WHERE channel IN ('UNMAPPED', 'EDJ')), 'EDJ UNMAPPED'),
  chk('vs live', (SELECT CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER) FROM t WHERE part = 'VS LIVE' AND source = 'SRC1' AND name LIKE 'MM_OPP%' AND item = 'IFA' AND item2 = 'INDEX'), '600/500'),

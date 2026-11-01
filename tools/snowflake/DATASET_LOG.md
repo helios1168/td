@@ -194,6 +194,7 @@ decision point, and we should be able to easily come back and look at the number
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 | the Tableau table: a cell with 2+ holders | a row per holder: the old and the new holders, each in ID order, paired by rank, so each holder in either state has the cell once; SUM(MM_OPP) over the table is above the opportunity by the repeats | one row, the lowest ID, as TMP_O1_DATASET (settled 2026-10-28) | owner, 2026-11-01: "opportunity is tied to the geography / territory, so it is okay if it is duplicated. sales is tied to the wholesaler though" | statement 17, `h` and `pr` (`AND pn.r = po.r`; keep `p.r = 1` only for one row) | TABLEAU SIZES (MM_OPP against TMP_O1_DATASET) |
 | the Tableau table: a sale's territory and row | the holders of the sale's own channel (firm 2's through Q19) and its firm's TAU at its ZIP, as the old table joined territories on the sale's DIST_CH (`s1_opp_sales.sql:719`); one row: its seller's pair, else the first; no seller: under the old territory wholesaler | the holders of the cell the sale lands on | owner, 2026-11-01: "terr_wholesaler reflected the wholesaler who owned that territory"; "keep the sales with no seller fall back to territory wholesaler" | statement 17, `s` and `u` | TABLEAU SIZES (ACTUAL_SALES_AMOUNT against TMP_O2_SALES) |
+| the Tableau table: TERR_WHOLESALER_CLEAN_NAME | the new holder (= NEW_TERR_WHOLESALER), TERRITORY_WHOLESALER_TERRITORY_ID its key: the holder that goes with CHANNEL | the old holder (= OLD_TERR_WHOLESALER, with DIST_CH) | owner, 2026-11-01: "the question is which wholesaler to map to terr_wholesaler_clean_name"; "yes make the changes"; run 1357: the holder moves for about 2.4% of firm 1's and 15% of firm 2's opportunity | statement 17's final SELECT (`x.new_nm`, `x.new_key`; `x.old_nm`, `x.old_key` to revert) | TABLEAU VS LIVE |
 
 ## Parked
 
@@ -1474,3 +1475,14 @@ of 8 title case; 1 with a suffix). No channel x ZIP had 2+ holders (V3 COVERAGE:
 and new holder pairing never leaves a blank side today. `union_test.sh` 15 checks (a W7 sale spelled another way in
 the sales table, firm 2's `r1 `); my first version of the new check concatenated a NULL old holder and failed on a
 correct row; fixed. 3 mutations killed (no key lookup, lookup on the old holder's key, TERR clean on the new holder).
+
+### 2026-11-01: TERR_WHOLESALER_CLEAN_NAME is the new holder
+
+Owner, 2026-11-01, after the walk-through of old and new holders (DIST_CH pairs with the old holder, CHANNEL with the
+new; the old table needed no choice because its holders never moved): "the question is which wholesaler to map to
+terr_wholesaler_clean_name", the session recommended the new holder, owner: "yes make the changes". Statement 17:
+TERR_WHOLESALER_CLEAN_NAME = NEW_TERR_WHOLESALER, TERRITORY_WHOLESALER_TERRITORY_ID = the new holder's key; Key
+decisions row added. Not changed: SALES_WHOLESALER on a cell's own rows and on sales with no seller is still the old
+holder (offered, not answered). `union_test.sh` 16 checks; two expected values changed, worked by hand before the run
+(firm 2's `r1 ` sale: R1, the FP holder of its firm's route; the N9 sale: N1 and W1, the IFA holder), both held; a
+new check that the clean name equals NEW_TERR_WHOLESALER on every row. 2 mutations killed (old name, old key).
