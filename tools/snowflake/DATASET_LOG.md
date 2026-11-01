@@ -195,6 +195,7 @@ decision point, and we should be able to easily come back and look at the number
 | the Tableau table: a cell with 2+ holders | a row per holder: the old and the new holders, each in ID order, paired by rank, so each holder in either state has the cell once; SUM(MM_OPP) over the table is above the opportunity by the repeats | one row, the lowest ID, as TMP_O1_DATASET (settled 2026-10-28) | owner, 2026-11-01: "opportunity is tied to the geography / territory, so it is okay if it is duplicated. sales is tied to the wholesaler though" | statement 17, `h` and `pr` (`AND pn.r = po.r`; keep `p.r = 1` only for one row) | TABLEAU SIZES (MM_OPP against TMP_O1_DATASET) |
 | the Tableau table: a sale's territory and row | the holders of the sale's own channel (firm 2's through Q19) and its firm's TAU at its ZIP, as the old table joined territories on the sale's DIST_CH (`s1_opp_sales.sql:719`); one row: its seller's pair, else the first; no seller: under the old territory wholesaler | the holders of the cell the sale lands on | owner, 2026-11-01: "terr_wholesaler reflected the wholesaler who owned that territory"; "keep the sales with no seller fall back to territory wholesaler" | statement 17, `s` and `u` | TABLEAU SIZES (ACTUAL_SALES_AMOUNT against TMP_O2_SALES) |
 | the Tableau table: TERR_WHOLESALER_CLEAN_NAME | the new holder (= NEW_TERR_WHOLESALER), TERRITORY_WHOLESALER_TERRITORY_ID its key: the holder that goes with CHANNEL | the old holder (= OLD_TERR_WHOLESALER, with DIST_CH) | owner, 2026-11-01: "the question is which wholesaler to map to terr_wholesaler_clean_name"; "yes make the changes"; run 1357: the holder moves for about 2.4% of firm 1's and 15% of firm 2's opportunity | statement 17's final SELECT (`x.new_nm`, `x.new_key`; `x.old_nm`, `x.old_key` to revert) | TABLEAU VS LIVE |
+| the Tableau table: SALES_WHOLESALER on opportunity rows | the old holder, the old table's fill-in (`owner_sql/uni_latest.sql:362`), so a cell's opportunity shares a row with its old holder's sales | blank (a name only on a sale); the new holder | owner, 2026-11-01: "sales wholesaler should be tied to a sale", then "ok don't blank it" | statement 17, `u` (`p.old_key AS sales_key`) | none (row placement only; sums unchanged) |
 
 ## Parked
 
@@ -1486,3 +1487,10 @@ decisions row added. Not changed: SALES_WHOLESALER on a cell's own rows and on s
 holder (offered, not answered). `union_test.sh` 16 checks; two expected values changed, worked by hand before the run
 (firm 2's `r1 ` sale: R1, the FP holder of its firm's route; the N9 sale: N1 and W1, the IFA holder), both held; a
 new check that the clean name equals NEW_TERR_WHOLESALER on every row. 2 mutations killed (old name, old key).
+
+### 2026-11-01: SALES_WHOLESALER on opportunity rows kept
+
+Owner, 2026-11-01: "sales wholesaler should be tied to a sale, so what do you mean about updating it on opportunity
+rows". The session explained that rows with opportunity and no sale carry the old holder as SALES_WHOLESALER, the old
+table's fill-in (`owner_sql/uni_latest.sql:362`), and offered blank (recommended) or as now; the new holder, offered
+earlier, withdrawn. Owner: "ok don't blank it." No code change; Key decisions row added.
