@@ -1022,3 +1022,18 @@ again (`:114`), but its `base_sales` (`:86`) and the groupings after it (`:158`,
 `:413`) keep no MGA column, so the base sales table has none today. Carrying it into `TMP_O2_DATASET` touches
 statements 10, 12 and 13 and the DuckDB fixture of firm 1's sales (`02_sales_test.sh`); opportunity has no MGA code,
 so its rows would carry none.
+
+### 2026-10-31: firm 1's base sales query with the MGA agent code (`00_base_sales.sql`)
+
+The owner sent their updated query (sha256 `428f51472a97…`, 445 lines, saved git-excluded as
+`owner_sql/s1_sales_v2.sql`). Against `owner_sql/s1_sales.sql` (`92fabcc00478…`) it builds a `_temp` table and carries
+`MGA_AGENT_CD` from `base_sales` through every step. Two joins did not match on it, and each could repeat a policy's
+sales once per MGA code: `ok_policies` was grouped by MGA but `agent_ticket` joins it on policy, year and channel only;
+`final_output`'s join to `agent_ticket` had no MGA. Owner, 2026-10-31: "ok fix the query with comments where you made
+edits in the script itself and push to git hub". So `tools/snowflake/00_base_sales.sql` is their query with four edits,
+each marked `EDIT (session, 2026-10-31)`: the table name as `IDENTIFIER($s1_sales_build)` (the Snowflake
+identifier-literal page shows `CREATE OR REPLACE TABLE IDENTIFIER(...)`, read 2026-10-31), `ok_policies` back to
+policy grain, `AND EQUAL_NULL(at.mga_agent_cd, aps.mga_agent_cd)` in `final_output`'s join, and two people's names in
+comments masked. This also corrects the 2026-10-31 next-step list, which named `agent_ticket` a grouping and missed
+the join. Not run, not tested (it reads production tables); its check is `01_opportunity_sales.sql`'s `SALES TABLE
+MINUS SLS_RPT_DETAIL` pair, 0 once `s1_sales` points at the new table. `owner_sql/vars.sql` gained `s1_sales_build`.
