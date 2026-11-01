@@ -177,6 +177,7 @@ decision point, and we should be able to easily come back and look at the number
 | a firm 1 sale with no firm, company on the new-channel list | the list's new channel, firm blank | UNMAPPED | run 2026-10-31: company 14, $302.3MM (Wells WH) | `01_opportunity_sales.sql` 12, join `nl` | `SALES FIRM BASIS` (firm), `TMP_O2_SALES.NEW_CHANNEL` |
 | manual assignments (sales) | fill only sales the rules leave without a firm; key = the sales table's firm ID, firm name, channel, MGA code (NULL = any; a row with the code wins); a key on 2+ firms or a firm not in TMP_O1_FIRM is not applied | override any sale | crd_dist_override's precedent (fills gaps only) | `01_opportunity_sales.sql` 8 `tmp_sales_firm_override`, 12 `ok` | `SALES FIRM BASIS` (MANUAL), CHECKS MANUAL ... |
 | a firm's channel the owner sets | the owner's channel is the CRD x broker name's route, before firm 1's rows and crd_dist_override; both sources' new state and the sales rules (owner, 2026-11-01: "when firm and written channel disagree, we need to override the actual channel for that firm and crd") | firm 1's rows (Q38) | the owner's review workbook, 2026-11-01 | `01_opportunity_sales.sql` 1 `tmp_firm_route_override`, 3 `fo` | opportunity CHECKS `ROUTE BASIS` (OWNER OVERRIDE), `OWNER ROUTES ...` |
+| a sale's channel the owner sets | a sale the manual table assigns takes the owner's NEW_CHANNEL; the firm's route, opportunity and holders are unchanged (owner, 2026-11-01: "ok the only update the sales side to /IMO and keep the opp side as it is") | every sale of the key, or the firm's route | `IFA/IMO` and `FI/IMO` are sales labels only: firm 1's opportunity feed and territories have none (profiles 2026-10-30; `s1_opp_sales.sql:18`, `:21` label sales policies) | `01_opportunity_sales.sql` 8 `tmp_sales_channel_override`, 12 `co` | `SALES NEW CHANNEL`, CHECKS `SALES CHANNELS ...` |
 | a split still 2+ after the ZIP and MGA code rules (sales, both sources) | the one with the most opportunity at the sale's ZIP x product, a strict maximum (`SPLIT, MOST OPPORTUNITY AT ZIP`); all are on the sale's route, so channel and holder do not depend on it (owner, 2026-10-31: "yes to 4 rules"; an exception to Rules' "no largest-share guesses") | no firm | run 2026-10-31: ~$900MM of ties, base name beside a variant on one route | `01_opportunity_sales.sql` 10-11, CTE `zo` | `SALES FIRM BASIS` |
 | firm 1's marketing organizations (sales) | left out of the review extract, UNMAPPED (owner, 2026-10-31: "imo's stay out"); IMO = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 15 `gi.is_imo` (labels: 8 `tmp_s1_sale_channel`) | REVIEW SUMMARY `IMO, LEFT OUT` |
 | review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
@@ -1259,3 +1260,17 @@ held BD row is released with it), Gold Coast -> IFA, and IFA for the three typed
 Clemens). Not added, pending the owner: Raymond James & Associates and Raymond James Financial Services - BANK, written
 IFA/IMO, which is a sales label, not a firm 1 territory channel. `sales_review_test.sh` 27 checks; 5 mutations fail
 it. Not run in Snowflake. Key decisions row added.
+
+### 2026-11-01: Raymond James: the sales side to IFA/IMO and FI/IMO, opportunity unchanged
+
+Owner, 2026-11-01, asked "wait don't we have IFA/IMO and FI/IMO as opportunity channel type in firm 1's original opp
+file?": no. The feed's DIST_CH is EDWARD JONES, FI, IFA, WH or blank, AMER, EDJ, FI, IFA, PRI, WH or blank after the
+rules (`data/safe/profile_2026-10-30-0324.csv`, `-0444.csv`); the territories' channels are EDJ, FI, IFA, IMO, PRI,
+VALIC, WH. The labels come from the sales step, `s1_opp_sales.sql:18` `THEN 'IFA/IMO'` and `:21` `THEN 'FI/IMO'`
+(sha256 `6262e2f93bbd…`); the owner's output shows them in its channel column because `:623` takes the sale's channel
+first, and `:638` joins opportunity only on an equal channel, so those rows never carry opportunity. Then: "ok the only
+update the sales side to /IMO and keep the opp side as it is". Statement 8 gains `tmp_sales_channel_override` (applied
+in 12 to MANUAL sales only), statement 14 a SALES NEW CHANNEL part and two checks (13 sales checks). Rows: firm 1 RJ
+code 88186 IFA -> IFA/IMO; firm 2 Raymond James Financial Svcs FP -> IFA/IMO and BD -> FI/IMO (the mapping proposed in
+chat and answered "ok"), both firm 2 rows released with the firm chosen, RJ FS "- BANK". No route override for Raymond
+James. `sales_review_test.sh` 30 checks; 5 mutations fail it. Not run in Snowflake.

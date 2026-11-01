@@ -13,7 +13,7 @@ cat <<'SQL'
 INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
   ('2025','Q4','10',NULL,'100','Alpha','','01','IA','-77777','02134',15);
 SQL
-sed -e '/^use /d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales channels: end$/d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \

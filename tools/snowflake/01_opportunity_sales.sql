@@ -498,9 +498,32 @@ FROM (VALUES
   ('S2', '19616', 'WFCS, LLC', 'BD', NULL, '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
   -- 2026-11-01, held row released: its firm's channel is now the owner's (tmp_firm_route_override)
   ('S2', '13572', 'Cetera Wealth Services', 'BD', NULL, '13572', 'CETERA WEALTH SERVICES, LLC'),
+  -- 2026-11-01, held rows released: the firm as chosen, the sale's channel in tmp_sales_channel_override
+  ('S2', '6694', 'Raymond James Financial Svcs', 'FP', NULL, '6694', 'RAYMOND JAMES FINANCIAL SERVICES, INC. - BANK'),
+  ('S2', '6694', 'Raymond James Financial Svcs', 'BD', NULL, '6694', 'RAYMOND JAMES FINANCIAL SERVICES, INC. - BANK'),
   -- owner rows: end
   ('', '', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_crd, broker_name)
+WHERE source <> '';
+
+--The owner's sales channels: a sale the manual table assigns (FIRM_BASIS MANUAL) takes this NEW_CHANNEL in place of
+--its firm's; the firm's route, its opportunity and its holders are unchanged (owner, 2026-11-01: "ok the only update
+--the sales side to /IMO and keep the opp side as it is").  Key as in tmp_sales_firm_override, matched the same way;
+--NULL MGA_AGENT_CD = any code, a row with the code wins.  CHECKS: a key on 2+ channels, a row matching no MANUAL sale.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_sales_channel_override AS
+SELECT UPPER(TRIM(CAST(source AS VARCHAR))) AS source, NULLIF(TRIM(CAST(sales_firm_id AS VARCHAR)), '') AS sales_firm_id,
+       UPPER(TRIM(CAST(sales_firm AS VARCHAR))) AS sales_firm, UPPER(TRIM(CAST(raw_channel AS VARCHAR))) AS raw_channel,
+       NULLIF(UPPER(TRIM(CAST(mga_agent_cd AS VARCHAR))), '') AS mga_agent_cd,
+       UPPER(TRIM(CAST(new_channel AS VARCHAR))) AS new_channel
+FROM (VALUES
+  -- owner sales channels: begin
+  -- 2026-11-01, Raymond James, from the owner's review workbook
+  ('S1', '6', 'RAYMOND JAMES', 'IFA', '88186', 'IFA/IMO'),
+  ('S2', '6694', 'Raymond James Financial Svcs', 'FP', NULL, 'IFA/IMO'),
+  ('S2', '6694', 'Raymond James Financial Svcs', 'BD', NULL, 'FI/IMO'),
+  -- owner sales channels: end
+  ('', '', '', '', '', '')   -- placeholder, keep it last
+) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, new_channel)
 WHERE source <> '';
 
 --9. Source 1's company ID -> the firms whose market metrics rows carry it, as layer 01 derives it from
@@ -655,7 +678,8 @@ LEFT JOIN z ON z.sid = s.sid
 LEFT JOIN zo ON zo.sid = s.sid;
 
 --12. Both sources' sales with the firm's new channel (a firm 1 sale with no firm: its company's on the new-channel
---list, else UNMAPPED; a sale still without a firm takes the manual assignment, FIRM_BASIS MANUAL), where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
+--list, else UNMAPPED; a sale still without a firm takes the manual assignment, FIRM_BASIS MANUAL, and the owner's
+--sales channel where one is set), where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
 --in the old and the new state (source 1 by wholesaler ID, source 2 by RVP: its territory IDs are seats, not people).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_sales AS
 WITH
@@ -682,6 +706,9 @@ u AS (SELECT u0.source, u0.seller_key, u0.seller, u0.sales_firm_id, u0.sales_fir
                      AND EQUAL_NULL(oa.sales_firm, UPPER(TRIM(u0.sales_firm)))
                      AND EQUAL_NULL(oa.raw_channel, UPPER(TRIM(u0.old_channel)))
                      AND oa.mga_agent_cd IS NULL),
+co AS (SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, COUNT(DISTINCT new_channel) AS k,
+              MIN(new_channel) AS ch
+       FROM ssdb_integration.lr_strategy.tmp_sales_channel_override GROUP BY ALL),
 h AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product,
              CASE WHEN source = 'S1' THEN TRIM(old_wholesaler_id) ELSE UPPER(TRIM(old_wholesaler)) END AS old_key,
              CASE WHEN source = 'S1' THEN TRIM(new_wholesaler_id) ELSE UPPER(TRIM(new_wholesaler)) END AS new_key
@@ -691,7 +718,8 @@ ho AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, old_key AS w
 hn AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, new_key AS w FROM h WHERE new_key IS NOT NULL)
 SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.mga_agent_cd, u.zip, u.raw_product, p.product,
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
-       COALESCE(f.new_label, nl.new_label, 'UNMAPPED') AS new_channel,
+       COALESCE(CASE WHEN u.firm_basis = 'MANUAL' AND COALESCE(ce1.k, ca1.k) = 1 THEN COALESCE(ce1.ch, ca1.ch) END,
+                f.new_label, nl.new_label, 'UNMAPPED') AS new_channel,
        CASE WHEN u.firm_crd IS NULL THEN 'NO FIRM' WHEN u.zip IS NULL THEN 'NO ZIP' WHEN p.product IS NULL THEN 'NO PRODUCT'
             WHEN ce.source IS NULL THEN 'NO OPPORTUNITY CELL' ELSE 'ON A CELL WITH OPPORTUNITY' END AS cell_status,
        ho.w IS NOT NULL AS held_old, hn.w IS NOT NULL AS held_new, u.n_rows, u.sales, u.sales_alt
@@ -700,6 +728,13 @@ LEFT JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TR
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = u.firm_crd AND f.broker_name = u.broker_name
 LEFT JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON u.source = 'S1' AND u.firm_crd IS NULL
                                                        AND nl.company_id = u.sales_firm_id
+LEFT JOIN co ce1 ON ce1.source = u.source AND EQUAL_NULL(ce1.sales_firm_id, u.sales_firm_id)
+                  AND EQUAL_NULL(ce1.sales_firm, UPPER(TRIM(u.sales_firm)))
+                  AND EQUAL_NULL(ce1.raw_channel, UPPER(TRIM(u.old_channel)))
+                  AND ce1.mga_agent_cd = UPPER(TRIM(u.mga_agent_cd))
+LEFT JOIN co ca1 ON ca1.source = u.source AND EQUAL_NULL(ca1.sales_firm_id, u.sales_firm_id)
+                  AND EQUAL_NULL(ca1.sales_firm, UPPER(TRIM(u.sales_firm)))
+                  AND EQUAL_NULL(ca1.raw_channel, UPPER(TRIM(u.old_channel))) AND ca1.mga_agent_cd IS NULL
 LEFT JOIN cell ce ON ce.source = u.source AND ce.zip = u.zip AND ce.firm_crd = u.firm_crd
                  AND ce.broker_name = u.broker_name AND ce.product = p.product
 LEFT JOIN ho ON ho.source = u.source AND ho.zip = u.zip AND ho.firm_crd = u.firm_crd
@@ -748,7 +783,7 @@ GROUP BY ALL;
 
 --14. Sizes, the tie-out and checks, one table; AMT is sales $ unless the name says otherwise.  PCT_AMT: of PART x
 --SOURCE x NAME.
---  SALES FIRM BASIS, SALES PRODUCT (value -> product), SALES CHANNEL (the sale's channel -> the firm 1 channel that
+--  SALES FIRM BASIS, SALES NEW CHANNEL, SALES PRODUCT (value -> product), SALES CHANNEL (the sale's channel -> the firm 1 channel that
 --    picks its firm): all of a source's 2025 sales.  SALES ON CELLS: CELL, and SOLD BY THE
 --    CELL'S HOLDER (old, new).  Q35: source 1's sales by how MM_MAP and CRD_TO_CBD map their company ID against the
 --    firm found here.  SALES PERIOD: each sales table by year, firm 1's also by product bucket (s1_sales.sql keeps only
@@ -801,6 +836,7 @@ v AS (
   UNION ALL SELECT 'SALES CHANNEL', source, NULL,
                    COALESCE(old_channel, '(BLANK)') || ' -> ' || COALESCE(match_channel, '(NONE)'),
                    seller_key, firm_crd, broker_name, n_rows, sales FROM s
+  UNION ALL SELECT 'SALES NEW CHANNEL', source, NULL, new_channel, seller_key, firm_crd, broker_name, n_rows, sales FROM s
   UNION ALL SELECT 'SALES ON CELLS', source, 'CELL', cell_status, seller_key, firm_crd, broker_name, n_rows, sales
             FROM s
   UNION ALL SELECT 'SALES ON CELLS', source, 'SOLD BY THE CELL''S HOLDER, OLD', CASE WHEN held_old THEN 'YES' ELSE 'NO' END,
@@ -879,6 +915,19 @@ SELECT 'CHECKS', NULL, 'MANUAL ROWS MATCHING NO SALE, NOT APPLIED (MUST BE 0)', 
 FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
 WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_o2_sales x
                   WHERE x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
+                    AND EQUAL_NULL(UPPER(TRIM(x.sales_firm)), o.sales_firm)
+                    AND EQUAL_NULL(UPPER(TRIM(x.old_channel)), o.raw_channel)
+                    AND (o.mga_agent_cd IS NULL OR UPPER(TRIM(x.mga_agent_cd)) = o.mga_agent_cd))
+UNION ALL
+SELECT 'CHECKS', NULL, 'SALES CHANNELS: KEYS ON 2+ CHANNELS, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
+FROM (SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, COUNT(DISTINCT new_channel) AS k
+      FROM ssdb_integration.lr_strategy.tmp_sales_channel_override GROUP BY ALL) x
+WHERE k > 1
+UNION ALL
+SELECT 'CHECKS', NULL, 'SALES CHANNELS: ROWS MATCHING NO MANUAL SALE, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
+FROM ssdb_integration.lr_strategy.tmp_sales_channel_override o
+WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_o2_sales x
+                  WHERE x.firm_basis = 'MANUAL' AND x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
                     AND EQUAL_NULL(UPPER(TRIM(x.sales_firm)), o.sales_firm)
                     AND EQUAL_NULL(UPPER(TRIM(x.old_channel)), o.raw_channel)
                     AND (o.mga_agent_cd IS NULL OR UPPER(TRIM(x.mga_agent_cd)) = o.mga_agent_cd))
