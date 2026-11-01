@@ -1239,3 +1239,8 @@ Code: the override table is matched trimmed and upper-cased (typed names arrived
 MANUAL ROWS MATCHING NO SALE, counts rows whose key matches no sale. The tests strip the owner rows (they match no
 test sale); `sales_review_test.sh` checks a padded lower-case row and an edited key; 5 mutations fail it. Not run in
 Snowflake.
+
+### 2026-11-01: correction to the previous entry
+
+Held for the owner: 10 rows ($117.2MM), not 9: three rows, not two, have DECISION blank with CHOSEN changed (Western
+International's two codes and WFCS's FP row). The per-row file has it right.
