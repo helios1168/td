@@ -1162,3 +1162,13 @@ Tests: expected values in `02_sales_test.sh`, `sales_mga_test.sh` and `sales_cro
 a test sale the rules now resolve; new checks in `02_sales_test.sh` and `sales_unmapped_test.sh`; 9 mutations fail them
 (2 survived until a candidate with opportunity only in another product and firm 2's CRD 438 were tested). Not run in
 Snowflake.
+
+### 2026-10-31: run with sales rules 1-3 (`data/safe/opp_sales_2026-10-31-2156.csv`)
+
+Every CHECKS row 0 (16); TIE-OUT unchanged ($7,730.0MM actual, $7,731.1MM comp'd). Firm 1: `SPLIT, 2+ CHANNEL MATCHES`
+$671.6MM -> $141.8MM; `MATCHED BY ZIP` $492.0MM, `MATCHED BY MGA CODE` $37.9MM; left: LPL $133.8MM, Cetera $5.3MM,
+Raymond James $2.5MM, Stifel $0.1MM. NO MARKET METRICS FIRM unchanged, $4,076.3MM (owner: "ignore the imo firms for
+now"). Firm 2: 2+ $1,746.2MM -> $758.6MM, `MATCHED BY ZIP` $987.7MM. Sales on a cell with opportunity: firm 1
+$15,979.5MM -> $16,496.8MM, firm 2 $9,495.6MM -> $10,483.3MM; sold by the cell's holder: firm 1 $12,965.2MM ->
+$13,351.3MM (old and new alike), firm 2 old $8,352.5MM -> $9,211.2MM, new $7,745.3MM -> $8,627.8MM. The new-channel
+list rule (company 14) moves no basis and no part of the result shows it; `TMP_O2_SALES.NEW_CHANNEL` does.
