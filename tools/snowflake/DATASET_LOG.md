@@ -1391,3 +1391,24 @@ Counted from the tests' output on 2026-11-01 (one `ok` per check): `sales_review
 `02_sales_test.sh` 54. The 2026-11-01 entries that give `sales_review_test.sh` 27, 30, 31, 33 or 34 checks, and the
 handoff note `notes/2026-11-01_snowflake-decision-dataset.md` (34 and 50), carried running estimates, not counts. The
 mutation results in those entries were run and stand.
+
+### 2026-11-01: the Tableau union layout (design)
+
+Next step (owner, 2026-11-01): "we need to match out latest dataset back into the union table layout and format so we
+can plug it back into a tableau dashboard without breaking anything"; the owner's query is `owner_sql/uni_latest.sql`
+(sha256 `d8f1f5ffbd5a`, git-excluded: carrier and wholesaler names). Its final select has 24 columns: FISCAL_YR,
+SOURCE, TERR_WHOLESALER, SALES_WHOLESALER, TERR_WHOLESALER_CLEAN_NAME, SALES_WHOLESALER_CLEAN_NAME, CBD_ID, FIRM,
+PARENT, DIST_CH, NEW_DIST, CHANNEL, STATE, ZIP_CODE, PRODUCT_V2, MM_OPP, ACTUAL_SALES_AMOUNT, SALES_AMOUNT, four
+wholesaler IDs from name-match tables, two HAS_TERRITORY flags. The owner's answers (2026-11-01):
+
+- "tableau reads data_withnewchannel_union_w_joinkeys. and yes you can add columns."
+- "you will replace cbd_id with crd, firm with broker_name, and you can leave parent as all null."
+- "terr_wholesaler reflected the wholesaler who owned that territory. could we replicate that with our dataset?"
+- "actual sales amount will be our sales. drop sales_alt and set sales amount to null."
+- "do not propagate any filters as we are implementing them in our override instead." (the channel list, the firm
+  exclusion)
+- "we do not need to replicate any of the name matching logic, since you were able to join them using the names as
+  they are across the different tables but within firm."
+- "And can we put a cell's opportunity on the same row as it's opportunity?" Read as: on the same row as its sales,
+  the old table's behavior (`s1_opp_sales.sql`, `saleswithMM`: a cell's opportunity on the sales row whose seller is
+  the cell's territory wholesaler). Pending the owner's confirmation with the open points in the reply.
