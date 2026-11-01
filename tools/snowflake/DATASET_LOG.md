@@ -170,6 +170,7 @@ decision point, and we should be able to easily come back and look at the number
 | a split with 2+ channel matches (sales, both sources) | the one of them with opportunity at the sale's ZIP x product (`SPLIT, MATCHED BY ZIP`) | no firm, UNMAPPED | run 2026-10-31: $492.1MM of firm 1's $671.6MM had one such candidate; firm 2's 2+ was $1,746.2MM, unmeasured | `01_opportunity_sales.sql` 10-11, CTE `z` | `SALES FIRM BASIS` |
 | a split still 2+ after ZIP (firm 1 sales) | the one name the company's sales under the same MGA code and channel matched by ZIP (`SPLIT, MATCHED BY MGA CODE`) | no firm | run 2026-10-31: $95.1MM of split $ in codes whose ZIP matches agree | `01_opportunity_sales.sql` 10, CTE `cz` | `SALES FIRM BASIS` |
 | a firm 1 sale with no firm, company on the new-channel list | the list's new channel, firm blank | UNMAPPED | run 2026-10-31: company 14, $302.3MM (Wells WH) | `01_opportunity_sales.sql` 12, join `nl` | `SALES FIRM BASIS` (firm), `TMP_O2_SALES.NEW_CHANNEL` |
+| manual assignments (sales) | fill only sales the rules leave without a firm; key = the sales table's firm ID, firm name, channel, MGA code (NULL = any; a row with the code wins); a key on 2+ firms or a firm not in TMP_O1_FIRM is not applied | override any sale | crd_dist_override's precedent (fills gaps only) | `01_opportunity_sales.sql` 8 `tmp_sales_firm_override`, 12 `ok` | `SALES FIRM BASIS` (MANUAL), CHECKS MANUAL ... |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
@@ -1172,3 +1173,17 @@ now"). Firm 2: 2+ $1,746.2MM -> $758.6MM, `MATCHED BY ZIP` $987.7MM. Sales on a 
 $15,979.5MM -> $16,496.8MM, firm 2 $9,495.6MM -> $10,483.3MM; sold by the cell's holder: firm 1 $12,965.2MM ->
 $13,351.3MM (old and new alike), firm 2 old $8,352.5MM -> $9,211.2MM, new $7,745.3MM -> $8,627.8MM. The new-channel
 list rule (company 14) moves no basis and no part of the result shows it; `TMP_O2_SALES.NEW_CHANNEL` does.
+
+### 2026-10-31: the review list and manual assignments (`TMP_SALES_REVIEW`, `tmp_sales_firm_override`)
+
+Owner, 2026-10-31: "include firm 2's unmapped firms as well. and where is the table or csv file where i can review and
+make the manual assignments? it should have our original dist_ch, firm name, consol broker id, and name. with a
+ranking by match strength. amongst any other relevant details, also include wholesaler as well". Statements 15-16 are
+now the review list, both sources, replacing the firm 1 leads of the earlier entry: one row per sales-table key
+(firm ID, firm name, DIST_CH / CHANNEL, MGA code) x candidate firm, evidence flags (company, channel, MM_MAP,
+CRD_TO_CBD, name), ZIP_AMT, SCORE, RANK_IN_KEY, the key's $ and rank, top wholesaler ID (firm 2: the RVP's lowest
+territory ID; names stay in the table, Masking). Layer REVIEW in the result. Statement 8 gains
+`tmp_sales_firm_override` (empty; a Key decisions row), statement 12 applies it (FIRM_BASIS MANUAL), statement 14 two
+checks (MANUAL KEYS ON 2+ FIRMS, MANUAL FIRMS NOT IN TMP_O1_FIRM). `sales_review_test.sh` (17 checks) replaces
+`sales_unmapped_test.sh`; 12 mutations fail it (two survived first: one changed a column both test rows share, and no
+candidate had opportunity at a sale's ZIP in another product only); one hand-worked value missed a fixture sale.
