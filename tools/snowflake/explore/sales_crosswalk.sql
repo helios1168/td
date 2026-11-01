@@ -87,7 +87,7 @@ raw AS (
                    CAST(actual_agent_dollars AS DECIMAL(38, 6)) AS a1, CAST(compd_agent_dollars AS DECIMAL(38, 6)) AS a2
             FROM IDENTIFIER($s1_sales) WHERE fiscal_yr = 2025 AND product_bucket = 'ALL'
   UNION ALL SELECT 'S2', CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), firm, channel, product,
-                   CAST(sales_amount AS DECIMAL(38, 6)), CAST(mm_amount AS DECIMAL(38, 6))
+                   CAST(sales_amount AS DECIMAL(38, 6)), CAST(NULL AS DECIMAL(38, 6))
             FROM IDENTIFIER($s2_sales) WHERE year = 2025),
 rk AS (SELECT source, COALESCE(firm_id, '(NULL)') AS k1, COALESCE(firm, '(NULL)') AS k2, COALESCE(channel, '(NULL)') AS k3,
               COALESCE(product, '(NULL)') AS k4, SUM(a1) AS a1, SUM(a2) AS a2
@@ -118,7 +118,7 @@ ow AS (
             WHERE NOT EQUAL_NULL(fiscal_yr, 2025) OR NOT EQUAL_NULL(product_bucket, 'ALL')
             GROUP BY ALL
   UNION ALL SELECT 'S2', 'YEAR ' || COALESCE(CAST(year AS VARCHAR), '(NULL)'), COUNT(*),
-                   SUM(CAST(sales_amount AS DECIMAL(38, 6))), SUM(CAST(mm_amount AS DECIMAL(38, 6)))
+                   SUM(CAST(sales_amount AS DECIMAL(38, 6))), CAST(NULL AS DECIMAL(38, 6))
             FROM IDENTIFIER($s2_sales) WHERE NOT EQUAL_NULL(year, 2025)
             GROUP BY ALL),
 whole AS (

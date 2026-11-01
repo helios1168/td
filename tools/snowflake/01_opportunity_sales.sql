@@ -427,7 +427,9 @@ WHERE p.company_id IS NOT NULL AND (p.how = 'DIRECT' OR d.company_id IS NULL);
 --matching reads them trimmed and upper-cased.  FIRM_BASIS: ONE FIRM (the company sits on one firm); SPLIT, MATCHED BY
 --CHANNEL (2+ firms, exactly one with the sale's channel); SPLIT, MATCHED BY ZIP (2+ with the sale's channel, exactly
 --one of them with opportunity at the sale's ZIP x product); SPLIT, MATCHED BY MGA CODE (still 2+: the one name that
---the company's sales under the same MGA code and channel matched by ZIP); SPLIT, 2+ CHANNEL MATCHES or NO CHANNEL MATCH
+--the company's sales under the same MGA code and channel matched by ZIP); SPLIT, MOST OPPORTUNITY AT ZIP (still 2+,
+--all on the sale's route: the one with the most opportunity at the sale's ZIP x product, a strict maximum; owner,
+--2026-10-31: "yes to 4 rules"); SPLIT, 2+ CHANNEL MATCHES or NO CHANNEL MATCH
 --(left without a firm: assign where unique, flag the rest); NO MARKET METRICS FIRM; NO COMPANY.  MGA_AGENT_CD is the sales
 --table's, trimmed, blank as NULL: a column only (Q45), the firm still comes from the company ID alone.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_s1 AS
@@ -454,14 +456,19 @@ c AS (SELECT s.sid, cf.firm_crd, cf.broker_name, f.route
 k AS (SELECT sid, COUNT(*) AS n_firms, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM c GROUP BY ALL),
 m AS (SELECT c.sid, COUNT(*) AS n_match, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
       FROM c JOIN sc ON sc.sid = c.sid WHERE c.route = sc.s1_channel GROUP BY ALL),
-cell AS (SELECT DISTINCT zip, firm_crd, broker_name, product FROM ssdb_integration.lr_strategy.tmp_o1_dataset
-         WHERE source = 'S1'),
-z AS (SELECT c.sid, COUNT(*) AS n_zip, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
-      FROM c JOIN sc ON sc.sid = c.sid AND c.route = sc.s1_channel JOIN s ON s.sid = c.sid
-      JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(s.raw_product))
-      JOIN cell ce ON ce.zip = s.zip AND ce.product = p.product AND ce.firm_crd = c.firm_crd
-                  AND ce.broker_name = c.broker_name
-      GROUP BY ALL),
+cell AS (SELECT zip, firm_crd, broker_name, product, SUM(opportunity) AS opp
+         FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S1' GROUP BY ALL),
+zc AS (SELECT c.sid, c.firm_crd, c.broker_name, ce.opp
+       FROM c JOIN sc ON sc.sid = c.sid AND c.route = sc.s1_channel JOIN s ON s.sid = c.sid
+       JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(s.raw_product))
+       JOIN cell ce ON ce.zip = s.zip AND ce.product = p.product AND ce.firm_crd = c.firm_crd
+                   AND ce.broker_name = c.broker_name),
+z AS (SELECT sid, COUNT(*) AS n_zip, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM zc GROUP BY ALL),
+zo AS (SELECT sid, firm_crd AS crd, broker_name AS nm
+       FROM (SELECT zc.*, ROW_NUMBER() OVER (PARTITION BY sid ORDER BY opp DESC, firm_crd, broker_name) AS rn,
+                    LEAD(opp) OVER (PARTITION BY sid ORDER BY opp DESC, firm_crd, broker_name) AS next_opp
+             FROM zc) x
+       WHERE rn = 1 AND opp > next_opp),
 cz AS (SELECT s.sales_firm_id, s.mga_agent_cd, sc.s1_channel, COUNT(DISTINCT z.crd || '|' || z.nm) AS k,
               MIN(z.crd) AS crd, MIN(z.nm) AS nm
        FROM s JOIN sc ON sc.sid = s.sid JOIN m ON m.sid = s.sid AND m.n_match > 1 JOIN z ON z.sid = s.sid AND z.n_zip = 1
@@ -472,17 +479,19 @@ SELECT 'S1' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, s.
             WHEN k.n_firms = 1 THEN 'ONE FIRM' WHEN m.n_match = 1 THEN 'SPLIT, MATCHED BY CHANNEL'
             WHEN m.n_match > 1 AND z.n_zip = 1 THEN 'SPLIT, MATCHED BY ZIP'
             WHEN m.n_match > 1 AND cz.k = 1 THEN 'SPLIT, MATCHED BY MGA CODE'
+            WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN 'SPLIT, MOST OPPORTUNITY AT ZIP'
             WHEN m.n_match > 1 THEN 'SPLIT, 2+ CHANNEL MATCHES' ELSE 'SPLIT, NO CHANNEL MATCH' END AS firm_basis,
        CASE WHEN k.n_firms = 1 THEN k.crd WHEN m.n_match = 1 THEN m.crd WHEN m.n_match > 1 AND z.n_zip = 1 THEN z.crd
-            WHEN m.n_match > 1 AND cz.k = 1 THEN cz.crd END AS firm_crd,
+            WHEN m.n_match > 1 AND cz.k = 1 THEN cz.crd WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN zo.crd END AS firm_crd,
        CASE WHEN k.n_firms = 1 THEN k.nm WHEN m.n_match = 1 THEN m.nm WHEN m.n_match > 1 AND z.n_zip = 1 THEN z.nm
-            WHEN m.n_match > 1 AND cz.k = 1 THEN cz.nm END AS broker_name,
+            WHEN m.n_match > 1 AND cz.k = 1 THEN cz.nm WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN zo.nm END AS broker_name,
        s.n_rows, s.sales, s.sales_alt
 FROM s
 JOIN sc ON sc.sid = s.sid
 LEFT JOIN k ON k.sid = s.sid
 LEFT JOIN m ON m.sid = s.sid
 LEFT JOIN z ON z.sid = s.sid
+LEFT JOIN zo ON zo.sid = s.sid
 LEFT JOIN cz ON cz.sales_firm_id = s.sales_firm_id AND cz.mga_agent_cd = s.mga_agent_cd
             AND EQUAL_NULL(cz.s1_channel, sc.s1_channel);
 
@@ -490,8 +499,8 @@ LEFT JOIN cz ON cz.sales_firm_id = s.sales_firm_id AND cz.mga_agent_cd = s.mga_a
 --CRD x broker name either source's opportunity carries), or on a CRD with 2+, the one whose firm 1 channel is the
 --sale's: CHANNEL through Q19 (or a territory code as is), then Q39 read back, which is also OLD_CHANNEL_S1.
 --SALES_FIRM_ID, SALES_FIRM, RAW_PRODUCT and OLD_CHANNEL are FIRM_CRD, FIRM, PRODUCT and CHANNEL as they are; each
---amount (a FLOAT) is cast to DECIMAL(38, 6) before it is summed.  FIRM_BASIS as in 10 (no MGA code rule: firm 2 has
---no codes), NO CRD for none.
+--amount (a FLOAT) is cast to DECIMAL(38, 6) before it is summed; SALES_ALT is NULL (MM_AMOUNT is not used: Q42).
+--FIRM_BASIS as in 10 (no MGA code rule: firm 2 has no codes), NO CRD for none.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_s2 AS
 WITH
 q39 AS (SELECT terr_channel, MIN(s1_channel) AS s1_channel FROM ssdb_integration.lr_strategy.tmp_s1ch_s2terr GROUP BY ALL),
@@ -501,7 +510,7 @@ s AS (SELECT *, ROW_NUMBER() OVER (ORDER BY sales DESC, sales_firm_id, sales_fir
          NULLIF(UPPER(TRIM(rvp)), '') AS seller_key, rvp AS seller,
          CASE WHEN NULLIF(TRIM(zip_code), '') IS NULL THEN NULL ELSE LPAD(LEFT(TRIM(zip_code), 5), 5, '0') END AS zip,
          product AS raw_product, channel AS old_channel, COUNT(*) AS n_rows,
-         SUM(CAST(sales_amount AS DECIMAL(38, 6))) AS sales, SUM(CAST(mm_amount AS DECIMAL(38, 6))) AS sales_alt
+         SUM(CAST(sales_amount AS DECIMAL(38, 6))) AS sales, CAST(NULL AS DECIMAL(38, 6)) AS sales_alt
   FROM IDENTIFIER($s2_sales)
   WHERE year = 2025
   GROUP BY ALL) x),
@@ -515,30 +524,37 @@ c AS (SELECT s.sid, f.firm_crd, f.broker_name, f.route
 k AS (SELECT sid, COUNT(*) AS n_firms, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM c GROUP BY ALL),
 m AS (SELECT c.sid, COUNT(*) AS n_match, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
       FROM c JOIN sc ON sc.sid = c.sid WHERE c.route = sc.s1_channel GROUP BY ALL),
-cell AS (SELECT DISTINCT zip, firm_crd, broker_name, product FROM ssdb_integration.lr_strategy.tmp_o1_dataset
-         WHERE source = 'S2'),
-z AS (SELECT c.sid, COUNT(*) AS n_zip, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
-      FROM c JOIN sc ON sc.sid = c.sid AND c.route = sc.s1_channel JOIN s ON s.sid = c.sid
-      JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(s.raw_product))
-      JOIN cell ce ON ce.zip = s.zip AND ce.product = p.product AND ce.firm_crd = c.firm_crd
-                  AND ce.broker_name = c.broker_name
-      GROUP BY ALL)
+cell AS (SELECT zip, firm_crd, broker_name, product, SUM(opportunity) AS opp
+         FROM ssdb_integration.lr_strategy.tmp_o1_dataset WHERE source = 'S2' GROUP BY ALL),
+zc AS (SELECT c.sid, c.firm_crd, c.broker_name, ce.opp
+       FROM c JOIN sc ON sc.sid = c.sid AND c.route = sc.s1_channel JOIN s ON s.sid = c.sid
+       JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(s.raw_product))
+       JOIN cell ce ON ce.zip = s.zip AND ce.product = p.product AND ce.firm_crd = c.firm_crd
+                   AND ce.broker_name = c.broker_name),
+z AS (SELECT sid, COUNT(*) AS n_zip, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM zc GROUP BY ALL),
+zo AS (SELECT sid, firm_crd AS crd, broker_name AS nm
+       FROM (SELECT zc.*, ROW_NUMBER() OVER (PARTITION BY sid ORDER BY opp DESC, firm_crd, broker_name) AS rn,
+                    LEAD(opp) OVER (PARTITION BY sid ORDER BY opp DESC, firm_crd, broker_name) AS next_opp
+             FROM zc) x
+       WHERE rn = 1 AND opp > next_opp)
 SELECT 'S2' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, CAST(NULL AS VARCHAR) AS mga_agent_cd, s.zip, s.raw_product, s.old_channel,
        sc.s1_channel AS old_channel_s1, sc.s1_channel AS match_channel,
        CASE WHEN s.sales_firm_id IS NULL THEN 'NO CRD' WHEN k.sid IS NULL THEN 'NO MARKET METRICS FIRM'
             WHEN k.n_firms = 1 THEN 'ONE FIRM' WHEN m.n_match = 1 THEN 'SPLIT, MATCHED BY CHANNEL'
             WHEN m.n_match > 1 AND z.n_zip = 1 THEN 'SPLIT, MATCHED BY ZIP'
+            WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN 'SPLIT, MOST OPPORTUNITY AT ZIP'
             WHEN m.n_match > 1 THEN 'SPLIT, 2+ CHANNEL MATCHES' ELSE 'SPLIT, NO CHANNEL MATCH' END AS firm_basis,
        CASE WHEN k.n_firms = 1 THEN k.crd WHEN m.n_match = 1 THEN m.crd WHEN m.n_match > 1 AND z.n_zip = 1 THEN z.crd
-            END AS firm_crd,
+            WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN zo.crd END AS firm_crd,
        CASE WHEN k.n_firms = 1 THEN k.nm WHEN m.n_match = 1 THEN m.nm WHEN m.n_match > 1 AND z.n_zip = 1 THEN z.nm
-            END AS broker_name,
+            WHEN m.n_match > 1 AND zo.sid IS NOT NULL THEN zo.nm END AS broker_name,
        s.n_rows, s.sales, s.sales_alt
 FROM s
 JOIN sc ON sc.sid = s.sid
 LEFT JOIN k ON k.sid = s.sid
 LEFT JOIN m ON m.sid = s.sid
-LEFT JOIN z ON z.sid = s.sid;
+LEFT JOIN z ON z.sid = s.sid
+LEFT JOIN zo ON zo.sid = s.sid;
 
 --12. Both sources' sales with the firm's new channel (a firm 1 sale with no firm: its company's on the new-channel
 --list, else UNMAPPED; a sale still without a firm takes the manual assignment, FIRM_BASIS MANUAL), where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
@@ -598,7 +614,7 @@ LEFT JOIN hn ON hn.source = u.source AND hn.zip = u.zip AND hn.firm_crd = u.firm
 --original dist_ch").  A sale shares a row with its cell's opportunity where the two old channels agree.
 --OLD_CHANNEL_S1: firm 1's is OLD_CHANNEL; firm 2's is in firm 1's names (Q19, then Q39 read back).  OPP_HELD_OLD,
 --OPP_HELD_NEW: TMP_O1_DATASET's opportunity under its old and its new wholesaler.  SALES: credited to the seller (firm
---1's actual sales, firm 2's SALES_AMOUNT); SALES_ALT: firm 1's comp'd sales, firm 2's MM_AMOUNT (Q42).
+--1's actual sales, firm 2's SALES_AMOUNT); SALES_ALT: firm 1's comp'd sales, NULL for firm 2 (Q42).
 --SALES_IN_HELD_CELLS_OLD and _NEW: the part of SALES whose seller holds that ZIP x firm x product in that state.
 --WHOLESALER_KEY: firm 1's wholesaler ID, firm 2's RVP.  No key: opportunity no one holds, or sales with no seller.
 --Sales with no market metrics firm sit under a blank firm, new channel UNMAPPED; TMP_O2_SALES has their sales table's
@@ -671,7 +687,7 @@ gd AS (SELECT source, firm_id, mga, channel, product, SUM(a1) AS d1, SUM(a2) AS 
                    CAST(compd_agent_dollars AS DECIMAL(38, 6)) AS a2
             FROM IDENTIFIER($s1_sales) WHERE fiscal_yr = 2025 AND product_bucket = 'ALL'
   UNION ALL SELECT 'S2', CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), CAST(NULL AS VARCHAR), channel, product,
-                   CAST(sales_amount AS DECIMAL(38, 6)), CAST(mm_amount AS DECIMAL(38, 6))
+                   CAST(sales_amount AS DECIMAL(38, 6)), CAST(NULL AS DECIMAL(38, 6))
             FROM IDENTIFIER($s2_sales) WHERE year = 2025
   UNION ALL SELECT source, sales_firm_id, mga_agent_cd, old_channel, raw_product, -sales, -sales_alt
             FROM ssdb_integration.lr_strategy.tmp_o2_sales) x
@@ -765,13 +781,18 @@ FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1 WHERE SPLIT_PART(company_id, '|
 --15. The review list for manual assignments (TMP_SALES_REVIEW): every 2025 sale still without a market metrics firm,
 --both sources, one row per review key x candidate firm.  Key: SOURCE, SALES_FIRM_ID (firm 1 CONSOL_BRKR_DLR_ID,
 --firm 2 FIRM_CRD), SALES_FIRM (CONSOL_BROKER_NM, FIRM), RAW_CHANNEL (DIST_CH, CHANNEL), MGA_AGENT_CD, as the sales
---table has them.  Candidates, with evidence 1 or 0: EV_COMPANY, one of the company's firms (firm 1: its opportunity
---rows carry the company; firm 2: a name on the CRD); EV_MM_MAP, EV_CRD_TO_CBD, the map takes firm 1's company to the
---firm's CRD; EV_NAME, the firm's name is the sales firm name; EV_CHANNEL, the firm's route is the sale's channel.
---ZIP_AMT: the key's $ sold at a ZIP x product where the firm has opportunity.  SCORE: the five flags + ZIP_AMT /
---KEY_AMT (0-6); RANK_IN_KEY 1 the strongest (ties: ZIP_AMT, then CRD, name); a key with no candidate has one row.
---KEY_AMT: the key's $ on every row; RANK_KEY_BY_AMT: within the source, 1 the largest.  TOP_WHOLESALER_ID: the key's
---largest seller (firm 1 WHSLR_ID; firm 2 the RVP's lowest territory ID); TOP_WHOLESALER (its name) stays in this table.
+--table has them.  IS_IMO: firm 1's marketing organizations (no market metrics firm, recorded IMO, IFA/IMO or FI/IMO:
+--tmp_s1_sale_channel's labels), kept here with no candidates and left out of the REVIEW part (owner, 2026-10-31:
+--"imo's stay out").  Candidates: one of the company's firms (firm 1: its opportunity rows carry the company; firm 2:
+--a name on the CRD), a map's (MM_MAP, CRD_TO_CBD: firm 1's company to the firm's CRD), or one of the 5 market metrics
+--names most like the sales firm name (JAROWINKLER_SIMILARITY 85 or more).  Evidence, 1 or 0: EV_COMPANY, EV_MM_MAP,
+--EV_CRD_TO_CBD, EV_CHANNEL (the firm's route is the sale's channel); EV_NAME: name similarity, 0-1 (1 = the same name).
+--ZIP_AMT: the key's $ sold at a ZIP x product where the firm has opportunity.  SCORE: EV_ sum + ZIP_AMT / KEY_AMT (0-6);
+--RANK_IN_KEY 1 the strongest (ties: ZIP_AMT, then CRD, name); a key with no candidate has one row.  KEY_AMT: the
+--key's $ on every row; RANK_KEY_BY_AMT: within the source, 1 the largest.  TOP_WHOLESALER: the key's largest seller's
+--name (firm 1 WHSLR_NM, firm 2 RVP; owner, 2026-10-31: "include the wholesaler name column and drop the wholesaler id
+--column for the review extract").  Assign by hand in tmp_sales_firm_override (statement 8): any firm in TMP_O1_FIRM,
+--a candidate here or typed.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_sales_review AS
 WITH
 u AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE firm_crd IS NULL),
@@ -781,6 +802,8 @@ g AS (SELECT x.*, ROW_NUMBER() OVER (ORDER BY source, sales_firm_id, sales_firm,
                    SUM(n_rows) AS n_rows, COUNT(DISTINCT seller_key) AS n_wholesalers, COUNT(DISTINCT zip) AS n_zips,
                    SUM(sales) AS amt, SUM(sales_alt) AS amt_alt
             FROM u GROUP BY ALL) x),
+gi AS (SELECT g.*, g.source = 'S1' AND g.firm_basis = 'NO MARKET METRICS FIRM' AND sl.label IS NOT NULL AS is_imo
+       FROM g LEFT JOIN ssdb_integration.lr_strategy.tmp_s1_sale_channel sl ON sl.label = UPPER(TRIM(g.raw_channel))),
 ug AS (SELECT u.*, g.kid
        FROM u JOIN g ON g.source = u.source AND EQUAL_NULL(g.sales_firm_id, u.sales_firm_id)
                     AND EQUAL_NULL(g.sales_firm, u.sales_firm) AND EQUAL_NULL(g.raw_channel, u.old_channel)
@@ -794,19 +817,24 @@ maps AS (
             FROM ssdb_integration.lr_strategy.crd_to_cbd),
 mk AS (SELECT DISTINCT map, company_id, crd FROM maps WHERE company_id IS NOT NULL AND crd IS NOT NULL),
 f AS (SELECT firm_crd, broker_name, route FROM ssdb_integration.lr_strategy.tmp_o1_firm),
+gc AS (SELECT * FROM gi WHERE NOT is_imo),
+fz AS (SELECT kid, firm_crd, broker_name
+       FROM (SELECT y.*, ROW_NUMBER() OVER (PARTITION BY kid ORDER BY sim DESC, firm_crd, broker_name) AS rn
+             FROM (SELECT gc.kid, f.firm_crd, f.broker_name,
+                          JAROWINKLER_SIMILARITY(TRIM(gc.sales_firm), TRIM(f.broker_name)) AS sim
+                   FROM gc CROSS JOIN f WHERE gc.sales_firm IS NOT NULL) y) x
+       WHERE sim >= 85 AND rn <= 5),
 c0 AS (
-            SELECT g.kid, cf.firm_crd, cf.broker_name, 'COMPANY' AS ev
-            FROM g JOIN ssdb_integration.lr_strategy.tmp_o2_company_firm cf
-                     ON g.source = 'S1' AND cf.company_id = g.sales_firm_id
-  UNION ALL SELECT g.kid, f.firm_crd, f.broker_name, 'COMPANY' FROM g JOIN f ON g.source = 'S2' AND f.firm_crd = g.sales_firm_id
-  UNION ALL SELECT g.kid, f.firm_crd, f.broker_name, mk.map
-            FROM g JOIN mk ON g.source = 'S1' AND mk.company_id = g.sales_firm_id JOIN f ON f.firm_crd = mk.crd
-  UNION ALL SELECT g.kid, f.firm_crd, f.broker_name, 'NAME'
-            FROM g JOIN f ON UPPER(TRIM(f.broker_name)) = UPPER(TRIM(g.sales_firm))),
+            SELECT gc.kid, cf.firm_crd, cf.broker_name, 'COMPANY' AS ev
+            FROM gc JOIN ssdb_integration.lr_strategy.tmp_o2_company_firm cf
+                      ON gc.source = 'S1' AND cf.company_id = gc.sales_firm_id
+  UNION ALL SELECT gc.kid, f.firm_crd, f.broker_name, 'COMPANY' FROM gc JOIN f ON gc.source = 'S2' AND f.firm_crd = gc.sales_firm_id
+  UNION ALL SELECT gc.kid, f.firm_crd, f.broker_name, mk.map
+            FROM gc JOIN mk ON gc.source = 'S1' AND mk.company_id = gc.sales_firm_id JOIN f ON f.firm_crd = mk.crd
+  UNION ALL SELECT kid, firm_crd, broker_name, 'NAME' FROM fz),
 c AS (SELECT kid, firm_crd, broker_name, MAX(CASE WHEN ev = 'COMPANY' THEN 1 ELSE 0 END) AS ev_company,
              MAX(CASE WHEN ev = 'MM_MAP' THEN 1 ELSE 0 END) AS ev_mm_map,
-             MAX(CASE WHEN ev = 'CRD_TO_CBD' THEN 1 ELSE 0 END) AS ev_crd_to_cbd,
-             MAX(CASE WHEN ev = 'NAME' THEN 1 ELSE 0 END) AS ev_name
+             MAX(CASE WHEN ev = 'CRD_TO_CBD' THEN 1 ELSE 0 END) AS ev_crd_to_cbd
       FROM c0 GROUP BY ALL),
 cell AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product FROM ssdb_integration.lr_strategy.tmp_o1_dataset),
 zc AS (SELECT c.kid, c.firm_crd, c.broker_name, SUM(ug.sales) AS zip_amt
@@ -814,27 +842,27 @@ zc AS (SELECT c.kid, c.firm_crd, c.broker_name, SUM(ug.sales) AS zip_amt
        JOIN cell ce ON ce.source = ug.source AND ce.zip = ug.zip AND ce.product = ug.product
                    AND ce.firm_crd = c.firm_crd AND ce.broker_name = c.broker_name
        GROUP BY ALL),
-t2 AS (SELECT UPPER(TRIM(rvp)) AS k, MIN(CAST(territory_id AS VARCHAR)) AS id FROM IDENTIFIER($s2_territories) GROUP BY ALL),
 w AS (SELECT kid, seller_key, MIN(seller) AS seller, SUM(sales) AS amt FROM ug GROUP BY ALL),
 wt AS (SELECT kid, seller_key, seller, ROW_NUMBER() OVER (PARTITION BY kid ORDER BY amt DESC, seller_key) AS rn FROM w),
-x AS (SELECT g.*, nl.new_label AS new_list_label,
-             CASE WHEN g.source = 'S1' THEN wt.seller_key ELSE t2.id END AS top_wholesaler_id, wt.seller AS top_wholesaler,
+x AS (SELECT g.*, nl.new_label AS new_list_label, wt.seller AS top_wholesaler,
              c.firm_crd AS cand_firm_crd, c.broker_name AS cand_broker_name, f.route AS cand_route, c.ev_company,
              CASE WHEN c.kid IS NULL THEN NULL WHEN f.route = g.match_channel THEN 1 ELSE 0 END AS ev_channel,
-             c.ev_mm_map, c.ev_crd_to_cbd, c.ev_name, CASE WHEN c.kid IS NOT NULL THEN COALESCE(zc.zip_amt, 0) END AS zip_amt
-      FROM g
+             c.ev_mm_map, c.ev_crd_to_cbd,
+             CASE WHEN c.kid IS NOT NULL
+                  THEN COALESCE(JAROWINKLER_SIMILARITY(TRIM(g.sales_firm), TRIM(c.broker_name)), 0) / 100.0 END AS ev_name,
+             CASE WHEN c.kid IS NOT NULL THEN COALESCE(zc.zip_amt, 0) END AS zip_amt
+      FROM gi g
       LEFT JOIN c ON c.kid = g.kid
       LEFT JOIN f ON f.firm_crd = c.firm_crd AND f.broker_name = c.broker_name
       LEFT JOIN zc ON zc.kid = c.kid AND zc.firm_crd = c.firm_crd AND zc.broker_name = c.broker_name
       LEFT JOIN wt ON wt.kid = g.kid AND wt.rn = 1
-      LEFT JOIN t2 ON g.source = 'S2' AND t2.k = wt.seller_key
       LEFT JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON g.source = 'S1' AND nl.company_id = g.sales_firm_id),
 y AS (SELECT x.*, ev_company + ev_channel + ev_mm_map + ev_crd_to_cbd + ev_name
                   + COALESCE(ROUND(zip_amt / NULLIF(amt, 0), 2), 0) AS score
       FROM x)
-SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_basis, match_channel, new_list_label,
-       top_wholesaler_id, top_wholesaler, n_wholesalers, n_zips, n_rows,
-       DENSE_RANK() OVER (PARTITION BY source ORDER BY amt DESC) AS rank_key_by_amt, amt AS key_amt,
+SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_basis, match_channel, is_imo, new_list_label,
+       top_wholesaler, n_wholesalers, n_zips, n_rows,
+       DENSE_RANK() OVER (PARTITION BY source, is_imo ORDER BY amt DESC) AS rank_key_by_amt, amt AS key_amt,
        amt_alt AS key_amt_alt, COUNT(cand_firm_crd) OVER (PARTITION BY kid) AS n_candidates,
        ROW_NUMBER() OVER (PARTITION BY kid ORDER BY score DESC NULLS LAST, zip_amt DESC NULLS LAST, cand_firm_crd,
                                                     cand_broker_name) AS rank_in_key,
@@ -842,9 +870,9 @@ SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_basis,
        score
 FROM y;
 
---16. The review parts: REVIEW (statement 15 without wholesaler names; AMT is KEY_AMT on RANK_IN_KEY 1 rows only, so a
+--16. The review parts: REVIEW (statement 15 without the IMO keys; AMT is KEY_AMT on RANK_IN_KEY 1 rows only, so a
 --sum over AMT counts each key once), SUMMARY (keys, N_KEYS, and $ by source x FIRM_BASIS x the top candidate's
---evidence, ITEM), CHECKS (the list's $ against TMP_O2_SALES).  PCT_AMT: of PART x SOURCE.
+--evidence, ITEM, or IMO, LEFT OUT), CHECKS (the list's $ against TMP_O2_SALES).  PCT_AMT: of PART x SOURCE.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_um_out AS
 WITH
 r AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_sales_review),
@@ -852,19 +880,19 @@ t AS (SELECT source, SUM(sales) AS amt FROM ssdb_integration.lr_strategy.tmp_o2_
 v AS (
             SELECT 'REVIEW' AS part, CAST(NULL AS VARCHAR) AS name, CAST(NULL AS VARCHAR) AS item, source,
                    sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_basis, match_channel, new_list_label,
-                   top_wholesaler_id, rank_key_by_amt, key_amt, n_candidates, rank_in_key, cand_firm_crd,
+                   top_wholesaler, rank_key_by_amt, key_amt, n_candidates, rank_in_key, cand_firm_crd,
                    cand_broker_name, cand_route, ev_company, ev_channel, ev_mm_map, ev_crd_to_cbd, ev_name, zip_amt,
                    score, CAST(NULL AS BIGINT) AS n_keys, n_rows, n_wholesalers, n_zips,
                    CASE WHEN rank_in_key = 1 THEN key_amt END AS amt,
                    CASE WHEN rank_in_key = 1 THEN key_amt_alt END AS amt_alt
-            FROM r
+            FROM r WHERE NOT is_imo
   UNION ALL SELECT 'SUMMARY', NULL,
-                   CASE WHEN cand_firm_crd IS NULL THEN 'NO CANDIDATE' ELSE TRIM(CASE WHEN ev_company = 1 THEN 'COMPANY ' ELSE '' END
+                   CASE WHEN is_imo THEN 'IMO, LEFT OUT' WHEN cand_firm_crd IS NULL THEN 'NO CANDIDATE' ELSE TRIM(CASE WHEN ev_company = 1 THEN 'COMPANY ' ELSE '' END
                         || CASE WHEN ev_channel = 1 THEN 'CHANNEL ' ELSE '' END
                         || CASE WHEN zip_amt <> 0 THEN 'ZIP ' ELSE '' END
                         || CASE WHEN ev_mm_map = 1 THEN 'MM_MAP ' ELSE '' END
                         || CASE WHEN ev_crd_to_cbd = 1 THEN 'CRD_TO_CBD ' ELSE '' END
-                        || CASE WHEN ev_name = 1 THEN 'NAME' ELSE '' END) END,
+                        || CASE WHEN ev_name = 1 THEN 'NAME' WHEN ev_name >= 0.85 THEN 'FUZZY NAME' ELSE '' END) END,
                    source, NULL, NULL, NULL, NULL, firm_basis, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, COUNT(*), SUM(n_rows), NULL, NULL, SUM(key_amt),
                    SUM(key_amt_alt)
@@ -881,7 +909,7 @@ FROM v;
 --SALES 8-14, REVIEW 15-16); SALES_FIRM_ID to SCORE and N_KEYS, N_ZIPS are REVIEW's columns.  PCT_AMT: of LAYER x PART x
 --SOURCE x NAME (REVIEW: as statement 16 says).
 SELECT 'REVIEW' AS layer, part, source, name, item, CAST(NULL AS VARCHAR) AS item2, sales_firm_id, sales_firm,
-       raw_channel, mga_agent_cd, firm_basis, match_channel, new_list_label, top_wholesaler_id, rank_key_by_amt,
+       raw_channel, mga_agent_cd, firm_basis, match_channel, new_list_label, top_wholesaler, rank_key_by_amt,
        key_amt, n_candidates, rank_in_key, cand_firm_crd, cand_broker_name, cand_route, ev_company, ev_channel,
        ev_mm_map, ev_crd_to_cbd, ev_name, zip_amt, score, n_keys, CAST(NULL AS BIGINT) AS n_cells, n_rows,
        CAST(NULL AS BIGINT) AS n_firms, CAST(NULL AS BIGINT) AS n_holders, n_wholesalers, n_zips, amt, amt_alt,

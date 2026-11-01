@@ -10,6 +10,8 @@ cat <<'SQL'
 ATTACH ':memory:' AS life_prod; CREATE SCHEMA life_prod.lif_murkylake;
 -- DuckDB has no EQUAL_NULL (Snowflake's NULL-safe equality)
 CREATE MACRO equal_null(a, b) AS a IS NOT DISTINCT FROM b;
+-- nor JAROWINKLER_SIMILARITY: Snowflake's is an integer 0-100, case-insensitive (docs, read 2026-10-31); rounding here
+CREATE MACRO jarowinkler_similarity(a, b) AS CAST(ROUND(jaro_winkler_similarity(UPPER(a), UPPER(b)) * 100) AS INTEGER);
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
 CREATE TABLE life_prod.lif_murkylake.wc_market_metrics_opportunity (fiscal_yr TEXT, quarter TEXT, cbd_id TEXT,
   client_firm_id TEXT, firm_crd TEXT, broker_name TEXT, dist_ch TEXT, channel TEXT, product_line TEXT,

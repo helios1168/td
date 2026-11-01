@@ -66,8 +66,10 @@ channels."
 - **Owner's queries.** Kept verbatim in `$TD_REPO/owner_sql/` (git-excluded). A cite into one names the file's
   sha256 prefix in its log entry; a changed file gets a new entry that re-cites, and old cites stay with their hash.
 - **Masking** (for `tools/snowflake/` only; the repo's `AGENTS.md` rule holds everywhere else). Only wholesaler names
-  are masked: never in a result the owner shares back, a file here or a note; results carry wholesaler IDs or counts,
-  and firm 2's RVP (a name, our seller key) only as a count. Firm names, sales $ and firm names beside $ may appear,
+  are masked: never in a file here, this log, a note or a commit. The one result shows them only in the review
+  extract's TOP_WHOLESALER (owner, 2026-10-31: "include the wholesaler name column and drop the wholesaler id column for
+  the review extract"); a CSV that carries them stays in `$TD_REPO/data/safe/` (git-excluded). Other parts carry
+  wholesaler counts only. Firm names, sales $ and firm names beside $ may appear,
   in results, CSVs and this log (owner, 2026-10-31: "do not worry about masking anything other than wholesaler names
   at this point. you may update the global conventions to reflect this"; it replaces the 2026-10-30 rule: "the real
   concern is people or individual's names. or sales dollars associated with firm names"). Other people's names stay
@@ -150,6 +152,9 @@ channels."
   opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team"). The
   label is the session's.
 
+- Q42: firm 2's `MM_AMOUNT` is not used anywhere (owner, 2026-10-31: "for q42 mm_amount is not to be used in the
+  queries it is an irrelevant and incorrect column"); firm 2's SALES_ALT is NULL.
+
 ## Key decisions
 
 Settled answers whose alternative would move the numbers. Each names where it lives in the SQL; change it there, rerun,
@@ -171,6 +176,9 @@ decision point, and we should be able to easily come back and look at the number
 | a split still 2+ after ZIP (firm 1 sales) | the one name the company's sales under the same MGA code and channel matched by ZIP (`SPLIT, MATCHED BY MGA CODE`) | no firm | run 2026-10-31: $95.1MM of split $ in codes whose ZIP matches agree | `01_opportunity_sales.sql` 10, CTE `cz` | `SALES FIRM BASIS` |
 | a firm 1 sale with no firm, company on the new-channel list | the list's new channel, firm blank | UNMAPPED | run 2026-10-31: company 14, $302.3MM (Wells WH) | `01_opportunity_sales.sql` 12, join `nl` | `SALES FIRM BASIS` (firm), `TMP_O2_SALES.NEW_CHANNEL` |
 | manual assignments (sales) | fill only sales the rules leave without a firm; key = the sales table's firm ID, firm name, channel, MGA code (NULL = any; a row with the code wins); a key on 2+ firms or a firm not in TMP_O1_FIRM is not applied | override any sale | crd_dist_override's precedent (fills gaps only) | `01_opportunity_sales.sql` 8 `tmp_sales_firm_override`, 12 `ok` | `SALES FIRM BASIS` (MANUAL), CHECKS MANUAL ... |
+| a split still 2+ after the ZIP and MGA code rules (sales, both sources) | the one with the most opportunity at the sale's ZIP x product, a strict maximum (`SPLIT, MOST OPPORTUNITY AT ZIP`); all are on the sale's route, so channel and holder do not depend on it (owner, 2026-10-31: "yes to 4 rules"; an exception to Rules' "no largest-share guesses") | no firm | run 2026-10-31: ~$900MM of ties, base name beside a variant on one route | `01_opportunity_sales.sql` 10-11, CTE `zo` | `SALES FIRM BASIS` |
+| firm 1's marketing organizations (sales) | left out of the review extract, UNMAPPED (owner, 2026-10-31: "imo's stay out"); IMO = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 15 `gi.is_imo` (labels: 8 `tmp_s1_sale_channel`) | REVIEW SUMMARY `IMO, LEFT OUT` |
+| review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 
 ## Parked
@@ -199,7 +207,6 @@ view.
 | Q33 | Source 1's split-policy labels `IFA/IMO` and `FI/IMO` (`owner_sql/s1_sales.sql:18`, `:21`): which channel's territories hold them, and does the IMO rule apply to them? | 2026-10-30 |
 | Q34 | The unified facts: opportunity and sales stacked in one long table and put side by side only by aggregation, never joined row to row; each step of `owner_sql/s1_opp_sales.sql` goes to the layer the 2026-10-30 entry gives it. Confirm? | 2026-10-30 |
 | Q35 | `CRD_TO_CBD` beside `MM_MAP`: what is it, and which one takes source 1's company IDs to CRD? | 2026-10-30 |
-| Q42 | Source 2's sales: what is `MM_AMOUNT` beside `SALES_AMOUNT`? (Q36's second half; its first half, the opportunity period, is settled.) | 2026-10-30 |
 | Q43 | Firm 1's LPL opportunity in the owner's output: $500MM under in total, too high per wholesaler; firm 2 ties. Which of A1-A4, B1-B3 (2026-10-30 entry; checks: `explore/lpl_checks.sql`)? If B1, layer 01's channel x ZIP holders over-credit channel wholesalers too. | 2026-10-30 |
 | Q41 | Who holds AMER (company 805's channel, `s1_opp_sales.sql:460`)? Firm 1's territory step keeps company 0's regions and company 3's (`:692`), so AMER has no territory and no holder in either state. Evidence: `explore/amer_holder.sql`. | 2026-10-30 |
 | Q44 | Who holds AFS (company 438, `s1_opp_sales.sql:706`) in the new state? The new-channel list gives it no holder channel, so its cells keep their channel's holder in the old state and have none in the new. | 2026-10-30 |
@@ -1202,3 +1209,17 @@ Every CHECKS row 0 (19); bases as the previous run. REVIEW: 578 keys (firm 1 551
   Securities - OID $68.1MM, DPL Financial Partners OID $57.4MM, ...): no candidate, the name matches no market metrics
   name exactly. Firm 2's top wholesaler ID is blank for $318.2MM: those RVPs are not in its territory table.
 - Firm 1 NO CANDIDATE $3,765.6MM, 519 keys: the marketing organizations (owner: ignore for now).
+
+### 2026-10-31: rule 4, IMO out of the review, fuzzy names, wholesaler names, Q42
+
+Owner, 2026-10-31: "first, include the wholesaler name column and drop the wholesaler id column for the review
+extract. for q42 mm_amount is not to be used in the queries it is an irrelevant and incorrect column. yes to 4 rules.
+imo's stay out. use fuzzy names but also allow manual typing". In `01_opportunity_sales.sql`: statements 10-11 rule 4,
+`SPLIT, MOST OPPORTUNITY AT ZIP` (a Key decisions row); statement 11 and 14 no longer read `MM_AMOUNT`, nor
+`explore/sales_crosswalk.sql` (Q42 settled); statement 15 IS_IMO (left out of the REVIEW part, a SUMMARY row instead,
+ranks within the rest), fuzzy name candidates and EV_NAME as a similarity (`JAROWINKLER_SIMILARITY`, integer 0-100,
+case-insensitive: Snowflake docs, functions/jarowinkler_similarity, read 2026-10-31; the DuckDB tests round
+`jaro_winkler_similarity`, so a name at the 85 cutoff may fall either side), TOP_WHOLESALER (name) in place of the ID
+(convention Masking edited). Manual typing needed nothing new: any CRD x name in TMP_O1_FIRM can be typed into
+`tmp_sales_firm_override`, and a typo shows in CHECKS (MANUAL FIRMS NOT IN TMP_O1_FIRM). `sales_review_test.sh` 20
+checks, all hand-worked values right first time; 11 mutations fail the tests. Not run in Snowflake.
