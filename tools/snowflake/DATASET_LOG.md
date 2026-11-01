@@ -1459,3 +1459,18 @@ SALES_WHOLESALER. Statement 17 drops them after the rename (`ALTER TABLE ... DRO
 table has 23 columns. `union_test.sh` checks the layout (23, no clean-name column); two mutations (drop another column
 instead; keep one clean-name column) killed. Revert: delete the two DROP COLUMN lines and put the two columns back in
 the SELECT and the INSERT list.
+
+### 2026-11-01: the clean-name columns kept and mapped (correction)
+
+Owner, 2026-11-01: "no I meant the other way around, make sure terr_wholesaler_clean name, and sales_whoelsaler clean
+name are mapped appropriately. and help me think through how to handle this for old_terr_wholesaler". The drop in the
+entry above is undone (the table has 25 columns again). TERR_WHOLESALER_CLEAN_NAME is OLD_TERR_WHOLESALER, as the live
+table's was the holder of the row's DIST_CH, pending the owner's choice of old or new; SALES_WHOLESALER_CLEAN_NAME is
+now the seller as the territory table names that wholesaler key (firm 1's ID, firm 2's RVP), else SALES_WHOLESALER,
+so one wholesaler has one name in both columns. Names are as the tables have them: the live table's clean names were
+the owner's parse to "First Last" (`owner_sql/uni_latest.sql`, `out`), not ported; open with the owner. In run
+2026-11-01-1357 the review extract's firm 1 names are upper case "LAST, FIRST" (2 of 2) and firm 2's "First Last" (6
+of 8 title case; 1 with a suffix). No channel x ZIP had 2+ holders (V3 COVERAGE: no "LOWEST OF 2+" row), so the old
+and new holder pairing never leaves a blank side today. `union_test.sh` 15 checks (a W7 sale spelled another way in
+the sales table, firm 2's `r1 `); my first version of the new check concatenated a NULL old holder and failed on a
+correct row; fixed. 3 mutations killed (no key lookup, lookup on the old holder's key, TERR clean on the new holder).

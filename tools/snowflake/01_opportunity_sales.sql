@@ -1095,10 +1095,7 @@ FROM v;
 --TMP_O1_DATASET and TMP_O2_SALES as DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2, a permanent table with the live table's
 --columns and types (CREATE TABLE ... LIKE; INSERT coerces each value to its column's type, and a value it cannot coerce
 --fails the run), TERR_WHOLESALER renamed OLD_TERR_WHOLESALER and NEW_TERR_WHOLESALER added (owner: "add the new state
---holder as new_terr_wholesaler, and name the old as old_terr_wholesaler"), TERR_WHOLESALER_CLEAN_NAME and
---SALES_WHOLESALER_CLEAN_NAME dropped: OLD_ and NEW_TERR_WHOLESALER and SALES_WHOLESALER take their place (owner,
---2026-11-01: "lets just replace the clean_name versions of the columns with the appropriate name from latest
---logic").  The owner swaps it in after the TABLEAU
+--holder as new_terr_wholesaler, and name the old as old_terr_wholesaler").  The owner swaps it in after the TABLEAU
 --parts tie out (18).  One row per source x old, new and sales wholesaler x CRD x broker name x old channel x new
 --channel x ZIP x product:
 --  OLD_ and NEW_TERR_WHOLESALER: who holds the row's territory channel at its ZIP in the old and the new state (the old
@@ -1116,7 +1113,10 @@ FROM v;
 --    the new channel; CHANNEL: owner_sql/uni_latest.sql's CASE on it.  STATE: ZIP_STATE_MAP's, the lowest of a ZIP's.
 --  MM_OPP: the cell's opportunity; ACTUAL_SALES_AMOUNT: the sales; SALES_AMOUNT NULL (owner: "actual sales amount will
 --    be our sales. drop sales_alt and set sales amount to null").
---    *_TERRITORY_ID: the wholesaler keys (firm 1's ID, firm 2's RVP); the address IDs and the HAS_TERRITORY flags
+--  TERR_WHOLESALER_CLEAN_NAME: OLD_TERR_WHOLESALER; SALES_WHOLESALER_CLEAN_NAME: the seller as the territory table
+--    names that wholesaler key, else SALES_WHOLESALER, so one wholesaler has one name in both (owner, 2026-11-01: "make
+--    sure terr_wholesaler_clean name, and sales_whoelsaler clean name are mapped appropriately").
+--  *_TERRITORY_ID: the wholesaler keys (firm 1's ID, firm 2's RVP); the address IDs and the HAS_TERRITORY flags
 --    NULL (owner: "we do not need to replicate any of the name matching logic"; "set those ... flags to null").
 --  No filter (owner: "do not propagate any filters as we are implementing them in our override instead").
 --TMP_UNION holds the same rows with this script's types; look at it in the same session.
@@ -1180,9 +1180,11 @@ g AS (SELECT source, zip, firm_crd, broker_name, product, dist_ch, new_dist, old
 x AS (SELECT g.*, COALESCE(g.sales_nm, CASE WHEN EQUAL_NULL(g.sales_key, g.old_key) THEN g.old_nm END) AS sales_wh
       FROM g),
 zs AS (SELECT LPAD(TRIM(CAST(zip_code AS VARCHAR)), 5, '0') AS zip, MIN(state) AS state
-       FROM ssdb_integration.lr_strategy.zip_state_map GROUP BY ALL)
+       FROM ssdb_integration.lr_strategy.zip_state_map GROUP BY ALL),
+nm AS (SELECT DISTINCT source, w_key, w_nm FROM h)
 SELECT 2025 AS fiscal_yr, CASE x.source WHEN 'S1' THEN $s1_source WHEN 'S2' THEN $s2_source END AS source,
-       x.old_nm AS old_terr_wholesaler, x.sales_wh AS sales_wholesaler, x.firm_crd AS cbd_id, x.broker_name AS firm,
+       x.old_nm AS old_terr_wholesaler, x.sales_wh AS sales_wholesaler, x.old_nm AS terr_wholesaler_clean_name,
+       COALESCE(nm.w_nm, x.sales_wh) AS sales_wholesaler_clean_name, x.firm_crd AS cbd_id, x.broker_name AS firm,
        CAST(NULL AS VARCHAR) AS parent, x.dist_ch, x.new_dist,
        CASE WHEN x.new_dist IN ('PRI', 'AFS') THEN 'pri_afs'
             WHEN x.new_dist IN ('Wells WH', 'National (Chase)', 'Wells FI') THEN 'National' ELSE x.new_dist END AS channel,
@@ -1191,20 +1193,20 @@ SELECT 2025 AS fiscal_yr, CASE x.source WHEN 'S1' THEN $s1_source WHEN 'S2' THEN
        CAST(NULL AS VARCHAR) AS sales_wholesaler_address_id, x.old_key AS territory_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS territory_wholesaler_address_id, CAST(NULL AS INTEGER) AS sales_wholesaler_has_territory,
        CAST(NULL AS INTEGER) AS territory_wholesaler_has_territory, x.new_nm AS new_terr_wholesaler
-FROM x LEFT JOIN zs ON zs.zip = x.zip;
+FROM x LEFT JOIN zs ON zs.zip = x.zip LEFT JOIN nm ON nm.source = x.source AND nm.w_key = x.sales_key;
 
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2
   LIKE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys;
 ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 RENAME COLUMN terr_wholesaler TO old_terr_wholesaler;
 ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 ADD COLUMN new_terr_wholesaler VARCHAR;
-ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 DROP COLUMN terr_wholesaler_clean_name;
-ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 DROP COLUMN sales_wholesaler_clean_name;
 INSERT INTO ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2
-  (fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
+  (fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, terr_wholesaler_clean_name, sales_wholesaler_clean_name,
+   cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
    sales_amount, sales_wholesaler_territory_id, sales_wholesaler_address_id, territory_wholesaler_territory_id,
    territory_wholesaler_address_id, sales_wholesaler_has_territory, territory_wholesaler_has_territory,
    new_terr_wholesaler)
-SELECT fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
+SELECT fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, terr_wholesaler_clean_name, sales_wholesaler_clean_name,
+       cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
        sales_amount, sales_wholesaler_territory_id, sales_wholesaler_address_id, territory_wholesaler_territory_id,
        territory_wholesaler_address_id, sales_wholesaler_has_territory, territory_wholesaler_has_territory,
        new_terr_wholesaler
@@ -1276,7 +1278,7 @@ vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp
   UNION ALL SELECT 'CHECKS', lb.source, 'SOURCE LABEL NOT IN THE LIVE TABLE (MUST BE 0)', NULL, NULL,
                    CASE WHEN ls.source IS NULL THEN 1 ELSE 0 END, 0, NULL
             FROM lb LEFT JOIN ls ON ls.source = lb.source
-  UNION ALL SELECT 'CHECKS', NULL, 'LIVE TABLE COLUMNS THIS SCRIPT DOES NOT FILL OR DROP (MUST BE 0)', NULL, NULL, n, 0, NULL
+  UNION ALL SELECT 'CHECKS', NULL, 'LIVE TABLE COLUMNS THIS SCRIPT DOES NOT FILL (MUST BE 0)', NULL, NULL, n, 0, NULL
             FROM lc;
 
 --19. Everything, one result set: download as CSV.  LAYER says which statements a row comes from (OPPORTUNITY 1-7,
