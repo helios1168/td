@@ -1346,3 +1346,10 @@ Every CHECKS row 0 (25); TIE-OUT unchanged ($7,730.0MM actual, $7,731.1MM comp'd
 Gold Coast's route removed: firm 2's new-state IFA opportunity $75,426.9MM -> $75,422.6MM, UNMAPPED $300.2MM ->
 $304.5MM. Cetera Wealth's route moves $418.2MM (firm 1) and $395.7MM (firm 2) to FI, as before. Review list: 10 keys,
 $81.2MM, each held, left unmapped or undecided by the owner.
+
+### 2026-11-01: the last Cetera keys assigned
+
+Owner, 2026-11-01, shown both keys and the options: "yep go with a". Cetera Advisors (firm 1, company 107, IFA, code
+88232, $1.20MM) -> 10299 CETERA ADVISORS LLC (exact name, MM_MAP agrees; no opportunity at its ZIPs); Cetera Wealth
+Services BK (firm 2, CRD 13572, $2.33MM; two FI names since the owner's route) -> CETERA WEALTH SERVICES, LLC - BANK,
+where it matched by channel before the route override. 53 manual rows, all distinct keys. Not run in Snowflake.

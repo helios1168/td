@@ -499,6 +499,9 @@ FROM (VALUES
   ('S1', '1391', 'WESTERN INTERNATIONAL SEC', 'IFA', '33ASE', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
   ('S1', '1391', 'WESTERN INTERNATIONAL SEC', 'IFA', '44ASE', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
   ('S2', '19616', 'WFCS, LLC', 'FP', NULL, '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  -- 2026-11-01, the last Cetera keys (owner: "yep go with a")
+  ('S1', '107', 'CETERA ADVISORS LLC', 'IFA', '88232', '10299', 'CETERA ADVISORS LLC'),
+  ('S2', '13572', 'Cetera Wealth Services', 'BK', NULL, '13572', 'CETERA WEALTH SERVICES, LLC - BANK'),
   -- owner rows: end
   ('', '', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_crd, broker_name)
