@@ -1,11 +1,15 @@
+use role rl_ssdb_Integration_Lr_Strategy_Rw;
+use database ssdb_Integration;
+use schema lr_strategy;
+
 --Firm 1's sales by MGA agent code, sales only (no opportunity): which codes span 2+ companies, firms, channels or
 --sellers, how each company's sales spread over codes, and whether a sale left without a firm carries a code that
 --resolved sales put on one firm (Q45: could the code pick a split company's firm?).  Reads TMP_O2_SALES
 --(01_opportunity_sales.sql, statement 12): run it after 01_opportunity_sales.sql in the same worksheet, with s1_sales
---on the base sales table that has MGA_AGENT_CD (00_base_sales.sql).  COMPANY X CODE puts firm names beside sales $:
---read it at work, never copy it out.  The other parts carry no names or IDs.  The tie to the sales table by code is
---01_opportunity_sales.sql's SALES TABLE MINUS TMP_O2_SALES BY FIRM X MGA X CHANNEL X PRODUCT check.
---Columns: PART, ITEM, ITEM2, N_ROWS, N_CODES, N_COMPANIES, N_FIRMS, N_CHANNELS, N_SELLERS, N_ZIPS, AMT (actual $),
+--on the base sales table that has MGA_AGENT_CD (00_base_sales.sql).  Its one result also carries all of
+--01_opportunity_sales.sql's (FILE says which), checks included, so one CSV has everything: the tie to the sales table
+--by code is 01's SALES TABLE MINUS TMP_O2_SALES BY FIRM X MGA X CHANNEL X PRODUCT check.  No wholesaler names.
+--tmp_mga_out columns: PART, ITEM, ITEM2, N_ROWS, N_CODES, N_COMPANIES, N_FIRMS, N_CHANNELS, N_SELLERS, N_ZIPS, AMT (actual $),
 --AMT_ALT (comp'd $), PCT_AMT (of PART, and of ITEM in SPANS and UNRESOLVED SALES BY CODE).
 --  CODES: one row per code, (BLANK) for none; N_*: distinct companies, firms reached, recorded channels, sellers, ZIPs.
 --  COMPANY X CODE: ITEM company ID | name; ITEM2 code | FIRM_BASIS | broker name found.
@@ -59,5 +63,17 @@ SELECT *, ROUND(100 * amt / NULLIF(SUM(amt) OVER (PARTITION BY part,
                                     CASE WHEN part IN ('SPANS', 'UNRESOLVED SALES BY CODE') THEN item END), 0), 2) AS pct_amt
 FROM v;
 
---Everything, one result set (COMPANY X CODE: read at work).
-SELECT * FROM ssdb_integration.lr_strategy.tmp_mga_out ORDER BY part, item, amt DESC NULLS LAST, item2;
+--Everything, one result set: this file's parts, then 01_opportunity_sales.sql's (its statement 15, in these columns).
+SELECT 'SALES_MGA' AS file, part, CAST(NULL AS VARCHAR) AS source, CAST(NULL AS VARCHAR) AS name, item, item2, n_rows,
+       n_codes, n_companies, n_firms, n_channels, n_sellers, n_zips, CAST(NULL AS BIGINT) AS n_cells,
+       CAST(NULL AS BIGINT) AS n_holders, CAST(NULL AS BIGINT) AS n_wholesalers, amt, amt_alt, pct_amt
+FROM ssdb_integration.lr_strategy.tmp_mga_out
+UNION ALL
+SELECT '01 OPPORTUNITY', part, source, name, item, item2, NULL, NULL, NULL, n_firms, NULL, NULL, NULL, n_cells, n_holders,
+       NULL, amt, NULL, ROUND(100.0 * amt / NULLIF(SUM(amt) OVER (PARTITION BY part, source, name), 0), 2)
+FROM ssdb_integration.lr_strategy.tmp_o1_out
+UNION ALL
+SELECT '01 SALES', part, source, name, item, NULL, n_rows, NULL, NULL, n_firms, NULL, NULL, NULL, NULL, NULL,
+       n_wholesalers, amt, NULL, ROUND(100.0 * amt / NULLIF(SUM(amt) OVER (PARTITION BY part, source, name), 0), 2)
+FROM ssdb_integration.lr_strategy.tmp_o2_out
+ORDER BY file DESC, part, source, name, item, amt DESC NULLS LAST, item2;

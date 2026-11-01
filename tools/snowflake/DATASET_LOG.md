@@ -17,6 +17,10 @@ channels."
 ## Conventions
 
 - **Database.** Every reference uses the full `database.schema.table` path; CTEs are exempt.
+- **Session header.** Every new SQL file starts with `use role rl_ssdb_Integration_Lr_Strategy_Rw;`, `use database
+  ssdb_Integration;`, `use schema lr_strategy;` (owner, 2026-10-31: "be sure to include use role
+  rl_ssdb_Integration_Lr_Strategy_Rw; use database ssdb_Integration; use schema lr_strategy; at the top of all new sql
+  files and add this as a convention or rule"). The DuckDB tests drop `use` lines.
 - **Table variables.** A table whose name carries a carrier is a session variable, set once at the top of the file
   (`SET s2_opp = 'db.schema.<...>'`) and read as `IDENTIFIER($s2_opp)`; the owner types the names there, never a
   find and replace (owner, 2026-10-30: "from now on, instead of using find and replace, set it up so I can just define
@@ -28,7 +32,11 @@ channels."
   see all relevent output, as opposed to having to manually run multiple queries step by step and check one at a
   time"). Each part (report, review list, checks) is its own temporary table with the same columns, and the last
   statement unions them; checks are rows of that result. Pattern: `explore/profile.sql`, statements 3-8 (`PART`,
-  `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages).
+  `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages). Everything one request asks the owner to run comes back
+  as one CSV: a file run after another in the same worksheet (an `explore/` file after `01_opportunity_sales.sql`)
+  ends on a result that also carries the first file's, under a `FILE` column, checks included (owner, 2026-10-31: "be
+  sure that we consolidate everything you ask me to run into a single query with a single output i can share back
+  with you as csv file"). Pattern: `explore/sales_mga.sql`.
 - **Columns** (layer files; an `explore/` profile reports in the long layout of `explore/profile.sql`). Source columns
   keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by
   what; rankings `RANK_<within>_<by>`; checks `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO`.
@@ -51,11 +59,13 @@ channels."
   2026-10-30: "can we save option 1 as a repeatable workflow for this snowflake-related portion of the project?").
 - **Owner's queries.** Kept verbatim in `$TD_REPO/owner_sql/` (git-excluded). A cite into one names the file's
   sha256 prefix in its log entry; a changed file gets a new entry that re-cites, and old cites stay with their hash.
-- **Masking** (for `tools/snowflake/` only; the repo's `AGENTS.md` rule holds everywhere else). Never a person's name,
-  and never sales $ tied to a firm name. Distributor firm names may stand in SQL and rule lists; a carrier's name only
-  through the table variables. This file gives amounts as percentages and counts (owner, 2026-10-30: "the real concern
-  is people or individual's names. or sales dollars associated with firm names"; "carrier-based names should be handled
-  with the "set" convention we defined earlier"; "exceptions are scoped only to tools/snowflake").
+- **Masking** (for `tools/snowflake/` only; the repo's `AGENTS.md` rule holds everywhere else). Only wholesaler names
+  are masked: never in a result the owner shares back, a file here or a note; results carry wholesaler IDs or counts,
+  and firm 2's RVP (a name, our seller key) only as a count. Firm names, sales $ and firm names beside $ may appear,
+  in results, CSVs and this log (owner, 2026-10-31: "do not worry about masking anything other than wholesaler names
+  at this point. you may update the global conventions to reflect this"; it replaces the 2026-10-30 rule: "the real
+  concern is people or individual's names. or sales dollars associated with firm names"). Other people's names stay
+  out too, and carrier tables stay behind the table variables (unchanged code).
 
 ## Settled
 
@@ -1058,3 +1068,17 @@ investigation, but the angle would still to eventually be looped back into the O
   50 checks; `sales_crosswalk_test.sh` row count 13 to 14 (the split), $ unchanged; `sales_mga_test.sh` 14 checks.
   Mutations that fail: 4 on statements 10-14, 7 on `sales_mga.sql` (one survived the first fixture, the "2+ firms"
   cutoff, until a test row put an unresolved sale on M1). Not run in Snowflake.
+
+### 2026-10-31: conventions, session header, one CSV per request, masking only wholesaler names
+
+Owner, 2026-10-31: "first be sure to include use role rl_ssdb_Integration_Lr_Strategy_Rw; use database
+ssdb_Integration; use schema lr_strategy; at the top of all new sql files and add this as a convention or rule. next
+be sure that we consolidate everything you ask me to run into a single query with a single output i can share back
+with you as csv file. do not worry about masking anything other than wholesaler names at this point. you may update
+the global conventions to reflect this". Conventions edited in place (Session header, One result, Masking).
+`00_base_sales.sql` and `explore/sales_mga.sql`, both new today, start with the three lines; older files keep
+`use secondary roles all;` only. `explore/sales_mga.sql`'s result now carries all of `01_opportunity_sales.sql`'s
+under `FILE` (test 16 checks: both files' rows, 01's checks inside; two mutations fail it; one first expected value,
+"01's checks all 0", was wrong: the test's own extra sale is not in `SLS_RPT_DETAIL`, so those two checks show 2 each).
+`explore/sales_crosswalk.sql` may now be shared (no wholesaler names); `explore/transfers.sql` still has them, at work
+only. Not changed: the repo's `AGENTS.md` masking rule and the global agent rules, which cover other threads.

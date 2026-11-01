@@ -19,9 +19,10 @@ sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
     -e '/^--15\./,$d' "$top/01_opportunity_sales.sql"
-sed -e 's/TEMPORARY TABLE/TABLE/' \
-    -e 's/^SELECT \* FROM ssdb_integration.lr_strategy.tmp_mga_out ORDER BY/CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_mga_out ORDER BY/' \
+sed -e '/^use /d' -e 's/TEMPORARY TABLE/TABLE/' \
+    -e "s/^SELECT 'SALES_MGA' AS file,/CREATE TABLE full_result AS SELECT 'SALES_MGA' AS file,/" \
     "$here/sales_mga.sql"
+echo "CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_mga_out;"
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
@@ -43,6 +44,8 @@ SELECT
  chk('company x code: LPL by code and basis', (SELECT string_agg(item2 || '=' || CAST(amt AS INTEGER), ', ' ORDER BY item2) FROM r WHERE part = 'COMPANY X CODE' AND item = '8 | LPL'), 'M3 | SPLIT, 2+ CHANNEL MATCHES | -=9, M3 | SPLIT, MATCHED BY CHANNEL | LPL FINANCIAL LLC - BANK=7, M4 | SPLIT, 2+ CHANNEL MATCHES | -=4'),
  chk('company x code: every sale', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'COMPANY X CODE'), 65),
  chk('pct: of part, of item in spans', (SELECT CAST(SUM(pct_amt) AS INTEGER) FROM r WHERE part = 'SPANS' AND item = 'CODES ON FIRMS') || ' ' || (SELECT CAST(ROUND(SUM(pct_amt)) AS INTEGER) FROM r WHERE part = 'CODES'), '100 100'),
+ chk('one result: this file and all of 01''s', (SELECT string_agg(file || '=' || n, ' ' ORDER BY file) FROM (SELECT file, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = '01 OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' 01 SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' SALES_MGA=' || (SELECT COUNT(*) FROM r), true),
+ chk('one result: 01''s checks in it (this test''s own row is not in SLS_RPT_DETAIL: 2 actual + 2 comp''d)', (SELECT string_agg(name || '=' || CAST(amt AS INTEGER), ', ' ORDER BY name) FROM full_result WHERE file = '01 SALES' AND part = 'CHECKS' AND amt <> 0), 'SALES TABLE MINUS SLS_RPT_DETAIL, 2025 ACTUAL (MUST BE 0)=2, SALES TABLE MINUS SLS_RPT_DETAIL, 2025 COMP''D (MUST BE 0)=2'),
  chk('no firm 2 rows', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'COMPANY X CODE' AND item LIKE '100 |%'), NULL);
 SELECT 'sales_mga_test: ok';
 SQL

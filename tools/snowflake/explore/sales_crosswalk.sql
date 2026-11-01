@@ -2,7 +2,7 @@
 --cross walk across our mappings from [firm 2's sales table] and [firm 1's base sales table] to what is in o2_dataset").
 --Run 01_opportunity_sales.sql first, in the same worksheet: this file reads its temporary tables and its session
 --variables s1_sales and s2_sales (no SET lines here, so an unset variable fails loudly).  Firm names and sales $ appear
---together: read it at work, never bring it here (DATASET_LOG.md, Conventions, Masking).  One result set:
+--together, which may be shared now; no wholesaler names (DATASET_LOG.md, Conventions, Masking).  One result set:
 --  CROSSWALK: one row per source x the sales table's own key, fiscal year 2025 (firm 1: product bucket ALL), as the
 --    table has it: SALES_FIRM_ID (firm 1's CONSOL_BRKR_DLR_ID, firm 2's FIRM_CRD), SALES_FIRM (CONSOL_BROKER_NM, FIRM),
 --    RAW_CHANNEL (DIST_CH, CHANNEL), RAW_PRODUCT (PRODUCT_LINE2, PRODUCT).  Then each mapping step's output:
@@ -154,7 +154,7 @@ SELECT 'CHECKS', item, source, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N
        NULL, amt, NULL, NULL, NULL, NULL, NULL, NULL, v
 FROM c;
 
---5. Everything, one result set (read at work).
+--5. Everything, one result set.
 SELECT * FROM ssdb_integration.lr_strategy.tmp_xw
 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_xw_checks
 ORDER BY part, source, sales DESC NULLS LAST, sales_firm_id, raw_channel, raw_product;

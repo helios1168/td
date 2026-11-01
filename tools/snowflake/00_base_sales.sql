@@ -1,3 +1,7 @@
+use role rl_ssdb_Integration_Lr_Strategy_Rw;
+use database ssdb_Integration;
+use schema lr_strategy;
+
 --Firm 1's base sales table with MGA_AGENT_CD (the owner's query of 2026-10-31, sha256
 --428f51472a97..., saved as owner_sql/s1_sales_v2.sql).  Changed only where a line says EDIT
 --(session, 2026-10-31): the table name as the SET variable s1_sales, two names masked, ok_policies back to policy grain, and MGA in final_output's join to agent_ticket.  Checks: the base table's
