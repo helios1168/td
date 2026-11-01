@@ -1338,3 +1338,11 @@ sales are IMO" (one rule for both kinds). `sales_review_test.sh` 33 checks, a sp
 stays split); 4 of 5 mutations fail it; the fifth, dropping the firm 1 condition, survives: firm 2's channels never
 carry these labels. One hand-worked value was wrong: the AMT check counts review rows, so the new key added 3, not 1.
 Not run in Snowflake.
+
+### 2026-11-01: run after the IMO relabel (`data/safe/opp_sales_2026-11-01-1357.csv`)
+
+Every CHECKS row 0 (25); TIE-OUT unchanged ($7,730.0MM actual, $7,731.1MM comp'd); firm bases unchanged from the
+1346 run. Firm 1's new channel IMO $0.2MM -> $3,745.3MM and UNMAPPED $3,746.3MM -> $1.2MM (Cetera Advisors 88232).
+Gold Coast's route removed: firm 2's new-state IFA opportunity $75,426.9MM -> $75,422.6MM, UNMAPPED $300.2MM ->
+$304.5MM. Cetera Wealth's route moves $418.2MM (firm 1) and $395.7MM (firm 2) to FI, as before. Review list: 10 keys,
+$81.2MM, each held, left unmapped or undecided by the owner.
