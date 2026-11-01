@@ -125,6 +125,26 @@ FROM (VALUES
   ('438', 'AFS', NULL)
 ) AS v (company_id, new_label, holder_channel);
 
+--The owner's firm channels: a CRD x broker name takes this channel as its route, over firm 1's rows and
+--crd_dist_override, so both sources' new state and the sales rules use it (owner, 2026-11-01: "when firm and written
+--channel disagree, we need to override the actual channel for that firm and crd").  Matched trimmed and upper-cased.
+--CHECKS (statement 7): a firm on 2+ channels (not applied), a firm not in the data, a channel no firm 1 territory has.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_firm_route_override AS
+SELECT TRIM(CAST(firm_crd AS VARCHAR)) AS firm_crd, UPPER(TRIM(CAST(broker_name AS VARCHAR))) AS broker_name,
+       UPPER(TRIM(CAST(route AS VARCHAR))) AS route
+FROM (VALUES
+  -- owner routes: begin
+  -- 2026-11-01, from the owner's review workbook: the channel written beside the chosen firm
+  ('13572', 'CETERA WEALTH SERVICES, LLC', 'FI'),
+  ('110925', 'GOLD COAST SECURITIES, INC.', 'IFA'),
+  ('146870', 'NOBLES & RICHARDS, INC', 'IFA'),
+  ('144403', 'PHX FINANCIAL, INC.', 'IFA'),
+  ('6914', 'VAN CLEMENS & CO. INCORPORATED', 'IFA'),
+  -- owner routes: end
+  ('', '', '')   -- placeholder, keep it last
+) AS v (firm_crd, broker_name, route)
+WHERE TRIM(firm_crd) <> '';
+
 --2. Each source's opportunity rows, cleaned and grouped: ZIP padded to 5, IDs as text, names and labels trimmed and
 --upper-cased, the product map (DATA_MODEL.md, p: RILA if either column says RILA, IOVA, VARIABLE, INDEX, FIXED).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_rows_s1 AS
@@ -165,7 +185,8 @@ GROUP BY ALL;
 
 --3. The firm table.  Route (Q38): the one non-blank firm 1 channel of the CRD x broker name in source 1's rows, of the
 --CRD where source 1 lacks the name (a source 2 name); crd_dist_override (distinct keys; its CRD x name row, else its CRD row) fills only a
---route with no channel, 2+ channels or no source 1 rows; else UNMAPPED.  NEW_LABEL: the new-channel list's label, else
+--route with no channel, 2+ channels or no source 1 rows; else UNMAPPED.  The owner's channel (tmp_firm_route_override,
+--one per firm) comes before all of these; ROUTE_BASIS then says OWNER OVERRIDE: the route it replaced -> the owner's.  NEW_LABEL: the new-channel list's label, else
 --the route.  TAU: the list's holder channel, else the route.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o1_firm AS
 WITH
@@ -182,7 +203,9 @@ ov AS (SELECT firm_crd, broker_name, COUNT(DISTINCT ch) AS k, MIN(ch) AS ch FROM
 nu AS (SELECT s1.firm_crd, s1.broker_name, COUNT(DISTINCT nl.new_label) AS k, MIN(nl.new_label) AS label,
               MIN(nl.holder_channel) AS holder_ch
        FROM s1 JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON nl.company_id = s1.company_id GROUP BY ALL),
-r AS (SELECT k.firm_crd, k.broker_name,
+fo AS (SELECT firm_crd, broker_name, COUNT(DISTINCT route) AS k, MIN(route) AS route
+       FROM ssdb_integration.lr_strategy.tmp_firm_route_override GROUP BY ALL),
+r AS (SELECT k.firm_crd, k.broker_name, fo.route AS owner_route,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.k ELSE cr.k END AS s1_k,
              CASE WHEN nr.firm_crd IS NOT NULL THEN nr.ch ELSE cr.ch END AS s1_ch,
              CASE WHEN nr.firm_crd IS NOT NULL THEN 'NAME' ELSE 'CRD' END AS s1_level,
@@ -193,14 +216,19 @@ r AS (SELECT k.firm_crd, k.broker_name,
       LEFT JOIN cr ON cr.firm_crd = k.firm_crd
       LEFT JOIN ov v1 ON v1.firm_crd = k.firm_crd AND v1.broker_name = k.broker_name
       LEFT JOIN ov v0 ON v0.firm_crd = k.firm_crd AND v0.broker_name IS NULL
-      LEFT JOIN nu ON nu.firm_crd = k.firm_crd AND nu.broker_name = k.broker_name),
-g AS (SELECT r.*,
-             CASE WHEN s1_k = 1 THEN s1_ch WHEN ov_k = 1 THEN ov_ch ELSE 'UNMAPPED' END AS route,
-             CASE WHEN s1_k = 1 THEN s1_level
-                  ELSE CASE WHEN ov_k = 1 THEN 'OVERRIDE FILLS ' ELSE 'UNMAPPED: ' END
-                       || CASE WHEN s1_k = 0 THEN 'NO CHANNEL' WHEN s1_k > 1 THEN '2+ CHANNELS'
-                               ELSE 'NO SOURCE 1 ROWS' END END AS route_basis
-      FROM r)
+      LEFT JOIN nu ON nu.firm_crd = k.firm_crd AND nu.broker_name = k.broker_name
+      LEFT JOIN fo ON fo.firm_crd = k.firm_crd AND fo.broker_name = UPPER(k.broker_name) AND fo.k = 1),
+g0 AS (SELECT r.*,
+              CASE WHEN s1_k = 1 THEN s1_ch WHEN ov_k = 1 THEN ov_ch ELSE 'UNMAPPED' END AS derived_route,
+              CASE WHEN s1_k = 1 THEN s1_level
+                   ELSE CASE WHEN ov_k = 1 THEN 'OVERRIDE FILLS ' ELSE 'UNMAPPED: ' END
+                        || CASE WHEN s1_k = 0 THEN 'NO CHANNEL' WHEN s1_k > 1 THEN '2+ CHANNELS'
+                                ELSE 'NO SOURCE 1 ROWS' END END AS derived_basis
+       FROM r),
+g AS (SELECT g0.*, COALESCE(owner_route, derived_route) AS route,
+             CASE WHEN owner_route IS NOT NULL THEN 'OWNER OVERRIDE: ' || derived_route || ' -> ' || owner_route
+                  ELSE derived_basis END AS route_basis
+      FROM g0)
 SELECT g.firm_crd, g.broker_name, g.route, g.route_basis, g.ov_ch,
        g.nu_k, CASE WHEN g.nu_k > 1 THEN '2+ NEW LABELS' WHEN g.nu_k = 1 THEN g.nu_label ELSE g.route END AS new_label,
        CASE WHEN g.nu_k > 1 THEN NULL WHEN g.nu_k = 1 THEN g.holder_ch ELSE g.route END AS tau
@@ -369,6 +397,22 @@ UNION ALL
 SELECT 'CHECKS', NULL, 'FIRMS WITH 2+ NEW LABELS (MUST BE 0)', NULL, NULL, NULL,
        (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE nu_k > 1), NULL, NULL
 UNION ALL
+SELECT 'CHECKS', NULL, 'OWNER ROUTES: A FIRM ON 2+ CHANNELS, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL,
+       (SELECT COUNT(*) FROM (SELECT firm_crd, broker_name, COUNT(DISTINCT route) AS k
+                              FROM ssdb_integration.lr_strategy.tmp_firm_route_override GROUP BY ALL) d WHERE k > 1),
+       NULL, NULL
+UNION ALL
+SELECT 'CHECKS', NULL, 'OWNER ROUTES: FIRM NOT IN THE DATA (MUST BE 0)', NULL, NULL, NULL,
+       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_firm_route_override o
+        LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f
+          ON f.firm_crd = o.firm_crd AND UPPER(f.broker_name) = o.broker_name
+        WHERE f.firm_crd IS NULL), NULL, NULL
+UNION ALL
+SELECT 'CHECKS', NULL, 'OWNER ROUTES: NO FIRM 1 TERRITORY CHANNEL (MUST BE 0)', NULL, NULL, NULL,
+       (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_firm_route_override o
+        LEFT JOIN (SELECT DISTINCT UPPER(TRIM(new_dist_channel)) AS ch FROM IDENTIFIER($s1_territories)) t ON t.ch = o.route
+        WHERE t.ch IS NULL), NULL, NULL
+UNION ALL
 SELECT 'CHECKS', source, 'CELLS WITH 2+ CURRENT LABELS', NULL, NULL, COUNT(*), NULL, NULL, SUM(amt)
 FROM multi GROUP BY ALL;
 
@@ -452,6 +496,8 @@ FROM (VALUES
   ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '41190', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
   ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', 'FSA05FUS00000000000', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
   ('S2', '19616', 'WFCS, LLC', 'BD', NULL, '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  -- 2026-11-01, held row released: its firm's channel is now the owner's (tmp_firm_route_override)
+  ('S2', '13572', 'Cetera Wealth Services', 'BD', NULL, '13572', 'CETERA WEALTH SERVICES, LLC'),
   -- owner rows: end
   ('', '', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_crd, broker_name)

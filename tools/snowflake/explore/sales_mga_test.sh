@@ -12,7 +12,7 @@ cat <<'SQL'
 INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
   (2025,2,2,'INDEX','IFA','NEW BD',77,'P','','02134','MA','W1','N1','ALL',1,1,1,'M1');
 SQL
-sed -e '/^use /d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \

@@ -37,13 +37,14 @@ INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Foxtrot Inc',NULL,'INDEPENDENT','MA','A','x','R1','D1',2025,5,5,'02134','IA');
 SQL
 manual="  ('S1', '8', 'LPL', 'IFA', 'M12', '200', 'LPL FINANCIAL LLC - INDEPENDENT'), ('S1', '8', 'LPL', 'IFA', NULL, '200', 'LPL FINANCIAL LLC - BANK'), (' s2', '438', ' kilo ', 'independent', NULL, '100 ', 'alpha'), ('S2', '805', 'Kilo', 'INDEPENDENT', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '400', 'DELTA'), ('S2', NULL, 'No Crd', 'BANK', NULL, '777', 'NOWHERE'),"
-sed -e '/^use /d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
     -e "s/^  ('', '', '', '', '', '', '')   -- placeholder, keep it last\$/$manual ('', '', '', '', '', '', '')/" \
+    -e "s/^  ('', '', '')   -- placeholder, keep it last\$/  ('601', ' foxtrot 2 ', 'ifa'), ('999999', 'NOWHERE', 'IFA'), ('300', 'CHARLIE', 'IFA'), ('300', 'CHARLIE', 'IFA\/IMO'), ('', '', '')/" \
     -e "s/^SELECT 'REVIEW' AS layer,/CREATE TABLE full_result AS SELECT 'REVIEW' AS layer,/" \
     "$here/01_opportunity_sales.sql"
 cat <<'SQL'
@@ -67,13 +68,17 @@ SELECT
  chk('review: candidates ranked by score', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Echo'), '1 ALPHA 348, 2 ECHO 100'),
  chk('review: map, name, channel and ZIP evidence, firm 1', ev('S1', 'Delta'), 'N3 1 0 1 1 0 100 6 400'),
  chk('review: firm 2 by name, its wholesaler by name', ev('S2', 'Delta'), 'R2 1 0 1 0 0 100 0 200'),
- chk('review: fuzzy names, ranked with the channel', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(ev_name * 100 AS INTEGER) || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Foxtrot Inc'), '1 FOXTROT 93 193, 2 FOXTROT 2 92 92'),
+ chk('review: fuzzy names, ranked with the channel', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(ev_name * 100 AS INTEGER) || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Foxtrot Inc'), '1 FOXTROT 93 193, 2 FOXTROT 2 92 192'),
  chk('review: IMO kept out, no candidates looked for', (SELECT COUNT(*) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm_id = '99') || ' ' || (SELECT n_candidates || ' ' || is_imo FROM ssdb_integration.lr_strategy.tmp_sales_review WHERE sales_firm_id = '99'), '0 0 true'),
  chk('review: keys with no candidate, one row each, ranked by $ in the source', (SELECT string_agg(source || ' ' || COALESCE(sales_firm_id, '-') || ' ' || rank_key_by_amt || ' ' || rank_in_key, ', ' ORDER BY source, rank_key_by_amt) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND cand_firm_crd IS NULL), 'S1 77 1 1, S1 438 3 1, S1 - 5 1, S2 - 3 1, S2 888 4 1'),
  chk('review: the new-channel list', (SELECT new_list_label FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm_id = '438'), 'AFS'),
  chk('review: AMT counts each key once', (SELECT string_agg(source || ' ' || n || ' ' || CAST(a AS INTEGER), ', ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n, SUM(amt) AS a FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' GROUP BY ALL) x), 'S1 6 23, S2 5 12'),
  chk('summary', (SELECT string_agg(source || ' | ' || firm_basis || ' | ' || item || '=' || n_keys || '/' || CAST(amt AS INTEGER), ', ' ORDER BY source, firm_basis, item) FROM full_result WHERE layer = 'REVIEW' AND part = 'SUMMARY'), 'S1 | NO COMPANY | NO CANDIDATE=1/1, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP=1/3, S1 | NO MARKET METRICS FIRM | CHANNEL ZIP MM_MAP NAME=1/6, S1 | NO MARKET METRICS FIRM | IMO, LEFT OUT=1/7, S1 | NO MARKET METRICS FIRM | NO CANDIDATE=2/13, S2 | NO CRD | CHANNEL FUZZY NAME=1/5, S2 | NO CRD | NO CANDIDATE=1/2, S2 | NO MARKET METRICS FIRM | CHANNEL NAME=1/4, S2 | NO MARKET METRICS FIRM | NO CANDIDATE=1/1'),
  chk('review check 0', (SELECT string_agg(source || '=' || CAST(amt AS INTEGER), ' ' ORDER BY source) FROM full_result WHERE layer = 'REVIEW' AND part = 'CHECKS'), 'S1=0 S2=0'),
+ chk('owner route: the firm takes it, new state and route basis', (SELECT route || ' ' || route_basis || ' ' || new_label || ' ' || tau FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE firm_crd = '601'), 'IFA OWNER OVERRIDE: FI -> IFA IFA IFA'),
+ chk('owner route: a firm on 2+ channels keeps its own', (SELECT route || ' ' || route_basis FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE firm_crd = '300'), 'IFA NAME'),
+ chk('owner route: the opportunity it moves is reported', (SELECT source || ' ' || CAST(amt AS INTEGER) FROM full_result WHERE layer = 'OPPORTUNITY' AND part = 'CHECKS' AND name = 'ROUTE BASIS' AND item LIKE 'OWNER OVERRIDE%'), 'S1 10'),
+ chk('owner route checks', (SELECT string_agg(name || '=' || n_firms, ', ' ORDER BY name) FROM full_result WHERE layer = 'OPPORTUNITY' AND name LIKE 'OWNER ROUTES%'), 'OWNER ROUTES: A FIRM ON 2+ CHANNELS, NOT APPLIED (MUST BE 0)=1, OWNER ROUTES: FIRM NOT IN THE DATA (MUST BE 0)=1, OWNER ROUTES: NO FIRM 1 TERRITORY CHANNEL (MUST BE 0)=1'),
  chk('one result: every layer', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true);
 SELECT 'sales_review_test: ok';
 SQL

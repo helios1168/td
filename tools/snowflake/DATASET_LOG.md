@@ -176,6 +176,7 @@ decision point, and we should be able to easily come back and look at the number
 | a split still 2+ after ZIP (firm 1 sales) | the one name the company's sales under the same MGA code and channel matched by ZIP (`SPLIT, MATCHED BY MGA CODE`) | no firm | run 2026-10-31: $95.1MM of split $ in codes whose ZIP matches agree | `01_opportunity_sales.sql` 10, CTE `cz` | `SALES FIRM BASIS` |
 | a firm 1 sale with no firm, company on the new-channel list | the list's new channel, firm blank | UNMAPPED | run 2026-10-31: company 14, $302.3MM (Wells WH) | `01_opportunity_sales.sql` 12, join `nl` | `SALES FIRM BASIS` (firm), `TMP_O2_SALES.NEW_CHANNEL` |
 | manual assignments (sales) | fill only sales the rules leave without a firm; key = the sales table's firm ID, firm name, channel, MGA code (NULL = any; a row with the code wins); a key on 2+ firms or a firm not in TMP_O1_FIRM is not applied | override any sale | crd_dist_override's precedent (fills gaps only) | `01_opportunity_sales.sql` 8 `tmp_sales_firm_override`, 12 `ok` | `SALES FIRM BASIS` (MANUAL), CHECKS MANUAL ... |
+| a firm's channel the owner sets | the owner's channel is the CRD x broker name's route, before firm 1's rows and crd_dist_override; both sources' new state and the sales rules (owner, 2026-11-01: "when firm and written channel disagree, we need to override the actual channel for that firm and crd") | firm 1's rows (Q38) | the owner's review workbook, 2026-11-01 | `01_opportunity_sales.sql` 1 `tmp_firm_route_override`, 3 `fo` | opportunity CHECKS `ROUTE BASIS` (OWNER OVERRIDE), `OWNER ROUTES ...` |
 | a split still 2+ after the ZIP and MGA code rules (sales, both sources) | the one with the most opportunity at the sale's ZIP x product, a strict maximum (`SPLIT, MOST OPPORTUNITY AT ZIP`); all are on the sale's route, so channel and holder do not depend on it (owner, 2026-10-31: "yes to 4 rules"; an exception to Rules' "no largest-share guesses") | no firm | run 2026-10-31: ~$900MM of ties, base name beside a variant on one route | `01_opportunity_sales.sql` 10-11, CTE `zo` | `SALES FIRM BASIS` |
 | firm 1's marketing organizations (sales) | left out of the review extract, UNMAPPED (owner, 2026-10-31: "imo's stay out"); IMO = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 15 `gi.is_imo` (labels: 8 `tmp_s1_sale_channel`) | REVIEW SUMMARY `IMO, LEFT OUT` |
 | review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
@@ -1244,3 +1245,17 @@ Snowflake.
 
 Held for the owner: 10 rows ($117.2MM), not 9: three rows, not two, have DECISION blank with CHOSEN changed (Western
 International's two codes and WFCS's FP row). The per-row file has it right.
+
+### 2026-11-01: the owner's firm channels (`tmp_firm_route_override`)
+
+Owner, 2026-11-01: "when firm and written channel disagree, we need to override the actual channel for that firm and
+crd". Statement 1 gains `tmp_firm_route_override` (CRD x broker name -> channel, matched trimmed and upper-cased);
+statement 3 takes it before firm 1's rows and `crd_dist_override`, ROUTE_BASIS `OWNER OVERRIDE: <derived> -> <owner>`,
+so statement 7's ROUTE BASIS rows give the opportunity each override moves. A route is shared by both sources, so it
+moves both sources' new state (current labels are unchanged) and the sales rules' channel matches. Statement 7 gains
+three checks (a firm on 2+ channels, not applied; a firm not in the data; a channel no firm 1 territory has: its
+opportunity would have no holder). Rows from the workbook's written channels: Cetera Wealth Services, LLC -> FI (the
+held BD row is released with it), Gold Coast -> IFA, and IFA for the three typed firms (Nobles & Richards, PHX, Van
+Clemens). Not added, pending the owner: Raymond James & Associates and Raymond James Financial Services - BANK, written
+IFA/IMO, which is a sales label, not a firm 1 territory channel. `sales_review_test.sh` 27 checks; 5 mutations fail
+it. Not run in Snowflake. Key decisions row added.
