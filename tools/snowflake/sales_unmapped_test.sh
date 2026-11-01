@@ -1,12 +1,11 @@
 #!/bin/sh
-# Runs 01_opportunity_sales.sql, then sales_unmapped.sql, in DuckDB on 02_sales_test.sh's made-up tables (its fixture
-# block) plus the rows below, and checks sales_unmapped.sql's result (answers worked out by hand).
+# Runs all of 01_opportunity_sales.sql in DuckDB on 02_sales_test.sh's made-up tables (its fixture block) plus the
+# rows below, and checks its UNMAPPED layer, statements 15-16 (answers worked out by hand).
 # Prints "sales_unmapped_test: ok" or stops at the first failed check.  Run from anywhere: sh sales_unmapped_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-top=$(cd "$here/.." && pwd)
 {
-awk '/^cat <<.SQL.$/ && !s {s=1; next} s && /^SQL$/ {exit} s' "$top/02_sales_test.sh"
+awk '/^cat <<.SQL.$/ && !s {s=1; next} s && /^SQL$/ {exit} s' "$here/02_sales_test.sh"
 cat <<'SQL'
 -- this test's rows: company 91 named like a market metrics firm and in MM_MAP on it (two leads agree); company 92 whose
 -- name and MM_MAP point to different firms; a second LPL IFA sale on code M3 at a ZIP where the other IFA name has
@@ -27,10 +26,8 @@ sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
-    -e '/^--15\./,$d' "$top/01_opportunity_sales.sql"
-sed -e '/^use /d' -e 's/TEMPORARY TABLE/TABLE/' \
-    -e "s/^SELECT 'SALES_UNMAPPED' AS file,/CREATE TABLE full_result AS SELECT 'SALES_UNMAPPED' AS file,/" \
-    "$here/sales_unmapped.sql"
+    -e "s/^SELECT 'UNMAPPED' AS layer,/CREATE TABLE full_result AS SELECT 'UNMAPPED' AS layer,/" \
+    "$here/01_opportunity_sales.sql"
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
@@ -38,7 +35,7 @@ CREATE MACRO dt(c, m) AS (SELECT leads || ' ' || COALESCE(lead_sources, '-') || 
   || mm_map_lead || ' ' || COALESCE(mm_map_firm, '-') || ' | ' || crd_to_cbd_lead || ' | ' || name_lead || ' '
   || COALESCE(name_firm, '-') || ' | ' || n_zip_firms || ' ' || COALESCE(zip_firm, '-') || ' ' || CAST(amt_zip AS INTEGER)
   || ' | ' || CAST(amt AS INTEGER)
-  FROM full_result WHERE file = 'SALES_UNMAPPED' AND part = 'DETAIL' AND company_id IS NOT DISTINCT FROM c
+  FROM full_result WHERE layer = 'UNMAPPED' AND part = 'DETAIL' AND company_id IS NOT DISTINCT FROM c
   AND mga_agent_cd IS NOT DISTINCT FROM m);
 SELECT
  chk('split: a code''s sales agree by ZIP', dt('8', 'M4'), 'AGREE ZIP 200 | LPL FINANCIAL LLC | 2+ CHANNEL MATCHES - | 2+ CHANNEL MATCHES | NO NAME MATCH - | 1 200 | LPL FINANCIAL LLC 4 | 4'),
@@ -48,12 +45,12 @@ SELECT
  chk('no firm, no lead', dt('77', 'M8'), 'NONE - - | NOT IN THE MAP - | NOT IN THE MAP | NO NAME MATCH - | 0 - 0 | 8'),
  chk('no company, no lead', dt(NULL, NULL), 'NONE - - | NOT IN THE MAP - | NOT IN THE MAP | NO NAME MATCH - | 0 - 0 | 1'),
  chk('new-channel list', (SELECT new_list_label || ' ' || leads FROM full_result WHERE part = 'DETAIL' AND company_id = '438'), 'AFS NONE'),
- chk('detail: every unresolved sale, once', (SELECT COUNT(*) || ' ' || CAST(SUM(amt) AS INTEGER) FROM full_result WHERE file = 'SALES_UNMAPPED' AND part = 'DETAIL'), '8 39'),
- chk('summary', (SELECT string_agg(firm_basis || ' | ' || leads || ' ' || COALESCE(lead_sources, '-') || '=' || CAST(amt AS INTEGER) || '/' || n_groups || '/' || n_companies || '/' || CAST(pct_amt AS INTEGER), ', ' ORDER BY firm_basis, leads) FROM full_result WHERE file = 'SALES_UNMAPPED' AND part = 'SUMMARY'), 'NO COMPANY | NONE -=1/1/0/100, NO MARKET METRICS FIRM | AGREE MM_MAP NAME=6/1/1/27, NO MARKET METRICS FIRM | CONFLICT MM_MAP NAME=3/1/1/14, NO MARKET METRICS FIRM | NONE -=13/2/2/59, SPLIT, 2+ CHANNEL MATCHES | AGREE ZIP=4/1/1/25, SPLIT, 2+ CHANNEL MATCHES | CONFLICT ZIP=11/1/1/69, SPLIT, 2+ CHANNEL MATCHES | NONE -=1/1/1/6'),
+ chk('detail: every unresolved sale, once', (SELECT COUNT(*) || ' ' || CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'UNMAPPED' AND part = 'DETAIL'), '8 39'),
+ chk('summary', (SELECT string_agg(firm_basis || ' | ' || leads || ' ' || COALESCE(lead_sources, '-') || '=' || CAST(amt AS INTEGER) || '/' || n_groups || '/' || n_companies || '/' || CAST(pct_amt AS INTEGER), ', ' ORDER BY firm_basis, leads) FROM full_result WHERE layer = 'UNMAPPED' AND part = 'SUMMARY'), 'NO COMPANY | NONE -=1/1/0/100, NO MARKET METRICS FIRM | AGREE MM_MAP NAME=6/1/1/27, NO MARKET METRICS FIRM | CONFLICT MM_MAP NAME=3/1/1/14, NO MARKET METRICS FIRM | NONE -=13/2/2/59, SPLIT, 2+ CHANNEL MATCHES | AGREE ZIP=4/1/1/25, SPLIT, 2+ CHANNEL MATCHES | CONFLICT ZIP=11/1/1/69, SPLIT, 2+ CHANNEL MATCHES | NONE -=1/1/1/6'),
  chk('split: two candidates at the sale''s ZIP, no lead', dt('8', 'M12'), 'NONE - - | 2+ CHANNEL MATCHES - | 2+ CHANNEL MATCHES | NO NAME MATCH - | 0 - 0 | 1'),
- chk('check 0', (SELECT amt FROM full_result WHERE file = 'SALES_UNMAPPED' AND part = 'CHECKS'), 0),
- chk('one result: this file and all of 01''s', (SELECT string_agg(file || '=' || n, ' ' ORDER BY file) FROM (SELECT file, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = '01 OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' 01 SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' SALES_UNMAPPED=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out), true),
- chk('one result: 01''s checks in it, all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) FROM full_result WHERE file = '01 SALES' AND part = 'CHECKS'), '8 0');
+ chk('check 0', (SELECT amt FROM full_result WHERE layer = 'UNMAPPED' AND part = 'CHECKS'), 0),
+ chk('one result: every layer', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' UNMAPPED=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out), true),
+ chk('one result: the sales checks in it, all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'CHECKS'), '8 0');
 SELECT 'sales_unmapped_test: ok';
 SQL
 } | duckdb -bail -noheader -list

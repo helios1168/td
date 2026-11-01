@@ -36,11 +36,12 @@ channels."
   see all relevent output, as opposed to having to manually run multiple queries step by step and check one at a
   time"). Each part (report, review list, checks) is its own temporary table with the same columns, and the last
   statement unions them; checks are rows of that result. Pattern: `explore/profile.sql`, statements 3-8 (`PART`,
-  `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages). Everything one request asks the owner to run comes back
-  as one CSV: a file run after another in the same worksheet (an `explore/` file after `01_opportunity_sales.sql`)
-  ends on a result that also carries the first file's, under a `FILE` column, checks included (owner, 2026-10-31: "be
-  sure that we consolidate everything you ask me to run into a single query with a single output i can share back
-  with you as csv file"). Pattern: `explore/sales_mga.sql`.
+  `DS`, `COL`, `COL2`, `ITEM`, counts, `AMT`, percentages). Everything the owner is asked to run is one script
+  with one result and one CSV: new analysis goes into `01_opportunity_sales.sql` as statements before its last, and
+  the last returns every part under `LAYER`, checks included (owner, 2026-10-31: "be sure that we consolidate
+  everything you ask me to run into a single query with a single output i can share back with you as csv file"; "no,
+  why are there two separate scripts? it needs to be one consolidated script like i said earlier"). `explore/` files
+  are references (already run, or for a later fold-in), not a second script to run.
 - **Columns** (layer files; an `explore/` profile reports in the long layout of `explore/profile.sql`). Source columns
   keep their names. Ratios `SHARE_` (0-1) or `PCT_` (0-100), naming what is divided by
   what; rankings `RANK_<within>_<by>`; checks `CHECK_NAME`, `VALUE`, `MUST_BE_ZERO`.
@@ -1121,3 +1122,12 @@ picked as statement 10 picks) and a market metrics name equal to the company nam
 nothing is assigned yet (step B builds rules where the $ warrant it). Test 14 checks; 7 mutations fail it (one
 survived until a sale at a ZIP with two candidates was added); two hand-worked percentages were truncated where the
 cast rounds. Not run in Snowflake.
+
+### 2026-10-31: one script: the unmapped leads are statements 15-16 of `01_opportunity_sales.sql`
+
+Owner, 2026-10-31: "no, why are there two separate scripts? it needs to be one consolidated script like i said
+earlier". `explore/sales_unmapped.sql` (previous entry) is now `01_opportunity_sales.sql` statements 15 (leads) and 16
+(DETAIL, SUMMARY, CHECKS); statement 17 returns all three parts under `LAYER` (OPPORTUNITY, SALES, UNMAPPED), with the
+unmapped columns added to the result. The explore file and its test are deleted; `sales_unmapped_test.sh` (14 checks)
+runs the whole file; 6 mutations fail it. `02_sales_test.sh` counts the third layer. Convention One result rewritten:
+one script to run, `explore/` files are references.
