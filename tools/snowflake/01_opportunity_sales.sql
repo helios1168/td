@@ -501,6 +501,10 @@ FROM (VALUES
   -- 2026-11-01, held rows released: the firm as chosen, the sale's channel in tmp_sales_channel_override
   ('S2', '6694', 'Raymond James Financial Svcs', 'FP', NULL, '6694', 'RAYMOND JAMES FINANCIAL SERVICES, INC. - BANK'),
   ('S2', '6694', 'Raymond James Financial Svcs', 'BD', NULL, '6694', 'RAYMOND JAMES FINANCIAL SERVICES, INC. - BANK'),
+  -- 2026-11-01, held rows assigned (owner: "yes map them both to lpl financial llc - independent IFA")
+  ('S1', '1391', 'WESTERN INTERNATIONAL SEC', 'IFA', '33ASE', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '1391', 'WESTERN INTERNATIONAL SEC', 'IFA', '44ASE', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', '19616', 'WFCS, LLC', 'FP', NULL, '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
   -- owner rows: end
   ('', '', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_crd, broker_name)

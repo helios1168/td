@@ -1288,3 +1288,13 @@ gives CRD 8026 (SALES_FIRM_ID, CHOSEN_CRD) and 8361 (CAND_FIRM_CRD); neither app
 (8361 is firm 1's company ID for another firm, a different numbering), and a name starting "A.G.P /" scores 79
 against the sales name, under the fuzzy cutoff, so the run could not have listed it. Held for the owner.
 `sales_review_test.sh` 31 checks; 4 mutations fail it. Not run in Snowflake.
+
+### 2026-11-01: Western International and WFCS FP assigned
+
+Owner, 2026-11-01, shown the two Western International codes (33ASE $0.99MM, 44ASE $0.08MM; company 1391, which
+`MM_MAP` takes to LPL's CRD 6413) and WFCS FP ($0.12MM, CRD 19616, no name on IFA): "yes map them both to lpl
+financial llc - independent IFA". Both Western International codes -> 6413 LPL FINANCIAL LLC - INDEPENDENT (route
+IFA; 44ASE lands on no opportunity cell, the only name with opportunity at its ZIP is the base name); WFCS FP -> 19616
+WELLS FARGO CLEARING SERVICES, LLC - ADVISOR as the workbook chose (the "yes" to assigning all three as chosen; no
+opportunity at its ZIP either). 54 manual rows, all distinct keys. Held: Alliance Global (owner: "hold off on alliance
+global for now"); undecided: Cetera Advisors 88232, "Unassigned". Not run in Snowflake.
