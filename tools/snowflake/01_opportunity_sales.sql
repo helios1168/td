@@ -392,15 +392,67 @@ FROM (VALUES ('IMO', 'IFA'), ('IFA/IMO', 'IFA'), ('FI/IMO', 'FI')) AS v (label, 
 --Manual assignments (the owner's): a sale the rules leave without a market metrics firm takes the firm named here
 --(FIRM_BASIS MANUAL).  Copy a TMP_SALES_REVIEW row's key (SOURCE, SALES_FIRM_ID, SALES_FIRM, RAW_CHANNEL,
 --MGA_AGENT_CD) and the chosen CAND_FIRM_CRD, CAND_BROKER_NAME; NULL MGA_AGENT_CD = any code (a row with the code wins).
---A key on 2+ firms, or a firm not in TMP_O1_FIRM, is not applied (CHECKS: MANUAL ...).
+--Matched trimmed and upper-cased (a typed name may be in any case).  A key on 2+ firms, a firm not in TMP_O1_FIRM or a
+--key that matches no sale is not applied (CHECKS: MANUAL ...).
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_sales_firm_override AS
-SELECT CAST(source AS VARCHAR) AS source, CAST(sales_firm_id AS VARCHAR) AS sales_firm_id,
-       CAST(sales_firm AS VARCHAR) AS sales_firm, CAST(raw_channel AS VARCHAR) AS raw_channel,
-       CAST(mga_agent_cd AS VARCHAR) AS mga_agent_cd, CAST(firm_crd AS VARCHAR) AS firm_crd,
-       CAST(broker_name AS VARCHAR) AS broker_name
+SELECT UPPER(TRIM(CAST(source AS VARCHAR))) AS source, NULLIF(TRIM(CAST(sales_firm_id AS VARCHAR)), '') AS sales_firm_id,
+       UPPER(TRIM(CAST(sales_firm AS VARCHAR))) AS sales_firm, UPPER(TRIM(CAST(raw_channel AS VARCHAR))) AS raw_channel,
+       NULLIF(UPPER(TRIM(CAST(mga_agent_cd AS VARCHAR))), '') AS mga_agent_cd, TRIM(CAST(firm_crd AS VARCHAR)) AS firm_crd,
+       UPPER(TRIM(CAST(broker_name AS VARCHAR))) AS broker_name
 FROM (VALUES
   -- one row per assignment, each ending in a comma, above the placeholder, e.g.
   -- ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', NULL, '<CAND_FIRM_CRD>', '<CAND_BROKER_NAME>'),
+  -- owner rows: begin
+  -- 2026-11-01, from the owner's review workbook (Decisions, DECISION = ASSIGN); keys as the sales table has them
+  ('S2', NULL, 'Ameriprise Financial Svcs, LLC', 'FP', NULL, '6363', 'AMERIPRISE FINANCIAL SERVICES, LLC'),
+  ('S2', NULL, 'Baird Trust Company', 'RA', NULL, '8158', 'Robert W. Baird & Co. Incorporated'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '44AME', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '88070', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '41124', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '33AME', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '11124', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '86', 'CADARET GRANT & COMPANY, INC.', 'IFA', '7BG99', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', '13572', 'Cetera Wealth Services', 'FP', NULL, '13572', 'Cetera Wealth Services, LLC - INDEPENDENT'),
+  ('S2', NULL, 'Edward D.Jones & Co.,LP', 'BD', NULL, '250', 'EDWARD JONES'),
+  ('S2', NULL, 'Flourish Financial - OID', 'FP', NULL, '293019', 'FLOURISH FINANCIAL LLC'),
+  ('S1', '779', 'GOLD COAST SECURITIES, INC.', 'IFA', '88H49', '110925', 'GOLD COAST SECURITIES, INC.'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', '33AAZ', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', '44AAZ', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', '88268', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', '41114', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', '11114', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA', 'WNL0BD4400000000000', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '8', 'LPL FINANCIAL CORPORATION', 'IFA/IMO', '44AAL', '6413', 'LPL FINANCIAL LLC - BANK'),
+  ('S2', '6413', 'LPL Financial LLC', 'FP', NULL, '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', '6413', 'LPL Financial LLC', 'BD', NULL, '6413', 'LPL FINANCIAL LLC - BANK'),
+  ('S2', '6413', 'LPL Financial LLC', 'RA', NULL, '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', NULL, 'MS Howells & CO', 'FP', NULL, '104100', 'M. S. Howells & Co.'),
+  ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '88E74', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '44AJM', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '11162', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S1', '327', 'NEXT FINANCIAL GROUP', 'IFA', '33AJM', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', NULL, 'Nobles & Richards, Inc', 'FP', NULL, '146870', 'Nobles & Richards, Inc'),
+  ('S2', NULL, 'PHX Financial, Inc.', 'FP', NULL, '144403', 'PHX Financial, Inc.'),
+  ('S1', '6', 'RAYMOND JAMES', 'IFA', '88186', '705', 'RAYMOND JAMES & ASSOCIATES, INC.'),
+  ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', '11346', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
+  ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', '33AKR', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
+  ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', '88874', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
+  ('S1', '569', 'STIFEL INDEPENDENT ADVISORS', 'IFA', 'WNL0B27400000000000', '28218', 'STIFEL INDEPENDENT ADVISORS, LLC'),
+  ('S1', '222', 'STIFEL NICOLAUS & CO INC', 'WH', '11182', '793', 'STIFEL, NICOLAUS & COMPANY, INCORPORATED'),
+  ('S1', '100', 'THE INVESTMENT CENTER, INC.', 'IFA', '88544', '6413', 'LPL FINANCIAL LLC - INDEPENDENT'),
+  ('S2', NULL, 'U.S. Bancorp Advisors, LLC', 'BK', NULL, '17868', 'U.S. BANCORP INVESTMENTS, INC.'),
+  ('S2', '6914', 'Van Clemens & Co. Inc', 'BD', NULL, '6914', 'VAN CLEMENS & CO. INCORPORATED'),
+  ('S2', NULL, 'VOYA FINANCIAL ADVISORS,INC', 'RA', NULL, '2882', 'VOYA FINANCIAL ADVISORS, INC.'),
+  ('S2', NULL, 'VOYA FINANCIAL ADVISORS,INC', 'FP', NULL, '2882', 'VOYA FINANCIAL ADVISORS, INC.'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '33ABN', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', 'WNL049AP00000000000', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '88A30', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '44ABN', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '11190', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', '41190', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S1', '14', 'WELLS FARGO CLEARING SERVICES PCG', 'WH', 'FSA05FUS00000000000', '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  ('S2', '19616', 'WFCS, LLC', 'BD', NULL, '19616', 'WELLS FARGO CLEARING SERVICES, LLC - ADVISOR'),
+  -- owner rows: end
   ('', '', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, firm_crd, broker_name)
 WHERE source <> '';
@@ -563,9 +615,9 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_sales AS
 WITH
 u0 AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_s1 UNION ALL SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_s2),
 ok AS (SELECT o.source, o.sales_firm_id, o.sales_firm, o.raw_channel, o.mga_agent_cd,
-              COUNT(DISTINCT o.firm_crd || '|' || o.broker_name) AS k, MIN(o.firm_crd) AS crd, MIN(o.broker_name) AS nm
+              COUNT(DISTINCT f.firm_crd || '|' || f.broker_name) AS k, MIN(f.firm_crd) AS crd, MIN(f.broker_name) AS nm
        FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
-       JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = o.firm_crd AND f.broker_name = o.broker_name
+       JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = o.firm_crd AND UPPER(f.broker_name) = o.broker_name
        GROUP BY ALL),
 u AS (SELECT u0.source, u0.seller_key, u0.seller, u0.sales_firm_id, u0.sales_firm, u0.mga_agent_cd, u0.zip,
              u0.raw_product, u0.old_channel, u0.old_channel_s1, u0.match_channel,
@@ -577,10 +629,12 @@ u AS (SELECT u0.source, u0.seller_key, u0.seller, u0.sales_firm_id, u0.sales_fir
              u0.n_rows, u0.sales, u0.sales_alt
       FROM u0
       LEFT JOIN ok oe ON oe.source = u0.source AND EQUAL_NULL(oe.sales_firm_id, u0.sales_firm_id)
-                     AND EQUAL_NULL(oe.sales_firm, u0.sales_firm) AND EQUAL_NULL(oe.raw_channel, u0.old_channel)
-                     AND oe.mga_agent_cd = u0.mga_agent_cd
+                     AND EQUAL_NULL(oe.sales_firm, UPPER(TRIM(u0.sales_firm)))
+                     AND EQUAL_NULL(oe.raw_channel, UPPER(TRIM(u0.old_channel)))
+                     AND oe.mga_agent_cd = UPPER(TRIM(u0.mga_agent_cd))
       LEFT JOIN ok oa ON oa.source = u0.source AND EQUAL_NULL(oa.sales_firm_id, u0.sales_firm_id)
-                     AND EQUAL_NULL(oa.sales_firm, u0.sales_firm) AND EQUAL_NULL(oa.raw_channel, u0.old_channel)
+                     AND EQUAL_NULL(oa.sales_firm, UPPER(TRIM(u0.sales_firm)))
+                     AND EQUAL_NULL(oa.raw_channel, UPPER(TRIM(u0.old_channel)))
                      AND oa.mga_agent_cd IS NULL),
 h AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product,
              CASE WHEN source = 'S1' THEN TRIM(old_wholesaler_id) ELSE UPPER(TRIM(old_wholesaler)) END AS old_key,
@@ -772,8 +826,16 @@ WHERE k > 1
 UNION ALL
 SELECT 'CHECKS', NULL, 'MANUAL FIRMS NOT IN TMP_O1_FIRM, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
 FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
-LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = o.firm_crd AND f.broker_name = o.broker_name
+LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = o.firm_crd AND UPPER(f.broker_name) = o.broker_name
 WHERE f.firm_crd IS NULL
+UNION ALL
+SELECT 'CHECKS', NULL, 'MANUAL ROWS MATCHING NO SALE, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
+FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
+WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_o2_sales x
+                  WHERE x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
+                    AND EQUAL_NULL(UPPER(TRIM(x.sales_firm)), o.sales_firm)
+                    AND EQUAL_NULL(UPPER(TRIM(x.old_channel)), o.raw_channel)
+                    AND (o.mga_agent_cd IS NULL OR UPPER(TRIM(x.mga_agent_cd)) = o.mga_agent_cd))
 UNION ALL
 SELECT 'CHECKS', 'S1', 'COMPANY LISTS OVER 10 PARTS (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
 FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1 WHERE SPLIT_PART(company_id, '|', 11) <> '';

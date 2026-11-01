@@ -1223,3 +1223,19 @@ case-insensitive: Snowflake docs, functions/jarowinkler_similarity, read 2026-10
 (convention Masking edited). Manual typing needed nothing new: any CRD x name in TMP_O1_FIRM can be typed into
 `tmp_sales_firm_override`, and a typo shows in CHECKS (MANUAL FIRMS NOT IN TMP_O1_FIRM). `sales_review_test.sh` 20
 checks, all hand-worked values right first time; 11 mutations fail the tests. Not run in Snowflake.
+
+### 2026-11-01: the owner's first manual assignments, rationalized
+
+Owner, 2026-11-01: "here is the file with our inputs. help me rationalize it as i edited more than just columns u and
+v in decisions tab" (`10_31_unmapped_manual_fix.xlsx`, 63 Decisions rows; read with the standard library, compared
+with its own Extract sheet). Edits outside CHOSEN_CRD / CHOSEN_NAME: SALES_FIRM_ID on 13 rows (a key column: an edited
+key matches no sale, so its SQL row would have been skipped without a word), MATCH_CHANNEL or CAND_ROUTE on 14 rows,
+candidate columns typed on 3 rows where none was found; SCORE blanks shown as 0 are not edits. Applied: 48 rows,
+$843.0MM, in statement 8 between `-- owner rows: begin` and `end`, each key restored to the sales table's values (42
+chose a firm seen among the candidates, 6 typed one). Held for the owner: 9 rows (a CRD in doubt; three ASSIGN rows
+with no firm and a channel written in; three where the chosen firm's route and the channel written in disagree; two
+with DECISION blank but CHOSEN changed); left unmapped 3, undecided 2. Per row: `data/safe/manual_review_2026-11-01.csv`.
+Code: the override table is matched trimmed and upper-cased (typed names arrived in mixed case), and a third check,
+MANUAL ROWS MATCHING NO SALE, counts rows whose key matches no sale. The tests strip the owner rows (they match no
+test sale); `sales_review_test.sh` checks a padded lower-case row and an edited key; 5 mutations fail it. Not run in
+Snowflake.

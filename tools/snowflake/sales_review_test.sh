@@ -36,8 +36,8 @@ INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Delta',999.0,'REGIONAL','NY','A','x','R2','D1',2025,4,4,'10001','IA'),
   ('P','Foxtrot Inc',NULL,'INDEPENDENT','MA','A','x','R1','D1',2025,5,5,'02134','IA');
 SQL
-manual="  ('S1', '8', 'LPL', 'IFA', 'M12', '200', 'LPL FINANCIAL LLC - INDEPENDENT'), ('S1', '8', 'LPL', 'IFA', NULL, '200', 'LPL FINANCIAL LLC - BANK'), ('S2', '438', 'Kilo', 'INDEPENDENT', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '400', 'DELTA'), ('S2', NULL, 'No Crd', 'BANK', NULL, '777', 'NOWHERE'),"
-sed -e '/^use /d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+manual="  ('S1', '8', 'LPL', 'IFA', 'M12', '200', 'LPL FINANCIAL LLC - INDEPENDENT'), ('S1', '8', 'LPL', 'IFA', NULL, '200', 'LPL FINANCIAL LLC - BANK'), (' s2', '438', ' kilo ', 'independent', NULL, '100 ', 'alpha'), ('S2', '805', 'Kilo', 'INDEPENDENT', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '400', 'DELTA'), ('S2', NULL, 'No Crd', 'BANK', NULL, '777', 'NOWHERE'),"
+sed -e '/^use /d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
@@ -61,9 +61,9 @@ SELECT
  chk('rule 4: the name with the most opportunity at the ZIP', sl('S1', 'LPL', 'M13', '94105'), 'SPLIT, MOST OPPORTUNITY AT ZIP LPL FINANCIAL LLC - INDEPENDENT IFA'),
  chk('manual fills only what the rules leave', sl('S1', 'LPL', 'M4', '30301'), 'SPLIT, MATCHED BY MGA CODE LPL FINANCIAL LLC IFA'),
  chk('mga code rule: not where the code''s sales matched two names (then manual)', (SELECT string_agg(zip || ' ' || firm_basis, ', ' ORDER BY zip, firm_basis) FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE sales_firm_id = '8' AND mga_agent_cd = 'M3' AND source = 'S1'), '02134 SPLIT, MATCHED BY ZIP, 10001 SPLIT, MATCHED BY CHANNEL, 10001 SPLIT, MATCHED BY ZIP, 30301 MANUAL'),
- chk('manual: firm 2, its new channel from the firm', sl('S2', 'Kilo', NULL, '02134'), 'MANUAL ALPHA IFA'),
+ chk('manual: firm 2, typed in any case and padded; its new channel from the firm', sl('S2', 'Kilo', NULL, '02134'), 'MANUAL ALPHA IFA'),
  chk('manual: a key on 2+ firms and a firm not in market metrics are not applied', (SELECT string_agg(sales_firm || ' ' || firm_basis, ', ' ORDER BY sales_firm) FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S2' AND sales_firm IN ('New', 'No Crd')), 'New NO MARKET METRICS FIRM, No Crd NO CRD'),
- chk('checks: the two manual checks count them, the rest 0', (SELECT COUNT(*) || ' ' || string_agg(name || '=' || CAST(amt AS INTEGER), ', ' ORDER BY name) FILTER (WHERE amt <> 0) FROM full_result WHERE layer = 'SALES' AND part = 'CHECKS'), '10 MANUAL FIRMS NOT IN TMP_O1_FIRM, NOT APPLIED (MUST BE 0)=1, MANUAL KEYS ON 2+ FIRMS, NOT APPLIED (MUST BE 0)=1'),
+ chk('checks: the three manual checks count them (an edited key matches no sale), the rest 0', (SELECT COUNT(*) || ' ' || string_agg(name || '=' || CAST(amt AS INTEGER), ', ' ORDER BY name) FILTER (WHERE amt <> 0) FROM full_result WHERE layer = 'SALES' AND part = 'CHECKS'), '11 MANUAL FIRMS NOT IN TMP_O1_FIRM, NOT APPLIED (MUST BE 0)=1, MANUAL KEYS ON 2+ FIRMS, NOT APPLIED (MUST BE 0)=1, MANUAL ROWS MATCHING NO SALE, NOT APPLIED (MUST BE 0)=1'),
  chk('review: candidates ranked by score', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Echo'), '1 ALPHA 348, 2 ECHO 100'),
  chk('review: map, name, channel and ZIP evidence, firm 1', ev('S1', 'Delta'), 'N3 1 0 1 1 0 100 6 400'),
  chk('review: firm 2 by name, its wholesaler by name', ev('S2', 'Delta'), 'R2 1 0 1 0 0 100 0 200'),

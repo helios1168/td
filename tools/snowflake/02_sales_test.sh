@@ -90,7 +90,7 @@ CREATE TABLE ssdb_integration.lr_strategy.crd_to_cbd (firm TEXT, firm_crd DOUBLE
 INSERT INTO ssdb_integration.lr_strategy.crd_to_cbd VALUES
   ('Alpha',100.0,10.0,'ALPHA'), ('LPL',200.0,8.0,'LPL'), ('Delta',400.0,30.0,'DELTA');
 SQL
-sed -e '/^use /d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e '/^use /d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
     -e 's/IDENTIFIER(\$s2_opp)/ssdb_integration.lr_strategy.s2_opp_t/g' \
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
@@ -160,7 +160,7 @@ SELECT
  chk('tie-out: dataset comp''d', (SELECT CAST(SUM(amt) AS INTEGER) FROM r WHERE part = 'TIE-OUT' AND name LIKE 'DATASET%COMP''D'), 48),
  chk('wholesalers s1 old', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S1' AND name = 'OLD'), 'HOLDS OPPORTUNITY AND SELLS=5/54 SELLS, HOLDS NO OPPORTUNITY=2/9'),
  chk('wholesalers s2 new', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S2' AND name = 'NEW'), 'HOLDS OPPORTUNITY AND SELLS=2/18 SELLS, HOLDS NO OPPORTUNITY=1/6'),
- chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '10 0 0'),
+ chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '11 0 0'),
  chk('the last statement: every layer, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true),
  chk('the last statement: sales $ intact', (SELECT CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'TIE-OUT' AND name LIKE 'DATASET%ACTUAL'), 46),
  chk('mga: firm 1 sales per code, blank as NULL', (SELECT string_agg(COALESCE(mga_agent_cd, '-') || '=' || CAST(sl AS INTEGER), ' ' ORDER BY mga_agent_cd NULLS FIRST) FROM (SELECT mga_agent_cd, SUM(sales) AS sl FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' GROUP BY ALL) x), '-=3 M1=14 M2=4 M3=16 M4=4 M5=2 M6=6 M7=1 M8=8 M9=5'),
