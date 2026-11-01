@@ -1109,3 +1109,15 @@ base table's soundness rests on the owner's word (previous entry). `02_sales_tes
 `SLS_RPT_DETAIL` fixture and `TO_DATE` macro are gone; `sales_mga_test.sh` checks 01's 8 checks inside its result.
 Not runnable as is, flagged in the README: `explore/amer_holder.sql` (reads `SLS_RPT_DETAIL`), `explore/lpl_checks.sql`
 (the MGA master), and `00_base_sales.sql` (both; a fallback for someone with access). Local `vars.sql` names `_temp`.
+
+### 2026-10-31: step A, the unmapped sales leads (`explore/sales_unmapped.sql`)
+
+Owner, 2026-10-31: "ok so how do we leverage the mga addition to improve any of our matches where it makes sense, and
+to then see what unmapped candidates remain for market metrics firm"; then "no just build the next step with this in
+mind. we are on a time crunch". Built without the MGA tables (Access convention), so the code's use is as a group: for
+a split company, each sale's one candidate with the sale's channel and opportunity at its ZIP x product, agreed across
+the code's sales. The other leads, for every unmapped sale: `MM_MAP` and `CRD_TO_CBD` (company -> one CRD -> its firm,
+picked as statement 10 picks) and a market metrics name equal to the company name. LEADS: AGREE, CONFLICT, NONE;
+nothing is assigned yet (step B builds rules where the $ warrant it). Test 14 checks; 7 mutations fail it (one
+survived until a sale at a ZIP with two candidates was added); two hand-worked percentages were truncated where the
+cast rounds. Not run in Snowflake.
