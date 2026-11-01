@@ -63,8 +63,15 @@ SELECT
       FROM duckdb_columns() WHERE table_name = 'data_withnewchannel_union_w_joinkeys_v2'),
      '25 old_terr_wholesaler new_terr_wholesaler INTEGER DOUBLE'),
  chk('layout: CBD_ID the CRD, FIRM the broker name', (SELECT cbd_id || ' ' || firm FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), '200 LPL FINANCIAL LLC'),
- chk('layout: PARENT, SALES_AMOUNT, address IDs, HAS_TERRITORY flags all NULL',
-     (SELECT COUNT(*) FROM v WHERE parent IS NOT NULL OR sales_amount IS NOT NULL OR sales_wholesaler_address_id IS NOT NULL
+ chk('comp''d sales in SALES_AMOUNT: firm 1 per row, 0 on its opportunity rows, firm 2 NULL on every row',
+     (SELECT (SELECT string_agg(sales_wholesaler || '=' || CAST(sales_amount AS INTEGER), ', ' ORDER BY old_terr_wholesaler, sales_wholesaler)
+              FROM v WHERE source = 'SRC1' AND zip_code = '02134' AND firm = 'ALPHA' AND product_v2 = 'INDEX' AND dist_ch = 'IFA')
+             || ' | ' || CAST(SUM(CASE WHEN source = 'SRC1' THEN sales_amount END) AS INTEGER)
+             || ' ' || COUNT(CASE WHEN source = 'SRC1' AND sales_amount IS NULL THEN 1 END)
+             || ' ' || COUNT(CASE WHEN source = 'SRC2' THEN sales_amount END) FROM v),
+     'N1=14, N6=6, N7 AS SOLD=2 | 70 0 0'),
+ chk('layout: PARENT, address IDs, HAS_TERRITORY flags all NULL',
+     (SELECT COUNT(*) FROM v WHERE parent IS NOT NULL OR sales_wholesaler_address_id IS NOT NULL
       OR territory_wholesaler_address_id IS NOT NULL OR sales_wholesaler_has_territory IS NOT NULL
       OR territory_wholesaler_has_territory IS NOT NULL), 0),
  chk('layout: clean names and territory IDs as they are',
@@ -73,7 +80,7 @@ SELECT
  chk('channel: uni_latest.sql''s CASE (AFS to pri_afs)', (SELECT CAST(SUM(actual_sales_amount) AS INTEGER) FROM v WHERE channel = 'pri_afs'), 5),
  chk('no filter: UNMAPPED, EDJ kept', (SELECT string_agg(DISTINCT channel, ' ' ORDER BY channel) FROM v WHERE channel IN ('UNMAPPED', 'EDJ')), 'EDJ UNMAPPED'),
  chk('vs live', (SELECT CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER) FROM t WHERE part = 'VS LIVE' AND source = 'SRC1' AND name LIKE 'MM_OPP%' AND item = 'IFA' AND item2 = 'INDEX'), '600/500'),
- chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || SUM(n_rows) FROM t WHERE part = 'CHECKS'), '9 0 0');
+ chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || SUM(n_rows) FROM t WHERE part = 'CHECKS'), '12 0 0');
 SELECT 'union_test: ok';
 SQL
 } | duckdb -bail -noheader -list

@@ -1111,8 +1111,10 @@ FROM v;
 --  CBD_ID: the CRD; FIRM: the broker name; PARENT: NULL (owner: "replace cbd_id with crd, firm with broker_name, and
 --    you can leave parent as all null").  DIST_CH: the old channel in firm 1's names (a sale's own channel); NEW_DIST:
 --    the new channel; CHANNEL: owner_sql/uni_latest.sql's CASE on it.  STATE: ZIP_STATE_MAP's, the lowest of a ZIP's.
---  MM_OPP: the cell's opportunity; ACTUAL_SALES_AMOUNT: the sales; SALES_AMOUNT NULL (owner: "actual sales amount will
---    be our sales. drop sales_alt and set sales amount to null").
+--  MM_OPP: the cell's opportunity; ACTUAL_SALES_AMOUNT: the sales (owner: "actual sales amount will be our
+--    sales"); SALES_AMOUNT: firm 1's comp'd sales (TMP_O2_SALES.SALES_ALT; 0 on its opportunity rows), NULL on every
+--    firm 2 row (owner, 2026-11-01: "we do want to add in the compd sales to "sales_amount" instead of setting it null.
+--    and ok that source 2 will be null for every row there").
 --  TERR_WHOLESALER_CLEAN_NAME: NEW_TERR_WHOLESALER, the holder that goes with CHANNEL (owner, 2026-11-01, asked
 --    which wholesaler to map to it: "yes make the changes"); SALES_WHOLESALER_CLEAN_NAME: the seller as the territory table
 --    names that wholesaler key, else SALES_WHOLESALER, so one wholesaler has one name in both (owner, 2026-11-01: "make
@@ -1163,13 +1165,14 @@ u AS (
             SELECT d.source, d.zip, d.firm_crd, d.broker_name, d.product, d.old_channel_s1 AS dist_ch,
                    d.new_channel AS new_dist, p.old_key, p.old_nm, p.new_key, p.new_nm, p.old_key AS sales_key,
                    CAST(NULL AS VARCHAR) AS sales_nm, CAST(d.opportunity AS DECIMAL(38, 6)) AS mm_opp,
-                   CAST(0 AS DECIMAL(38, 6)) AS sales
+                   CAST(0 AS DECIMAL(38, 6)) AS sales,
+                   CASE WHEN d.source = 'S1' THEN CAST(0 AS DECIMAL(38, 6)) END AS sales_comp
             FROM ssdb_integration.lr_strategy.tmp_o1_dataset d
             LEFT JOIN pr p ON p.source = d.source AND p.zip = d.zip AND p.oc = COALESCE(d.old_territory_channel, '')
                           AND p.nc = COALESCE(d.new_territory_channel, '')
   UNION ALL SELECT s.source, s.zip, s.firm_crd, s.broker_name, COALESCE(s.product, s.raw_product), s.old_channel_s1,
                    s.new_channel, p.old_key, p.old_nm, p.new_key, p.new_nm, COALESCE(s.seller_key, p.old_key), s.seller,
-                   CAST(0 AS DECIMAL(38, 6)), CAST(s.sales AS DECIMAL(38, 6))
+                   CAST(0 AS DECIMAL(38, 6)), CAST(s.sales AS DECIMAL(38, 6)), CAST(s.sales_alt AS DECIMAL(38, 6))
             FROM s
             LEFT JOIN pr a ON a.source = s.source AND a.zip = s.zip AND a.oc = COALESCE(s.oc, '')
                           AND a.nc = COALESCE(s.nc, '') AND a.old_key = s.seller_key
@@ -1177,7 +1180,7 @@ u AS (
                           AND p.nc = COALESCE(s.nc, '') AND p.r = COALESCE(a.r, 1)),
 g AS (SELECT source, zip, firm_crd, broker_name, product, dist_ch, new_dist, old_key, new_key, sales_key,
              MIN(old_nm) AS old_nm, MIN(new_nm) AS new_nm, MIN(sales_nm) AS sales_nm, SUM(mm_opp) AS mm_opp,
-             SUM(sales) AS sales
+             SUM(sales) AS sales, SUM(sales_comp) AS sales_comp
       FROM u GROUP BY ALL),
 x AS (SELECT g.*, COALESCE(g.sales_nm, CASE WHEN EQUAL_NULL(g.sales_key, g.old_key) THEN g.old_nm END) AS sales_wh
       FROM g),
@@ -1191,7 +1194,7 @@ SELECT 2025 AS fiscal_yr, CASE x.source WHEN 'S1' THEN $s1_source WHEN 'S2' THEN
        CASE WHEN x.new_dist IN ('PRI', 'AFS') THEN 'pri_afs'
             WHEN x.new_dist IN ('Wells WH', 'National (Chase)', 'Wells FI') THEN 'National' ELSE x.new_dist END AS channel,
        zs.state, x.zip AS zip_code, x.product AS product_v2, x.mm_opp, x.sales AS actual_sales_amount,
-       CAST(NULL AS DECIMAL(38, 6)) AS sales_amount, x.sales_key AS sales_wholesaler_territory_id,
+       x.sales_comp AS sales_amount, x.sales_key AS sales_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS sales_wholesaler_address_id, x.new_key AS territory_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS territory_wholesaler_address_id, CAST(NULL AS INTEGER) AS sales_wholesaler_has_territory,
        CAST(NULL AS INTEGER) AS territory_wholesaler_has_territory, x.new_nm AS new_terr_wholesaler
@@ -1215,18 +1218,19 @@ SELECT fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, terr_wholesaler
 FROM ssdb_integration.lr_strategy.tmp_union;
 
 --18. The TABLEAU parts, per SOURCE label: SIZES (rows; MM_OPP, AMT_ALT TMP_O1_DATASET's: above it by the opportunity
---repeated for 2+ holders; ACTUAL_SALES_AMOUNT, AMT_ALT TMP_O2_SALES'), VS LIVE (by CHANNEL, ITEM, x PRODUCT_V2, ITEM2:
+--repeated for 2+ holders; ACTUAL_SALES_AMOUNT and SALES_AMOUNT, AMT_ALT TMP_O2_SALES' SALES and SALES_ALT), VS LIVE (by CHANNEL, ITEM, x PRODUCT_V2, ITEM2:
 --AMT the new table, AMT_ALT the live one), CHECKS.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_tb_out AS
 WITH
 lb AS (SELECT 'S1' AS src, $s1_source AS source UNION ALL SELECT 'S2', $s2_source),
 v AS (SELECT * FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2),
 l AS (SELECT * FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys),
-vt AS (SELECT source, COUNT(*) AS n, SUM(mm_opp) AS opp, SUM(actual_sales_amount) AS sales FROM v GROUP BY ALL),
+vt AS (SELECT source, COUNT(*) AS n, SUM(mm_opp) AS opp, SUM(actual_sales_amount) AS sales, SUM(sales_amount) AS comp,
+              COUNT(sales_amount) AS n_comp FROM v GROUP BY ALL),
 ut AS (SELECT source, COUNT(*) AS n, SUM(mm_opp) AS opp FROM ssdb_integration.lr_strategy.tmp_union GROUP BY ALL),
 o1 AS (SELECT lb.source, SUM(d.opportunity) AS amt
        FROM ssdb_integration.lr_strategy.tmp_o1_dataset d JOIN lb ON lb.src = d.source GROUP BY ALL),
-o2 AS (SELECT lb.source, SUM(s.sales) AS amt
+o2 AS (SELECT lb.source, SUM(s.sales) AS amt, SUM(s.sales_alt) AS comp
        FROM ssdb_integration.lr_strategy.tmp_o2_sales s JOIN lb ON lb.src = s.source GROUP BY ALL),
 ck AS (SELECT lb.source, d.zip, d.firm_crd, d.broker_name, d.product, d.old_channel_s1, d.new_channel,
               SUM(d.opportunity) AS opp
@@ -1248,12 +1252,14 @@ lc AS (SELECT COUNT(*) AS n FROM ssdb_integration.information_schema.columns
              'SALES_WHOLESALER_TERRITORY_ID', 'SALES_WHOLESALER_ADDRESS_ID', 'TERRITORY_WHOLESALER_TERRITORY_ID',
              'TERRITORY_WHOLESALER_ADDRESS_ID', 'SALES_WHOLESALER_HAS_TERRITORY', 'TERRITORY_WHOLESALER_HAS_TERRITORY')),
 vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp) AS live_opp,
-              SUM(new_sales) AS new_sales, SUM(live_sales) AS live_sales
+              SUM(new_sales) AS new_sales, SUM(live_sales) AS live_sales, SUM(new_comp) AS new_comp,
+              SUM(live_comp) AS live_comp
        FROM (SELECT source, channel, product_v2, CAST(mm_opp AS DECIMAL(38, 6)) AS new_opp,
                     CAST(0 AS DECIMAL(38, 6)) AS live_opp, CAST(actual_sales_amount AS DECIMAL(38, 6)) AS new_sales,
-                    CAST(0 AS DECIMAL(38, 6)) AS live_sales FROM v
+                    CAST(0 AS DECIMAL(38, 6)) AS live_sales, CAST(sales_amount AS DECIMAL(38, 6)) AS new_comp,
+                    CAST(NULL AS DECIMAL(38, 6)) AS live_comp FROM v
              UNION ALL SELECT source, channel, product_v2, 0, CAST(mm_opp AS DECIMAL(38, 6)), 0,
-                    CAST(actual_sales_amount AS DECIMAL(38, 6)) FROM l) y
+                    CAST(actual_sales_amount AS DECIMAL(38, 6)), NULL, CAST(sales_amount AS DECIMAL(38, 6)) FROM l) y
        GROUP BY ALL)
             SELECT 'SIZES' AS part, lb.source, 'TABLE ROWS (N_ROWS)' AS name, CAST(NULL AS VARCHAR) AS item,
                    CAST(NULL AS VARCHAR) AS item2, COALESCE(vt.n, 0) AS n_rows, CAST(NULL AS DECIMAL(38, 6)) AS amt,
@@ -1264,13 +1270,24 @@ vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp
             FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN o1 ON o1.source = lb.source
   UNION ALL SELECT 'SIZES', lb.source, 'ACTUAL_SALES_AMOUNT (AMT_ALT: TMP_O2_SALES)', NULL, NULL, NULL, vt.sales, o2.amt
             FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN o2 ON o2.source = lb.source
+  UNION ALL SELECT 'SIZES', lb.source, 'SALES_AMOUNT, COMP''D (AMT_ALT: TMP_O2_SALES SALES_ALT; NULL FOR SOURCE 2)', NULL,
+                   NULL, NULL, vt.comp, o2.comp
+            FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN o2 ON o2.source = lb.source
   UNION ALL SELECT 'VS LIVE', source, 'MM_OPP (AMT: THIS TABLE, AMT_ALT: THE LIVE ONE)', channel, product_v2, NULL,
                    new_opp, live_opp FROM vl
   UNION ALL SELECT 'VS LIVE', source, 'ACTUAL_SALES_AMOUNT (AMT: THIS TABLE, AMT_ALT: THE LIVE ONE)', channel,
                    product_v2, NULL, new_sales, live_sales FROM vl
+  UNION ALL SELECT 'VS LIVE', source, 'SALES_AMOUNT (AMT: THIS TABLE, AMT_ALT: THE LIVE ONE)', channel, product_v2,
+                   NULL, new_comp, live_comp FROM vl
   UNION ALL SELECT 'CHECKS', lb.source, 'ACTUAL_SALES_AMOUNT MINUS TMP_O2_SALES (MUST BE 0)', NULL, NULL, 0,
                    ROUND(COALESCE(vt.sales, 0) - COALESCE(o2.amt, 0), 2), NULL
             FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN o2 ON o2.source = lb.source
+  UNION ALL SELECT 'CHECKS', lb.source, 'SALES_AMOUNT MINUS TMP_O2_SALES COMP''D (MUST BE 0)', NULL, NULL, 0,
+                   ROUND(COALESCE(vt.comp, 0) - COALESCE(o2.comp, 0), 2), NULL
+            FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN o2 ON o2.source = lb.source
+  UNION ALL SELECT 'CHECKS', lb.source, 'SOURCE 2 ROWS WITH A SALES_AMOUNT (MUST BE 0)', NULL, NULL,
+                   COALESCE(vt.n_comp, 0), 0, NULL
+            FROM lb LEFT JOIN vt ON vt.source = lb.source WHERE lb.src = 'S2'
   UNION ALL SELECT 'CHECKS', lb.source, 'TABLE MINUS TMP_UNION, ROWS AND MM_OPP (MUST BE 0)', NULL, NULL,
                    COALESCE(vt.n, 0) - COALESCE(ut.n, 0), ROUND(COALESCE(vt.opp, 0) - COALESCE(ut.opp, 0), 2), NULL
             FROM lb LEFT JOIN vt ON vt.source = lb.source LEFT JOIN ut ON ut.source = lb.source

@@ -1494,3 +1494,15 @@ Owner, 2026-11-01: "sales wholesaler should be tied to a sale, so what do you me
 rows". The session explained that rows with opportunity and no sale carry the old holder as SALES_WHOLESALER, the old
 table's fill-in (`owner_sql/uni_latest.sql:362`), and offered blank (recommended) or as now; the new holder, offered
 earlier, withdrawn. Owner: "ok don't blank it." No code change; Key decisions row added.
+
+### 2026-11-01: SALES_AMOUNT is firm 1's comp'd sales
+
+Owner, 2026-11-01: "ok we do want to add in the compd sales to "sales_amount" instead of setting it null. and ok that
+source 2 will be null for every row there". This replaces "set sales amount to null" (design entry above). Statement
+17: SALES_AMOUNT = TMP_O2_SALES.SALES_ALT (firm 1's comp'd, `compd_agent_dollars`), 0 on firm 1's opportunity rows (as
+ACTUAL_SALES_AMOUNT is), NULL on every firm 2 row. Statement 18: a SIZES row (SALES_AMOUNT against TMP_O2_SALES'
+SALES_ALT), a VS LIVE measure (SALES_AMOUNT against the live table's), two checks (SALES_AMOUNT MINUS TMP_O2_SALES
+COMP'D per source; SOURCE 2 ROWS WITH A SALES_AMOUNT): 12 checks per run. `union_test.sh` 17 checks; the new one worked
+by hand before the run (02134 ALPHA INDEX IFA: N1 14, N6 6, N7 AS SOLD 2; firm 1 total 70; no firm 1 NULL; no firm 2
+value) held. 6 mutations: 5 killed; zeroing the SOURCE 2 check survived (the fixture never gives firm 2 a value), and the
+check, run alone on the mutation that gives firm 2's opportunity rows 0, flags 3 rows.
