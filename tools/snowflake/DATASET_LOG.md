@@ -1187,3 +1187,18 @@ territory ID; names stay in the table, Masking). Layer REVIEW in the result. Sta
 checks (MANUAL KEYS ON 2+ FIRMS, MANUAL FIRMS NOT IN TMP_O1_FIRM). `sales_review_test.sh` (17 checks) replaces
 `sales_unmapped_test.sh`; 12 mutations fail it (two survived first: one changed a column both test rows share, and no
 candidate had opportunity at a sale's ZIP in another product only); one hand-worked value missed a fixture sale.
+
+### 2026-10-31: first review list (`data/safe/opp_sales_2026-10-31-2219.csv`)
+
+Every CHECKS row 0 (19); bases as the previous run. REVIEW: 578 keys (firm 1 551, $4,218.0MM; firm 2 27, $1,275.9MM).
+- Most split $ left is a CRD's base name beside a variant on the same route, both with opportunity at the same ZIPs, so
+  evidence ties and rank 1 falls to the name order: firm 2 LPL (CRD 6413) FP $585.2MM, LPL FINANCIAL LLC vs its
+  "- INDEPENDENT" name (the base name ranks first only on the name match); Cetera Wealth (13572) $102.4MM; Raymond
+  James FS (6694) $36.1MM; Wells Fargo Clearing (19616) BD $34.9MM, base vs "- ADVISOR"; firm 1 LPL's codes, $134MM.
+  Either name puts the sale on the same route, so on the same new channel and holder: only the cell's name differs.
+- Firm 1 company 14 (Wells Fargo Clearing Services PCG, $302.3MM over 7 codes): both maps reach CRD 19616, whose WH
+  names tie the same way; one manual row (MGA NULL) would cover it.
+- Firm 2 NO CRD, $463.5MM, 17 keys (Ameriprise Financial Svcs $176.1MM, U.S. Bancorp Advisors $107.8MM, Halo
+  Securities - OID $68.1MM, DPL Financial Partners OID $57.4MM, ...): no candidate, the name matches no market metrics
+  name exactly. Firm 2's top wholesaler ID is blank for $318.2MM: those RVPs are not in its territory table.
+- Firm 1 NO CANDIDATE $3,765.6MM, 519 keys: the marketing organizations (owner: ignore for now).
