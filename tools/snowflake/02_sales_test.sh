@@ -47,23 +47,24 @@ INSERT INTO ssdb_integration.lr_strategy.crd_dist_override VALUES ('999', NULL, 
 CREATE TABLE ssdb_integration.lr_strategy.s1_sales_t (fiscal_yr INTEGER, actual_agent_dollars DECIMAL(18,2),
   compd_agent_dollars DECIMAL(18,2), product_line2 TEXT, dist_ch TEXT, consol_broker_nm TEXT,
   consol_brkr_dlr_id DECIMAL(38,0), parent TEXT, firmcrd TEXT, zip_cd TEXT, state_cd TEXT, whslr_id TEXT, whslr_nm TEXT,
-  product_bucket TEXT, true_ticket_count DOUBLE, true_ticket_count_act DOUBLE, distinct_agents INTEGER);
+  product_bucket TEXT, true_ticket_count DOUBLE, true_ticket_count_act DOUBLE, distinct_agents INTEGER, mga_agent_cd TEXT);
 INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
-  (2025,10,11,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1),
-  (2025,5,6,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W6','N6','ALL',1,1,1),
-  (2025,7,7,'INDEX','FI','LPL',8,'P','','10001','NY','W5','N5','ALL',1,1,1),
-  (2025,9,9,'INDEX','IFA','LPL',8,'P','','10001','NY','W2','N2','ALL',1,1,1),
-  (2025,4,4,'INDEX','IMO','LPL',8,'P','','02134','MA','W9','N9','ALL',1,1,1),
-  (2025,3,3,'FIXED','WH','DELTA',30,'P','','10001','NY','W3','N3','ALL',1,1,1),
-  (2025,2,2,'FIXED','IFA','CHARLIE',31,'P','','2134','MA','W1','N1','ALL',1,1,1),
-  (2025,6,6,'INDEX','CAPTIVE','ECHO',3,'P','','60601','IL','W4','N4','ALL',1,1,1),
-  (2025,1,1,'INDEX','IFA','FOX',60,'P','','02134','MA','W1','N1','ALL',1,1,1),
-  (2025,8,8,'INDEX','IFA','NEW BD',77,'P','','BLANK','BLANK','W1','N1','ALL',1,1,1),
-  (2025,5,5,'INDEX','IFA','AFS',438,'P','','02134','MA','W1','N1','ALL',1,1,1),
-  (2025,1,1,'INDEX','IFA','NONE',NULL,'P','','02134','MA','W1','N1','ALL',1,1,1),
-  (2024,100,100,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1),
-  (2025,50,50,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','RIVA',1,1,1),
-  (2025,2,2,'INDEX','ifa ','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1);
+  (2025,6,7,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,'M1'),
+  (2025,4,4,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,'M2'),
+  (2025,5,6,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W6','N6','ALL',1,1,1,'M1'),
+  (2025,7,7,'INDEX','FI','LPL',8,'P','','10001','NY','W5','N5','ALL',1,1,1,'M3'),
+  (2025,9,9,'INDEX','IFA','LPL',8,'P','','10001','NY','W2','N2','ALL',1,1,1,'M3'),
+  (2025,4,4,'INDEX','IMO','LPL',8,'P','','02134','MA','W9','N9','ALL',1,1,1,'M4'),
+  (2025,3,3,'FIXED','WH','DELTA',30,'P','','10001','NY','W3','N3','ALL',1,1,1,'M1'),
+  (2025,2,2,'FIXED','IFA','CHARLIE',31,'P','','2134','MA','W1','N1','ALL',1,1,1,'M5'),
+  (2025,6,6,'INDEX','CAPTIVE','ECHO',3,'P','','60601','IL','W4','N4','ALL',1,1,1,'M6'),
+  (2025,1,1,'INDEX','IFA','FOX',60,'P','','02134','MA','W1','N1','ALL',1,1,1,'M7'),
+  (2025,8,8,'INDEX','IFA','NEW BD',77,'P','','BLANK','BLANK','W1','N1','ALL',1,1,1,'M8'),
+  (2025,5,5,'INDEX','IFA','AFS',438,'P','','02134','MA','W1','N1','ALL',1,1,1,'M9'),
+  (2025,1,1,'INDEX','IFA','NONE',NULL,'P','','02134','MA','W1','N1','ALL',1,1,1,NULL),
+  (2024,100,100,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,'M1'),
+  (2025,50,50,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1','RIVA',1,1,1,'M1'),
+  (2025,2,2,'INDEX','ifa ','ALPHA BD',10,'P','','02134','MA','W1','N1','ALL',1,1,1,' ');
 CREATE TABLE life_prod.lif_murkylake.sls_rpt_detail (policy_no TEXT, fiscal_yr INTEGER, sales_date TIMESTAMP,
   bonus_rate DECIMAL(9,4), init_pay_in TEXT, consol_brkr_dlr_id DECIMAL(38,0), life70_co_cd TEXT, agent_tax_id TEXT,
   product_line TEXT, actual_sales_amount DECIMAL(18,2), sales_amount DECIMAL(18,2));
@@ -168,6 +169,10 @@ SELECT
  chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '10 0 0'),
  chk('the last statement: both halves, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true),
  chk('the last statement: sales $ intact', (SELECT CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'TIE-OUT' AND name LIKE 'DATASET%ACTUAL'), 46),
+ chk('mga: firm 1 sales per code, blank as NULL', (SELECT string_agg(COALESCE(mga_agent_cd, '-') || '=' || CAST(sl AS INTEGER), ' ' ORDER BY mga_agent_cd NULLS FIRST) FROM (SELECT mga_agent_cd, SUM(sales) AS sl FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' GROUP BY ALL) x), '-=3 M1=14 M2=4 M3=16 M4=4 M5=2 M6=6 M7=1 M8=8 M9=5'),
+ chk('mga: one sale split across two codes keeps its firm', (SELECT string_agg(mga_agent_cd || ' ' || firm_basis || ' ' || CAST(sales AS INTEGER), ', ' ORDER BY mga_agent_cd) FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND seller_key = 'W1' AND sales_firm_id = '10' AND old_channel = 'IFA'), 'M1 ONE FIRM 6, M2 ONE FIRM 4'),
+ chk('mga: firm 2 has none', (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S2' AND mga_agent_cd IS NOT NULL), 0),
+ chk('mga: the dataset sums over it (no column)', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name = 'tmp_o2_dataset' AND column_name = 'mga_agent_cd'), 0),
  chk('no renamed duplicate column', (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name LIKE 'tmp_o2%' AND regexp_matches(column_name, '_[0-9]+$')), 0);
 SELECT '02_sales_test: ok';
 SQL

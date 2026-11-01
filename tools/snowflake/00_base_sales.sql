@@ -1,17 +1,18 @@
 --Firm 1's base sales table with MGA_AGENT_CD (the owner's query of 2026-10-31, sha256
 --428f51472a97..., saved as owner_sql/s1_sales_v2.sql).  Changed only where a line says EDIT
---(session, 2026-10-31): the table name as a SET variable, two names masked, ok_policies back to policy grain, and MGA in final_output's join to agent_ticket.  Checks: the base table's
+--(session, 2026-10-31): the table name as the SET variable s1_sales, two names masked, ok_policies back to policy grain, and MGA in final_output's join to agent_ticket.  Checks: the base table's
 --2025 totals must equal SLS_RPT_DETAIL's (01_opportunity_sales.sql, SALES TABLE MINUS SLS_RPT_DETAIL, MUST BE 0).
 /*select sum(sales_amount)/1000000 amt from LIFE_PROD.LIF_MURKYLAKE.sls_rpt_Detail m  where m.mga_agent_cd  = 'WNL0BD4400000000000'
 and fiscal_yr =2025 */
 
 use secondary roles all;
 
--- EDIT (session, 2026-10-31): the table name comes from a SET variable (masking: no carrier name in the repo).
---Set it to the table to build (yours: the base sales table's _temp copy); point s1_sales at it only after
---01_opportunity_sales.sql's SALES TABLE MINUS SLS_RPT_DETAIL checks come back 0 on it.
-SET s1_sales_build = 'ssdb_integration.lr_strategy.<firm 1 base sales, new>';
-CREATE OR REPLACE TABLE IDENTIFIER($s1_sales_build) AS (
+-- EDIT (session, 2026-10-31): the table name comes from a SET variable (masking: no carrier name in the repo), the
+--same s1_sales that 01_opportunity_sales.sql reads.  It names the _temp table: this statement REPLACES whatever it
+--names, so never the old base sales table.  Then 01_opportunity_sales.sql's two SALES TABLE MINUS SLS_RPT_DETAIL
+--checks must be 0 on it.
+SET s1_sales = 'ssdb_integration.lr_strategy.<firm 1 base sales, _temp>';
+CREATE OR REPLACE TABLE IDENTIFIER($s1_sales) AS (
 /*=========================================================
   1) Distribution channel manual assignments
   If a policy is split across exactly IFA + IMO, and only

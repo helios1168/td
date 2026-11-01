@@ -16,7 +16,8 @@
 --    the sale's own channel, those three as the sales table has them (SALES_FIRM_ID and SALES_FIRM: firm 1's company
 --    ID and name, firm 2's CRD and firm name; RAW_PRODUCT; OLD_CHANNEL), with the market metrics firm (CRD x broker
 --    name) it reaches and how (FIRM_BASIS), the firm's new channel, and whether the seller holds that ZIP x firm x
---    product in the old and the new state.
+--    product in the old and the new state.  Firm 1's rows are also per MGA_AGENT_CD (blank for firm 2); TMP_O2_DATASET
+--    sums over it.
 --  TMP_O2_DATASET: the table to look at.  One row per source x wholesaler x ZIP x firm x product x old channel x new
 --    channel: the opportunity the wholesaler holds there, old and new (TMP_O1_DATASET), and the sales credited to
 --    them there.  Sales never move between states; only held opportunity does.  Every 2025 sale and every
@@ -403,12 +404,14 @@ WHERE p.company_id IS NOT NULL AND (p.how = 'DIRECT' OR d.company_id IS NULL);
 --OLD_CHANNEL are the sales table's CONSOL_BRKR_DLR_ID, CONSOL_BROKER_NM, PRODUCT_LINE2 and DIST_CH as they are;
 --matching reads them trimmed and upper-cased.  FIRM_BASIS: ONE FIRM (the company sits on one firm); SPLIT, MATCHED BY
 --CHANNEL (2+ firms, exactly one with the sale's channel); SPLIT, 2+ CHANNEL MATCHES or NO CHANNEL MATCH (left without
---a firm: assign where unique, flag the rest); NO MARKET METRICS FIRM; NO COMPANY.
+--a firm: assign where unique, flag the rest); NO MARKET METRICS FIRM; NO COMPANY.  MGA_AGENT_CD is the sales
+--table's, trimmed, blank as NULL: a column only (Q45), the firm still comes from the company ID alone.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_s1 AS
 WITH
 s AS (SELECT *, ROW_NUMBER() OVER (ORDER BY sales DESC) AS sid FROM (
   SELECT NULLIF(CAST(CAST(consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0') AS sales_firm_id,
-         consol_broker_nm AS sales_firm, NULLIF(TRIM(CAST(whslr_id AS VARCHAR)), '') AS seller_key, whslr_nm AS seller,
+         consol_broker_nm AS sales_firm, NULLIF(TRIM(CAST(mga_agent_cd AS VARCHAR)), '') AS mga_agent_cd,
+         NULLIF(TRIM(CAST(whslr_id AS VARCHAR)), '') AS seller_key, whslr_nm AS seller,
          CASE WHEN NULLIF(TRIM(zip_cd), '') IS NULL OR TRIM(zip_cd) = 'BLANK' THEN NULL
               ELSE LPAD(LEFT(TRIM(zip_cd), 5), 5, '0') END AS zip,
          product_line2 AS raw_product, dist_ch AS old_channel, COUNT(*) AS n_rows,
@@ -426,7 +429,7 @@ c AS (SELECT s.sid, cf.firm_crd, cf.broker_name, f.route
 k AS (SELECT sid, COUNT(*) AS n_firms, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM c GROUP BY ALL),
 m AS (SELECT c.sid, COUNT(*) AS n_match, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
       FROM c JOIN sc ON sc.sid = c.sid WHERE c.route = sc.s1_channel GROUP BY ALL)
-SELECT 'S1' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, s.zip, s.raw_product, s.old_channel,
+SELECT 'S1' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, s.mga_agent_cd, s.zip, s.raw_product, s.old_channel,
        s.old_channel AS old_channel_s1, sc.s1_channel AS match_channel,
        CASE WHEN s.sales_firm_id IS NULL THEN 'NO COMPANY' WHEN k.sid IS NULL THEN 'NO MARKET METRICS FIRM'
             WHEN k.n_firms = 1 THEN 'ONE FIRM' WHEN m.n_match = 1 THEN 'SPLIT, MATCHED BY CHANNEL'
@@ -466,7 +469,7 @@ c AS (SELECT s.sid, f.firm_crd, f.broker_name, f.route
 k AS (SELECT sid, COUNT(*) AS n_firms, MIN(firm_crd) AS crd, MIN(broker_name) AS nm FROM c GROUP BY ALL),
 m AS (SELECT c.sid, COUNT(*) AS n_match, MIN(c.firm_crd) AS crd, MIN(c.broker_name) AS nm
       FROM c JOIN sc ON sc.sid = c.sid WHERE c.route = sc.s1_channel GROUP BY ALL)
-SELECT 'S2' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, s.zip, s.raw_product, s.old_channel,
+SELECT 'S2' AS source, s.seller_key, s.seller, s.sales_firm_id, s.sales_firm, CAST(NULL AS VARCHAR) AS mga_agent_cd, s.zip, s.raw_product, s.old_channel,
        sc.s1_channel AS old_channel_s1, sc.s1_channel AS match_channel,
        CASE WHEN s.sales_firm_id IS NULL THEN 'NO CRD' WHEN k.sid IS NULL THEN 'NO MARKET METRICS FIRM'
             WHEN k.n_firms = 1 THEN 'ONE FIRM' WHEN m.n_match = 1 THEN 'SPLIT, MATCHED BY CHANNEL'
@@ -491,7 +494,7 @@ h AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product,
 cell AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product FROM h),
 ho AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, old_key AS w FROM h WHERE old_key IS NOT NULL),
 hn AS (SELECT DISTINCT source, zip, firm_crd, broker_name, product, new_key AS w FROM h WHERE new_key IS NOT NULL)
-SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.zip, u.raw_product, p.product,
+SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.mga_agent_cd, u.zip, u.raw_product, p.product,
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
        COALESCE(f.new_label, 'UNMAPPED') AS new_channel,
        CASE WHEN u.firm_crd IS NULL THEN 'NO FIRM' WHEN u.zip IS NULL THEN 'NO ZIP' WHEN p.product IS NULL THEN 'NO PRODUCT'
@@ -557,7 +560,7 @@ GROUP BY ALL;
 --  TIE-OUT: the owner's cut of firm 1's sales (PRODUCT_LINE2 <> 'FIXED' AND DIST_CH IN ('WH', 'FI', 'IFA')), actual and
 --    comp'd: the sales table by fiscal year, and TMP_O2_DATASET's 2025 (PRODUCT, OLD_CHANNEL).
 --  CHECKS (MUST BE 0): source 1's sales table against SLS_RPT_DETAIL under s1_sales.sql's row filters (:117-126) and
---    non-zero policies (:137-148), fiscal year 2025; each sales table against TMP_O2_SALES by firm x channel x product
+--    non-zero policies (:137-148), fiscal year 2025; each sales table against TMP_O2_SALES by firm x MGA code x channel x product
 --    as the sales table has them (N_ROWS: groups that differ; AMT: their $); the tie-out, sales table minus dataset;
 --    the dataset's opportunity and sales against their sources; company lists over 10 parts.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_out AS
@@ -593,15 +596,15 @@ tb AS (SELECT CAST(fiscal_yr AS VARCHAR) AS fy, COUNT(*) AS n, SUM(actual_agent_
 td AS (SELECT SUM(sales) AS act, SUM(sales_alt) AS comp FROM ssdb_integration.lr_strategy.tmp_o2_dataset
        WHERE source = 'S1' AND product <> 'FIXED' AND old_channel IN ('WH', 'FI', 'IFA')),
 am AS (SELECT * FROM (VALUES ('ACTUAL'), ('COMP''D')) AS x (amount)),
-gd AS (SELECT source, firm_id, channel, product, SUM(a1) AS d1, SUM(a2) AS d2 FROM (
+gd AS (SELECT source, firm_id, mga, channel, product, SUM(a1) AS d1, SUM(a2) AS d2 FROM (
             SELECT 'S1' AS source, NULLIF(CAST(CAST(consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0') AS firm_id,
-                   dist_ch AS channel, product_line2 AS product, CAST(actual_agent_dollars AS DECIMAL(38, 6)) AS a1,
+                   NULLIF(TRIM(CAST(mga_agent_cd AS VARCHAR)), '') AS mga, dist_ch AS channel, product_line2 AS product, CAST(actual_agent_dollars AS DECIMAL(38, 6)) AS a1,
                    CAST(compd_agent_dollars AS DECIMAL(38, 6)) AS a2
             FROM IDENTIFIER($s1_sales) WHERE fiscal_yr = 2025 AND product_bucket = 'ALL'
-  UNION ALL SELECT 'S2', CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), channel, product,
+  UNION ALL SELECT 'S2', CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR), CAST(NULL AS VARCHAR), channel, product,
                    CAST(sales_amount AS DECIMAL(38, 6)), CAST(mm_amount AS DECIMAL(38, 6))
             FROM IDENTIFIER($s2_sales) WHERE year = 2025
-  UNION ALL SELECT source, sales_firm_id, old_channel, raw_product, -sales, -sales_alt
+  UNION ALL SELECT source, sales_firm_id, mga_agent_cd, old_channel, raw_product, -sales, -sales_alt
             FROM ssdb_integration.lr_strategy.tmp_o2_sales) x
        GROUP BY ALL),
 v AS (
@@ -658,7 +661,7 @@ SELECT 'CHECKS', 'S1', 'TIE-OUT: SALES TABLE MINUS DATASET, 2025, ACTUAL + COMP'
 FROM (SELECT SUM(act) AS act, SUM(comp) AS comp FROM tb WHERE fy = '2025') t
 CROSS JOIN (SELECT SUM(act) AS act, SUM(comp) AS comp FROM td) d
 UNION ALL
-SELECT 'CHECKS', source, 'SALES TABLE MINUS TMP_O2_SALES BY FIRM X CHANNEL X PRODUCT, 2025 (MUST BE 0)', NULL,
+SELECT 'CHECKS', source, 'SALES TABLE MINUS TMP_O2_SALES BY FIRM X MGA X CHANNEL X PRODUCT, 2025 (MUST BE 0)', NULL,
        SUM(CASE WHEN ROUND(COALESCE(d1, 0), 2) <> 0 OR ROUND(COALESCE(d2, 0), 2) <> 0 THEN 1 ELSE 0 END), NULL, NULL,
        ROUND(SUM(ABS(COALESCE(d1, 0)) + ABS(COALESCE(d2, 0))), 2)
 FROM gd GROUP BY ALL

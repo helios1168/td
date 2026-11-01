@@ -1037,3 +1037,24 @@ policy grain, `AND EQUAL_NULL(at.mga_agent_cd, aps.mga_agent_cd)` in `final_outp
 comments masked. This also corrects the 2026-10-31 next-step list, which named `agent_ticket` a grouping and missed
 the join. Not run, not tested (it reads production tables); its check is `01_opportunity_sales.sql`'s `SALES TABLE
 MINUS SLS_RPT_DETAIL` pair, 0 once `s1_sales` points at the new table. `owner_sql/vars.sql` gained `s1_sales_build`.
+
+### 2026-10-31: MGA agent code in the sales half only (`TMP_O2_SALES`, `explore/sales_mga.sql`); one `s1_sales`
+
+Owner, 2026-10-31: "we'll have to think very carefully about how we integrated with any op data because it may not
+align as well now is there anyway we can just look at the sales component without the opt component so we can do some
+investigation, but the angle would still to eventually be looped back into the O2_data set layout and table"; then
+"shouldn't S1 sales always point to the new temptable though?" and "yes" to one variable. So:
+
+- `s1_sales` names the `_temp` base sales table everywhere; `00_base_sales.sql` builds `IDENTIFIER($s1_sales)` and
+  `s1_sales_build` is gone (the previous entry's variable). Its header warns the statement replaces what `s1_sales` names.
+- `01_opportunity_sales.sql` statement 10 groups firm 1's sales also by `MGA_AGENT_CD` (trimmed, blank as NULL);
+  firm 2's rows carry NULL at the same place (statement 12 stacks the two with `SELECT *`); `TMP_O2_SALES` has the
+  column. A column only (Q45 (a) for now): the firm still comes from the company ID alone. `TMP_O2_DATASET` is
+  unchanged and sums over it; looping it back is adding it to statement 13's grouping, opportunity rows blank.
+- The check `SALES TABLE MINUS TMP_O2_SALES BY FIRM X CHANNEL X PRODUCT` is now `BY FIRM X MGA X CHANNEL X PRODUCT`.
+- `explore/sales_mga.sql`: CODES, COMPANY X CODE (names with $: at work only), SPANS, UNRESOLVED SALES BY CODE (does a
+  sale left without a firm carry a code that resolved sales put on one firm, the first evidence for Q45 (b)).
+- Tests: `02_sales_test.sh` firm 1 sales carry codes (one sale split over M1 and M2, M1 on two companies, two blank),
+  50 checks; `sales_crosswalk_test.sh` row count 13 to 14 (the split), $ unchanged; `sales_mga_test.sh` 14 checks.
+  Mutations that fail: 4 on statements 10-14, 7 on `sales_mga.sql` (one survived the first fixture, the "2+ firms"
+  cutoff, until a test row put an unresolved sale on M1). Not run in Snowflake.

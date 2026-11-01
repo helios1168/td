@@ -17,7 +17,7 @@ INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Alpha Inc',100.0,'REGIONAL','NY','A','x','R2','D1',2025,2,2,'10001','IA');
 -- and a firm 1 row with no product bucket: outside the window, and it must be listed there
 INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
-  (2025,3,3,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1',NULL,1,1,1);
+  (2025,3,3,'INDEX','IFA','ALPHA BD',10,'P','','02134','MA','W1','N1',NULL,1,1,1,'M1');
 SQL
 sed -e '/^use secondary roles all;$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
@@ -55,7 +55,7 @@ SELECT
  chk('held old', (SELECT CAST(sales_in_held_cells_old AS INTEGER) FROM r WHERE part = 'CROSSWALK' AND sales_firm = 'ALPHA BD' AND raw_channel = 'IFA'), 10),
  chk('checks: 8 rows, all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(check_value)) AS INTEGER) FROM r WHERE part = 'CHECKS'), '8 0'),
  chk('map: one row per sales-table key', (SELECT string_agg(source || '=' || n || '/' || k, ' ' ORDER BY source) FROM (SELECT source, COUNT(*) AS n, COUNT(DISTINCT COALESCE(sales_firm_id, '-') || '|' || COALESCE(sales_firm, '-') || '|' || COALESCE(raw_channel, '-') || '|' || COALESCE(raw_product, '-')) AS k FROM ssdb_integration.lr_strategy.tmp_sales_map GROUP BY ALL) z), 'S1=12/12 S2=11/11'),
- chk('map: the documented firm 1 join reproduces every 2025 sale', (SELECT CAST(SUM(b.actual_agent_dollars) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s1_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S1' AND EQUAL_NULL(m.sales_firm_id, NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0')) AND EQUAL_NULL(m.sales_firm, b.consol_broker_nm) AND EQUAL_NULL(m.raw_channel, b.dist_ch) AND EQUAL_NULL(m.raw_product, b.product_line2) WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL'), '63 13'),
+ chk('map: the documented firm 1 join reproduces every 2025 sale', (SELECT CAST(SUM(b.actual_agent_dollars) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s1_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S1' AND EQUAL_NULL(m.sales_firm_id, NULLIF(CAST(CAST(b.consol_brkr_dlr_id AS DECIMAL(38, 0)) AS VARCHAR), '0')) AND EQUAL_NULL(m.sales_firm, b.consol_broker_nm) AND EQUAL_NULL(m.raw_channel, b.dist_ch) AND EQUAL_NULL(m.raw_product, b.product_line2) WHERE b.fiscal_yr = 2025 AND b.product_bucket = 'ALL'), '63 14'),
  chk('map: the firm 2 join reproduces every 2025 sale', (SELECT CAST(SUM(b.sales_amount) AS INTEGER) || ' ' || COUNT(*) FROM ssdb_integration.lr_strategy.s2_sales_t b JOIN ssdb_integration.lr_strategy.tmp_sales_map m ON m.source = 'S2' AND EQUAL_NULL(m.sales_firm_id, CAST(CAST(b.firm_crd AS DECIMAL(38, 0)) AS VARCHAR)) AND EQUAL_NULL(m.sales_firm, b.firm) AND EQUAL_NULL(m.raw_channel, b.channel) AND EQUAL_NULL(m.raw_product, b.product) WHERE b.year = 2025), '26 11'),
  chk('map: CBD_ID of the mapped firm, firm 1', (SELECT sales_firm_id || '>' || cbd_id || ' ' || n_cbd_id FROM ssdb_integration.lr_strategy.tmp_sales_map WHERE source = 'S1' AND sales_firm = 'ALPHA BD' AND raw_channel = 'IFA'), '10>10 1'),
  chk('map: CBD_ID for firm 2, through the firm (a pinned LPL name)', (SELECT COALESCE(sales_firm_id, '-') || '>' || cbd_id FROM ssdb_integration.lr_strategy.tmp_sales_map WHERE source = 'S2' AND sales_firm = 'LPL Corp' AND raw_channel = 'Bank'), '200>8'),
