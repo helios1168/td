@@ -810,6 +810,10 @@ GROUP BY ALL;
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_o2_out AS
 WITH
 s AS (SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_sales),
+sk AS (SELECT DISTINCT source, sales_firm_id, UPPER(TRIM(sales_firm)) AS sales_firm,
+              UPPER(TRIM(old_channel)) AS raw_channel, UPPER(TRIM(mga_agent_cd)) AS mga_agent_cd,
+              firm_basis = 'MANUAL' OR firm_crd IS NULL AS manual_or_open
+       FROM ssdb_integration.lr_strategy.tmp_o2_sales),
 maps AS (
             SELECT 'MM_MAP' AS map, CAST(CAST(CASE WHEN cbd_id = 0 THEN firm_client_id ELSE cbd_id END AS DECIMAL(38, 0))
                                          AS VARCHAR) AS company_id, CAST(CAST(firm_crd AS DECIMAL(38, 0)) AS VARCHAR) AS crd
@@ -925,12 +929,14 @@ LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = o.firm_crd 
 WHERE f.firm_crd IS NULL
 UNION ALL
 SELECT 'CHECKS', NULL, 'MANUAL ROWS MATCHING NO SALE, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
-FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
-WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_o2_sales x
-                  WHERE x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
-                    AND EQUAL_NULL(UPPER(TRIM(x.sales_firm)), o.sales_firm)
-                    AND EQUAL_NULL(UPPER(TRIM(x.old_channel)), o.raw_channel)
-                    AND (o.mga_agent_cd IS NULL OR UPPER(TRIM(x.mga_agent_cd)) = o.mga_agent_cd))
+FROM (SELECT o.source, o.sales_firm_id, o.sales_firm, o.raw_channel, o.mga_agent_cd, o.firm_crd, o.broker_name,
+             COUNT(x.source) AS hits
+      FROM ssdb_integration.lr_strategy.tmp_sales_firm_override o
+      LEFT JOIN sk x ON x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
+                    AND EQUAL_NULL(x.sales_firm, o.sales_firm) AND EQUAL_NULL(x.raw_channel, o.raw_channel)
+                    AND (o.mga_agent_cd IS NULL OR x.mga_agent_cd = o.mga_agent_cd)
+      GROUP BY ALL) y
+WHERE hits = 0
 UNION ALL
 SELECT 'CHECKS', NULL, 'SALES CHANNELS: KEYS ON 2+ CHANNELS, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
 FROM (SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, COUNT(DISTINCT new_channel) AS k
@@ -938,13 +944,14 @@ FROM (SELECT source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, COUNT
 WHERE k > 1
 UNION ALL
 SELECT 'CHECKS', NULL, 'SALES CHANNELS: ROWS MATCHING NO MANUAL OR UNMATCHED SALE, NOT APPLIED (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
-FROM ssdb_integration.lr_strategy.tmp_sales_channel_override o
-WHERE NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_o2_sales x
-                  WHERE (x.firm_basis = 'MANUAL' OR x.firm_crd IS NULL) AND x.source = o.source
-                    AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
-                    AND EQUAL_NULL(UPPER(TRIM(x.sales_firm)), o.sales_firm)
-                    AND EQUAL_NULL(UPPER(TRIM(x.old_channel)), o.raw_channel)
-                    AND (o.mga_agent_cd IS NULL OR UPPER(TRIM(x.mga_agent_cd)) = o.mga_agent_cd))
+FROM (SELECT o.source, o.sales_firm_id, o.sales_firm, o.raw_channel, o.mga_agent_cd, o.new_channel,
+             COUNT(x.source) AS hits
+      FROM ssdb_integration.lr_strategy.tmp_sales_channel_override o
+      LEFT JOIN sk x ON x.source = o.source AND EQUAL_NULL(x.sales_firm_id, o.sales_firm_id)
+                    AND EQUAL_NULL(x.sales_firm, o.sales_firm) AND EQUAL_NULL(x.raw_channel, o.raw_channel)
+                    AND (o.mga_agent_cd IS NULL OR x.mga_agent_cd = o.mga_agent_cd) AND x.manual_or_open
+      GROUP BY ALL) y
+WHERE hits = 0
 UNION ALL
 SELECT 'CHECKS', 'S1', 'COMPANY LISTS OVER 10 PARTS (MUST BE 0)', NULL, NULL, NULL, NULL, COUNT(*)
 FROM ssdb_integration.lr_strategy.tmp_o1_rows_s1 WHERE SPLIT_PART(company_id, '|', 11) <> '';

@@ -51,7 +51,7 @@ channels."
   owner, never assumed; a construct the owner has run at work counts as confirmed (owner, 2026-10-25).
 - **Testing.** Every query runs first in DuckDB on the extract in `data/safe/extract_<date>/`. DuckDB accepts what
   Snowflake rejects: it renames a repeated column name where Snowflake errors, so every CTE is described for repeats;
-  `IN` / `EXISTS` subqueries go only in `WHERE`; no named `WINDOW` clause.
+  `IN` / `EXISTS` subqueries go only in `WHERE`, and none correlated through `EQUAL_NULL` or an `OR` (Snowflake: "Unsupported subquery type cannot be evaluated"; DuckDB runs it): use a LEFT JOIN and count the misses; no named `WINDOW` clause.
 - **Words.** "Source firm" (firm_1, firm_2) for the insurers, "distributor" for the broker-dealer; the rest of the
   vocabulary is in `DATA_MODEL.md`. A channel is a sales channel, never a "desk".
 - **Audit.** `audit.js` checks this directory's documents against its code: a reader lists the claims of `DATA_MODEL.md`
@@ -1298,3 +1298,14 @@ IFA; 44ASE lands on no opportunity cell, the only name with opportunity at its Z
 WELLS FARGO CLEARING SERVICES, LLC - ADVISOR as the workbook chose (the "yes" to assigning all three as chosen; no
 opportunity at its ZIP either). 54 manual rows, all distinct keys. Held: Alliance Global (owner: "hold off on alliance
 global for now"); undecided: Cetera Advisors 88232, "Unassigned". Not run in Snowflake.
+
+### 2026-11-01: statement 14's two NOT EXISTS checks rewritten as joins
+
+Owner, 2026-11-01: "i get unsupported subquery type cannot be evaluated at line 120 eror". Line 120 of statement 14
+(the error counts from the statement's start) is the first of two checks added 2026-11-01, MANUAL ROWS MATCHING NO
+SALE and SALES CHANNELS: ROWS MATCHING NO MANUAL OR UNMATCHED SALE: correlated `NOT EXISTS` subqueries whose
+correlation ran through `EQUAL_NULL` and `o.mga_agent_cd IS NULL OR ...`. Snowflake's docs list correlated EXISTS in
+WHERE as supported (user-guide/querying-subqueries, read 2026-11-01) but this form fails to compile there; DuckDB ran
+it, so the tests missed it. Both checks now LEFT JOIN a distinct sales-key CTE (`sk`) and count override rows with no
+match. Same results in the tests; 4 mutations fail them. Convention Testing gains the rule. `explore/amer_holder.sql`
+keeps a correlated NOT EXISTS on plain equality (not runnable at work anyway: it reads SLS_RPT_DETAIL).
