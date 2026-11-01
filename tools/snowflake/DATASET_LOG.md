@@ -1449,3 +1449,13 @@ Owner, 2026-11-01, on `DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2`: "I'm getting $7
 sales in FI. IFA, National, and WH", then "excluding fixed", then "just kidding we're good": firm 1's ACTUAL_SALES_AMOUNT
 in those four CHANNEL values without FIXED ties to the ~$7.7B of the earlier runs (TIE-OUT $7,730.0MM). The run's CSV
 (the 9 TABLEAU checks) has not come back yet.
+
+### 2026-11-01: the Tableau table without the clean-name columns
+
+Owner, 2026-11-01: "and also lets just replace the clean_name versions of the columns with the appropriate name from
+latest logic". Read as: drop TERR_WHOLESALER_CLEAN_NAME and SALES_WHOLESALER_CLEAN_NAME (they held OLD_TERR_WHOLESALER
+and SALES_WHOLESALER already); Tableau fields on them move to OLD_TERR_WHOLESALER or NEW_TERR_WHOLESALER and
+SALES_WHOLESALER. Statement 17 drops them after the rename (`ALTER TABLE ... DROP COLUMN`, one per statement); the
+table has 23 columns. `union_test.sh` checks the layout (23, no clean-name column); two mutations (drop another column
+instead; keep one clean-name column) killed. Revert: delete the two DROP COLUMN lines and put the two columns back in
+the SELECT and the INSERT list.

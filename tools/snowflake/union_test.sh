@@ -50,21 +50,22 @@ SELECT
      (SELECT string_agg(source || '=' || CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER), ' ' ORDER BY source)
       FROM t WHERE part = 'SIZES' AND name LIKE 'ACTUAL%'), 'SRC1=68/68 SRC2=24/24'),
  chk('state: one per ZIP, the lowest', (SELECT string_agg(DISTINCT zip_code || '=' || state, ' ' ORDER BY zip_code || '=' || state) FROM v WHERE zip_code IN ('02134', '10001')), '02134=MA 10001=NJ'),
- chk('layout: the live columns and types, TERR_WHOLESALER renamed, NEW_TERR_WHOLESALER last',
+ chk('layout: the live columns and types, TERR_WHOLESALER renamed, the clean names dropped, NEW_TERR_WHOLESALER last',
      (SELECT COUNT(*) || ' ' || MAX(CASE WHEN column_index = 3 THEN column_name END) || ' '
-             || MAX(CASE WHEN column_index = 25 THEN column_name END) || ' '
+             || MAX(CASE WHEN column_index = 23 THEN column_name END) || ' '
              || MAX(CASE WHEN column_name = 'fiscal_yr' THEN data_type END) || ' '
              || MAX(CASE WHEN column_name = 'mm_opp' THEN data_type END)
       FROM duckdb_columns() WHERE table_name = 'data_withnewchannel_union_w_joinkeys_v2'),
-     '25 old_terr_wholesaler new_terr_wholesaler INTEGER DOUBLE'),
+     '23 old_terr_wholesaler new_terr_wholesaler INTEGER DOUBLE'),
  chk('layout: CBD_ID the CRD, FIRM the broker name', (SELECT cbd_id || ' ' || firm FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), '200 LPL FINANCIAL LLC'),
  chk('layout: PARENT, SALES_AMOUNT, address IDs, HAS_TERRITORY flags all NULL',
      (SELECT COUNT(*) FROM v WHERE parent IS NOT NULL OR sales_amount IS NOT NULL OR sales_wholesaler_address_id IS NOT NULL
       OR territory_wholesaler_address_id IS NOT NULL OR sales_wholesaler_has_territory IS NOT NULL
       OR territory_wholesaler_has_territory IS NOT NULL), 0),
- chk('layout: clean names and territory IDs as they are',
-     (SELECT terr_wholesaler_clean_name || ' ' || sales_wholesaler_clean_name || ' ' || territory_wholesaler_territory_id
-             || ' ' || sales_wholesaler_territory_id FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), 'N9 N9 W9 W9'),
+ chk('layout: no clean-name column; territory IDs as they are',
+     (SELECT (SELECT COUNT(*) FROM duckdb_columns() WHERE table_name = 'data_withnewchannel_union_w_joinkeys_v2'
+              AND column_name LIKE '%clean_name') || ' ' || territory_wholesaler_territory_id
+             || ' ' || sales_wholesaler_territory_id FROM v WHERE source = 'SRC1' AND sales_wholesaler = 'N9'), '0 W9 W9'),
  chk('channel: uni_latest.sql''s CASE (AFS to pri_afs)', (SELECT CAST(SUM(actual_sales_amount) AS INTEGER) FROM v WHERE channel = 'pri_afs'), 5),
  chk('no filter: UNMAPPED, EDJ kept', (SELECT string_agg(DISTINCT channel, ' ' ORDER BY channel) FROM v WHERE channel IN ('UNMAPPED', 'EDJ')), 'EDJ UNMAPPED'),
  chk('vs live', (SELECT CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER) FROM t WHERE part = 'VS LIVE' AND source = 'SRC1' AND name LIKE 'MM_OPP%' AND item = 'IFA' AND item2 = 'INDEX'), '600/500'),
