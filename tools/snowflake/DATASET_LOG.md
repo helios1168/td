@@ -192,6 +192,8 @@ decision point, and we should be able to easily come back and look at the number
 | firm 1's marketing organizations (sales) | new channel IMO, left out of the review extract (owner, 2026-10-31: "imo's stay out"; 2026-11-01: "yes relabel as IMO"); a marketing organization = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | UNMAPPED; reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 12 join `sl` (labels: 8 `tmp_s1_sale_channel`), 15 `gi.is_imo` | `SALES NEW CHANNEL` IMO, REVIEW SUMMARY `IMO, LEFT OUT` |
 | review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
+| the Tableau table: a cell with 2+ holders | a row per holder: the old and the new holders, each in ID order, paired by rank, so each holder in either state has the cell once; SUM(MM_OPP) over the table is above the opportunity by the repeats | one row, the lowest ID, as TMP_O1_DATASET (settled 2026-10-28) | owner, 2026-11-01: "opportunity is tied to the geography / territory, so it is okay if it is duplicated. sales is tied to the wholesaler though" | statement 17, `h` and `pr` (`AND pn.r = po.r`; keep `p.r = 1` only for one row) | TABLEAU SIZES (MM_OPP against TMP_O1_DATASET) |
+| the Tableau table: a sale's territory and row | the holders of the sale's own channel (firm 2's through Q19) and its firm's TAU at its ZIP, as the old table joined territories on the sale's DIST_CH (`s1_opp_sales.sql:719`); one row: its seller's pair, else the first; no seller: under the old territory wholesaler | the holders of the cell the sale lands on | owner, 2026-11-01: "terr_wholesaler reflected the wholesaler who owned that territory"; "keep the sales with no seller fall back to territory wholesaler" | statement 17, `s` and `u` | TABLEAU SIZES (ACTUAL_SALES_AMOUNT against TMP_O2_SALES) |
 
 ## Parked
 
@@ -1412,3 +1414,31 @@ wholesaler IDs from name-match tables, two HAS_TERRITORY flags. The owner's answ
 - "And can we put a cell's opportunity on the same row as it's opportunity?" Read as: on the same row as its sales,
   the old table's behavior (`s1_opp_sales.sql`, `saleswithMM`: a cell's opportunity on the sales row whose seller is
   the cell's territory wholesaler). Pending the owner's confirmation with the open points in the reply.
+
+### 2026-11-01: the Tableau table, built
+
+The owner's answers (2026-11-01), after the design entry above:
+
+- "well recall that opportunity is tied to the geography / territory, so it is okay if it is duplicated. sales is tied
+  to the wholesaler though."
+- "yes add the new state holder as new_terr_wholesaler, and name the old as old_terr_wholesaler. and you can set those
+  seller holds a territory flags to null."
+- "drop open but keey the sales with no seller fall back to territory wholesaler."
+- "and yes on output table. and no there are no relationships that would break from these changes"
+
+Built: statements 17-18 of `01_opportunity_sales.sql`. 17 makes `TMP_UNION` from TMP_O1_DATASET and TMP_O2_SALES and
+inserts it into `DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2`, made `LIKE` the live table (its columns and types),
+TERR_WHOLESALER renamed OLD_TERR_WHOLESALER, NEW_TERR_WHOLESALER added last; the live table is not touched. Column by
+column in the statement's comment; two Key decisions rows (2+ holders; a sale's territory and row). 18 is the new
+TABLEAU layer: SIZES, VS LIVE (by source x CHANNEL x PRODUCT_V2 against the live table) and 5 checks per run (sales
+against TMP_O2_SALES, the table against TMP_UNION, cells with less MM_OPP than TMP_O1_DATASET, SOURCE label not in the
+live table, live columns this script does not fill). New SET lines `s1_source`, `s2_source` (`owner_sql/vars.sql`:
+firm 1's label from `s1_opp_sales.sql`'s own; firm 2's a guess the label check confirms or not).
+
+Tests: `union_test.sh` (14 checks, answers worked out by hand before the run, all held on the first run: W7 a second
+IFA holder at 02134, a sale with no seller, a sale by W7); `02_sales_test.sh` and `sales_review_test.sh` gained the
+live-table and ZIP_STATE_MAP fixtures and the TABLEAU layer in their every-layer check. 16 mutations, all killed (rank
+pairing, the sale's pair, the no-seller fallback, the CHANNEL CASE, one state per ZIP, the labels, the opportunity, the
+column list, holder order, a sale's old and new channel, the rename, firm 2's RVP key, Q19 on sales, a filter). The
+cells check, run alone on the halved-opportunity mutation, flags 5 firm 1 cells ($310) and 3 firm 2 cells ($65), the
+hand count. All 11 DuckDB suites pass.

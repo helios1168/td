@@ -89,6 +89,16 @@ INSERT INTO ssdb_integration.lr_strategy.mm_map VALUES
 CREATE TABLE ssdb_integration.lr_strategy.crd_to_cbd (firm TEXT, firm_crd DOUBLE, cbd_id DOUBLE, cbd_nm_best TEXT);
 INSERT INTO ssdb_integration.lr_strategy.crd_to_cbd VALUES
   ('Alpha',100.0,10.0,'ALPHA'), ('LPL',200.0,8.0,'LPL'), ('Delta',400.0,30.0,'DELTA');
+CREATE TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys (fiscal_yr INTEGER, source TEXT,
+  terr_wholesaler TEXT, sales_wholesaler TEXT, terr_wholesaler_clean_name TEXT, sales_wholesaler_clean_name TEXT,
+  cbd_id TEXT, firm TEXT, parent TEXT, dist_ch TEXT, new_dist TEXT, channel TEXT, state TEXT, zip_code TEXT,
+  product_v2 TEXT, mm_opp DOUBLE, actual_sales_amount DOUBLE, sales_amount DOUBLE, sales_wholesaler_territory_id TEXT,
+  sales_wholesaler_address_id TEXT, territory_wholesaler_territory_id TEXT, territory_wholesaler_address_id TEXT,
+  sales_wholesaler_has_territory INTEGER, territory_wholesaler_has_territory INTEGER);
+INSERT INTO ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys (source, channel, product_v2, mm_opp,
+  actual_sales_amount) VALUES ('SRC1', 'IFA', 'INDEX', 500, 40), ('SRC2', 'IFA', 'INDEX', 80, 10);
+CREATE TABLE ssdb_integration.lr_strategy.zip_state_map (zip_code INTEGER, state TEXT);
+INSERT INTO ssdb_integration.lr_strategy.zip_state_map VALUES (2134, 'MA'), (10001, 'NY'), (10001, 'NJ'), (60601, 'IL');
 SQL
 sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales channels: end$/d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/IDENTIFIER(\$s1_territories)/ssdb_integration.lr_strategy.s1_terr_t/g' \
@@ -96,6 +106,7 @@ sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales ch
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
+    -e "s/\$s1_source/'SRC1'/g" -e "s/\$s2_source/'SRC2'/g" -e 's/^  LIKE \(.*\);$/  AS SELECT * FROM \1 LIMIT 0;/'  -e 's/ssdb_integration\.information_schema\./information_schema./' \
     -e "s/^SELECT 'REVIEW' AS layer,/CREATE TABLE full_result AS SELECT 'REVIEW' AS layer,/" \
     "$here/01_opportunity_sales.sql"
 echo "CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_out;"
@@ -161,7 +172,7 @@ SELECT
  chk('wholesalers s1 old', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S1' AND name = 'OLD'), 'HOLDS OPPORTUNITY AND SELLS=5/54 SELLS, HOLDS NO OPPORTUNITY=2/9'),
  chk('wholesalers s2 new', (SELECT string_agg(item || '=' || n_wholesalers || '/' || CAST(amt AS INTEGER), ' ' ORDER BY item) FROM r WHERE part = 'WHOLESALERS' AND source = 'S2' AND name = 'NEW'), 'HOLDS OPPORTUNITY AND SELLS=2/18 SELLS, HOLDS NO OPPORTUNITY=1/6'),
  chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || CAST(COALESCE(SUM(n_rows), 0) AS INTEGER) FROM r WHERE part = 'CHECKS'), '13 0 0'),
- chk('the last statement: every layer, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true),
+ chk('the last statement: every layer, every row', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' TABLEAU=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_tb_out), true),
  chk('the last statement: sales $ intact', (SELECT CAST(SUM(amt) AS INTEGER) FROM full_result WHERE layer = 'SALES' AND part = 'TIE-OUT' AND name LIKE 'DATASET%ACTUAL'), 46),
  chk('mga: firm 1 sales per code, blank as NULL', (SELECT string_agg(COALESCE(mga_agent_cd, '-') || '=' || CAST(sl AS INTEGER), ' ' ORDER BY mga_agent_cd NULLS FIRST) FROM (SELECT mga_agent_cd, SUM(sales) AS sl FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' GROUP BY ALL) x), '-=3 M1=14 M2=4 M3=16 M4=4 M5=2 M6=6 M7=1 M8=8 M9=5'),
  chk('mga: one sale split across two codes keeps its firm', (SELECT string_agg(mga_agent_cd || ' ' || firm_basis || ' ' || CAST(sales AS INTEGER), ', ' ORDER BY mga_agent_cd) FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND seller_key = 'W1' AND sales_firm_id = '10' AND old_channel = 'IFA'), 'M1 ONE FIRM 6, M2 ONE FIRM 4'),

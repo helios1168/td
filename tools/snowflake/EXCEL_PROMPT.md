@@ -14,7 +14,7 @@ summary, the manual-assignment worklist, candidates, opportunity views, and the 
 ```
 The table Extract is one result set from a territory-realignment analysis. Build the workbook below so a stakeholder can review results and decide manual firm assignments. Follow the rules exactly.
 
-STRUCTURE: LAYER and PART say what a row is. LAYER = OPPORTUNITY, SALES or REVIEW. SOURCE = S1 (firm 1) or S2 (firm 2): two separate firms, never add them together.
+STRUCTURE: LAYER and PART say what a row is. LAYER = OPPORTUNITY, SALES, REVIEW or TABLEAU (the Tableau table's tie-out). SOURCE = S1 (firm 1) or S2 (firm 2): two separate firms, never add them together.
 - OPPORTUNITY parts: V1 CHANNEL (opportunity $ by channel; NAME = CURRENT or NEW state), V2A RECLASSIFIED (ITEM = "old -> new" channel), V2B HOLDER MOVES (ITEM = what happens to the wholesaler holding the cell; ITEM2 = territory channel old -> new), V3 COVERAGE (NAME = state), CHECKS.
 - SALES parts: SALES FIRM BASIS (ITEM = how a sale was matched to a market metrics firm), SALES ON CELLS, SALES CHANNEL, SALES PRODUCT, WHOLESALERS, Q35, SALES PERIOD, TIE-OUT, CHECKS.
 - REVIEW parts: REVIEW (manual-assignment worklist), SUMMARY, CHECKS.

@@ -48,6 +48,7 @@ sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales ch
     -e "s/^  ('', '', '', '', '', '', '')   -- placeholder, keep it last\$/$manual ('', '', '', '', '', '', '')/" \
     -e "s/^  ('', '', '')   -- placeholder, keep it last\$/  ('601', ' foxtrot 2 ', 'ifa'), ('601', NULL, 'WH'), ('500', '', 'FI'), ('999999', 'NOWHERE', 'IFA'), ('300', 'CHARLIE', 'IFA'), ('300', 'CHARLIE', 'IFA\/IMO'), ('', '', '')/" \
     -e "s/^  ('', '', '', '', '', '')   -- placeholder, keep it last\$/  ('s1', '8', 'lpl', 'ifa', 'm12', 'ifa\/imo'), ('S1', '8', 'LPL', 'IFA', NULL, 'IFA\/IMO'), ('S1', '8', 'LPL', 'IFA', NULL, 'FI\/IMO'), ('S1', '8', 'LPL', 'IFA', 'M4', 'FI\/IMO'), ('S1', '77', 'NEW BD', 'IFA', 'M8', 'IMO'), ('', '', '', '', '', '')/" \
+    -e "s/\$s1_source/'SRC1'/g" -e "s/\$s2_source/'SRC2'/g" -e 's/^  LIKE \(.*\);$/  AS SELECT * FROM \1 LIMIT 0;/'  -e 's/ssdb_integration\.information_schema\./information_schema./' \
     -e "s/^SELECT 'REVIEW' AS layer,/CREATE TABLE full_result AS SELECT 'REVIEW' AS layer,/" \
     "$here/01_opportunity_sales.sql"
 cat <<'SQL'
@@ -87,7 +88,7 @@ SELECT
  chk('owner route: a firm on 2+ channels keeps its own', (SELECT route || ' ' || route_basis FROM ssdb_integration.lr_strategy.tmp_o1_firm WHERE firm_crd = '300'), 'IFA NAME'),
  chk('owner route: the opportunity it moves is reported', (SELECT string_agg(source || ' ' || item || '=' || CAST(amt AS INTEGER), ', ' ORDER BY item) FROM full_result WHERE layer = 'OPPORTUNITY' AND part = 'CHECKS' AND name = 'ROUTE BASIS' AND item LIKE 'OWNER OVERRIDE%'), 'S1 OWNER OVERRIDE: EDJ -> FI=71, S1 OWNER OVERRIDE: FI -> IFA=10'),
  chk('owner route checks', (SELECT string_agg(name || '=' || n_firms, ', ' ORDER BY name) FROM full_result WHERE layer = 'OPPORTUNITY' AND name LIKE 'OWNER ROUTES%'), 'OWNER ROUTES: A FIRM ON 2+ CHANNELS, NOT APPLIED (MUST BE 0)=1, OWNER ROUTES: FIRM NOT IN THE DATA (MUST BE 0)=1, OWNER ROUTES: NO FIRM 1 TERRITORY CHANNEL (MUST BE 0)=1'),
- chk('one result: every layer', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out), true);
+ chk('one result: every layer', (SELECT string_agg(layer || '=' || n, ' ' ORDER BY layer) FROM (SELECT layer, COUNT(*) AS n FROM full_result GROUP BY ALL) x) = 'OPPORTUNITY=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o1_out) || ' REVIEW=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_um_out) || ' SALES=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_o2_out) || ' TABLEAU=' || (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.tmp_tb_out), true);
 SELECT 'sales_review_test: ok';
 SQL
 } | duckdb -bail -noheader -list
