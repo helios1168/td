@@ -1442,3 +1442,10 @@ pairing, the sale's pair, the no-seller fallback, the CHANNEL CASE, one state pe
 column list, holder order, a sale's old and new channel, the rename, firm 2's RVP key, Q19 on sales, a filter). The
 cells check, run alone on the halved-opportunity mutation, flags 5 firm 1 cells ($310) and 3 firm 2 cells ($65), the
 hand count. All 11 DuckDB suites pass.
+
+### 2026-11-01: the Tableau table, first look in Snowflake
+
+Owner, 2026-11-01, on `DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2`: "I'm getting $7.9 instead of $7.7 for firm 1 total
+sales in FI. IFA, National, and WH", then "excluding fixed", then "just kidding we're good": firm 1's ACTUAL_SALES_AMOUNT
+in those four CHANNEL values without FIXED ties to the ~$7.7B of the earlier runs (TIE-OUT $7,730.0MM). The run's CSV
+(the 9 TABLEAU checks) has not come back yet.
