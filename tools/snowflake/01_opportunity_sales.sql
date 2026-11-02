@@ -30,7 +30,8 @@ use schema lr_strategy;
 --    opportunity cell is in it, so it ties to the sales tables (owner, 2026-10-30: "which we must be able to exactly
 --    replicate in this new table") and is the one master table (owner, 2026-10-30: "a single master table across all
 --    cases which we then filter down afterwards").
---  DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2: the one permanent table, the Tableau table rebuilt (statement 17).
+--  DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2 and TERRITORIES_V2: the two permanent tables, the Tableau table rebuilt and
+--    its territory join (statement 17).
 --EDJ, AMER and AFS are channels like the others: EDJ and AMER come from firm 1's rules (old and new), AFS from the
 --new-channel list (new only); a cut without them filters NEW_CHANNEL (owner, 2026-10-30: "should edj, amer, and afs
 --just be considered like their own channels?").
