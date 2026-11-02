@@ -196,6 +196,7 @@ decision point, and we should be able to easily come back and look at the number
 | the Tableau table: a sale's territory and row | the holders of the sale's own channel (firm 2's through Q19) and its firm's TAU at its ZIP, as the old table joined territories on the sale's DIST_CH (`s1_opp_sales.sql:719`); one row: its seller's pair, else the first; no seller: under the old territory wholesaler | the holders of the cell the sale lands on | owner, 2026-11-01: "terr_wholesaler reflected the wholesaler who owned that territory"; "keep the sales with no seller fall back to territory wholesaler" | statement 17, `s` and `u` | TABLEAU SIZES (ACTUAL_SALES_AMOUNT against TMP_O2_SALES) |
 | the Tableau table: TERR_WHOLESALER_CLEAN_NAME | the new holder (= NEW_TERR_WHOLESALER), TERRITORY_WHOLESALER_TERRITORY_ID its key: the holder that goes with CHANNEL | the old holder (= OLD_TERR_WHOLESALER, with DIST_CH) | owner, 2026-11-01: "the question is which wholesaler to map to terr_wholesaler_clean_name"; "yes make the changes"; run 1357: the holder moves for about 2.4% of firm 1's and 15% of firm 2's opportunity | statement 17's final SELECT (`x.new_nm`, `x.new_key`; `x.old_nm`, `x.old_key` to revert) | TABLEAU VS LIVE |
 | the Tableau table: SALES_WHOLESALER on opportunity rows | the old holder, the old table's fill-in (`owner_sql/uni_latest.sql:362`), so a cell's opportunity shares a row with its old holder's sales | blank (a name only on a sale); the new holder | owner, 2026-11-01: "sales wholesaler should be tied to a sale", then "ok don't blank it" | statement 17, `u` (`p.old_key AS sales_key`) | none (row placement only; sums unchanged) |
+| the Tableau table: territory join | `TERRITORIES_V2`, the two territory tables unioned as they are, keyed as `_v2` keys its holders; Tableau joins `SOURCE`, `TERRITORY_WHOLESALER_TERRITORY_ID` = `WHOLESALER_KEY`, `ZIP_CODE`, `NEW_TERR_CHANNEL` = `TERR_CHANNEL` | the `territories` table (clean names, `DIST_CH`) | owner, 2026-11-01: "drop the logic that was in territories and lean on the original tables since we know we can already join them to our latest v2 union" | statement 17 (`territories_v2`, `x.nc AS new_terr_channel`) | TABLEAU CHECKS: ROWS WITH A NEW HOLDER AND NO TERRITORIES_V2 ROW, TERRITORY JOIN COLUMNS TYPED UNLIKE THIS TABLE'S |
 
 ## Parked
 
@@ -1554,3 +1555,25 @@ company 98 recorded IFA/IMO with no market metrics firm added: SALES NEW CHANNEL
 LPL: new channel IMO). 4 mutations: 3 killed; dropping the firm 1 condition survives (firm 2's channels never carry
 these labels). Not changed, for the owner: firm 2's Raymond James keys (IFA/IMO, FI/IMO here, IFA and FI in the old
 table), Citizens and HSBC. Not run in Snowflake.
+
+### 2026-11-01: the Tableau territory join on keys (`TERRITORIES_V2`)
+
+Owner, 2026-11-01: Tableau joined the `territories` and `addresses` tables "on clean_names, zip, and dist_ch"; both
+union the two firms' source tables with clean-name logic. Then: "no lets drop the logic that was in territories and
+lean on the original tables since we know we can already join them to our latest v2 union". Built in statement 17,
+committed inside `40abbc2` (a forked session's IFA/IMO commit took this session's uncommitted edits with it):
+
+- `TERRITORIES_V2`: the two source territory tables unioned, one row per SOURCE x WHOLESALER_KEY x TERR_CHANNEL x
+  ZIP_CODE, keyed exactly as statement 17's `h` keys holders (firm 1 trimmed `WHSLR_ID`, firm 2 upper-cased `RVP`; ZIP
+  padded to 5). WHOLESALER: the key's name as `TERR_WHOLESALER_CLEAN_NAME` has it. Firm 2's TERRITORY_ID: the lowest
+  of the key's, N_TERRITORY_IDS of them.
+- `_v2` gains NEW_TERR_CHANNEL (column 26): the territory channel the new holder holds, in the territory table's codes.
+  `DIST_CH` cannot be the join channel: it is the old channel, and the clean name is the new holder.
+- TABLEAU parts: SIZES (TERRITORIES_V2 rows; keys on 2+ territory IDs); two CHECKS, must be 0 (rows with a new holder
+  and no TERRITORIES_V2 row; join columns typed unlike `_v2`'s); ADDRESS COLUMNS and ADDRESS ROWS for `$s1_addr`,
+  `$s2_addr` (column names, types, positions, row counts; no values, they are home addresses), to design the address
+  join next.
+- `union_test.sh`: 5 new checks, worked by hand first, all held on the first run; 6 mutations killed (key not
+  normalized, the new channel from the old on opportunity and on sales, ZIP typed INTEGER, 2 territory IDs on 2 rows,
+  the address table name). The two new checks each fire alone on the ZIP-typed-INTEGER mutation (1, and 11 + 3 rows).
+- Not built: an old-state territory join (old holder key and channel); add on the owner's word.
