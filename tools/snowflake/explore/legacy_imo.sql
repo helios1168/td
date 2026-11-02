@@ -3,7 +3,7 @@ use database ssdb_Integration;
 use schema lr_strategy;
 
 --How the old union table carried IFA/IMO, FI/IMO, IMO and Raymond James (owner, 2026-11-01: "we've completely broken
---ifa/imo and raymond james now"; "we don't have the eqh v3 query, but I can send you extracts").  Reads the two tables
+--ifa/imo and raymond james now"; "we don't have the [firm 2 table's] query, but I can send you extracts").  Reads the two tables
 --owner_sql/uni_latest.sql unions (fiscal year 2025) and the live Tableau table.  One result set, no wholesaler names:
 --  MAP: each old table's DIST_CH -> NEW_DIST by row type (opportunity only, sales only, both): rows, firms, $.
 --  IMO AND RAYMOND JAMES FIRMS: firm 2's rows with an IMO label (DIST_CH or NEW_DIST), and either firm's Raymond James

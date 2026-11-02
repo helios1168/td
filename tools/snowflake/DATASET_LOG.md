@@ -1523,7 +1523,7 @@ was mapped and used previously compared to what we've now done". Read, not built
   Raymond James has the label only on its three keys (`:532`-`:534`). Run 1357, firm 1: recorded IFA/IMO $1,012.7MM,
   FI/IMO $289.3MM, IMO $2,673.8MM; new channel IFA/IMO $0.6MM, FI/IMO $0, IMO $3,745.3MM. Firm 2: IFA/IMO $28.6MM,
   FI/IMO $3.1MM, the Raymond James keys only.
-- Owner: "we don't have the eqh v3 query, but I can send you extracts". `explore/legacy_imo.sql`: the two old tables'
+- Owner: "we don't have the [firm 2 table's] query, but I can send you extracts". `explore/legacy_imo.sql`: the two old tables'
   DIST_CH -> NEW_DIST by row type, firm 2's IMO and either firm's Raymond James rows, and the live table's IMO sellers'
   territory channels. `legacy_imo_test.sh` 3 checks worked by hand (one expected value fixed for DuckDB's FLOAT-to-text
   `6694.0`, display only); 6 mutations killed. Not run in Snowflake.
