@@ -48,20 +48,20 @@ use schema lr_strategy;
 --through the base sales table (no SLS_RPT_DETAIL or MGA tables: the owner has no access; owner, 2026-10-31).
 use secondary roles all;
 
---EDIT once: the tables whose names carry a carrier (paste the SET lines from owner_sql/vars.sql).  A name left as <...>
---fails loudly.
-SET s1_territories = 'ssdb_integration.lr_strategy.<source 1 territories, ends _TERRITORIES>';
-SET s2_opp         = 'ssdb_integration.lr_strategy.<source 2 opportunity, ends _OPP_ORIGINAL>';
-SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _TERRITORIES>';
---s1_sales is the table owner_sql/s1_sales.sql makes with its first CREATE line and its last line uncommented.
-SET s1_sales       = 'ssdb_integration.lr_strategy.<source 1 base sales from s1_sales.sql, ends _BASE_SALES>';
-SET s2_sales       = 'ssdb_integration.lr_strategy.<source 2 sales, ends _SALES>';
+--The tables the script reads (owner, 2026-11-01: "go ahead and set these in what is in the github"; owner_sql/vars.sql).
+SET s1_territories = 'ssdb_integration.lr_strategy.CRBG_TERRITORIES';
+SET s2_opp         = 'ssdb_integration.lr_strategy.EQH_OPP_ORIGINAL';
+SET s2_territories = 'ssdb_integration.lr_strategy.EQH_TERRITORIES';
+--s1_sales: the owner's base sales table, with MGA_AGENT_CD (2026-10-31).
+SET s1_sales       = 'ssdb_integration.lr_strategy.CRBG_Base_Sales_temp';
+SET s2_sales       = 'ssdb_integration.lr_strategy.EQH_SALES';
 --The wholesaler address tables (statement 18 lists their columns, for the address join).
-SET s1_addr        = 'ssdb_integration.lr_strategy.<source 1 wholesaler addresses, ends _WH_ADDR>';
-SET s2_addr        = 'ssdb_integration.lr_strategy.<source 2 wholesaler addresses, ends _WH_ADDR>';
---The SOURCE label each firm has in the Tableau table, data_withnewchannel_union_w_joinkeys (statement 17).
-SET s1_source      = '<source 1 label in the Tableau table>';
-SET s2_source      = '<source 2 label in the Tableau table>';
+SET s1_addr        = 'ssdb_integration.lr_strategy.CRBG_WH_ADDR';
+SET s2_addr        = 'ssdb_integration.lr_strategy.EQH_WH_ADDR';
+--The SOURCE label each firm has in the Tableau table, data_withnewchannel_union_w_joinkeys (statement 17); s2 is
+--checked by the TABLEAU check SOURCE LABEL NOT IN THE LIVE TABLE.
+SET s1_source      = 'CRBG';
+SET s2_source      = 'EQH';
 
 --1. Rules and decisions as tables.  The first three are profile.sql's, row for row (the test compares them).
 --Firm 1's channel rules, s1_opp_sales.sql:459-470 (sha256 6262e2f93bbd...): a row matches on the one column it fills;
