@@ -189,7 +189,7 @@ decision point, and we should be able to easily come back and look at the number
 | a firm's channel the owner sets | the owner's channel is the CRD x broker name's route (a blank name = every name on the CRD; a name row wins), before firm 1's rows and crd_dist_override; both sources' new state and the sales rules (owner, 2026-11-01: "when firm and written channel disagree, we need to override the actual channel for that firm and crd") | firm 1's rows (Q38) | the owner's review workbook, 2026-11-01 | `01_opportunity_sales.sql` 1 `tmp_firm_route_override`, 3 `fo` | opportunity CHECKS `ROUTE BASIS` (OWNER OVERRIDE), `OWNER ROUTES ...` |
 | a sale's channel the owner sets | a sale the manual table assigns, or one left without a firm, takes the owner's NEW_CHANNEL; IMO = pure IMO, out of the review list, filtered out at the end (owner, 2026-11-01: "we treat them as pure imo and filter out in the end"); the firm's route, opportunity and holders are unchanged (owner, 2026-11-01: "ok the only update the sales side to /IMO and keep the opp side as it is") | every sale of the key, or the firm's route | `IFA/IMO` and `FI/IMO` are sales labels only: firm 1's opportunity feed and territories have none (profiles 2026-10-30; `s1_opp_sales.sql:18`, `:21` label sales policies) | `01_opportunity_sales.sql` 8 `tmp_sales_channel_override`, 12 `co` | `SALES NEW CHANNEL`, CHECKS `SALES CHANNELS ...` |
 | a split still 2+ after the ZIP and MGA code rules (sales, both sources) | the one with the most opportunity at the sale's ZIP x product, a strict maximum (`SPLIT, MOST OPPORTUNITY AT ZIP`); all are on the sale's route, so channel and holder do not depend on it (owner, 2026-10-31: "yes to 4 rules"; an exception to Rules' "no largest-share guesses") | no firm | run 2026-10-31: ~$900MM of ties, base name beside a variant on one route | `01_opportunity_sales.sql` 10-11, CTE `zo` | `SALES FIRM BASIS` |
-| firm 1's marketing organizations (sales) | new channel IMO, left out of the review extract (owner, 2026-10-31: "imo's stay out"; 2026-11-01: "yes relabel as IMO"); a marketing organization = no market metrics firm and recorded IMO, IFA/IMO or FI/IMO | UNMAPPED; reviewed like the rest | run 2026-10-31: $3,745MM, 513 keys | `01_opportunity_sales.sql` 12 join `sl` (labels: 8 `tmp_s1_sale_channel`), 15 `gi.is_imo` | `SALES NEW CHANNEL` IMO, REVIEW SUMMARY `IMO, LEFT OUT` |
+| firm 1's recorded IFA/IMO, FI/IMO, IMO (sales) | the recorded label is the sale's new channel, with or without a market metrics firm, before the firm's (the old table: `s1_opp_sales.sql:707`); the firm is still picked on the base channel (IFA, FI); keys whose sales carry one of the three are left out of the review extract | the firm's channel; IMO only with no market metrics firm (2026-11-01, "yes relabel as IMO", superseded) | owner, 2026-11-01: "we've completely broken ifa/imo and raymond james now"; extract `data/safe/legacy_imo_2026-11-01-1808.csv`: firm 1's old NEW_DIST keeps IFA/IMO $1,012.2MM, FI/IMO $287.3MM, IMO $2,669.8MM | `01_opportunity_sales.sql` 12 (`CASE WHEN u.source = 'S1' THEN sl.label END`), 15 `any_imo` | `SALES NEW CHANNEL` |
 | review candidates by name (sales) | the 5 market metrics names most like the sales firm name, JAROWINKLER_SIMILARITY 85 or more; EV_NAME = similarity / 100 for every candidate (owner, 2026-10-31: "use fuzzy names but also allow manual typing") | exact names only | firm 2 NO CRD $463.5MM had no candidate | `01_opportunity_sales.sql` 15 CTE `fz` | REVIEW, SUMMARY `FUZZY NAME` |
 | source 1's blank-channel rows in the new state | the holder of the firm's route at the ZIP (second run: 2 rows, $0.00B; the other blank rows, 0.23% of source 1's $, are firms with no channel, UNMAPPED either way) | no holder, as the owner's query (`s1_opp_sales.sql:719` joins the row's own label) | session, 2026-10-30: the route is the firm's channel (Q38), so its holder serves every row of the firm; source 2 already works this way (Q39) | `01_opportunity_sales.sql` 5, the `hn` join of `TMP_O1_CELLS_S1` (`f.tau`; `c.cur_label` for the alternative) | `01_opportunity_sales.sql` V2B `GAINS A HOLDER` |
 | the Tableau table: a cell with 2+ holders | a row per holder: the old and the new holders, each in ID order, paired by rank, so each holder in either state has the cell once; SUM(MM_OPP) over the table is above the opportunity by the repeats | one row, the lowest ID, as TMP_O1_DATASET (settled 2026-10-28) | owner, 2026-11-01: "opportunity is tied to the geography / territory, so it is okay if it is duplicated. sales is tied to the wholesaler though" | statement 17, `h` and `pr` (`AND pn.r = po.r`; keep `p.r = 1` only for one row) | TABLEAU SIZES (MM_OPP against TMP_O1_DATASET) |
@@ -1527,3 +1527,30 @@ was mapped and used previously compared to what we've now done". Read, not built
   DIST_CH -> NEW_DIST by row type, firm 2's IMO and either firm's Raymond James rows, and the live table's IMO sellers'
   territory channels. `legacy_imo_test.sh` 3 checks worked by hand (one expected value fixed for DuckDB's FLOAT-to-text
   `6694.0`, display only); 6 mutations killed. Not run in Snowflake.
+
+### 2026-11-01: the old union's IFA/IMO, FI/IMO, IMO and Raymond James (extract), and firm 1's labels restored
+
+Owner, 2026-11-01: "don't worry about masking for now, we are in ultra crunch time", with the extract of
+`explore/legacy_imo.sql` (`data/safe/legacy_imo_2026-11-01-1808.csv`, 94 rows). Read:
+
+- Firm 1's old table: NEW_DIST is the recorded label for IFA/IMO ($1,012.2MM actual, $2,021.8MM comp'd), FI/IMO
+  ($287.3MM, $544.2MM) and IMO ($2,669.8MM), sales only; no other NEW_DIST for them. Comp'd is about twice actual on
+  the split labels.
+- Raymond James, firm 1 (company 6): opportunity IFA $3,963.7MM, FI $1,642.3MM; sales IFA $35.3MM, IFA/IMO $23.4MM,
+  FI/IMO $12.5MM, FI $0.6MM, IMO $0 ($17.9MM comp'd): its IFA/IMO and FI/IMO were the recorded split policies only.
+- Firm 2's old table: no IFA/IMO at all; FI/IMO $189.9MM, Citizens (583) $185.9MM and HSBC (362) $4.0MM, both BK,
+  which the union's firm 2 channel list drops (`uni_latest.sql:37`). Raymond James firm 2: FP -> IFA $105.2MM, BD ->
+  IFA $60.0MM, BK -> FI $14.6MM. Its CBD_IDs are firm 1's company IDs (6, 583). Firm 2's old table carries no
+  opportunity ($0 MM_OPP on every row) and $7,137.1MM of CAREER sales with no firm; without CAREER, $12,076.4MM, beside
+  run 1357's $12,073.3MM.
+- The third part (the live table's IMO sellers' territories) came back with no rows.
+
+Built: statement 12 gives a firm 1 sale recorded IFA/IMO, FI/IMO or IMO that label as its new channel, before the
+firm's; statement 15 leaves out of the review list a key with any of the three (not only IMO). Key decisions row
+rewritten (supersedes "yes relabel as IMO" for IFA/IMO and FI/IMO with no firm). Tests, values worked by hand before
+each run: `sales_review_test.sh` (the split LPL sale recorded IMO now IMO and left out: review rows 8 -> 5, $16 -> 15;
+company 98 recorded IFA/IMO with no market metrics firm added: SALES NEW CHANNEL IFA/IMO 1 -> 4, IMO LEFT OUT 2/15 ->
+3/18), `union_test.sh` (the IMO sale at LPL: NEW_DIST and CHANNEL IMO), `explore/sales_crosswalk_test.sh` (IMO on
+LPL: new channel IMO). 4 mutations: 3 killed; dropping the firm 1 condition survives (firm 2's channels never carry
+these labels). Not changed, for the owner: firm 2's Raymond James keys (IFA/IMO, FI/IMO here, IFA and FI in the old
+table), Citizens and HSBC. Not run in Snowflake.

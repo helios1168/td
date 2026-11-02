@@ -97,6 +97,10 @@ CREATE TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys (
   sales_wholesaler_has_territory INTEGER, territory_wholesaler_has_territory INTEGER);
 INSERT INTO ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys (source, channel, product_v2, mm_opp,
   actual_sales_amount) VALUES ('SRC1', 'IFA', 'INDEX', 500, 40), ('SRC2', 'IFA', 'INDEX', 80, 10);
+CREATE TABLE ssdb_integration.lr_strategy.s1_addr_t (whslr_id TEXT, addr_line TEXT, zip TEXT);
+INSERT INTO ssdb_integration.lr_strategy.s1_addr_t VALUES ('W1', 'x', '02134'), ('W2', 'x', '10001');
+CREATE TABLE ssdb_integration.lr_strategy.s2_addr_t (rvp TEXT, city TEXT);
+INSERT INTO ssdb_integration.lr_strategy.s2_addr_t VALUES ('R1', 'x');
 CREATE TABLE ssdb_integration.lr_strategy.zip_state_map (zip_code INTEGER, state TEXT);
 INSERT INTO ssdb_integration.lr_strategy.zip_state_map VALUES (2134, 'MA'), (10001, 'NY'), (10001, 'NJ'), (60601, 'IL');
 SQL
@@ -106,7 +110,7 @@ sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales ch
     -e 's/IDENTIFIER(\$s2_territories)/ssdb_integration.lr_strategy.s2_terr_t/g' \
     -e 's/IDENTIFIER(\$s1_sales)/ssdb_integration.lr_strategy.s1_sales_t/g' \
     -e 's/IDENTIFIER(\$s2_sales)/ssdb_integration.lr_strategy.s2_sales_t/g' \
-    -e "s/\$s1_source/'SRC1'/g" -e "s/\$s2_source/'SRC2'/g" -e 's/^  LIKE \(.*\);$/  AS SELECT * FROM \1 LIMIT 0;/'  -e 's/ssdb_integration\.information_schema\./information_schema./' \
+    -e 's/IDENTIFIER(\$s1_addr)/ssdb_integration.lr_strategy.s1_addr_t/g' -e 's/IDENTIFIER(\$s2_addr)/ssdb_integration.lr_strategy.s2_addr_t/g' -e "s/\$s1_addr/'ssdb_integration.lr_strategy.s1_addr_t'/g" -e "s/\$s2_addr/'ssdb_integration.lr_strategy.s2_addr_t'/g" -e "s/\$s1_source/'SRC1'/g" -e "s/\$s2_source/'SRC2'/g" -e 's/^  LIKE \(.*\);$/  AS SELECT * FROM \1 LIMIT 0;/'  -e 's/ssdb_integration\.information_schema\./information_schema./' \
     -e "s/^SELECT 'REVIEW' AS layer,/CREATE TABLE full_result AS SELECT 'REVIEW' AS layer,/" \
     "$here/01_opportunity_sales.sql"
 echo "CREATE TABLE r AS SELECT * FROM ssdb_integration.lr_strategy.tmp_o2_out;"

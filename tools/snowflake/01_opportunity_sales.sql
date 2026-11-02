@@ -55,6 +55,9 @@ SET s2_territories = 'ssdb_integration.lr_strategy.<source 2 territories, ends _
 --s1_sales is the table owner_sql/s1_sales.sql makes with its first CREATE line and its last line uncommented.
 SET s1_sales       = 'ssdb_integration.lr_strategy.<source 1 base sales from s1_sales.sql, ends _BASE_SALES>';
 SET s2_sales       = 'ssdb_integration.lr_strategy.<source 2 sales, ends _SALES>';
+--The wholesaler address tables (statement 18 lists their columns, for the address join).
+SET s1_addr        = 'ssdb_integration.lr_strategy.<source 1 wholesaler addresses, ends _WH_ADDR>';
+SET s2_addr        = 'ssdb_integration.lr_strategy.<source 2 wholesaler addresses, ends _WH_ADDR>';
 --The SOURCE label each firm has in the Tableau table, data_withnewchannel_union_w_joinkeys (statement 17).
 SET s1_source      = '<source 1 label in the Tableau table>';
 SET s2_source      = '<source 2 label in the Tableau table>';
@@ -694,8 +697,10 @@ LEFT JOIN m ON m.sid = s.sid
 LEFT JOIN z ON z.sid = s.sid
 LEFT JOIN zo ON zo.sid = s.sid;
 
---12. Both sources' sales with the firm's new channel (a firm 1 sale with no firm: its company's on the new-channel
---list, else IMO for firm 1's marketing organizations (owner, 2026-11-01: "yes relabel as IMO"), else UNMAPPED; a sale still
+--12. Both sources' sales with the firm's new channel (a firm 1 sale recorded IFA/IMO, FI/IMO or IMO keeps that label,
+--with or without a firm, as the old table did (s1_opp_sales.sql:707, else iwn.dist_ch; the owner's extract
+--data/safe/legacy_imo_2026-11-01-1808.csv: no other new label for them; owner, 2026-11-01: "we've completely broken
+--ifa/imo"); a firm 1 sale with no firm: its company's on the new-channel list, else UNMAPPED; a sale still
 --without a firm takes the manual assignment, FIRM_BASIS MANUAL, and the owner's
 --sales channel where one is set), where the sale lands (CELL_STATUS: on a ZIP x firm x product of TMP_O1_DATASET or why not), and whether its seller holds that cell
 --in the old and the new state (source 1 by wholesaler ID, source 2 by RVP: its territory IDs are seats, not people).
@@ -738,8 +743,9 @@ SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.mga_ag
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
        COALESCE(CASE WHEN (u.firm_basis = 'MANUAL' OR u.firm_crd IS NULL) AND COALESCE(ce1.k, ca1.k) = 1
                      THEN COALESCE(ce1.ch, ca1.ch) END,
+                -- ponytail: before the firm's label, listed ones too; the old table has no such sale at a listed company
+                CASE WHEN u.source = 'S1' THEN sl.label END,
                 f.new_label, nl.new_label,
-                CASE WHEN u.source = 'S1' AND u.firm_basis = 'NO MARKET METRICS FIRM' AND sl.label IS NOT NULL THEN 'IMO' END,
                 'UNMAPPED') AS new_channel,
        CASE WHEN u.firm_crd IS NULL THEN 'NO FIRM' WHEN u.zip IS NULL THEN 'NO ZIP' WHEN p.product IS NULL THEN 'NO PRODUCT'
             WHEN ce.source IS NULL THEN 'NO OPPORTUNITY CELL' ELSE 'ON A CELL WITH OPPORTUNITY' END AS cell_status,
@@ -987,7 +993,7 @@ g AS (SELECT x.*, ROW_NUMBER() OVER (ORDER BY source, sales_firm_id, sales_firm,
                                               match_channel) AS kid
       FROM (SELECT source, sales_firm_id, sales_firm, old_channel AS raw_channel, mga_agent_cd, firm_basis, match_channel,
                    SUM(n_rows) AS n_rows, COUNT(DISTINCT seller_key) AS n_wholesalers, COUNT(DISTINCT zip) AS n_zips,
-                   SUM(sales) AS amt, SUM(sales_alt) AS amt_alt, MAX(CASE WHEN new_channel = 'IMO' THEN 1 ELSE 0 END) AS any_imo
+                   SUM(sales) AS amt, SUM(sales_alt) AS amt_alt, MAX(CASE WHEN new_channel IN ('IMO', 'IFA/IMO', 'FI/IMO') THEN 1 ELSE 0 END) AS any_imo
             FROM u GROUP BY ALL) x),
 gi AS (SELECT g.*, g.any_imo = 1 AS is_imo FROM g),
 ug AS (SELECT u.*, g.kid
@@ -1122,8 +1128,15 @@ FROM v;
 --  *_TERRITORY_ID: the wholesaler keys (firm 1's ID, firm 2's RVP): the seller's, and the new holder's with
 --    TERR_WHOLESALER_CLEAN_NAME; the address IDs and the HAS_TERRITORY flags
 --    NULL (owner: "we do not need to replicate any of the name matching logic"; "set those ... flags to null").
+--  NEW_TERR_CHANNEL: the territory channel NEW_TERR_WHOLESALER holds, in the territory table's own codes (firm 1
+--    NEW_DIST_CHANNEL, firm 2 CHANNEL: Wells WH is WH, a firm 2 firm routed IFA is FP).
 --  No filter (owner: "do not propagate any filters as we are implementing them in our override instead").
 --TMP_UNION holds the same rows with this script's types; look at it in the same session.
+--TERRITORIES_V2: the two territory tables as they are, unioned, one row per SOURCE x WHOLESALER_KEY x TERR_CHANNEL x
+--ZIP_CODE and keyed as this table keys its holders, for Tableau's territory join (owner, 2026-11-01: "drop the logic
+--that was in territories and lean on the original tables"): TERRITORY_WHOLESALER_TERRITORY_ID = WHOLESALER_KEY,
+--ZIP_CODE = ZIP_CODE, NEW_TERR_CHANNEL = TERR_CHANNEL.  WHOLESALER: the key's name as TERR_WHOLESALER_CLEAN_NAME
+--has it; TERRITORY_ID: firm 2's lowest of the key's, N_TERRITORY_IDS of them.
 --Snowflake docs read 2026-11-01: CREATE TABLE ... LIKE copies column names and types (.../sql/create-table); ALTER
 --TABLE ... RENAME COLUMN, ADD COLUMN (.../sql/alter-table-column); INSERT coerces to the column's type
 --(.../sql/insert).
@@ -1166,19 +1179,20 @@ u AS (
                    d.new_channel AS new_dist, p.old_key, p.old_nm, p.new_key, p.new_nm, p.old_key AS sales_key,
                    CAST(NULL AS VARCHAR) AS sales_nm, CAST(d.opportunity AS DECIMAL(38, 6)) AS mm_opp,
                    CAST(0 AS DECIMAL(38, 6)) AS sales,
-                   CASE WHEN d.source = 'S1' THEN CAST(0 AS DECIMAL(38, 6)) END AS sales_comp
+                   CASE WHEN d.source = 'S1' THEN CAST(0 AS DECIMAL(38, 6)) END AS sales_comp,
+                   d.new_territory_channel AS nc
             FROM ssdb_integration.lr_strategy.tmp_o1_dataset d
             LEFT JOIN pr p ON p.source = d.source AND p.zip = d.zip AND p.oc = COALESCE(d.old_territory_channel, '')
                           AND p.nc = COALESCE(d.new_territory_channel, '')
   UNION ALL SELECT s.source, s.zip, s.firm_crd, s.broker_name, COALESCE(s.product, s.raw_product), s.old_channel_s1,
                    s.new_channel, p.old_key, p.old_nm, p.new_key, p.new_nm, COALESCE(s.seller_key, p.old_key), s.seller,
-                   CAST(0 AS DECIMAL(38, 6)), CAST(s.sales AS DECIMAL(38, 6)), CAST(s.sales_alt AS DECIMAL(38, 6))
+                   CAST(0 AS DECIMAL(38, 6)), CAST(s.sales AS DECIMAL(38, 6)), CAST(s.sales_alt AS DECIMAL(38, 6)), s.nc
             FROM s
             LEFT JOIN pr a ON a.source = s.source AND a.zip = s.zip AND a.oc = COALESCE(s.oc, '')
                           AND a.nc = COALESCE(s.nc, '') AND a.old_key = s.seller_key
             LEFT JOIN pr p ON p.source = s.source AND p.zip = s.zip AND p.oc = COALESCE(s.oc, '')
                           AND p.nc = COALESCE(s.nc, '') AND p.r = COALESCE(a.r, 1)),
-g AS (SELECT source, zip, firm_crd, broker_name, product, dist_ch, new_dist, old_key, new_key, sales_key,
+g AS (SELECT source, zip, firm_crd, broker_name, product, dist_ch, new_dist, old_key, new_key, sales_key, nc,
              MIN(old_nm) AS old_nm, MIN(new_nm) AS new_nm, MIN(sales_nm) AS sales_nm, SUM(mm_opp) AS mm_opp,
              SUM(sales) AS sales, SUM(sales_comp) AS sales_comp
       FROM u GROUP BY ALL),
@@ -1197,29 +1211,45 @@ SELECT 2025 AS fiscal_yr, CASE x.source WHEN 'S1' THEN $s1_source WHEN 'S2' THEN
        x.sales_comp AS sales_amount, x.sales_key AS sales_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS sales_wholesaler_address_id, x.new_key AS territory_wholesaler_territory_id,
        CAST(NULL AS VARCHAR) AS territory_wholesaler_address_id, CAST(NULL AS INTEGER) AS sales_wholesaler_has_territory,
-       CAST(NULL AS INTEGER) AS territory_wholesaler_has_territory, x.new_nm AS new_terr_wholesaler
+       CAST(NULL AS INTEGER) AS territory_wholesaler_has_territory, x.new_nm AS new_terr_wholesaler,
+       x.nc AS new_terr_channel
 FROM x LEFT JOIN zs ON zs.zip = x.zip LEFT JOIN nm ON nm.source = x.source AND nm.w_key = x.sales_key;
 
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2
   LIKE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys;
 ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 RENAME COLUMN terr_wholesaler TO old_terr_wholesaler;
 ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 ADD COLUMN new_terr_wholesaler VARCHAR;
+ALTER TABLE ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2 ADD COLUMN new_terr_channel VARCHAR;
 INSERT INTO ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2
   (fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, terr_wholesaler_clean_name, sales_wholesaler_clean_name,
    cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
    sales_amount, sales_wholesaler_territory_id, sales_wholesaler_address_id, territory_wholesaler_territory_id,
    territory_wholesaler_address_id, sales_wholesaler_has_territory, territory_wholesaler_has_territory,
-   new_terr_wholesaler)
+   new_terr_wholesaler, new_terr_channel)
 SELECT fiscal_yr, source, old_terr_wholesaler, sales_wholesaler, terr_wholesaler_clean_name, sales_wholesaler_clean_name,
        cbd_id, firm, parent, dist_ch, new_dist, channel, state, zip_code, product_v2, mm_opp, actual_sales_amount,
        sales_amount, sales_wholesaler_territory_id, sales_wholesaler_address_id, territory_wholesaler_territory_id,
        territory_wholesaler_address_id, sales_wholesaler_has_territory, territory_wholesaler_has_territory,
-       new_terr_wholesaler
+       new_terr_wholesaler, new_terr_channel
 FROM ssdb_integration.lr_strategy.tmp_union;
+
+CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.territories_v2 AS
+WITH t AS (
+            SELECT $s1_source AS source, TRIM(CAST(whslr_id AS VARCHAR)) AS wholesaler_key, whslr_nm AS nm,
+                   UPPER(TRIM(new_dist_channel)) AS terr_channel, LPAD(LEFT(TRIM(zip), 5), 5, '0') AS zip_code,
+                   state_cd AS state, CAST(NULL AS VARCHAR) AS territory_id
+            FROM IDENTIFIER($s1_territories) WHERE whslr_id IS NOT NULL
+  UNION ALL SELECT $s2_source, UPPER(TRIM(rvp)), rvp, UPPER(TRIM(channel)), LPAD(LEFT(TRIM(zipcode), 5), 5, '0'), state,
+                   TRIM(CAST(territory_id AS VARCHAR))
+            FROM IDENTIFIER($s2_territories) WHERE NULLIF(TRIM(rvp), '') IS NOT NULL)
+SELECT source, wholesaler_key, MIN(MIN(nm)) OVER (PARTITION BY source, wholesaler_key) AS wholesaler, terr_channel,
+       zip_code, MIN(state) AS state, MIN(territory_id) AS territory_id, COUNT(DISTINCT territory_id) AS n_territory_ids
+FROM t GROUP BY source, wholesaler_key, terr_channel, zip_code;
 
 --18. The TABLEAU parts, per SOURCE label: SIZES (rows; MM_OPP, AMT_ALT TMP_O1_DATASET's: above it by the opportunity
 --repeated for 2+ holders; ACTUAL_SALES_AMOUNT and SALES_AMOUNT, AMT_ALT TMP_O2_SALES' SALES and SALES_ALT), VS LIVE (by CHANNEL, ITEM, x PRODUCT_V2, ITEM2:
---AMT the new table, AMT_ALT the live one), CHECKS.
+--AMT the new table, AMT_ALT the live one), CHECKS, ADDRESS COLUMNS (each address table's columns: ITEM the column,
+--ITEM2 its type, N_ROWS its position; no values, they are home addresses) and ADDRESS ROWS.
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_tb_out AS
 WITH
 lb AS (SELECT 'S1' AS src, $s1_source AS source UNION ALL SELECT 'S2', $s2_source),
@@ -1251,6 +1281,29 @@ lc AS (SELECT COUNT(*) AS n FROM ssdb_integration.information_schema.columns
              'NEW_DIST', 'CHANNEL', 'STATE', 'ZIP_CODE', 'PRODUCT_V2', 'MM_OPP', 'ACTUAL_SALES_AMOUNT', 'SALES_AMOUNT',
              'SALES_WHOLESALER_TERRITORY_ID', 'SALES_WHOLESALER_ADDRESS_ID', 'TERRITORY_WHOLESALER_TERRITORY_ID',
              'TERRITORY_WHOLESALER_ADDRESS_ID', 'SALES_WHOLESALER_HAS_TERRITORY', 'TERRITORY_WHOLESALER_HAS_TERRITORY')),
+tv AS (SELECT source, COUNT(*) AS n, SUM(CASE WHEN n_territory_ids > 1 THEN 1 ELSE 0 END) AS n_multi
+       FROM ssdb_integration.lr_strategy.territories_v2 GROUP BY ALL),
+tj AS (SELECT v.source, COUNT(*) AS n
+       FROM v LEFT JOIN ssdb_integration.lr_strategy.territories_v2 r
+         ON r.source = v.source AND CAST(r.wholesaler_key AS VARCHAR) = CAST(v.territory_wholesaler_territory_id AS VARCHAR)
+        AND CAST(r.zip_code AS VARCHAR) = CAST(v.zip_code AS VARCHAR) AND r.terr_channel = v.new_terr_channel
+       WHERE v.territory_wholesaler_territory_id IS NOT NULL AND r.source IS NULL GROUP BY ALL),
+ic AS (SELECT UPPER(table_name) AS tbl, UPPER(column_name) AS col, data_type AS typ
+       FROM ssdb_integration.information_schema.columns
+       WHERE UPPER(table_schema) = 'LR_STRATEGY'
+         AND UPPER(table_name) IN ('DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2', 'TERRITORIES_V2')),
+ty AS (SELECT COUNT(*) AS n
+       FROM (VALUES ('SOURCE', 'SOURCE'), ('TERRITORY_WHOLESALER_TERRITORY_ID', 'WHOLESALER_KEY'),
+                    ('ZIP_CODE', 'ZIP_CODE'), ('NEW_TERR_CHANNEL', 'TERR_CHANNEL')) AS p (vc, tc)
+       LEFT JOIN ic a ON a.tbl = 'DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2' AND a.col = p.vc
+       LEFT JOIN ic b ON b.tbl = 'TERRITORIES_V2' AND b.col = p.tc
+       WHERE a.typ IS NULL OR NOT EQUAL_NULL(a.typ, b.typ)),
+ad AS (SELECT lb.source, c.column_name, c.data_type, c.ordinal_position
+       FROM lb JOIN ssdb_integration.information_schema.columns c
+         ON UPPER(c.table_schema) = UPPER(SPLIT_PART(CASE lb.src WHEN 'S1' THEN $s1_addr ELSE $s2_addr END, '.', 2))
+        AND UPPER(c.table_name) = UPPER(SPLIT_PART(CASE lb.src WHEN 'S1' THEN $s1_addr ELSE $s2_addr END, '.', 3))),
+an AS (SELECT $s1_source AS source, COUNT(*) AS n FROM IDENTIFIER($s1_addr)
+       UNION ALL SELECT $s2_source, COUNT(*) FROM IDENTIFIER($s2_addr)),
 vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp) AS live_opp,
               SUM(new_sales) AS new_sales, SUM(live_sales) AS live_sales, SUM(new_comp) AS new_comp,
               SUM(live_comp) AS live_comp
@@ -1297,6 +1350,19 @@ vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp
   UNION ALL SELECT 'CHECKS', lb.source, 'SOURCE LABEL NOT IN THE LIVE TABLE (MUST BE 0)', NULL, NULL,
                    CASE WHEN ls.source IS NULL THEN 1 ELSE 0 END, 0, NULL
             FROM lb LEFT JOIN ls ON ls.source = lb.source
+  UNION ALL SELECT 'SIZES', lb.source, 'TERRITORIES_V2 ROWS (N_ROWS)', NULL, NULL, COALESCE(tv.n, 0), NULL, NULL
+            FROM lb LEFT JOIN tv ON tv.source = lb.source
+  UNION ALL SELECT 'SIZES', lb.source, 'TERRITORIES_V2 KEYS ON 2+ TERRITORY IDS (N_ROWS)', NULL, NULL,
+                   COALESCE(tv.n_multi, 0), NULL, NULL
+            FROM lb LEFT JOIN tv ON tv.source = lb.source
+  UNION ALL SELECT 'CHECKS', lb.source, 'ROWS WITH A NEW HOLDER AND NO TERRITORIES_V2 ROW (MUST BE 0)', NULL, NULL,
+                   COALESCE(tj.n, 0), 0, NULL
+            FROM lb LEFT JOIN tj ON tj.source = lb.source
+  UNION ALL SELECT 'CHECKS', NULL, 'TERRITORY JOIN COLUMNS TYPED UNLIKE THIS TABLE''S (MUST BE 0)', NULL, NULL, n, 0, NULL
+            FROM ty
+  UNION ALL SELECT 'ADDRESS COLUMNS', source, 'COLUMN (ITEM2: TYPE, N_ROWS: POSITION)', column_name, data_type,
+                   ordinal_position, NULL, NULL FROM ad
+  UNION ALL SELECT 'ADDRESS ROWS', source, 'ROWS (N_ROWS)', NULL, NULL, n, NULL, NULL FROM an
   UNION ALL SELECT 'CHECKS', NULL, 'LIVE TABLE COLUMNS THIS SCRIPT DOES NOT FILL (MUST BE 0)', NULL, NULL, n, 0, NULL
             FROM lc;
 
