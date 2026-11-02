@@ -1598,3 +1598,14 @@ mutations: 2 killed, CHANNEL in the IMO filter survived and is deleted (NEW_DIST
 a status for moved columns survived (no column moves in the fixture; positions are in ITEM2). The schema check found
 NEW_TERR_CHANNEL, a column another session added in this worktree (`40abbc2` swept its uncommitted territory-join
 work into this session's commit; `357f7cf` is its log): two writers in one worktree, raised with the owner.
+
+### 2026-11-01: NULL DIST_CH in the Tableau table, left NULL
+
+Owner, 2026-11-01: "why do we have null dist_ch in v2 union?", then "so would these have been filled by any of the
+original queryies with transformations that we dropped?". No: the owner's opportunity query drops rows with no company
+ID (`owner_sql/s1_opp_sales.sql:481` `WHEN TO_CHAR(cbd_id) = '0' THEN NULL`, `:500` `WHERE original_cbd_id IS NOT
+NULL`), so blank-channel firms never reached the old table (its only blank DIST_CH for firm 1: a hard-coded Wells row,
+$0.2MM; the old firm 1 opportunity $194.4B in the 1808 extract against run 1357's $196.4B); the old firm 2 table had no
+opportunity. The NULLs (run 1357): firm 1's blank feed channel, 509 cells, $445.6MM; firm 2's NO CHANNEL, 11,980 cells,
+$4,448.0MM. Options offered: leave NULL, label NO CHANNEL (recommended), firm 2 from firm 1's channel, drop. Owner:
+"ok that's fine": read as leave NULL; no change.
