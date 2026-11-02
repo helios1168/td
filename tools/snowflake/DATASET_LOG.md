@@ -1641,3 +1641,10 @@ patch this with a query on the existing v2 dataset without redefining it". The k
 FIRM NAME ON 2+ CRDS, ALL ROWS per source. Run once in DuckDB on `union_test.sh`'s tables with one row planted twice:
 1 exact duplicate ($100 opportunity, $13 sales), the 2-holder cells (ALPHA 2 extra rows $200 with the planted one,
 LPL 1 extra $30), CRD 200 on 3 names, all held by hand.
+
+The owner's run (`data/safe/v2_dupes_2026-11-02-0821.csv`): no EXACT DUPLICATE ROWS, no CELL ON 2+ ROWS, no CRD on 2+
+names; only ALL ROWS: each firm is once per source, with nearly the same opportunity (Citizens Securities, CRD 39550:
+CRBG $1,328.8MM, EQH $1,327.6MM; HSBC, 19585: $176.3MM, $174.8MM; First Citizens, 44430, matched by the pattern:
+$798.1MM, $798.4MM). The "duplicates" are the two firms' estimates of one market, summed across SOURCE; the old table
+had no firm 2 opportunity (`data/safe/legacy_imo_2026-11-01-1808.csv`). Patch offered: firm 2's MM_OPP to 0 on the
+existing table (the open decision on firm 2's opportunity), or a SOURCE filter.
