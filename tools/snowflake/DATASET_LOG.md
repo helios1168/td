@@ -1577,3 +1577,11 @@ committed inside `40abbc2` (a forked session's IFA/IMO commit took this session'
   normalized, the new channel from the old on opportunity and on sales, ZIP typed INTEGER, 2 territory IDs on 2 rows,
   the address table name). The two new checks each fire alone on the ZIP-typed-INTEGER mutation (1, and 11 + 3 rows).
 - Not built: an old-state territory join (old holder key and channel); add on the owner's word.
+
+### 2026-11-01: the chat queries saved
+
+Owner, 2026-11-01: "put it on github, you keep forgettig". The four queries given only in chat are now files under
+`explore/`, each run on its own: `v2_schema.sql`, `v2_book_by_channel.sql`, `v2_vs_live_imo.sql`, `live_imo_rows.sql`
+(the last for the owner's "data_withnewchannel_union_w_joinkeys has IFA/IMO and FI/IMO rows in dist_ch, new_dist, and
+channel", where `legacy_imo.sql`'s third part returned none). From here on, every query given to the owner is
+committed before it is given.
