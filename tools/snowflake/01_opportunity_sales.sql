@@ -532,10 +532,6 @@ SELECT UPPER(TRIM(CAST(source AS VARCHAR))) AS source, NULLIF(TRIM(CAST(sales_fi
        UPPER(TRIM(CAST(new_channel AS VARCHAR))) AS new_channel
 FROM (VALUES
   -- owner sales channels: begin
-  -- 2026-11-01, Raymond James, from the owner's review workbook
-  ('S1', '6', 'RAYMOND JAMES', 'IFA', '88186', 'IFA/IMO'),
-  ('S2', '6694', 'Raymond James Financial Svcs', 'FP', NULL, 'IFA/IMO'),
-  ('S2', '6694', 'Raymond James Financial Svcs', 'BD', NULL, 'FI/IMO'),
   -- 2026-11-01, pure IMO, filtered out at the end (Flourish, Gold Coast with their firm; DPL, FIDx, Pinnacle none)
   ('S2', NULL, 'Flourish Financial - OID', 'FP', NULL, 'IMO'),  -- $0.1MM
   ('S1', '779', 'GOLD COAST SECURITIES, INC.', 'IFA', '88H49', 'IMO'),  -- $0.2MM
@@ -546,6 +542,17 @@ FROM (VALUES
   ('', '', '', '', '', '')   -- placeholder, keep it last
 ) AS v (source, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, new_channel)
 WHERE source <> '';
+
+--Firm 2's sales by firm name: the old table's new channel by the sale's own channel (owner, 2026-11-01: "match the old
+--table for raymond james"; data/safe/legacy_imo_2026-11-01-1808.csv, Raymond James firm 2: FP -> IFA $105.2MM, BD ->
+--IFA $60.0MM, BK -> FI $14.6MM), for every firm 2 sale whose sales-table firm name is like PATTERN, whatever its
+--firm; after the owner's sales channels, before the firm's label (statement 12).  One
+--pattern per raw channel (2 would repeat a sale).
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_s2_name_sales_channel AS
+SELECT CAST(pattern AS VARCHAR) AS pattern, CAST(raw_channel AS VARCHAR) AS raw_channel,
+       CAST(new_channel AS VARCHAR) AS new_channel
+FROM (VALUES ('%RAYMOND JAMES%', 'FP', 'IFA'), ('%RAYMOND JAMES%', 'BD', 'IFA'), ('%RAYMOND JAMES%', 'BK', 'FI'))
+     AS v (pattern, raw_channel, new_channel);
 
 --9. Source 1's company ID -> the firms whose market metrics rows carry it, as layer 01 derives it from
 --s1_opp_sales.sql:475-482.  A company found only inside a client firm ID list ('a|b') takes that list's firms; a
@@ -744,6 +751,7 @@ SELECT u.source, u.seller_key, u.seller, u.sales_firm_id, u.sales_firm, u.mga_ag
        u.old_channel, u.old_channel_s1, u.match_channel, u.firm_basis, u.firm_crd, u.broker_name,
        COALESCE(CASE WHEN (u.firm_basis = 'MANUAL' OR u.firm_crd IS NULL) AND COALESCE(ce1.k, ca1.k) = 1
                      THEN COALESCE(ce1.ch, ca1.ch) END,
+                rj.new_channel,
                 -- ponytail: before the firm's label, listed ones too; the old table has no such sale at a listed company
                 CASE WHEN u.source = 'S1' THEN sl.label END,
                 f.new_label, nl.new_label,
@@ -755,6 +763,9 @@ FROM u
 LEFT JOIN ssdb_integration.lr_strategy.tmp_sales_product p ON p.value = UPPER(TRIM(u.raw_product))
 LEFT JOIN ssdb_integration.lr_strategy.tmp_o1_firm f ON f.firm_crd = u.firm_crd AND f.broker_name = u.broker_name
 LEFT JOIN ssdb_integration.lr_strategy.tmp_s1_sale_channel sl ON sl.label = UPPER(TRIM(u.old_channel))
+LEFT JOIN ssdb_integration.lr_strategy.tmp_s2_name_sales_channel rj ON u.source = 'S2'
+                                                                   AND rj.raw_channel = UPPER(TRIM(u.old_channel))
+                                                                   AND u.sales_firm ILIKE rj.pattern
 LEFT JOIN ssdb_integration.lr_strategy.tmp_new_label nl ON u.source = 'S1' AND u.firm_crd IS NULL
                                                        AND nl.company_id = u.sales_firm_id
 LEFT JOIN co ce1 ON ce1.source = u.source AND EQUAL_NULL(ce1.sales_firm_id, u.sales_firm_id)

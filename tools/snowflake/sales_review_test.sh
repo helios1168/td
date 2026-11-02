@@ -16,7 +16,8 @@ cat <<'SQL'
 -- code M13 at 94105, where the two IFA names have opportunity 9 and 4 (rule 4); company 99, a marketing organization
 -- (IMO) named exactly like a market metrics firm; firm 2 'Foxtrot Inc' with no CRD (fuzzy names 93 and 92); an LPL
 -- sale recorded IMO at 30301 under a new code (2+ IFA names, equal opportunity: stays split, new channel IMO); company 98,
--- not in the market metrics data, recorded IFA/IMO (new channel IFA/IMO, left out of the review list)
+-- not in the market metrics data, recorded IFA/IMO (new channel IFA/IMO, left out of the review list); firm 2 sales named
+-- like Raymond James on CRD 100 (Alpha, route IFA): BK takes FI, BD IFA (the old table's), Alpha's firm kept
 INSERT INTO life_prod.lif_murkylake.wc_market_metrics_opportunity VALUES
   ('2025','Q1','0',NULL,'200','LPL Financial LLC','IFA','01','FA','-77777','10001',5),
   ('2025','Q2','3',NULL,'500','Echo','EDWARD JONES','13','FA','-77777','02134',1),
@@ -38,7 +39,9 @@ INSERT INTO ssdb_integration.lr_strategy.s1_sales_t VALUES
 INSERT INTO ssdb_integration.lr_strategy.mm_map VALUES ('WH',91,11,NULL,'Delta',400), ('IFA',92,1,NULL,'Echo',100);
 INSERT INTO ssdb_integration.lr_strategy.s2_sales_t VALUES
   ('P','Delta',999.0,'REGIONAL','NY','A','x','R2','D1',2025,4,4,'10001','IA'),
-  ('P','Foxtrot Inc',NULL,'INDEPENDENT','MA','A','x','R1','D1',2025,5,5,'02134','IA');
+  ('P','Foxtrot Inc',NULL,'INDEPENDENT','MA','A','x','R1','D1',2025,5,5,'02134','IA'),
+  ('P','Raymond James Fin',100.0,'BK','NY','A','x','R3','D1',2025,2,2,'10001','IA'),
+  ('P','Raymond James Fin',100.0,'BD','MA','A','x','R1','D1',2025,1,1,'02134','IA');
 SQL
 manual="  ('S1', '8', 'LPL', 'IFA', 'M12', '200', 'LPL FINANCIAL LLC - INDEPENDENT'), ('S1', '8', 'LPL', 'IFA', NULL, '200', 'LPL FINANCIAL LLC - BANK'), (' s2', '438', ' kilo ', 'independent', NULL, '100 ', 'alpha'), ('S2', '805', 'Kilo', 'INDEPENDENT', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '100', 'ALPHA'), ('S2', '888', 'New', 'BANK', NULL, '400', 'DELTA'), ('S2', NULL, 'No Crd', 'BANK', NULL, '777', 'NOWHERE'),"
 sed -e '/^use /d' -e '/^  -- owner sales channels: begin$/,/^  -- owner sales channels: end$/d' -e '/^  -- owner routes: begin$/,/^  -- owner routes: end$/d' -e '/^  -- owner rows: begin$/,/^  -- owner rows: end$/d' -e '/^SET s[12]_/d' -e 's/TEMPORARY TABLE/TABLE/' \
@@ -78,6 +81,7 @@ SELECT
  chk('review: map, name, channel and ZIP evidence, firm 1', ev('S1', 'Delta'), 'N3 1 0 1 1 0 100 6 400'),
  chk('review: firm 2 by name, its wholesaler by name', ev('S2', 'Delta'), 'R2 1 0 1 0 0 100 0 200'),
  chk('review: fuzzy names, ranked with the channel', (SELECT string_agg(rank_in_key || ' ' || cand_broker_name || ' ' || CAST(ev_name * 100 AS INTEGER) || ' ' || CAST(score * 100 AS INTEGER), ', ' ORDER BY rank_in_key) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm = 'Foxtrot Inc'), '1 FOXTROT 93 193, 2 FOXTROT 2 92 192'),
+ chk('firm 2 Raymond James: the old table''s channel by the sale''s own (BK FI, BD IFA), its firm kept', sl('S2', 'Raymond James Fin', NULL, '10001') || ' | ' || sl('S2', 'Raymond James Fin', NULL, '02134'), 'ONE FIRM ALPHA FI | ONE FIRM ALPHA IFA'),
  chk('recorded IMO: new channel IMO, with or without a firm (the old table)', (SELECT new_channel || ' ' || firm_basis FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND sales_firm_id = '99') || ' | ' || (SELECT new_channel || ' ' || firm_basis FROM ssdb_integration.lr_strategy.tmp_o2_sales WHERE source = 'S1' AND mga_agent_cd = 'M15'), 'IMO NO MARKET METRICS FIRM | IMO SPLIT, 2+ CHANNEL MATCHES'),
  chk('review: IMO kept out, no candidates looked for', (SELECT COUNT(*) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND sales_firm_id = '99') || ' ' || (SELECT n_candidates || ' ' || is_imo FROM ssdb_integration.lr_strategy.tmp_sales_review WHERE sales_firm_id = '99'), '0 0 true'),
  chk('review: keys with no candidate, one row each, ranked by $ in the source', (SELECT string_agg(source || ' ' || COALESCE(sales_firm_id, '-') || ' ' || rank_key_by_amt || ' ' || rank_in_key, ', ' ORDER BY source, rank_key_by_amt) FROM full_result WHERE layer = 'REVIEW' AND part = 'REVIEW' AND cand_firm_crd IS NULL), 'S1 438 2 1, S1 - 4 1, S2 - 3 1, S2 888 4 1'),
