@@ -30,6 +30,7 @@ CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THE
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
 CREATE VIEW v AS SELECT * FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2;
 CREATE VIEW t AS SELECT * FROM ssdb_integration.lr_strategy.tmp_tb_out;
+CREATE VIEW t2 AS SELECT * FROM ssdb_integration.lr_strategy.tmp_tb_out2;
 SELECT
  chk('2+ holders: the cell on a row per holder; sales on one, the holder''s with its cell, no seller under the holder',
      (SELECT string_agg(old_terr_wholesaler || '|' || new_terr_wholesaler || '|' || sales_wholesaler || '|'
@@ -98,6 +99,18 @@ SELECT
  chk('channel: uni_latest.sql''s CASE (AFS to pri_afs)', (SELECT CAST(SUM(actual_sales_amount) AS INTEGER) FROM v WHERE channel = 'pri_afs'), 5),
  chk('no filter: UNMAPPED, EDJ kept', (SELECT string_agg(DISTINCT channel, ' ' ORDER BY channel) FROM v WHERE channel IN ('UNMAPPED', 'EDJ')), 'EDJ UNMAPPED'),
  chk('vs live', (SELECT CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER) FROM t WHERE part = 'VS LIVE' AND source = 'SRC1' AND name LIKE 'MM_OPP%' AND item = 'IFA' AND item2 = 'INDEX'), '600/500'),
+ chk('schema: 23 the same, the renamed column only in the live table, the three new ones only here',
+     (SELECT string_agg(item || '=' || n, ' ' ORDER BY item) FROM (SELECT item, COUNT(*) AS n FROM t2 WHERE part = 'SCHEMA' GROUP BY ALL) x)
+     || ' ' || (SELECT string_agg(name, ' ' ORDER BY name) FROM t2 WHERE part = 'SCHEMA' AND item <> 'SAME'),
+     'ONLY IN LIVE=1 ONLY IN V2=3 SAME=23 NEW_TERR_CHANNEL NEW_TERR_WHOLESALER OLD_TERR_WHOLESALER TERR_WHOLESALER'),
+ chk('imo and raymond james: the IMO sale at LPL, here only (the fixture''s live rows carry no label)',
+     (SELECT string_agg(name || ' | ' || source || ' | ' || item || ' | ' || item2 || '=' || CAST(amt AS INTEGER) || ' ' || n_rows || '/' || n_firms || '/' || n_holders, ', ' ORDER BY item2)
+      FROM t2 WHERE part = 'IMO AND RAYMOND JAMES'),
+     'V2 | OTHER | FY 2025 | SRC1 | IMO -> IMO -> IMO | ACTUAL_SALES_AMOUNT=4 1/0/0, V2 | OTHER | FY 2025 | SRC1 | IMO -> IMO -> IMO | MM_OPP=0 1/0/0, V2 | OTHER | FY 2025 | SRC1 | IMO -> IMO -> IMO | SALES_AMOUNT=4 1/0/0'),
+ chk('book by channel: new and today''s books sum to the opportunity; firm 2''s 30 moves from the WH holder to the IFA one',
+     (SELECT string_agg(source || '=' || CAST(a AS INTEGER) || '/' || CAST(b AS INTEGER), ' ' ORDER BY source) FROM (SELECT source, SUM(amt) AS a, SUM(amt_alt) AS b FROM t2 WHERE part = 'BOOK BY CHANNEL' GROUP BY ALL) x)
+     || ' ' || (SELECT string_agg(item || ' ' || name || '=' || CAST(amt AS INTEGER) || '/' || CAST(amt_alt AS INTEGER), ', ' ORDER BY item) FROM t2 WHERE part = 'BOOK BY CHANNEL' AND source = 'SRC2' AND item IN ('IFA', 'WH')),
+     'SRC1=1020/1020 SRC2=130/130 IFA R1=70/40, WH R2=0/30'),
  chk('checks all 0', (SELECT COUNT(*) || ' ' || CAST(SUM(ABS(amt)) AS INTEGER) || ' ' || SUM(n_rows) FROM t WHERE part = 'CHECKS'), '15 0 0');
 SELECT 'union_test: ok';
 SQL

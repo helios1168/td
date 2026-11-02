@@ -1366,6 +1366,70 @@ vl AS (SELECT source, channel, product_v2, SUM(new_opp) AS new_opp, SUM(live_opp
   UNION ALL SELECT 'CHECKS', NULL, 'LIVE TABLE COLUMNS THIS SCRIPT DOES NOT FILL (MUST BE 0)', NULL, NULL, n, 0, NULL
             FROM lc;
 
+--18b. More TABLEAU parts (owner, 2026-11-01: "we want one query, one output file I share with you"):
+--  SCHEMA: this table's columns against the live table's; NAME the column, ITEM SAME, TYPE DIFFERS, ONLY IN LIVE or
+--    ONLY IN V2 (expect 23 SAME, TERR_WHOLESALER only in the live one, OLD_TERR_WHOLESALER, NEW_TERR_WHOLESALER and
+--    NEW_TERR_CHANNEL only here), ITEM2
+--    each one's position and type.
+--  IMO AND RAYMOND JAMES: the live table and this one, rows with an IMO label (DIST_CH or NEW_DIST) or a
+--    Raymond James firm (CHANNEL differs from NEW_DIST only for National, pri_afs); NAME table | RAYMOND JAMES or OTHER | fiscal year, ITEM DIST_CH -> NEW_DIST -> CHANNEL, ITEM2
+--    the measure (MM_OPP, ACTUAL_SALES_AMOUNT, SALES_AMOUNT; filter on it: the counts repeat on each), AMT its $;
+--    N_ROWS rows, N_FIRMS sales rows with no seller ID, N_HOLDERS rows with no territory wholesaler (or 'open').
+--  BOOK BY CHANNEL: per source x channel x wholesaler, AMT the new book (CHANNEL x TERR_WHOLESALER_CLEAN_NAME), AMT_ALT
+--    today's (DIST_CH x OLD_TERR_WHOLESALER, PRI as pri_afs); the change is AMT - AMT_ALT, 0 summed over a source.
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_tb_out2 AS
+WITH
+c AS (SELECT UPPER(table_name) AS tn, UPPER(column_name) AS cn, ordinal_position AS pos, data_type,
+             character_maximum_length AS len, numeric_precision AS prec, numeric_scale AS scale
+      FROM ssdb_integration.information_schema.columns
+      WHERE UPPER(table_schema) = 'LR_STRATEGY'
+        AND UPPER(table_name) IN ('DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS', 'DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2')),
+cl AS (SELECT * FROM c WHERE tn = 'DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS'),
+cv AS (SELECT * FROM c WHERE tn = 'DATA_WITHNEWCHANNEL_UNION_W_JOINKEYS_V2'),
+t AS (
+            SELECT 'LIVE' AS tbl, CAST(fiscal_yr AS VARCHAR) AS fy, source, dist_ch, new_dist, channel, firm,
+                   terr_wholesaler AS terr_wh, sales_wholesaler_territory_id AS sales_id,
+                   CAST(mm_opp AS DECIMAL(38, 6)) AS opp, CAST(actual_sales_amount AS DECIMAL(38, 6)) AS sales,
+                   CAST(sales_amount AS DECIMAL(38, 6)) AS comp
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys
+  UNION ALL SELECT 'V2', CAST(fiscal_yr AS VARCHAR), source, dist_ch, new_dist, channel, firm, old_terr_wholesaler,
+                   sales_wholesaler_territory_id, CAST(mm_opp AS DECIMAL(38, 6)),
+                   CAST(actual_sales_amount AS DECIMAL(38, 6)), CAST(sales_amount AS DECIMAL(38, 6))
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2),
+ti AS (SELECT tbl || ' | ' || CASE WHEN firm ILIKE '%RAYMOND JAMES%' THEN 'RAYMOND JAMES' ELSE 'OTHER' END || ' | FY '
+              || COALESCE(fy, '-') AS name, source,
+              COALESCE(dist_ch, '-') || ' -> ' || COALESCE(new_dist, '-') || ' -> ' || COALESCE(channel, '-') AS item,
+              COUNT(*) AS n_rows, SUM(CASE WHEN sales_id IS NULL AND COALESCE(sales, 0) <> 0 THEN 1 ELSE 0 END) AS n_firms,
+              SUM(CASE WHEN terr_wh IS NULL OR terr_wh = 'open' THEN 1 ELSE 0 END) AS n_holders,
+              SUM(opp) AS opp, SUM(sales) AS sales, SUM(comp) AS comp
+       FROM t
+       WHERE firm ILIKE '%RAYMOND JAMES%' OR dist_ch ILIKE '%IMO%' OR new_dist ILIKE '%IMO%'
+       GROUP BY ALL),
+bk AS (
+            SELECT source, CASE WHEN dist_ch IN ('PRI', 'AFS') THEN 'pri_afs' ELSE dist_ch END AS channel,
+                   COALESCE(old_terr_wholesaler, '(NO HOLDER)') AS w, CAST(0 AS DECIMAL(38, 6)) AS new_book,
+                   CAST(mm_opp AS DECIMAL(38, 6)) AS today_book
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2
+  UNION ALL SELECT source, channel, COALESCE(terr_wholesaler_clean_name, '(NO HOLDER)'), CAST(mm_opp AS DECIMAL(38, 6)),
+                   CAST(0 AS DECIMAL(38, 6))
+            FROM ssdb_integration.lr_strategy.data_withnewchannel_union_w_joinkeys_v2)
+            SELECT 'SCHEMA' AS part, CAST(NULL AS VARCHAR) AS source, COALESCE(v.cn, l.cn) AS name,
+                   CASE WHEN l.cn IS NULL THEN 'ONLY IN V2' WHEN v.cn IS NULL THEN 'ONLY IN LIVE'
+                        WHEN l.data_type = v.data_type AND EQUAL_NULL(l.len, v.len) AND EQUAL_NULL(l.prec, v.prec)
+                         AND EQUAL_NULL(l.scale, v.scale) THEN 'SAME' ELSE 'TYPE DIFFERS' END AS item,
+                   'live ' || COALESCE(CAST(l.pos AS VARCHAR) || ' ' || l.data_type, '-') || ' | v2 '
+                   || COALESCE(CAST(v.pos AS VARCHAR) || ' ' || v.data_type, '-') AS item2,
+                   CAST(NULL AS BIGINT) AS n_rows, CAST(NULL AS BIGINT) AS n_firms, CAST(NULL AS BIGINT) AS n_holders,
+                   CAST(NULL AS DECIMAL(38, 6)) AS amt, CAST(NULL AS DECIMAL(38, 6)) AS amt_alt
+            FROM cl l FULL JOIN cv v ON v.cn = l.cn
+  UNION ALL SELECT 'IMO AND RAYMOND JAMES', source, name, item, 'MM_OPP', n_rows, n_firms, n_holders, opp, NULL FROM ti
+  UNION ALL SELECT 'IMO AND RAYMOND JAMES', source, name, item, 'ACTUAL_SALES_AMOUNT', n_rows, n_firms, n_holders, sales,
+                   NULL FROM ti
+  UNION ALL SELECT 'IMO AND RAYMOND JAMES', source, name, item, 'SALES_AMOUNT', n_rows, n_firms, n_holders, comp, NULL
+            FROM ti
+  UNION ALL SELECT 'BOOK BY CHANNEL', source, w, channel, NULL, NULL, NULL, NULL, SUM(new_book), SUM(today_book)
+            FROM bk GROUP BY ALL HAVING SUM(new_book) <> 0 OR SUM(today_book) <> 0;
+
 --19. Everything, one result set: download as CSV.  LAYER says which statements a row comes from (OPPORTUNITY 1-7,
 --SALES 8-14, REVIEW 15-16, TABLEAU 17-18); SALES_FIRM_ID to SCORE and N_KEYS, N_ZIPS are REVIEW's columns.  PCT_AMT: of LAYER x PART x
 --SOURCE x NAME (REVIEW: as statement 16 says).
@@ -1391,5 +1455,10 @@ SELECT 'TABLEAU', part, source, name, item, item2, NULL, NULL, NULL, NULL, NULL,
        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, n_rows, NULL, NULL, NULL, NULL, amt,
        amt_alt, NULL
 FROM ssdb_integration.lr_strategy.tmp_tb_out
+UNION ALL
+SELECT 'TABLEAU', part, source, name, item, item2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, n_rows, n_firms, n_holders, NULL,
+       NULL, amt, amt_alt, NULL
+FROM ssdb_integration.lr_strategy.tmp_tb_out2
 ORDER BY layer, part, source, rank_key_by_amt, sales_firm_id, sales_firm, raw_channel, mga_agent_cd, rank_in_key, name,
          amt DESC NULLS LAST, item, item2;

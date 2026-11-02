@@ -1585,3 +1585,16 @@ Owner, 2026-11-01: "put it on github, you keep forgettig". The four queries give
 (the last for the owner's "data_withnewchannel_union_w_joinkeys has IFA/IMO and FI/IMO rows in dist_ch, new_dist, and
 channel", where `legacy_imo.sql`'s third part returned none). From here on, every query given to the owner is
 committed before it is given.
+
+### 2026-11-01: the chat queries folded into the one script
+
+Owner, 2026-11-01: "ok but they are separate queries, we want one query, one output file I share with you". The four
+`explore/` files of the entry above are deleted; their questions are three TABLEAU parts of `01_opportunity_sales.sql`
+(statement 18b, `tmp_tb_out2`): SCHEMA (the table's columns against the live table's), IMO AND RAYMOND JAMES (the live
+table and this one, by table x firm group x fiscal year x DIST_CH -> NEW_DIST -> CHANNEL, one row per measure, with the
+rows having no seller ID or no territory wholesaler: the question `legacy_imo.sql`'s empty third part left), BOOK BY
+CHANNEL (per source x channel x wholesaler, new book against today's). `union_test.sh` 3 checks, worked by hand; 4
+mutations: 2 killed, CHANNEL in the IMO filter survived and is deleted (NEW_DIST carries every IMO label CHANNEL does),
+a status for moved columns survived (no column moves in the fixture; positions are in ITEM2). The schema check found
+NEW_TERR_CHANNEL, a column another session added in this worktree (`40abbc2` swept its uncommitted territory-join
+work into this session's commit; `357f7cf` is its log): two writers in one worktree, raised with the owner.
