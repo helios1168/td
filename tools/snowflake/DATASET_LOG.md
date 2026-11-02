@@ -1632,3 +1632,12 @@ Owner, 2026-11-01: "what about citizens and hsbc?"; the old table had firm 2's C
 BK sales as FI/IMO, which the union's firm 2 channel list dropped (`owner_sql/uni_latest.sql:37`); firm 1's recorded
 FI/IMO stands through the labels rule. Options: FI/IMO by firm name (as Raymond James), or their firm's channel.
 Owner: "lets go with option 2": no change; Key decisions row added.
+
+### 2026-11-02: Citizens and HSBC duplicates in `_v2`
+
+Owner, 2026-11-02: "it looks like we have quite a few duplicates for citizens securities and hsbc. How can we quickly
+patch this with a query on the existing v2 dataset without redefining it". The kind decides the patch, so first
+`explore/v2_dupes.sql` (one query on the existing table): EXACT DUPLICATE ROWS, CELL ON 2+ ROWS, CRD ON 2+ FIRM NAMES,
+FIRM NAME ON 2+ CRDS, ALL ROWS per source. Run once in DuckDB on `union_test.sh`'s tables with one row planted twice:
+1 exact duplicate ($100 opportunity, $13 sales), the 2-holder cells (ALPHA 2 extra rows $200 with the planted one,
+LPL 1 extra $30), CRD 200 on 3 names, all held by hand.
