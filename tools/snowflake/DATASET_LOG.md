@@ -1506,3 +1506,24 @@ COMP'D per source; SOURCE 2 ROWS WITH A SALES_AMOUNT): 12 checks per run. `union
 by hand before the run (02134 ALPHA INDEX IFA: N1 14, N6 6, N7 AS SOLD 2; firm 1 total 70; no firm 1 NULL; no firm 2
 value) held. 6 mutations: 5 killed; zeroing the SOURCE 2 check survived (the fixture never gives firm 2 a value), and the
 check, run alone on the mutation that gives firm 2's opportunity rows 0, flags 3 rows.
+
+### 2026-11-01: IFA/IMO and Raymond James in the Tableau table, compared with the old union
+
+Owner, 2026-11-01: "ok so we've completely broken ifa/imo and raymond james now. develop an understanding of how that
+was mapped and used previously compared to what we've now done". Read, not built:
+
+- Before: firm 1's base sales table makes the labels per policy (`owner_sql/s1_sales_v2.sql:21` `THEN 'IFA/IMO'`, `:24`
+  `THEN 'FI/IMO'`, `:423` an IFA sale by an IMO-district wholesaler `then 'IMO'`); the opportunity step keeps a sale's
+  label as NEW_DIST unless its company is listed (`owner_sql/s1_opp_sales.sql:707` `else iwn.dist_ch`); the union keeps
+  IFA/IMO for both firms, FI/IMO for firm 1, drops IMO (`owner_sql/uni_latest.sql:37`, `:71`), and gives an IFA/IMO
+  seller a territory ID from `ifa_imo_names_match` (`:400`). Firm 2's sales carry no such label (FP, BK, BD, RA in run
+  1357), so firm 2's IFA/IMO comes from the firm 2 table's own build, which the owner does not have.
+- Now: the labels only pick a firm (`tools/snowflake/01_opportunity_sales.sql:439`); NEW_CHANNEL is the firm's
+  (`:741` `f.new_label, nl.new_label,`); the owner's sales channels apply to manual and no-firm sales only (`:739`), so
+  Raymond James has the label only on its three keys (`:532`-`:534`). Run 1357, firm 1: recorded IFA/IMO $1,012.7MM,
+  FI/IMO $289.3MM, IMO $2,673.8MM; new channel IFA/IMO $0.6MM, FI/IMO $0, IMO $3,745.3MM. Firm 2: IFA/IMO $28.6MM,
+  FI/IMO $3.1MM, the Raymond James keys only.
+- Owner: "we don't have the eqh v3 query, but I can send you extracts". `explore/legacy_imo.sql`: the two old tables'
+  DIST_CH -> NEW_DIST by row type, firm 2's IMO and either firm's Raymond James rows, and the live table's IMO sellers'
+  territory channels. `legacy_imo_test.sh` 3 checks worked by hand (one expected value fixed for DuckDB's FLOAT-to-text
+  `6694.0`, display only); 6 mutations killed. Not run in Snowflake.
