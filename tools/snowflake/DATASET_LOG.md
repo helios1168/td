@@ -1648,3 +1648,11 @@ CRBG $1,328.8MM, EQH $1,327.6MM; HSBC, 19585: $176.3MM, $174.8MM; First Citizens
 $798.1MM, $798.4MM). The "duplicates" are the two firms' estimates of one market, summed across SOURCE; the old table
 had no firm 2 opportunity (`data/safe/legacy_imo_2026-11-01-1808.csv`). Patch offered: firm 2's MM_OPP to 0 on the
 existing table (the open decision on firm 2's opportunity), or a SOURCE filter.
+
+### 2026-11-03: sales by policy number
+
+Owner, 2026-11-03: "is there anyway to get cbd_id, firm name, and dist_ch at the policy number through any of our
+queries? the catch is I don't have direct access to the sls_rpt table". Not from the tables the script reads: firm 1's
+base sales table is built from `final_output_wo_policy` (`owner_sql/s1_sales_v2.sql:374`), after the policy-grain
+`final_output` (`:312`); firm 2's sales table has no policy column. `explore/policy_tables.sql` lists every table the
+role can read with a policy column; otherwise the policy grain needs whoever builds the base sales table.
