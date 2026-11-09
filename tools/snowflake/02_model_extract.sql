@@ -3,9 +3,9 @@ use database ssdb_Integration;
 use schema lr_strategy;
 
 --The opportunity-only model extract for td (td.data.load, format td_instance_descaled/3), one Run All file, one result set.
---The owner edits the two SET lines below to the real table names, nothing else (owner's names, 2026-11-09, schema lr_strategy
---assumed as for every other table: correct it there if not).  It reads only those two tables: no
---sales, no wholesaler name, no firm name or ID leaves Snowflake.  Download the result as CSV into $TD_REPO/data/safe/ and
+--The owner edits the first two SET lines below to the real table names, nothing else (owner's names, 2026-11-09, schema
+--lr_strategy assumed as for every other table: correct it there if not).  It reads only those two tables, plus the holder key
+--below: no sales, no wholesaler name, no firm name or ID leaves Snowflake.  Download the result as CSV into $TD_REPO/data/safe/ and
 --run model_extract.py on it.
 --Result, under LAYER (all layers share the column list, NULL where a layer has no such column):
 --  OPP    SOURCE, ZIP_CODE, DIST_CH, NEW_DIST, CHANNEL, MM_OPP, N_CELLS: the opportunity once per cell.  The union table
@@ -16,14 +16,32 @@ use schema lr_strategy;
 --         the MAX of its positive MM_OPP, summed to SOURCE x ZIP_CODE x DIST_CH x NEW_DIST x CHANNEL.  N_CELLS: cells
 --         summed.  A row with MM_OPP of 0 or NULL (a sales-only row) adds nothing.  FIRM and CBD_ID never leave.
 --  TERR   SOURCE, ZIP_CODE, STATE, CHANNEL, HOLDER: who holds each ZIP x channel, HOLDER a surrogate R<n> of CLEAN_ID
---         (DENSE_RANK over SOURCE, CLEAN_ID), neither CLEAN_ID nor NAME appears.  A row with no CLEAN_ID is left out
+--         from the holder key (below), neither CLEAN_ID nor NAME appears.  A row with no CLEAN_ID is left out
 --         and counted in CHECKS.
 --  CHECKS NAME, VALUE (a count unless NAME says otherwise), MM_OPP where the check has an amount, per SOURCE.
 --         MUST_BE_ZERO = 1 rows must have VALUE 0: model_extract.py refuses the file otherwise.
 --ZIP_CODE is LPAD(LEFT(TRIM(..), 5), 5, '0') on both tables.
+--The holder key (owner, 2026-11-09: stable mapping in Snowflake for wholesalers): the permanent table holder_tbl, one row per
+--SOURCE x CLEAN_ID with its number holder_n, so R<n> is the same wholesaler in every run.  The first run numbers every holder
+--in SOURCE, CLEAN_ID order, later runs add only the pairs not yet in it as max + 1 onward.  Rows are never updated or deleted,
+--a holder who leaves the territories table keeps their number and it is never reused.  Never DROP or CREATE OR REPLACE it,
+--that renumbers everyone.  It is the de-masking key: it stays in Snowflake, never export or download it.  It is keyed on
+--SOURCE x CLEAN_ID, CLEAN_ID being the UUID of the clean name, so a change in the name cleaning gives a holder a new number.
+--The result SELECT must stay the last statement, Run All shows one result.
 
 SET union_tbl = 'ssdb_integration.lr_strategy.sales_opp_2026_11_9';
 SET terr_tbl  = 'ssdb_integration.lr_strategy.territories_tableau';
+SET holder_tbl = 'ssdb_integration.lr_strategy.td_holder_key';
+
+CREATE TABLE IF NOT EXISTS IDENTIFIER($holder_tbl) (source VARCHAR, clean_id VARCHAR, holder_n INTEGER, first_seen TIMESTAMP_NTZ);
+
+INSERT INTO IDENTIFIER($holder_tbl)
+SELECT s.source, s.clean_id,
+       COALESCE((SELECT MAX(holder_n) FROM IDENTIFIER($holder_tbl)), 0) + ROW_NUMBER() OVER (ORDER BY s.source, s.clean_id),
+       CURRENT_TIMESTAMP()
+FROM (SELECT DISTINCT source, clean_id FROM IDENTIFIER($terr_tbl) WHERE clean_id IS NOT NULL) s
+LEFT JOIN IDENTIFIER($holder_tbl) k ON k.source = s.source AND k.clean_id = s.clean_id
+WHERE k.clean_id IS NULL;
 
 WITH
 u AS (SELECT source, fiscal_yr, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, cbd_id, firm, parent, firm_key,
@@ -43,7 +61,9 @@ cell AS (SELECT source, zip_code, dist_ch, new_dist, channel, MAX(CASE WHEN mm_o
 t AS (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, state, channel, clean_id
       FROM IDENTIFIER($terr_tbl)),
 th AS (SELECT source, zip_code, channel, COUNT(DISTINCT clean_id) AS n FROM t WHERE clean_id IS NOT NULL
-       GROUP BY source, zip_code, channel)
+       GROUP BY source, zip_code, channel),
+hk AS (SELECT source, clean_id, holder_n, first_seen FROM IDENTIFIER($holder_tbl)),
+hd AS (SELECT holder_n, COUNT(*) AS n FROM hk GROUP BY holder_n)
 --OPP
 SELECT 'OPP' AS layer, source, CAST(NULL AS VARCHAR) AS name, zip_code, CAST(NULL AS VARCHAR) AS state, dist_ch, new_dist,
        channel, CAST(NULL AS VARCHAR) AS holder, SUM(opp) AS mm_opp, COUNT(*) AS n_cells, CAST(NULL AS DOUBLE) AS value,
@@ -51,10 +71,10 @@ SELECT 'OPP' AS layer, source, CAST(NULL AS VARCHAR) AS name, zip_code, CAST(NUL
 FROM cell GROUP BY source, zip_code, dist_ch, new_dist, channel
 UNION ALL
 --TERR
-SELECT 'TERR', source, NULL, zip_code, state, NULL, NULL, channel, 'R' || DENSE_RANK() OVER (ORDER BY source, clean_id),
-       NULL, NULL, NULL, NULL
-FROM t WHERE clean_id IS NOT NULL
-GROUP BY source, zip_code, state, channel, clean_id
+SELECT 'TERR', t.source, NULL, t.zip_code, t.state, NULL, NULL, t.channel, 'R' || hk.holder_n, NULL, NULL, NULL, NULL
+FROM t JOIN hk ON hk.source = t.source AND hk.clean_id = t.clean_id
+WHERE t.clean_id IS NOT NULL
+GROUP BY t.source, t.zip_code, t.state, t.channel, hk.holder_n
 UNION ALL
 --CHECKS
 SELECT 'CHECKS', source, 'OPP RAW SUM(MM_OPP)', NULL, NULL, NULL, NULL, NULL, NULL, SUM(mm_opp), NULL, NULL, 0
@@ -102,6 +122,18 @@ UNION ALL
 SELECT 'CHECKS', source, 'TERR ROWS WITH NULL CLEAN_ID', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
        COUNT(CASE WHEN clean_id IS NULL THEN 1 END), 0
 FROM t GROUP BY source
+UNION ALL
+SELECT 'CHECKS', t.source, 'TERR HOLDERS WITH NO KEY', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+       COUNT(DISTINCT CASE WHEN t.clean_id IS NOT NULL AND hk.clean_id IS NULL THEN t.clean_id END), 1
+FROM t LEFT JOIN hk ON hk.source = t.source AND hk.clean_id = t.clean_id GROUP BY t.source
+UNION ALL
+SELECT 'CHECKS', source, 'KEY ROWS ADDED THIS RUN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+       COUNT(CASE WHEN first_seen = (SELECT MAX(first_seen) FROM hk) THEN 1 END), 0
+FROM hk GROUP BY source
+UNION ALL
+SELECT 'CHECKS', hk.source, 'KEY HOLDER_N DUPLICATED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+       COUNT(CASE WHEN hd.n > 1 THEN 1 END), 1
+FROM hk JOIN hd ON hd.holder_n = hk.holder_n GROUP BY hk.source
 UNION ALL
 SELECT 'CHECKS', t.source, 'TERR SOURCE WITH NO OPP SOURCE OF THE SAME NAME', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
        COUNT(*), 1

@@ -2,10 +2,22 @@
 # Runs 02_model_extract.sql in DuckDB on made-up UNION and TERRITORIES tables (the real column names) and checks the answers
 # (worked out by hand from the rows below): a cell repeated on 2 holder rows counts once, a sales-only row adds nothing,
 # an unequal repeat shows in the MUST_BE_ZERO check, two sources stay apart, TERR surrogates are stable and carry no
-# CLEAN_ID or name.  Prints "02_model_extract_test: ok" or stops at the first failed check.
+# CLEAN_ID or name.  The script then runs a second time on the same database after one holder is added and one removed:
+# survivors keep their number, the new one gets max + 1, the removed number is not reused.  Prints "02_model_extract_test: ok" or stops at the first failed check.
 # Run from anywhere: sh 02_model_extract_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
+# the script as DuckDB runs it, into a fresh full_result
+emit_sql() {
+echo 'DROP TABLE IF EXISTS full_result;'
+# DuckDB has no REGEXP_LIKE (Snowflake's full match): regexp_matches, the pattern anchored in the file
+# and no CURRENT_TIMESTAMP() or TIMESTAMP_NTZ
+sed -e 's/REGEXP_LIKE(/regexp_matches(/g' -e '/^use /d' -e '/^SET /d' -e 's/^WITH$/CREATE TABLE full_result AS WITH/' \
+    -e 's/CURRENT_TIMESTAMP()/now()/' -e 's/TIMESTAMP_NTZ/TIMESTAMP/' \
+    -e 's/IDENTIFIER(\$union_tbl)/ssdb_integration.lr_strategy.union_t/' \
+    -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
+    -e 's/IDENTIFIER(\$holder_tbl)/ssdb_integration.lr_strategy.holder_key/' "$here/02_model_extract.sql"
+}
 {
 cat <<'SQL'
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
@@ -49,10 +61,7 @@ INSERT INTO ssdb_integration.lr_strategy.terr_t VALUES
   ('B','Cy Doe','02134','MA','ifa','cy doe','u-1'),
   ('C','Dee Roe','02134','MA','ifa','dee roe','u-3');
 SQL
-# DuckDB has no REGEXP_LIKE (Snowflake's full match): regexp_matches, the pattern anchored in the file
-sed -e 's/REGEXP_LIKE(/regexp_matches(/g' -e '/^use /d' -e '/^SET /d' -e 's/^WITH$/CREATE TABLE full_result AS WITH/' \
-    -e 's/IDENTIFIER(\$union_tbl)/ssdb_integration.lr_strategy.union_t/' \
-    -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' "$here/02_model_extract.sql"
+emit_sql
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
@@ -86,7 +95,30 @@ SELECT
      (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'alice|bob|u-1|u-2|whole|firmname|c1', 'i')), 0),
  chk('MUST_BE_ZERO rows not zero: A unequal and C no opp source, nothing else',
      (SELECT string_agg(source || ':' || name, ' ' ORDER BY source) FROM full_result WHERE layer = 'CHECKS' AND must_be_zero = 1 AND value <> 0),
-     'A:CELL KEYS WITH UNEQUAL POSITIVE MM_OPP, THEIR OPP C:TERR SOURCE WITH NO OPP SOURCE OF THE SAME NAME');
+     'A:CELL KEYS WITH UNEQUAL POSITIVE MM_OPP, THEIR OPP C:TERR SOURCE WITH NO OPP SOURCE OF THE SAME NAME'),
+ chk('run 1: the key holds 4 pairs numbered 1..4, all added this run, none missing or duplicated',
+     (SELECT string_agg(source || clean_id || '=' || holder_n, ' ' ORDER BY holder_n) FROM ssdb_integration.lr_strategy.holder_key),
+     'Au-1=1 Au-2=2 Bu-1=3 Cu-3=4'),
+ chk('run 1: key checks', (SELECT string_agg(source || ':' || name || '=' || CAST(value AS BIGINT), ' ' ORDER BY source, name) FROM full_result
+                           WHERE layer = 'CHECKS' AND (name LIKE 'KEY %' OR name = 'TERR HOLDERS WITH NO KEY')),
+     'A:KEY HOLDER_N DUPLICATED=0 A:KEY ROWS ADDED THIS RUN=2 A:TERR HOLDERS WITH NO KEY=0 B:KEY HOLDER_N DUPLICATED=0 B:KEY ROWS ADDED THIS RUN=1 B:TERR HOLDERS WITH NO KEY=0 C:KEY HOLDER_N DUPLICATED=0 C:KEY ROWS ADDED THIS RUN=1 C:TERR HOLDERS WITH NO KEY=0');
+-- run 2 on the same database: Eve is new (her CLEAN_ID sorts before every other, a renumber would shift all), Dee, who held
+-- the highest number, leaves
+INSERT INTO ssdb_integration.lr_strategy.terr_t VALUES ('A','Eve Fox','02137','MA','ifa','eve fox','u-0');
+DELETE FROM ssdb_integration.lr_strategy.terr_t WHERE clean_id = 'u-3';
+SQL
+emit_sql
+cat <<'SQL'
+SELECT
+ chk('run 2: survivors keep their number, Eve is max + 1, Dee is gone from TERR',
+     (SELECT string_agg(source || '|' || zip_code || '|' || holder, ' ' ORDER BY source, zip_code, holder) FROM full_result WHERE layer = 'TERR'),
+     'A|02134|R1 A|02134|R2 A|02135|R2 A|02137|R5 B|02134|R3'),
+ chk('run 2: the key keeps Dee as 4 and never reuses it', (SELECT string_agg(source || clean_id || '=' || holder_n, ' ' ORDER BY holder_n) FROM ssdb_integration.lr_strategy.holder_key),
+     'Au-1=1 Au-2=2 Bu-1=3 Cu-3=4 Au-0=5'),
+ chk('run 2: one key row added', (SELECT SUM(value) FROM full_result WHERE name = 'KEY ROWS ADDED THIS RUN'), 1),
+ chk('run 2: both key MUST_BE_ZERO checks 0',
+     (SELECT SUM(value) FROM full_result WHERE must_be_zero = 1 AND name IN ('TERR HOLDERS WITH NO KEY', 'KEY HOLDER_N DUPLICATED')), 0),
+ chk('run 2: no CLEAN_ID or name in the result', (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'eve|u-0|alice|bob|u-1|u-2|whole|firmname|c1', 'i')), 0);
 SELECT '02_model_extract_test: ok';
 SQL
 } | duckdb -bail -noheader -list
