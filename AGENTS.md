@@ -39,7 +39,7 @@ One file per question. Read `STATE.md` and the issue you were given first.
 
 ## Masking
 
-- Sales, wholesaler (rep) names and firm names never enter this repo, an issue, a note or anything online. The exporter replaces reps and firms with surrogates (`R…`, `F…`). The per-rep shares (`share`, `share_free`) and the `firm` map are sales data: the model does not use them and they never leave the extract.
+- Sales and wholesaler (rep) names never enter this repo, an issue, a note or anything online. Firm and source names may (owner, 2026-11-09: "Firm/source names are fine. It's wholesaler names we must mask"). Wholesalers leave Snowflake only as the stable surrogates `R<n>` of `td_holder_key` (`tools/snowflake/02_model_extract.sql`), a table that never leaves Snowflake; the exporter's surrogates (`R…`, `F…`) are unchanged. The per-rep shares (`share`, `share_free`) and the `firm` map are sales data: the model does not use them and they never leave the extract.
 - Not confidential (owner, 2026-09-30 and 2026-10-01): descaled opportunity (`m_rel`), opportunity in dollars, and everything the model makes from them (run output, ledgers, maps, per-ZIP values).
 
 ## Never weaken a mandate
