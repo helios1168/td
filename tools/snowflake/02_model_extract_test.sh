@@ -101,7 +101,7 @@ SELECT
      'Au-1=1 Au-2=2 Bu-1=3 Cu-3=4'),
  chk('run 1: key checks', (SELECT string_agg(source || ':' || name || '=' || CAST(value AS BIGINT), ' ' ORDER BY source, name) FROM full_result
                            WHERE layer = 'CHECKS' AND (name LIKE 'KEY %' OR name = 'TERR HOLDERS WITH NO KEY')),
-     'A:KEY HOLDER_N DUPLICATED=0 A:KEY ROWS ADDED THIS RUN=2 A:TERR HOLDERS WITH NO KEY=0 B:KEY HOLDER_N DUPLICATED=0 B:KEY ROWS ADDED THIS RUN=1 B:TERR HOLDERS WITH NO KEY=0 C:KEY HOLDER_N DUPLICATED=0 C:KEY ROWS ADDED THIS RUN=1 C:TERR HOLDERS WITH NO KEY=0');
+     'A:KEY HOLDER_N DUPLICATED=0 A:KEY ROWS IN THE LATEST ADDITION=2 A:TERR HOLDERS WITH NO KEY=0 B:KEY HOLDER_N DUPLICATED=0 B:KEY ROWS IN THE LATEST ADDITION=1 B:TERR HOLDERS WITH NO KEY=0 C:KEY HOLDER_N DUPLICATED=0 C:KEY ROWS IN THE LATEST ADDITION=1 C:TERR HOLDERS WITH NO KEY=0');
 -- run 2 on the same database: Eve is new (her CLEAN_ID sorts before every other, a renumber would shift all), Dee, who held
 -- the highest number, leaves
 INSERT INTO ssdb_integration.lr_strategy.terr_t VALUES ('A','Eve Fox','02137','MA','ifa','eve fox','u-0');
@@ -115,7 +115,7 @@ SELECT
      'A|02134|R1 A|02134|R2 A|02135|R2 A|02137|R5 B|02134|R3'),
  chk('run 2: the key keeps Dee as 4 and never reuses it', (SELECT string_agg(source || clean_id || '=' || holder_n, ' ' ORDER BY holder_n) FROM ssdb_integration.lr_strategy.holder_key),
      'Au-1=1 Au-2=2 Bu-1=3 Cu-3=4 Au-0=5'),
- chk('run 2: one key row added', (SELECT SUM(value) FROM full_result WHERE name = 'KEY ROWS ADDED THIS RUN'), 1),
+ chk('run 2: one key row added', (SELECT SUM(value) FROM full_result WHERE name = 'KEY ROWS IN THE LATEST ADDITION'), 1),
  chk('run 2: both key MUST_BE_ZERO checks 0',
      (SELECT SUM(value) FROM full_result WHERE must_be_zero = 1 AND name IN ('TERR HOLDERS WITH NO KEY', 'KEY HOLDER_N DUPLICATED')), 0),
  chk('run 2: no CLEAN_ID or name in the result', (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'eve|u-0|alice|bob|u-1|u-2|whole|firmname|c1', 'i')), 0);

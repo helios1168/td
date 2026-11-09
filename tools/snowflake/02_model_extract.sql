@@ -39,7 +39,7 @@ INSERT INTO IDENTIFIER($holder_tbl)
 SELECT s.source, s.clean_id,
        COALESCE((SELECT MAX(holder_n) FROM IDENTIFIER($holder_tbl)), 0) + ROW_NUMBER() OVER (ORDER BY s.source, s.clean_id),
        CURRENT_TIMESTAMP()
-FROM (SELECT DISTINCT source, clean_id FROM IDENTIFIER($terr_tbl) WHERE clean_id IS NOT NULL) s
+FROM (SELECT DISTINCT source, clean_id FROM IDENTIFIER($terr_tbl) WHERE clean_id IS NOT NULL AND source IS NOT NULL) s
 LEFT JOIN IDENTIFIER($holder_tbl) k ON k.source = s.source AND k.clean_id = s.clean_id
 WHERE k.clean_id IS NULL;
 
@@ -127,7 +127,7 @@ SELECT 'CHECKS', t.source, 'TERR HOLDERS WITH NO KEY', NULL, NULL, NULL, NULL, N
        COUNT(DISTINCT CASE WHEN t.clean_id IS NOT NULL AND hk.clean_id IS NULL THEN t.clean_id END), 1
 FROM t LEFT JOIN hk ON hk.source = t.source AND hk.clean_id = t.clean_id GROUP BY t.source
 UNION ALL
-SELECT 'CHECKS', source, 'KEY ROWS ADDED THIS RUN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+SELECT 'CHECKS', source, 'KEY ROWS IN THE LATEST ADDITION', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
        COUNT(CASE WHEN first_seen = (SELECT MAX(first_seen) FROM hk) THEN 1 END), 0
 FROM hk GROUP BY source
 UNION ALL
