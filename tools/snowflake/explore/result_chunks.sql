@@ -1,8 +1,12 @@
+use role rl_ssdb_Integration_Lr_Strategy_Rw;
+use database ssdb_Integration;
+use schema lr_strategy;
+
 --Download a large result in parts of about 1 MB, without running its script again.  Reads only the cached result
---(RESULT_SCAN, kept 24 hours).  Run in the same worksheet right after the script, else paste its query ID from Query History.
---1. Point q at the result (run the SET q line once only: run again it points at the last part), and see how many parts.
-SET q = LAST_QUERY_ID();
---SET q = '<query id>';
+--(RESULT_SCAN, kept 24 hours).
+--1. Paste the script's query ID from Query History (not LAST_QUERY_ID(): the use lines above are queries too), and see
+--how many parts.
+SET q = '<query id>';
 SELECT COUNT(*) AS n_rows, CEIL(COUNT(*) / 20000) AS n_parts FROM TABLE(RESULT_SCAN($q));
 
 --2. Set part to 1, run, download as CSV, then 2, and so on to n_parts.  The ORDER BY is a total order of

@@ -1,3 +1,7 @@
+use role rl_ssdb_Integration_Lr_Strategy_Rw;
+use database ssdb_Integration;
+use schema lr_strategy;
+
 --The census boundary tables (GEO_ID, FULLY_QUALIFIED_ID, GEO_NAME, GEO_BOUNDARY GEOGRAPHY): vintage, ID format, size
 --and validity.  Reads only these four tables, public data.  Edit the four SET lines to the real names, Run All, send the
 --one result.  GEO_BOUNDARY itself is never selected (it would print GeoJSON).
