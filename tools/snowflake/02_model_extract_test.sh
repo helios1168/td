@@ -108,11 +108,11 @@ SELECT
  chk('checks: TERR 2+ holders, no name, a source with no opportunity',
      c('A', 'TERR ZIP X CHANNEL WITH 2+ HOLDERS') || ' ' || c('A', 'TERR ROWS WITH NO NAME') || ' ' || c('C', 'TERR SOURCE WITH NO OPP SOURCE OF THE SAME NAME'),
      '1/-/-/0 1/-/-/0 1/-/-/1'),
- chk('checks: name from NAME (B 2, A 0, the vacant NAME-only row not counted), open rows (A 3, B 0), no name (B 0), raw names merged by normalizing (A 2: SMITH, JOHN and OPEN, B 1: Dana 3 spellings, C 0)',
+ chk('checks: name from NAME (B 2, A 0, the vacant NAME-only row not counted), open rows (A 3, B 0), no name (B 0), raw names merged by normalizing (A 1: SMITH, JOHN, OPEN not counted, B 1: Dana 3 spellings, C 0)',
      c('B', 'TERR ROWS NAME FROM NAME (CLEAN_NAME BLANK)') || ' ' || c('A', 'TERR ROWS NAME FROM NAME (CLEAN_NAME BLANK)') || ' ' || c('A', 'TERR ROWS OPEN (VACANT)')
      || ' ' || c('B', 'TERR ROWS OPEN (VACANT)') || ' ' || c('B', 'TERR ROWS WITH NO NAME')
      || ' ' || c('A', 'TERR RAW NAMES MERGED BY NORMALIZING') || ' ' || c('B', 'TERR RAW NAMES MERGED BY NORMALIZING') || ' ' || c('C', 'TERR RAW NAMES MERGED BY NORMALIZING'),
-     '2/-/-/0 0/-/-/0 3/-/-/0 0/-/-/0 0/-/-/0 2/-/-/0 1/-/-/0 0/-/-/0'),
+     '2/-/-/0 0/-/-/0 3/-/-/0 0/-/-/0 0/-/-/0 1/-/-/0 1/-/-/0 0/-/-/0'),
  chk('no CLEAN_ID, name, firm or wholesaler anywhere in the result',
      (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'alice|bob|dana|smith|john|fay|doe|u-[0-9]|whole|firmname|c1', 'i')), 0),
  chk('no CLEAN_NAME, NAME or normalized name (raw or collapsed, any case), no CLEAN_ID and no holder id anywhere in the result (check names say OPEN, so open is not looked for in CHECKS)',

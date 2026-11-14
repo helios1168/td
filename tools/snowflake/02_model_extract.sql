@@ -44,7 +44,7 @@ SELECT s.source, s.holder_id,
        COALESCE((SELECT MAX(holder_n) FROM IDENTIFIER($holder_tbl)), 0) + ROW_NUMBER() OVER (ORDER BY s.source, s.holder_id),
        CURRENT_TIMESTAMP()
 FROM (SELECT DISTINCT source, hid AS holder_id
-      FROM (SELECT source, CASE WHEN nm = 'OPEN' THEN NULL ELSE UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', nm) END AS hid
+      FROM (SELECT source, CASE WHEN nm IS NULL OR nm = 'OPEN' THEN NULL ELSE UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', nm) END AS hid
             FROM (SELECT source, NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(COALESCE(NULLIF(TRIM(clean_name), ''), name)), '\\s+', ' '))), '') AS nm
                   FROM IDENTIFIER($terr_tbl)))
       WHERE hid IS NOT NULL AND source IS NOT NULL) s
@@ -71,7 +71,7 @@ tn AS (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, state, 
               NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(COALESCE(NULLIF(TRIM(clean_name), ''), name)), '\\s+', ' '))), '') AS nm
        FROM IDENTIFIER($terr_tbl)),
 t AS (SELECT source, zip_code, state, channel, spelling, no_cn, nm, COALESCE(nm = 'OPEN', FALSE) AS is_open,
-             CASE WHEN nm = 'OPEN' THEN NULL ELSE UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', nm) END AS hid
+             CASE WHEN nm IS NULL OR nm = 'OPEN' THEN NULL ELSE UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', nm) END AS hid
       FROM tn),
 th AS (SELECT source, zip_code, channel, COUNT(DISTINCT hid) AS n FROM t WHERE hid IS NOT NULL
        GROUP BY source, zip_code, channel),
@@ -142,7 +142,7 @@ FROM t GROUP BY source
 UNION ALL
 SELECT 'CHECKS', source, 'TERR RAW NAMES MERGED BY NORMALIZING', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
        COUNT(CASE WHEN k > 1 THEN 1 END), 0
-FROM (SELECT source, nm, COUNT(DISTINCT spelling) AS k FROM t WHERE nm IS NOT NULL GROUP BY source, nm) GROUP BY source
+FROM (SELECT source, nm, COUNT(DISTINCT spelling) AS k FROM t WHERE hid IS NOT NULL GROUP BY source, nm) GROUP BY source
 UNION ALL
 SELECT 'CHECKS', source, 'TERR ROWS OPEN (VACANT)', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
        COUNT(CASE WHEN is_open THEN 1 END), 0
