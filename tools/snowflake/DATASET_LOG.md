@@ -1656,3 +1656,20 @@ queries? the catch is I don't have direct access to the sls_rpt table". Not from
 base sales table is built from `final_output_wo_policy` (`owner_sql/s1_sales_v2.sql:374`), after the policy-grain
 `final_output` (`:312`); firm 2's sales table has no policy column. `explore/policy_tables.sql` lists every table the
 role can read with a policy column; otherwise the policy grain needs whoever builds the base sales table.
+
+### 2026-11-14: the holder key on the normalized raw name; CLEAN_ID no longer read
+
+Owner, 2026-11-14: "there are no more clean names, all names are the raw names". `territories_tableau`'s `CLEAN_NAME` and
+`NAME` both hold raw names, and `CLEAN_ID`, where present, is a hash of an old clean name. Owner, same day: reset
+`td_holder_key` once, keyed on the normalized raw name. So `02_model_extract.sql` takes the holder id as
+`UUID_STRING(namespace, nm)`, `nm` being `CLEAN_NAME` (`NAME` when `CLEAN_NAME` is blank) trimmed, with each run of white
+space as one space, in upper case; `nm` of `OPEN` is a vacancy as before. `CLEAN_ID` is not read, and the key's id column
+is `holder_id` (was `clean_id`), so an old key table fails the INSERT instead of mixing numbers. The reset is the owner's
+one DROP of `td_holder_key` before the next run; the script has none and the key must never be dropped or replaced again.
+Every `R<n>` from before the reset is void. CHECKS: `TERR ROWS NAME FROM NAME (CLEAN_NAME BLANK)` and `TERR ROWS WITH NO
+NAME` replace the two `HOLDER ID` checks (info), and `TERR RAW NAMES MERGED BY NORMALIZING` counts the normalized names
+that two or more trimmed raw spellings reach, per source (info). Snowflake page read 2026-11-14,
+https://docs.snowflake.com/en/sql-reference/functions/regexp_replace: a backslash in a single-quoted literal is doubled
+(`'\\s+'`). `02_model_extract_test.sh` ran green in DuckDB (the pattern and its `g` flag converted by `sed`) with two
+spellings of one person under one number, `NAME` used for a blank `CLEAN_NAME`, `Open` vacant, `CLEAN_ID` ignored, the
+two-run stability test and no name or id in the result. Not run in Snowflake.
