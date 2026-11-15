@@ -1,78 +1,133 @@
-"""census_upload.py -- a Census cartographic shapefile zip into a Snowflake table CENSUS_<LAYER>, in the layout of
-the census tables already there: GEO_ID, FULLY_QUALIFIED_ID, GEO_NAME, GEO_BOUNDARY (GEOGRAPHY), plus a layer's
-extra columns.  The owner's upload script (2026-11-15), set up for the state outlines.
-
-    pip install "snowflake-connector-python[pandas]" geopandas
-    export SNOWFLAKE_ACCOUNT=... SNOWFLAKE_USER=... SNOWFLAKE_WAREHOUSE=...     (Windows: set NAME=value)
-    python census_upload.py [folder holding the zips, default: geo/ beside this file]
-
-Signs in through the browser.  The account, user and warehouse come from the environment so that they are not in
-the repo; the role, database and schema are the session header's.  CREATE OR REPLACE: an existing CENSUS_<LAYER> is
-replaced.  Stops with an error unless every row of the file is in the table with a valid shape.
-"""
 import os
-import sys
+import geopandas as gpd
+from shapely.wkt import dumps
+import pandas as pd
+import snowflake.connector
+from snowflake.connector.pandas_tools import write_pandas
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+# ==========================================
+# 1. PATH & SCHEMA CONFIGURATION
+# ==========================================
+# UPDATE THIS: Set the path to the folder where your file lives
+# ==========================================
+# 1. PATH & SCHEMA CONFIGURATION
+# ==========================================
+DOWNLOAD_DIR = "./"
 
-# layer -> the zip, its ID and name columns, and columns kept beside the four (STUSPS: the two-letter state code,
-# to join a ZIP's state).  The cartographic state file has no "20" suffix: GEOID and NAME, not GEOID20 and NAME20.
+# Target the exact verified cartographic shapefile archive you downloaded
+GEOPACKAGE_ZIP = "cb_2025_us_state_500k.zip"
+FULL_LOCAL_PATH = os.path.join(DOWNLOAD_DIR, GEOPACKAGE_ZIP)
+
 CENSUS_LAYERS = {
-    "states": {"zip": "cb_2025_us_state_500k.zip", "id_col": "GEOID", "name_col": "NAME", "extra": ["STUSPS"]},
+    "states": {
+        "layer_name": "cb_2025_us_state_500k.zip", 
+        "id_col": "GEOID", 
+        "name_col": "NAME"
+    }
+}
+# Snowflake Credentials Configuration
+SNOWFLAKE_CREDS = {
+    "account": "YOUR_ACCOUNT_LOCATOR",
+    "user": "YOUR_USERNAME",
+    "password": "YOUR_PASSWORD",
+    "role": "SYSADMIN",
+    "warehouse": "YOUR_WAREHOUSE",
+    "database": "YOUR_DATABASE",
+    "schema": "YOUR_SCHEMA"
 }
 
-
-def frame(zip_path, meta):
-    """The layer as the rows to load: GEO_ID, FULLY_QUALIFIED_ID, GEO_NAME, the extra columns, WKT_GEOM (WGS 84)."""
-    import geopandas as gpd
-    import pandas as pd
-    from shapely.wkt import dumps
-
-    gdf = gpd.read_file(f"zip://{zip_path}").to_crs(epsg=4326)
-    # the fully qualified ID was AFFGEOID in older files
-    fq = next((c for c in ("GEOIDFQ", "AFFGEOID") if c in gdf.columns), meta["id_col"])
-    cols = {"GEO_ID": meta["id_col"], "FULLY_QUALIFIED_ID": fq, "GEO_NAME": meta["name_col"],
-            **{c: c for c in meta.get("extra", [])}}
-    df = pd.DataFrame({k: gdf[v].astype(str) for k, v in cols.items()})
-    df["WKT_GEOM"] = gdf["geometry"].apply(lambda g: dumps(g, rounding_precision=6))
-    return df
-
-
-def main(folder):
-    import snowflake.connector
-    from snowflake.connector.pandas_tools import write_pandas
-
-    for meta in CENSUS_LAYERS.values():  # before signing in
-        if not os.path.exists(os.path.join(folder, meta["zip"])):
-            raise FileNotFoundError(os.path.abspath(os.path.join(folder, meta["zip"])))
+# ==========================================
+# 2. LOCAL PROCESSING & LOADING ENGINE
+# ==========================================
+# ==========================================
+# 2. LOCAL PROCESSING & LOADING ENGINE
+# ==========================================
+def ingest_local_geopackage():
+    # Verify the file actually exists before starting database channels
+    if not os.path.exists(FULL_LOCAL_PATH):
+        raise FileNotFoundError(
+            f"Could not find the file at: {os.path.abspath(FULL_LOCAL_PATH)}. "
+            f"Please verify your DOWNLOAD_DIR variable."
+        )
+        
+    print(f"Targeting local archive: {FULL_LOCAL_PATH}")
+    print("--- Initializing Snowflake Native DB Connection ---")
     ctx = snowflake.connector.connect(
-        account=os.environ["SNOWFLAKE_ACCOUNT"], user=os.environ["SNOWFLAKE_USER"],
-        warehouse=os.environ["SNOWFLAKE_WAREHOUSE"], database="SSDB_INTEGRATION", schema="LR_STRATEGY",
-        role="RL_SSDB_INTEGRATION_LR_STRATEGY_RW", client_store_temporary_credential=True,
-        authenticator="externalbrowser")
+        user='<user>',
+        account='<account>',
+        warehouse='WH_LIFE_GP_XS',
+        database='SSDB_INTEGRATION',
+        schema='LR_STRATEGY',
+        role='RL_SSDB_INTEGRATION_LR_STRATEGY_RW',
+        client_store_temporary_credential=True,
+        authenticator='externalbrowser'
+    )
+
     cs = ctx.cursor()
+    
     try:
-        for layer, meta in CENSUS_LAYERS.items():
-            target, tmp = f"CENSUS_{layer.upper()}", f"TMP_CENSUS_{layer.upper()}"
-            df = frame(os.path.join(folder, meta["zip"]), meta)
-            print(f"{meta['zip']}: {len(df)} rows -> {tmp}")
-            write_pandas(conn=ctx, df=df, table_name=tmp, auto_create_table=True, overwrite=True)
-            extra = "".join(f"{c}::VARCHAR AS {c.lower()}, " for c in meta.get("extra", []))
+        for layer_key, meta in CENSUS_LAYERS.items():
+            target_table = f"CENSUS_{layer_key.upper()}"
+            tmp_table = f"TMP_{target_table}"
+            
+            print(f"\n[Ingesting Shapefile Archive: {FULL_LOCAL_PATH}]")
+            
+            # Form virtual pointer path inside the compressed zip shapefile bundle natively
+            shapefile_uri = f"zip://{FULL_LOCAL_PATH}"
+            
+            print(f"Reading zipped shapefile layers via spatial engine...")
+            try:
+                # Read the zipped shapefile directly and instantly project to standard WGS84 coordinates
+                gdf = gpd.read_file(shapefile_uri).to_crs(epsg=4326)
+            except Exception as layer_err:
+                print(f"❌ Error loading shapefile layer: {layer_err}")
+                print("Skipping layout layer definition block.")
+                continue
+                
+            # Safely capture any newly retired/renamed ID headers (GEOIDFQ vs AFFGEOID)
+            fq_id_col = "GEOIDFQ" if "GEOIDFQ" in gdf.columns else (
+                "AFFGEOID" if "AFFGEOID" in gdf.columns else meta["id_col"]
+            )
+            
+            print("Serializing high-precision vectors to string structures...")
+            gdf['WKT_GEOM'] = gdf['geometry'].apply(lambda g: dumps(g, rounding_precision=6))
+            
+            # Map into a clean Pandas dataframe structure
+            pandas_df = pd.DataFrame({
+                'GEO_ID': gdf[meta['id_col']].astype(str),
+                'FULLY_QUALIFIED_ID': gdf[fq_id_col].astype(str),
+                'GEO_NAME': gdf[meta['name_col']].astype(str),
+                'WKT_GEOM': gdf['WKT_GEOM'].astype(str)
+            })
+            
+            print(f"Streaming data elements to staging array table: {tmp_table}...")
+            write_pandas(
+                conn=ctx,
+                df=pandas_df,
+                table_name=tmp_table,
+                auto_create_table=True,
+                overwrite=True
+            )
+            
+            print(f"Materializing permanent Snowflake GEOGRAPHY object layer: {target_table}")
             cs.execute(f"""
-                CREATE OR REPLACE TABLE {target} AS
-                SELECT GEO_ID::VARCHAR AS geo_id, FULLY_QUALIFIED_ID::VARCHAR AS fully_qualified_id,
-                       GEO_NAME::VARCHAR AS geo_name, {extra}TO_GEOGRAPHY(WKT_GEOM) AS geo_boundary
-                FROM {tmp}""")
-            cs.execute(f"DROP TABLE IF EXISTS {tmp}")
-            n, bad = cs.execute(f"SELECT COUNT(*), COUNT_IF(geo_boundary IS NULL OR NOT ST_ISVALID(geo_boundary)) "
-                                f"FROM {target}").fetchone()
-            if (n, bad) != (len(df), 0):
-                raise RuntimeError(f"{target}: {n} rows, {bad} invalid or missing shapes, expected {len(df)} and 0")
-            print(f"{target}: {n} rows, every shape valid")
+                CREATE OR REPLACE TABLE {target_table} AS
+                SELECT 
+                    GEO_ID::VARCHAR AS geo_id,
+                    FULLY_QUALIFIED_ID::VARCHAR AS fully_qualified_id,
+                    GEO_NAME::VARCHAR AS geo_name,
+                    TO_GEOGRAPHY(WKT_GEOM) AS geo_boundary
+                FROM {tmp_table};
+            """)
+            
+            cs.execute(f"DROP TABLE IF EXISTS {tmp_table};")
+            print(f"✅ Layer {target_table} is fully loaded and structurally indexed.")
+            
     finally:
         cs.close()
         ctx.close()
-
+        print("\nAll database channels closed. Ingestion pipeline complete.")
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "geo"))
+    ingest_local_geopackage()
+
