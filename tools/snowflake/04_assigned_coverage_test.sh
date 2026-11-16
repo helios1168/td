@@ -1,9 +1,20 @@
 #!/bin/sh
 # Runs 04_assigned_coverage.sql in DuckDB on made-up UNION, TERRITORIES and assignments tables (the real column names)
-# and checks the four tables and the result against answers worked out by hand from the rows below.
+# and checks the four tables and the result against answers worked out by hand from the rows below: run 1 with every
+# area mode blank (today's ZIPs), run 2 on the same database with TRIM, ADD and REPLACE and the area checks.
 # Prints "04_assigned_coverage_test: ok" or stops at the first failed check.  Run from anywhere.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
+# the script as DuckDB runs it, into a fresh full_result
+emit_sql() {
+echo 'DROP TABLE IF EXISTS full_result;'
+sed -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
+    -e "s/^WITH\$/CREATE TABLE full_result AS WITH/" \
+    -e 's/IDENTIFIER(\$union_tbl)/ssdb_integration.lr_strategy.union_t/' \
+    -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
+    -e 's/IDENTIFIER(\$zip_state_tbl)/ssdb_integration.lr_strategy.zst_t/' \
+    -e 's/IDENTIFIER(\$assign_tbl)/ssdb_integration.lr_strategy.assign_t/' "$here/04_assigned_coverage.sql"
+}
 {
 cat <<'SQL'
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
@@ -22,7 +33,12 @@ INSERT INTO ssdb_integration.lr_strategy.terr_t (source, name, zip_code, channel
   ('B','Gil G','00001','WH'), ('B','Gil G','00001','FI'), ('B','Gil G','00002','WH'), ('B','Gil G','00002','FI'),
   ('B','Hal H','00003','WH'), ('B','Hal H','00003','FI'), ('B','Hal H','00004','WH'), ('B','Hal H','00004','FI');
 -- the roster as loaded back: the seed's other columns are ignored
-CREATE TABLE ssdb_integration.lr_strategy.assign_t (source TEXT, wholesaler TEXT, current_channels TEXT, kept TEXT, role TEXT);
+CREATE TABLE ssdb_integration.lr_strategy.assign_t (source TEXT, wholesaler TEXT, current_channels TEXT, kept TEXT, role TEXT,
+  area_mode TEXT, area_states TEXT);
+-- ZIP states: 00001-00002 MA, 00003-00004 NH, 00005-00008 VT (00008: nobody holds it, no opportunity), 00009 none
+CREATE TABLE ssdb_integration.lr_strategy.zst_t (zip_code TEXT, state TEXT);
+INSERT INTO ssdb_integration.lr_strategy.zst_t VALUES ('1','MA'), ('00002','ma'), ('00003','NH'), ('00004','NH'), ('00005','VT'),
+  ('00006','VT'), ('00007','VT'), ('00008','VT'), ('00009','');
 INSERT INTO ssdb_integration.lr_strategy.assign_t (source, wholesaler, kept, role) VALUES
   -- Ann FI: she holds FI, so her area is her FI ZIP only (00001).  Bob WIFI: 00002, 00003.
   -- Cy FI: he holds no FI, so his area is his WH ZIPs (00002, 00003).  Dee WH: an IFA holder, no area.
@@ -58,11 +74,7 @@ INSERT INTO ssdb_integration.lr_strategy.union_t (fiscal_yr, source, zip_code, p
   -- B: the other estimate, claimed by the same wholesalers
   (2025,'B','00001','VA','FI','FI',210,'F1'), (2025,'B','00003','VA','FI','Wells FI',61,'F3'), (2025,'B','00004','VA','WH','WH',1100,'F1');
 SQL
-sed -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
-    -e "s/^WITH\$/CREATE TABLE full_result AS WITH/" \
-    -e 's/IDENTIFIER(\$union_tbl)/ssdb_integration.lr_strategy.union_t/' \
-    -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
-    -e 's/IDENTIFIER(\$assign_tbl)/ssdb_integration.lr_strategy.assign_t/' "$here/04_assigned_coverage.sql"
+emit_sql
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
@@ -111,13 +123,15 @@ SELECT
  chk('ROSTER', sec('ROSTER'),
      'A|01 ROWS|-|9|-|0 / A|02 KEPT Y|-|6|-|0 / A|03 KEPT N|-|1|-|0 / A|04 KEPT BLANK (NOT DECIDED)|-|0|-|0 / A|05 KEPT NOT Y, N OR BLANK|-|1|-|1'
      || ' / A|06 ROLE NOT NATIONAL, WH, FI, WIFI OR BLANK|-|1|-|1 / A|07 WHOLESALER ON 2+ ROWS|-|1|-|1 / A|08 KEPT WITH NO ROLE (OUTSIDE THE MAIN MAP)|-|1|-|0'
-     || ' / A|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (NO AREA)|-|1|-|0 / A|10 KEPT WITH A ROLE, HOLDS NO WH OR FI ZIP (NO AREA)|-|1|-|0'
+     || ' / A|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (AREA FROM LISTED STATES ONLY)|-|1|-|0 / A|10 KEPT WITH A ROLE, IN THE TERRITORIES, NO ZIP IN THE AREA|-|1|-|0'
      || ' / A|11 WH OR FI HOLDERS NOT ON THE ROSTER (NOT KEPT)|-|1|-|0'
+     || ' / A|12 AREA_MODE NOT TRIM, REPLACE, ADD OR BLANK|-|0|-|1 / A|13 AREA_MODE WITH NO AREA_STATES, OR AREA_STATES WITH NO AREA_MODE|-|0|-|1 / A|14 AREA_STATES CODE NOT IN THE ZIP STATE TABLE (OR TWICE)|-|0|-|1'
      || ' / B|01 ROWS|-|2|-|0 / B|02 KEPT Y|-|2|-|0 / B|03 KEPT N|-|0|-|0 / B|04 KEPT BLANK (NOT DECIDED)|-|0|-|0 / B|05 KEPT NOT Y, N OR BLANK|-|0|-|1'
      || ' / B|06 ROLE NOT NATIONAL, WH, FI, WIFI OR BLANK|-|0|-|1 / B|07 WHOLESALER ON 2+ ROWS|-|0|-|1 / B|08 KEPT WITH NO ROLE (OUTSIDE THE MAIN MAP)|-|0|-|0'
-     || ' / B|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (NO AREA)|-|0|-|0 / B|10 KEPT WITH A ROLE, HOLDS NO WH OR FI ZIP (NO AREA)|-|0|-|0'
-     || ' / B|11 WH OR FI HOLDERS NOT ON THE ROSTER (NOT KEPT)|-|0|-|0'),
- chk('ROLES', sec('ROLES'), 'A|FI|-|2|-|0 / A|WH|-|2|-|0 / A|WIFI|-|1|-|0 / B|NATIONAL|-|1|-|0 / B|WIFI|-|1|-|0'),
+     || ' / B|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (AREA FROM LISTED STATES ONLY)|-|0|-|0 / B|10 KEPT WITH A ROLE, IN THE TERRITORIES, NO ZIP IN THE AREA|-|0|-|0'
+     || ' / B|11 WH OR FI HOLDERS NOT ON THE ROSTER (NOT KEPT)|-|0|-|0'
+     || ' / B|12 AREA_MODE NOT TRIM, REPLACE, ADD OR BLANK|-|0|-|1 / B|13 AREA_MODE WITH NO AREA_STATES, OR AREA_STATES WITH NO AREA_MODE|-|0|-|1 / B|14 AREA_STATES CODE NOT IN THE ZIP STATE TABLE (OR TWICE)|-|0|-|1'),
+ chk('ROLES', sec('ROLES'), 'A|FI|TODAY|2|-|0 / A|WH|TODAY|2|-|0 / A|WIFI|TODAY|1|-|0 / B|NATIONAL|TODAY|1|-|0 / B|WIFI|TODAY|1|-|0'),
  chk('CAPTURE: per estimate the rows add up to the main map (A 4801, B 1371)', sec('CAPTURE'),
      'A|FI|1 CLAIMANT: FI|2|250|0 / A|FI|1 CLAIMANT: WIFI|2|2500|0 / A|FI|2+ CLAIMANTS, 2+ FIRMS|2|460|0 / A|FI|2+ CLAIMANTS, ONE FIRM|1|20|0'
      || ' / A|FI|GAP: NO HOLDER TODAY|1|9|0 / A|NATIONAL|1 CLAIMANT: NATIONAL|3|75|0 / A|WH|1 CLAIMANT: WIFI|2|1010|0 / A|WH|2+ CLAIMANTS, 2+ FIRMS|2|307|0'
@@ -128,10 +142,65 @@ SELECT
  chk('FINE CHANNEL: the national fine channels under NATIONAL where Gil is, fallen back elsewhere', sec('FINE CHANNEL'),
      'A|FI|FI|6|2679|0 / A|NATIONAL (CHASE)|FI|1|500|0 / A|NATIONAL (CHASE)|NATIONAL|1|30|0 / A|WELLS FI|FI|1|60|0 / A|WELLS FI|NATIONAL|1|40|0'
      || ' / A|WELLS WH|NATIONAL|1|5|0 / A|WELLS WH|WH|1|7|0 / A|WH|WH|5|1480|0 / B|FI|FI|1|210|0 / B|WELLS FI|FI|1|61|0 / B|WH|WH|1|1100|0'),
- chk('TIE', sec('TIE'), 'A|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|1 / B|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|1'),
+ chk('TIE', sec('TIE'), 'A|MAIN MAP IN ZIPS WITH NO STATE IN THE ZIP STATE TABLE|-|0|0|0 / A|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|1'
+     || ' / B|MAIN MAP IN ZIPS WITH NO STATE IN THE ZIP STATE TABLE|-|0|0|0 / B|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|1'),
  chk('no wholesaler name in the result or in TD_MAP_CELL',
      (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'ann a|bob +b|cy c|dee d|eve e|fay f|gil g|hal h|zed z|ivy i|jay j', 'i'))
      + (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.td_map_cell f WHERE regexp_matches(CAST(f AS VARCHAR), 'ann a|bob +b|cy c|dee d|eve e|fay f|gil g|hal h|zed z|ivy i|jay j', 'i')), 0);
+-- run 2: area modes.  Bob TRIM NH (today 00002, 00003 -> 00003).  Cy ADD VT (today 00002, 00003 + 00005-00008).
+-- Dee REPLACE VT (holds no WH or FI: 00005-00008).  Zed REPLACE NH (not in the territories: 00003, 00004).
+-- Hal REPLACE MA (today 00003, 00004 -> 00001, 00002).  Ann ADD 'MA XX' (XX flagged, MA adds 00002).
+-- Fay mode GROW (flagged).  Gil states NH with no mode (flagged, ignored: today's ZIPs).
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'trim', area_states = 'nh' WHERE wholesaler = 'BOB  B';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'ADD', area_states = 'VT' WHERE wholesaler = 'Cy C';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'REPLACE', area_states = ' VT ' WHERE wholesaler = 'Dee D';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'REPLACE', area_states = 'NH' WHERE wholesaler = 'Zed Z';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'REPLACE', area_states = 'ma' WHERE wholesaler = 'Hal H';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'ADD', area_states = 'MA,XX' WHERE wholesaler = 'Ann A';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_mode = 'GROW' WHERE wholesaler = 'Fay F';
+UPDATE ssdb_integration.lr_strategy.assign_t SET area_states = 'NH' WHERE wholesaler = 'Gil G';
+SQL
+emit_sql
+cat <<'SQL'
+SELECT
+ chk('run 2 TD_MAP_AREA: mode, held today WH FI, in today''s area, in a listed state',
+     (SELECT string_agg(concat_ws(' ', source, wholesaler, role, '[' || area_mode || ']', zip_code, has_wh || has_fi, in_today_area || in_listed_state), ' / '
+                        ORDER BY source, wholesaler, zip_code)
+      FROM ssdb_integration.lr_strategy.td_map_area),
+     'A Ann A FI [ADD] 00001 11 11 / A Ann A FI [ADD] 00002 10 01 / A BOB  B WIFI [TRIM] 00003 01 11'
+     || ' / A Cy C FI [ADD] 00002 10 10 / A Cy C FI [ADD] 00003 10 10 / A Cy C FI [ADD] 00005 00 01 / A Cy C FI [ADD] 00006 00 01'
+     || ' / A Cy C FI [ADD] 00007 00 01 / A Cy C FI [ADD] 00008 00 01'
+     || ' / A Dee D WH [REPLACE] 00005 00 01 / A Dee D WH [REPLACE] 00006 00 01 / A Dee D WH [REPLACE] 00007 00 01 / A Dee D WH [REPLACE] 00008 00 01'
+     || ' / A Zed Z WH [REPLACE] 00003 00 01 / A Zed Z WH [REPLACE] 00004 00 01'
+     || ' / B Gil G NATIONAL [] 00001 11 10 / B Gil G NATIONAL [] 00002 11 10 / B Hal H WIFI [REPLACE] 00001 00 01 / B Hal H WIFI [REPLACE] 00002 00 01'),
+ chk('run 2 TD_MAP_CELL in 00003-00006',
+     (SELECT string_agg(concat_ws(' ', source, zip_code, new_dist, '[' || dist_ch || ']', i(mm_opp), need, n_claim, n_claim_firms, status,
+                                  COALESCE(captured_role, gap_reason, '-')), ' / ' ORDER BY source, zip_code, new_dist, dist_ch)
+      FROM ssdb_integration.lr_strategy.td_map_cell WHERE zip_code BETWEEN '00003' AND '00006'),
+     'A 00003 FI [FI] 400 FI 2 1 OVERLAP - / A 00003 WELLS FI [FI] 60 FI 2 1 OVERLAP - / A 00003 WELLS WH [WH] 7 WH 2 1 OVERLAP -'
+     || ' / A 00003 WH [WH] 300 WH 2 1 OVERLAP - / A 00004 FI [FI] 2000 FI 0 0 GAP HOLDER NOT KEPT'
+     || ' / A 00004 NATIONAL (CHASE) [FI] 500 FI 0 0 GAP HOLDER NOT KEPT / A 00004 WH [WH] 1000 WH 1 1 CAPTURED WH'
+     || ' / A 00005 FI [] 9 FI 1 1 CAPTURED FI / A 00006 WH [WH] 70 WH 1 1 CAPTURED WH'
+     || ' / B 00003 WELLS FI [FI] 61 FI 2 1 OVERLAP - / B 00004 WH [WH] 1100 WH 1 1 CAPTURED WH'),
+ chk('run 2 TD_MAP_WHOLESALER: Dee, an IFA holder given VT, gains 00006''s WH and releases her IFA-held FI cell',
+     (SELECT string_agg(concat_ws(' ', est_source, '[' || kept || role || area_mode || area_states || ']', n_area_zips, i(opp_claimed), i(opp_sole), i(opp_shared), '|',
+                                  i(opp_held_today), i(opp_kept), i(opp_released), i(opp_gained)), ' / ' ORDER BY est_source)
+      FROM ssdb_integration.lr_strategy.td_map_wholesaler WHERE wholesaler = 'Dee D'),
+     'A [YWHREPLACEVT] 4 70 70 0 | 50 0 50 70 / B [YWHREPLACEVT] 4 0 0 0 | - - - -'),
+ chk('run 2 ROSTER area checks and check 10 (Dee has an area now)',
+     (SELECT string_agg(source || '|' || k1 || '|' || i(n), ' / ' ORDER BY source, k1) FROM full_result
+      WHERE section = 'ROSTER' AND (k1 LIKE '1_ %' AND k1 NOT LIKE '11 %' OR k1 LIKE '09 %')),
+     'A|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (AREA FROM LISTED STATES ONLY)|1 / A|10 KEPT WITH A ROLE, IN THE TERRITORIES, NO ZIP IN THE AREA|0'
+     || ' / A|12 AREA_MODE NOT TRIM, REPLACE, ADD OR BLANK|1 / A|13 AREA_MODE WITH NO AREA_STATES, OR AREA_STATES WITH NO AREA_MODE|0'
+     || ' / A|14 AREA_STATES CODE NOT IN THE ZIP STATE TABLE (OR TWICE)|1'
+     || ' / B|09 KEPT WITH A ROLE, NAME NOT IN THE TERRITORIES (AREA FROM LISTED STATES ONLY)|0 / B|10 KEPT WITH A ROLE, IN THE TERRITORIES, NO ZIP IN THE AREA|0'
+     || ' / B|12 AREA_MODE NOT TRIM, REPLACE, ADD OR BLANK|0 / B|13 AREA_MODE WITH NO AREA_STATES, OR AREA_STATES WITH NO AREA_MODE|1'
+     || ' / B|14 AREA_STATES CODE NOT IN THE ZIP STATE TABLE (OR TWICE)|0'),
+ chk('run 2 ROLES', sec('ROLES'), 'A|FI|ADD|2|-|0 / A|WH|REPLACE|2|-|0 / A|WIFI|TRIM|1|-|0 / B|NATIONAL|TODAY|1|-|0 / B|WIFI|REPLACE|1|-|0'),
+ chk('run 2 CAPTURE still adds up to the main map', (SELECT string_agg(source || ' ' || i(o), ' ' ORDER BY source)
+      FROM (SELECT source, SUM(mm_opp) AS o FROM full_result WHERE section = 'CAPTURE' GROUP BY source)), 'A 4801 B 1371'),
+ chk('run 2 no wholesaler name in the result',
+     (SELECT COUNT(*) FROM full_result f WHERE regexp_matches(CAST(f AS VARCHAR), 'ann a|bob +b|cy c|dee d|eve e|fay f|gil g|hal h|zed z|ivy i|jay j', 'i')), 0);
 SELECT '04_assigned_coverage_test: ok';
 SQL
 } | duckdb -bail -noheader -list
