@@ -1817,3 +1817,18 @@ reworked to read today's territories as they are (a cell's holder is the territo
 which the union's `OLD_TERR_WHOLESALER` matches, profile 2026-11-15) and the dataset's own `NEW_DIST` and `CHANNEL`,
 with the assignments as labels only. The splitting of shared states is dropped with the area modes.
 
+### 2026-11-16: 04 rebuilt on the current state; ASSIGNED_STATES a label
+
+Owner, 2026-11-16: "ok yes implement your proposal" (the session's: today's territories as they are, the dataset's own
+`NEW_DIST` and `CHANNEL`, the assignments as labels, preliminary states a label). `04_assigned_coverage.sql` no longer
+claims, falls back or decides a need: a piece is a territory row, a cell's holder is its source x ZIP x `DIST_CH`
+holder, and the main map is `CHANNEL` NATIONAL, WH, FI. A role fits `CHANNEL` (WH: WH, FI: FI, WIFI: WH and FI,
+NATIONAL: NATIONAL); a piece is in role when its channel is WH for WH, FI for FI, WH or FI for WIFI and NATIONAL. Overlap
+is ZIP x role: the kept wholesalers of one role, either source, with an in-role piece there. Opportunity on a piece is
+each estimate's cells at its ZIP x `DIST_CH`, side by side, never added. Tables `TD_MAP_PIECE`, `TD_MAP_CELL`,
+`TD_MAP_WHOLESALER`, `TD_MAP_ZIP` (replacing `TD_MAP_AREA` and `TD_MAP_CLAIM`); result sections ROSTER, ROLES,
+OPPORTUNITY, OVERLAP, SALES (rows and percent), TIE (two MUST_BE_ZERO checks that `CHANNEL` and `NEW_DIST` agree on the
+main map). `03_assignments.sql` gains `ASSIGNED_STATES` (codes checked against the territories' `STATE`) with edits set
+column by column. Both tests green in DuckDB, 04's failing when the holder join drops the source or WIFI stops fitting
+FI; not run in Snowflake.
+
