@@ -152,6 +152,10 @@ channels."
   opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team"). The
   label is the session's.
 
+- The assignment maps' channel structure and capture rule (owner, 2026-11-15; the 2026-11-15 entry): roles NATIONAL, WH,
+  FI, WIFI over the five main-map fine channels; a cell is captured by area and role, national first, then the #67
+  fallback; every other channel is done separately.
+
 - Q42: firm 2's `MM_AMOUNT` is not used anywhere (owner, 2026-10-31: "for q42 mm_amount is not to be used in the
   queries it is an irrelevant and incorrect column"); firm 2's SALES_ALT is NULL.
 
@@ -1673,3 +1677,52 @@ https://docs.snowflake.com/en/sql-reference/functions/regexp_replace: a backslas
 (`'\\s+'`). `02_model_extract_test.sh` ran green in DuckDB (the pattern and its `g` flag converted by `sed`) with two
 spellings of one person under one number, `NAME` used for a blank `CLEAN_NAME`, `Open` vacant, `CLEAN_ID` ignored, the
 two-run stability test and no name or id in the result. Not run in Snowflake.
+
+### 2026-11-15: the assignment maps: channel structure, the capture rule, the profile and the roster
+
+The next phase shows, for a preliminary roster (who is kept, in which role), each kept wholesaler's territory today, the
+overlaps and gaps, opportunity and sales, on maps drawn inside Snowflake; no optimizer. Owner, 2026-11-15: "We are
+starting with WIFI, and we will have national (national (chase), wells WH, wells FI). WH, and WIFI where recall that WIFI
+= (WH + FI). and that all opportunity must be captured"; "national may not cover the whole nation, and so if there is a
+dedicated WH or FI, or combined WIFI there it needs to include the WH/FI components of national".
+
+What was already settled and carries over. The main map has five fine channels (`NEW_DIST`: WH, FI, Wells WH, Wells FI,
+National (Chase)) and four planning channels: national holds the three national fine channels, WH and FI their own, WIFI
+is WH and FI planned as one. The owner's purity and fallback rule, as #67 records it ("Owner-confirmed additions", 2026-09-29): "A unit with national keeps national
+chase, wells WH and wells FI out of WH and FI. A unit without national maps national chase and wells FI to FI, and wells
+WH to WH"; where WH and FI are both WIFI all five go there (`scenarios/main_west8.toml:19-21`). Coverage (`PROBLEM.md`,
+owner 2026-10-05): every (ZIP, fine channel) cell is owned exactly once across the planning channels, and one planning
+channel need not cover the nation. Today's holders (Q29): Wells WH with the WH holder of the ZIP, Wells FI and National
+(Chase) with the FI holder; firm 2's BD is WH and BK is FI (Q39). So the fallback returns a cell to its holder of today.
+
+What the assignment work must not get wrong. The union's `CHANNEL` puts Wells and Chase in National on every row, which
+holds only where national covers, so coverage starts from `NEW_DIST`. WIFI is not a value in the data, it is a role.
+Cells with a blank `DIST_CH` (2026-11-09 run: firm 2 $3.50B, firm 1 $446M) have a fine channel and no holder today, so a
+cell is captured by area, not by who holds it today. "Has national" was a state switch in the scenarios and follows a
+wholesaler's ZIPs here. Opportunity is never added across sources: the capture check is per source.
+
+The capture rule (session's proposal; the owner's answers below). A kept wholesaler's area is the ZIPs they hold today in
+WH or FI (firm 2: BD, BK). In that area a NATIONAL role takes the three national fine channels; WH takes WH, and Wells WH
+where no NATIONAL wholesaler's area has the ZIP; FI takes FI, and Wells FI and National (Chase) there; WIFI takes WH and
+FI, and all three there. A cell is resolved national first, then the fallback, then WH, FI or WIFI: one wholesaler is
+captured, none a gap, two or more an overlap. Per source: opportunity of the five fine channels = national + WH + FI +
+WIFI + gap.
+
+Owner, 2026-11-15, to the session's four questions ("your recommendations for 1 and 2. for 3, all opportunity is only
+for national, wh, fi, wifi in this case. the other channels will be done separately. and yes for 4"):
+
+1. A NATIONAL wholesaler's area is the ZIPs they hold today, not a declared region.
+2. A WIFI wholesaler and a dedicated WH or FI wholesaler on one ZIP is an overlap, the cell is not split.
+3. "All opportunity" is the five fine channels of national, WH, FI and WIFI; IFA, PRI, AFS, EDJ, AMER and UNMAPPED are
+   done separately.
+4. A kept wholesaler of either source covers the ZIP for both sources' opportunity.
+
+Files. `explore/maps_profile.sql`: the read-only profile (channel cross-tab, holders per ZIP, WH and FI on a ZIP, each
+fine channel's holder under the fallback, the union's old holder against the territories, cross-firm ZIPs, sales rows),
+names only counted, sales as rows and percent. `03_assignments_seed.sql`: the roster the owner fills in (KEPT, ROLE) and
+loads back as the assignments table; its result holds names and stays with the owner. Both ran green in DuckDB
+(`explore/maps_profile_test.sh`, `03_assignments_seed_test.sh`); neither has run in Snowflake. Snowsight worksheets draw
+no maps (bar, line, scatter, heat grid, scorecard: https://docs.snowflake.com/en/user-guide/ui-snowsight-visualizations,
+read 2026-11-15), so the maps come from a notebook. Open: the roster design (one role per wholesaler, everyone listed
+with a kept flag) is the session's and not yet confirmed; whether the owner can create a notebook and a stage; the
+target and its band; the coverage script waits for the profile's result.
