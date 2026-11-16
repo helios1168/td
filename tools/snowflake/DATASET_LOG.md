@@ -1726,3 +1726,35 @@ no maps (bar, line, scatter, heat grid, scorecard: https://docs.snowflake.com/en
 read 2026-11-15), so the maps come from a notebook. Open: the roster design (one role per wholesaler, everyone listed
 with a kept flag) is the session's and not yet confirmed; whether the owner can create a notebook and a stage; the
 target and its band; the coverage script waits for the profile's result.
+
+### 2026-11-15: the maps profile, first run
+
+`explore/maps_profile.sql` on `sales_opp_2026_11_9` and `territories_tableau`, result
+`data/safe/maps_profile_2026-11-15-2208.csv` (261 rows). Opportunity in $MM, once per cell.
+
+- The five main-map fine channels: firm 1 106,555.9, firm 2 104,678.9. By fine channel, firm 1 then firm 2: FI 49,353.8 and
+  47,411.7, WH 16,184.2 and 16,275.0, National (Chase) 22,774.4 and 22,801.4, Wells FI 17,726.6 and 17,782.1, Wells WH
+  516.9 and 408.7.
+- The same opportunity by the cell's channel today (`DIST_CH`): firm 1 FI 75,608.3, WH 22,927.9, IFA 7,931.2 (all of it
+  the FI fine channel), blank 88.5; firm 2 FI 80,445.6, WH 17,430.6, IFA 2,636.7, PRI 2,567.4 (all WH), blank 1,598.6.
+  Wells FI sits under WH today for 6,240.2 (firm 1) and 4,050.1 (firm 2), and under IFA for 2,105.9 (firm 2); Wells WH is
+  under WH in firm 1 and has no channel today in firm 2. So the label does not say which holder has the cell today, and
+  the #67 fallback by label (Wells FI with FI) moves those cells off their WH holder. Open: fall back by label or by the
+  cell's channel today.
+- Territories: both sources carry firm 1's channel codes (firm 2: FI, IFA, PRI, WH, no BD, BK, FP, RA). firm 1 also has
+  EDJ, IMO, VALIC. One holder on every ZIP x channel except 12 firm 2 WH ZIPs with 2, no open or unnamed row. About
+  41,600 ZIPs per channel, about 8,000 of them not a ZCTA.
+- Holders: firm 1 WH 24, FI 29: 18 hold both, 6 WH only, 11 FI only. Firm 2 WH 55, FI 55: 54 hold both (48 of them IFA
+  too), 1 WH and IFA, 1 FI only. WH and FI on a ZIP are the same holder for 56,110.7 of firm 1's five-fine-channel
+  opportunity (24,866 ZIPs) and different holders for 50,345.4 (16,738 ZIPs); firm 2: 93,354.5 (40,497 ZIPs) the same,
+  11,258.4 different. ZIPs with that opportunity and neither channel held: firm 1 12 ZIPs, 86.1; firm 2 5 ZIPs, 24.2.
+- The union's `OLD_TERR_WHOLESALER` is the territories' holder of ZIP x `DIST_CH` on every cell that has one; the cells
+  with no holder in either are the blank `DIST_CH` (445.7 firm 1, 3,503.0 firm 2), AMER (2,727.6) and under 0.3% of each
+  channel. So today's holder of a cell can be read from either table.
+- Cross-firm: both sources hold about 41,500 of the 42,400 ZIPs of each of WH, FI, IFA and PRI.
+- Sales, percent of the source's own: in a ZIP the seller holds 85.0 (firm 1) and 89.1 (firm 2); outside the seller's
+  ZIPs 5.0 and 5.7; by a seller who holds no territory 10.0 (19 sellers) and 5.2 (7 sellers); in a ZIP that is not a
+  ZCTA or not 5 digits 0.8 and 0.6. No sale without a seller.
+- Names: 98 of firm 1's 100 holders have a comma, 2 of firm 2's 74, so the two sources write names differently and the
+  count of 0 holders in both sources does not show that nobody is.
+
