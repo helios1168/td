@@ -2,8 +2,8 @@ use role rl_ssdb_Integration_Lr_Strategy_Rw;
 use database ssdb_Integration;
 use schema lr_strategy;
 
---Coverage of the main map's opportunity by the kept wholesalers of the roster (03_assignments_seed.sql, filled in and
---loaded as the assignments table).  One Run All file.  It builds four tables for the maps and ends on one result of
+--Coverage of the main map's opportunity by the kept wholesalers of the roster (the assignments table that
+--03_assignments.sql builds).  One Run All file.  It builds four tables for the maps and ends on one result of
 --checks.  Set the three table names below, nothing else.  Rules: DATASET_LOG.md, 2026-11-15.
 --The main map is the five fine channels of NEW_DIST: WH, FI, Wells WH, Wells FI, National (Chase).  Opportunity is once
 --per cell, as 02_model_extract.sql, and is never added across sources: every table keeps the estimate's SOURCE.

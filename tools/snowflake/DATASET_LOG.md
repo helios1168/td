@@ -1778,3 +1778,15 @@ No target or band yet: with both firms' wholesalers kept most ZIPs have 2+ claim
 until the overlaps are resolved. No sales table yet. `04_assigned_coverage_test.sh` ran green in DuckDB, each table and
 section against hand-worked answers, and fails when the fallback is changed; not run in Snowflake.
 
+### 2026-11-15: the roster is edited in the query, not uploaded
+
+Owner, 2026-11-15: "how can I edit it in a query without having to upload a csv for every change". `03_assignments_seed.sql`
+is now `03_assignments.sql`: it rebuilds the assignments table on every Run All from the territories table, a default (a
+wholesaler holding a ZIP in WH or FI: KEPT Y, ROLE WIFI, the owner's "starting with WIFI"; everyone else blank) and the
+owner's edit rows, `('<SOURCE>', '<WHOLESALER>', '<KEPT>', '<ROLE>')` between the `--owner edits: begin` and `end` marker
+lines, one per wholesaler whose answer is not the default. An edit replaces both values and is matched by name in upper
+case with single spaces. The result is the roster under `STATUS`, rows to fix first: an edit matching no wholesaler, a
+wholesaler on two edits, a value not listed. The edits hold names, so the owner's edited copy stays in their worksheet
+and the repo's file keeps only the `EXAMPLE` row (ignored). `03_assignments_test.sh` ran green in DuckDB; not run in
+Snowflake.
+
