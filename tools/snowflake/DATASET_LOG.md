@@ -152,9 +152,9 @@ channels."
   opportunity and sales data but easily flag it as a manual mapping exercise to be done by the project team"). The
   label is the session's.
 
-- The assignment maps' channel structure and capture rule (owner, 2026-11-15; the 2026-11-15 entry): roles NATIONAL, WH,
+- ~~The assignment maps' channel structure and capture rule (owner, 2026-11-15; the 2026-11-15 entry): roles NATIONAL, WH,
   FI, WIFI over the five main-map fine channels; a cell is captured by area and role, national first, then the #67
-  fallback; every other channel is done separately.
+  fallback; every other channel is done separately.~~ Superseded 2026-11-16: current state only, no territory changed (the 2026-11-16 entry "current state only").
 
 - Q42: firm 2's `MM_AMOUNT` is not used anywhere (owner, 2026-10-31: "for q42 mm_amount is not to be used in the
   queries it is an irrelevant and incorrect column"); firm 2's SALES_ALT is NULL.
@@ -1804,4 +1804,16 @@ https://docs.snowflake.com/en/sql-reference/sql/create-table, DEFAULT takes a si
 answers for one wholesaler inside one statement are flagged, the same answer twice is fine. `03_assignments_test.sh` green
 in DuckDB (8 runs); not run in Snowflake, where the later-wins order rests on two statements not sharing a timestamp
 (a tie is flagged, not resolved).
+
+### 2026-11-16: current state only; the area modes reverted
+
+Owner, 2026-11-16: "we should not be adding or changing any structure not already in the datasets. we are not doing
+territory design at this point yet. we are simply looking at the current state, with the additional assignments data and
+want to do simple analytics first. be sure that you are not making any changes to the current state territories as they
+stand today outside of the additional structures already baked into the existing datasets". The area modes (e4a9a6c)
+are reverted (cf85c20): they changed which ZIPs a wholesaler has. The capture rule of 2026-11-15 (claims by role, need
+by national presence, the #67 fallback recomputed per ZIP) is a new structure too: `04_assigned_coverage.sql` is to be
+reworked to read today's territories as they are (a cell's holder is the territories table's holder of ZIP x `DIST_CH`,
+which the union's `OLD_TERR_WHOLESALER` matches, profile 2026-11-15) and the dataset's own `NEW_DIST` and `CHANNEL`,
+with the assignments as labels only. The splitting of shared states is dropped with the area modes.
 
