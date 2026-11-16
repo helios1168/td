@@ -1758,3 +1758,23 @@ target and its band; the coverage script waits for the profile's result.
 - Names: 98 of firm 1's 100 holders have a comma, 2 of firm 2's 74, so the two sources write names differently and the
   count of 0 holders in both sources does not show that nobody is.
 
+### 2026-11-15: the fallback stays by label; a dedicated role's area; the coverage script
+
+Owner, 2026-11-15, to the profile's two questions: "wells fi -> FI for fallback. and yes for 2".
+
+1. The fallback is by label, as #67: Wells FI and National (Chase) need FI and Wells WH needs WH wherever no NATIONAL
+   wholesaler's area has the ZIP, whatever channel holds the cell today. The alternative (the cell's `DIST_CH`) is not
+   taken: the Wells FI under WH today (6,240.2 firm 1, 4,050.1 firm 2, $MM) goes to the FI or WIFI wholesaler there.
+2. A dedicated role's area: role WH is the ZIPs the wholesaler holds in WH, or the ZIPs held in FI if they hold none in
+   WH; role FI the same way round. WIFI and NATIONAL stay every ZIP held in WH or FI.
+
+`04_assigned_coverage.sql` builds the coverage from the union, the territories and the assignments table (`SET
+assign_tbl`, default `td_assignments`): `TD_MAP_CELL` (estimate source x ZIP x fine channel x channel today: need, claim
+count, CAPTURED, OVERLAP or GAP with its reason, no names), and, with names, `TD_MAP_AREA`, `TD_MAP_CLAIM` and
+`TD_MAP_WHOLESALER` (claimed, sole, shared; on the wholesaler's own source held today, kept, released, gained). Its one
+result has no names: ROSTER (three MUST_BE_ZERO checks: kept or role not a listed value, a wholesaler on 2+ rows), ROLES,
+CAPTURE (per estimate source the rows add up to the main map), FINE CHANNEL (need by fine channel: the fallback), TIE.
+No target or band yet: with both firms' wholesalers kept most ZIPs have 2+ claimants, so an even share says nothing
+until the overlaps are resolved. No sales table yet. `04_assigned_coverage_test.sh` ran green in DuckDB, each table and
+section against hand-worked answers, and fails when the fallback is changed; not run in Snowflake.
+
