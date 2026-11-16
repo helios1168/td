@@ -1790,3 +1790,18 @@ wholesaler on two edits, a value not listed. The edits hold names, so the owner'
 and the repo's file keeps only the `EXAMPLE` row (ignored). `03_assignments_test.sh` ran green in DuckDB; not run in
 Snowflake.
 
+### 2026-11-15: roster edits by rule
+
+Owner, 2026-11-15: "how about filtering the territories or sales_opp table to match name format ... can I do that instead
+of typing things out manually? and which should I use?". `03_assignments.sql` now builds the roster before edits as
+`TMP_M_BASE` (one row per source x wholesaler, the result's columns) ahead of the edit block, so an edit can be an
+`INSERT ... SELECT source, wholesaler, '<KEPT>', '<ROLE>' FROM tmp_m_base WHERE ...` (a name pattern, the channels held,
+the ZIP counts, the states) as well as a typed row. Neither source table is the one to select from: `TMP_M_BASE` is built
+from the territories table, has each wholesaler once and under the name the roster matches on; the union has only the
+holders with opportunity and also sellers who hold nothing. Edit statements apply in order, the later one wins (each
+row carries its statement's `CURRENT_TIMESTAMP()` as a column default, read 2026-11-15:
+https://docs.snowflake.com/en/sql-reference/sql/create-table, DEFAULT takes a simple scalar expression); two different
+answers for one wholesaler inside one statement are flagged, the same answer twice is fine. `03_assignments_test.sh` green
+in DuckDB (8 runs); not run in Snowflake, where the later-wins order rests on two statements not sharing a timestamp
+(a tie is flagged, not resolved).
+

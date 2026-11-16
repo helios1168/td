@@ -7,14 +7,20 @@ use schema lr_strategy;
 --returns the roster.  THE RESULT AND THE EDITS HOLD WHOLESALER NAMES: keep your edited copy in your own worksheet,
 --never send it to an agent or put it in the repo.
 --Default: a wholesaler who holds a ZIP in WH or FI is KEPT Y, ROLE WIFI.  Everyone else is blank (not in the main map).
---Edits: one row per wholesaler whose answer is not the default, between the two marker lines below:
---  ('<SOURCE>', '<WHOLESALER as the result shows it>', '<KEPT: Y, N or blank>', '<ROLE: NATIONAL, WH, FI, WIFI or blank>')
---with a comma after every row but the last.  An edit replaces both KEPT and ROLE.  The name is matched in upper case
---with single spaces, so copy it from the result.  Leave the EXAMPLE row in, it is ignored.
---To change the roster: change the rows, Run All, then Run All 04_assigned_coverage.sql.
+--Edits: INSERT statements between the two marker lines below, each giving SOURCE, WHOLESALER, KEPT (Y, N or blank) and
+--ROLE (NATIONAL, WH, FI, WIFI or blank) for the wholesalers whose answer is not the default.  Two forms:
+--  by rule, from the roster before edits (one row per wholesaler, the result's columns), for example
+--    INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role)
+--    SELECT source, wholesaler, 'Y', 'FI' FROM ssdb_integration.lr_strategy.tmp_m_base
+--    WHERE source = 'CRBG' AND wholesaler ILIKE '%lastname%'
+--  by row, as the EXAMPLE statement (which is ignored, leave it in).
+--An edit replaces both KEPT and ROLE.  Statements apply in order: when a wholesaler is in two of them the later one
+--wins, so write the broad rules first and the exceptions after.  Two different answers inside one statement are flagged.
+--A name typed by hand is matched in upper case with single spaces.
+--To change the roster: change the statements, Run All, then Run All 04_assigned_coverage.sql.
 --Result: STATUS first.  DEFAULT and EDITED rows are fine.  Rows to fix come first:
 --  EDIT NOT MATCHED: NO SUCH WHOLESALER   the edit's SOURCE and name are not a holder of the territories table
---  ON 2+ EDIT ROWS                        one wholesaler has two edits
+--  TWO ANSWERS IN ONE EDIT STATEMENT
 --  KEPT OR ROLE NOT A LISTED VALUE
 --Columns: CURRENT_CHANNELS the territory channels held, ZIPS_WH and ZIPS_FI the ZIPs held in WH and FI, ZIPS_OTHER in
 --any other channel, STATES the states of those ZIPs.  04_assigned_coverage.sql reads SOURCE, WHOLESALER, KEPT, ROLE.
@@ -24,15 +30,8 @@ use schema lr_strategy;
 SET terr_tbl   = 'ssdb_integration.lr_strategy.territories_tableau';
 SET assign_tbl = 'ssdb_integration.lr_strategy.td_assignments';
 
-CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_edit (source VARCHAR, wholesaler VARCHAR, kept VARCHAR, role VARCHAR);
-
-INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) VALUES
---owner edits: begin
-  ('EXAMPLE', 'Last, First', 'N', '')
---owner edits: end
-;
-
-CREATE OR REPLACE TABLE IDENTIFIER($assign_tbl) AS
+--the roster before edits
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_base AS
 WITH
 t AS (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, COALESCE(UPPER(TRIM(state)), '') AS st,
              COALESCE(UPPER(TRIM(channel)), '') AS ch, TRIM(COALESCE(NULLIF(TRIM(clean_name), ''), name)) AS spelling,
@@ -46,29 +45,42 @@ h AS (SELECT source, nm, MIN(spelling) AS wholesaler,
 hc AS (SELECT source, nm, LISTAGG(ch, ' ') WITHIN GROUP (ORDER BY ch) AS current_channels
        FROM (SELECT DISTINCT source, nm, ch FROM t WHERE nm IS NOT NULL) GROUP BY source, nm),
 hs AS (SELECT source, nm, LISTAGG(st, ' ') WITHIN GROUP (ORDER BY st) AS states
-       FROM (SELECT DISTINCT source, nm, st FROM t WHERE nm IS NOT NULL) GROUP BY source, nm),
-e AS (SELECT UPPER(TRIM(source)) AS source, UPPER(TRIM(REGEXP_REPLACE(TRIM(wholesaler), '\\s+', ' '))) AS nm,
-             MAX(COALESCE(UPPER(TRIM(kept)), '')) AS kept, MAX(COALESCE(UPPER(TRIM(role)), '')) AS role, COUNT(*) AS n
-      FROM ssdb_integration.lr_strategy.tmp_m_edit WHERE source <> 'EXAMPLE' GROUP BY UPPER(TRIM(source)),
-           UPPER(TRIM(REGEXP_REPLACE(TRIM(wholesaler), '\\s+', ' '))))
-SELECT CASE WHEN e.nm IS NULL THEN 'DEFAULT' WHEN e.n > 1 THEN 'ON 2+ EDIT ROWS'
+       FROM (SELECT DISTINCT source, nm, st FROM t WHERE nm IS NOT NULL) GROUP BY source, nm)
+SELECT h.source, h.wholesaler, h.nm, hc.current_channels, h.zips_wh, h.zips_fi, h.zips_other, hs.states
+FROM h JOIN hc ON hc.source = h.source AND hc.nm = h.nm JOIN hs ON hs.source = h.source AND hs.nm = h.nm;
+
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_edit (source VARCHAR, wholesaler VARCHAR, kept VARCHAR,
+  role VARCHAR, edited_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP());
+
+--owner edits: begin
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) VALUES
+  ('EXAMPLE', 'Last, First', 'N', '');
+--owner edits: end
+
+CREATE OR REPLACE TABLE IDENTIFIER($assign_tbl) AS
+WITH
+e0 AS (SELECT UPPER(TRIM(source)) AS source, UPPER(TRIM(REGEXP_REPLACE(TRIM(wholesaler), '\\s+', ' '))) AS nm,
+              COALESCE(UPPER(TRIM(kept)), '') AS kept, COALESCE(UPPER(TRIM(role)), '') AS role, edited_at
+       FROM ssdb_integration.lr_strategy.tmp_m_edit WHERE source <> 'EXAMPLE'),
+el AS (SELECT source, nm, MAX(edited_at) AS edited_at FROM e0 GROUP BY source, nm),
+e AS (SELECT e0.source, e0.nm, MAX(e0.kept) AS kept, MAX(e0.role) AS role, COUNT(DISTINCT e0.kept || '|' || e0.role) AS n
+      FROM e0 JOIN el ON el.source = e0.source AND el.nm = e0.nm AND el.edited_at = e0.edited_at GROUP BY e0.source, e0.nm)
+SELECT CASE WHEN e.nm IS NULL THEN 'DEFAULT' WHEN e.n > 1 THEN 'TWO ANSWERS IN ONE EDIT STATEMENT'
             WHEN e.kept NOT IN ('Y', 'N', '') OR e.role NOT IN ('NATIONAL', 'WH', 'FI', 'WIFI', '') THEN 'KEPT OR ROLE NOT A LISTED VALUE'
             ELSE 'EDITED' END AS status,
-       h.source, h.wholesaler, hc.current_channels, h.zips_wh, h.zips_fi, h.zips_other, hs.states,
-       CASE WHEN e.nm IS NOT NULL THEN e.kept WHEN h.zips_wh + h.zips_fi > 0 THEN 'Y' ELSE '' END AS kept,
-       CASE WHEN e.nm IS NOT NULL THEN e.role WHEN h.zips_wh + h.zips_fi > 0 THEN 'WIFI' ELSE '' END AS role
-FROM h JOIN hc ON hc.source = h.source AND hc.nm = h.nm JOIN hs ON hs.source = h.source AND hs.nm = h.nm
-LEFT JOIN e ON e.source = UPPER(h.source) AND e.nm = h.nm;
+       b.source, b.wholesaler, b.current_channels, b.zips_wh, b.zips_fi, b.zips_other, b.states,
+       CASE WHEN e.nm IS NOT NULL THEN e.kept WHEN b.zips_wh + b.zips_fi > 0 THEN 'Y' ELSE '' END AS kept,
+       CASE WHEN e.nm IS NOT NULL THEN e.role WHEN b.zips_wh + b.zips_fi > 0 THEN 'WIFI' ELSE '' END AS role
+FROM ssdb_integration.lr_strategy.tmp_m_base b LEFT JOIN e ON e.source = UPPER(b.source) AND e.nm = b.nm;
 
 SELECT status, source, wholesaler, current_channels, zips_wh, zips_fi, zips_other, states, kept, role FROM (
 SELECT status, source, wholesaler, current_channels, zips_wh, zips_fi, zips_other, states, kept, role
 FROM IDENTIFIER($assign_tbl)
 UNION ALL
-SELECT 'EDIT NOT MATCHED: NO SUCH WHOLESALER', e.source, e.wholesaler, NULL, NULL, NULL, NULL, NULL, e.kept, e.role
+SELECT DISTINCT 'EDIT NOT MATCHED: NO SUCH WHOLESALER', e.source, e.wholesaler, NULL, NULL, NULL, NULL, NULL, e.kept, e.role
 FROM ssdb_integration.lr_strategy.tmp_m_edit e
-LEFT JOIN IDENTIFIER($assign_tbl) a
-       ON UPPER(a.source) = UPPER(TRIM(e.source))
-      AND UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))) = UPPER(TRIM(REGEXP_REPLACE(TRIM(e.wholesaler), '\\s+', ' ')))
-WHERE e.source <> 'EXAMPLE' AND a.source IS NULL)
+LEFT JOIN ssdb_integration.lr_strategy.tmp_m_base b
+       ON UPPER(b.source) = UPPER(TRIM(e.source)) AND b.nm = UPPER(TRIM(REGEXP_REPLACE(TRIM(e.wholesaler), '\\s+', ' ')))
+WHERE e.source <> 'EXAMPLE' AND b.source IS NULL)
 ORDER BY CASE WHEN status LIKE 'EDIT NOT MATCHED%' THEN 0 WHEN status IN ('DEFAULT', 'EDITED') THEN 2 ELSE 1 END, source,
          CASE WHEN zips_wh + zips_fi > 0 THEN 0 ELSE 1 END, wholesaler;
