@@ -3,18 +3,20 @@ use database ssdb_Integration;
 use schema lr_strategy;
 
 --The census boundary tables (GEO_ID, FULLY_QUALIFIED_ID, GEO_NAME, GEO_BOUNDARY GEOGRAPHY): vintage, ID format, size
---and validity.  Reads only these four tables, public data.  Edit the four SET lines to the real names, Run All, send the
---one result.  GEO_BOUNDARY itself is never selected (it would print GeoJSON).
-SET zcta_tbl = '<db.schema.zcta table>';
-SET cbsa_tbl = '<db.schema.metro cbsa table>';
-SET csa_tbl  = '<db.schema.csa table>';
-SET div_tbl  = '<db.schema.divisions table>';
+--and validity.  Reads only these five tables, public data (the owner's names, 2026-11-15, schema lr_strategy assumed,
+--CENSUS_STATES loaded by census_upload.py).  Run All, send the one result.  GEO_BOUNDARY itself is never selected (it would print GeoJSON).
+SET zcta_tbl  = 'ssdb_integration.lr_strategy.census_zip_codes_zcta';
+SET cbsa_tbl  = 'ssdb_integration.lr_strategy.census_metro_areas_cbsa';
+SET csa_tbl   = 'ssdb_integration.lr_strategy.census_combined_areas_csa';
+SET div_tbl   = 'ssdb_integration.lr_strategy.census_divisions';
+SET state_tbl = 'ssdb_integration.lr_strategy.census_states';
 
 WITH
 t AS (SELECT 'ZCTA' AS tbl, * FROM IDENTIFIER($zcta_tbl)
       UNION ALL SELECT 'CBSA', * FROM IDENTIFIER($cbsa_tbl)
       UNION ALL SELECT 'CSA', * FROM IDENTIFIER($csa_tbl)
-      UNION ALL SELECT 'DIVISION', * FROM IDENTIFIER($div_tbl)),
+      UNION ALL SELECT 'DIVISION', * FROM IDENTIFIER($div_tbl)
+      UNION ALL SELECT 'STATE', * FROM IDENTIFIER($state_tbl)),
 s AS (SELECT tbl, geo_id, fully_qualified_id, geo_name,
              ROW_NUMBER() OVER (PARTITION BY tbl ORDER BY geo_id) AS r FROM t)
 SELECT 'SIZE' AS part, tbl, COUNT(*) AS n_rows, COUNT(DISTINCT geo_id) AS n_geo_id,
