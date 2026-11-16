@@ -1805,23 +1805,3 @@ answers for one wholesaler inside one statement are flagged, the same answer twi
 in DuckDB (8 runs); not run in Snowflake, where the later-wins order rests on two statements not sharing a timestamp
 (a tie is flagged, not resolved).
 
-### 2026-11-16: preliminary states, three area modes
-
-Owner, 2026-11-16: "how about if in the assignments we also have preliminary states we want those wholesaler's to be in"
-(asked in a Paseo tab running the Claude Code CLI, session `8afc059c`, read back into this session), then, to the
-session's three options (states replace, trim or add to the area): "can we just build in all three? or make the code
-flexible enough to handle each case easily?". The assignments table has two more columns, set per wholesaler:
-`AREA_MODE` blank (the ZIPs held today, as before), `TRIM` (those of them in the listed states), `REPLACE` (every ZIP
-of the listed states, held today or not), `ADD` (both); `AREA_STATES` two-letter codes. The ZIPs held today are still
-those of the role (2026-11-15). A ZIP's state is `zip_state_map`'s, MIN(state) per ZIP as
-`01_opportunity_sales.sql:1213` (columns `zip_code`, `state`, as `owner_sql/uni_latest.sql:391` joins them; not
-otherwise checked). In `03_assignments.sql` an edit statement now sets only the columns it names, the later statement
-winning column by column, so a rule can set roles and a later one states; the roster flags a mode with no states,
-states with no mode, a code with no ZIP in `zip_state_map` or given twice. `04_assigned_coverage.sql` builds the area by
-mode (`TD_MAP_AREA` gains `AREA_MODE`, `IN_TODAY_AREA`, `IN_LISTED_STATE`; `TD_MAP_WHOLESALER` gains `AREA_MODE`,
-`AREA_STATES`), adds three MUST_BE_ZERO roster checks (12-14), ROLES by role x mode, and TIE's main-map opportunity in
-ZIPs with no state. Downstream, nothing else reads the table yet. Not built: two wholesalers of one role sharing a
-listed state overlap across the whole state (no split of a state by today's ZIPs), and the roster has only today's
-territory holders, so a new hire cannot be added through `03_assignments.sql`. Both tests green in DuckDB, `04`'s with
-a second run over every mode and failing when TRIM is made ADD; not run in Snowflake.
-
