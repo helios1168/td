@@ -59,6 +59,9 @@ INSERT INTO ssdb_integration.lr_strategy.union_t (fiscal_yr, source, state, zip_
   (2025,'B','MA','00001','VA','WH','WH','WH',110,0,NULL,'F1'), (2025,'B','MA','00001','VA','FI','FI','FI',210,0,NULL,'F1'),
   (2025,'B','NH','00003','VA','FI','Wells FI','National',61,0,NULL,'F3'), (2025,'B','NH','00003','VA','WH','WH','WH',310,0,NULL,'F1'),
   (2025,'B','NH','00003','FA','WH','WH','WH',0,40,'Hal H','F1');
+-- the new-state holder's channel the dataset gives the national fine channels (B in its own code)
+UPDATE ssdb_integration.lr_strategy.union_t SET new_terr_channel = CASE source WHEN 'A' THEN 'fi' ELSE 'BK' END
+  WHERE new_dist IN ('Wells FI', 'National (Chase)');
 SQL
 # DuckDB has no LISTAGG ... WITHIN GROUP: string_agg with ORDER BY.  REGEXP_REPLACE as in 02_model_extract_test.sh
 sed -e "s/LISTAGG(\([a-z]*\), ' ') WITHIN GROUP (ORDER BY [a-z]*)/string_agg(\1, ' ' ORDER BY \1)/" \
@@ -86,30 +89,32 @@ SELECT
  chk('TD_MAP_PIECE: as many pieces as territory rows that are not vacant (two spellings of one ZIP x channel are one)',
      (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.td_map_piece), 18),
  chk('TD_MAP_CELL: the holder today and their label',
-     (SELECT string_agg(concat_ws(' ', est_source, zip_code, state, new_dist, '[' || dist_ch || ']', channel, i(mm_opp), n_holders, holder_status), ' / '
+     (SELECT string_agg(concat_ws(' ', est_source, zip_code, state, new_dist, '[' || dist_ch || ']', channel, fit_channel, i(mm_opp), n_holders, holder_status), ' / '
                         ORDER BY est_source, zip_code, new_dist, dist_ch) FROM ssdb_integration.lr_strategy.td_map_cell),
-     'A 00001 MA FI [FI] FI 200 1 KEPT IN ROLE / A 00001 MA FI [IFA] FI 50 1 KEPT IN ROLE / A 00001 MA NATIONAL (CHASE) [FI] NATIONAL 30 1 KEPT OUT OF ROLE'
-     || ' / A 00001 MA WELLS FI [WH] NATIONAL 40 1 KEPT OUT OF ROLE / A 00001 MA WH [WH] WH 100 1 KEPT IN ROLE'
-     || ' / A 00002 MA FI [FI] FI 20 1 KEPT IN ROLE / A 00002 MA WH [WH] WH 10 1 KEPT IN ROLE'
-     || ' / A 00003 NH FI [FI] FI 400 1 KEPT IN ROLE / A 00003 NH WELLS FI [FI] NATIONAL 60 1 KEPT OUT OF ROLE / A 00003 NH WH [WH] WH 300 1 KEPT IN ROLE'
-     || ' / A 00004 NH FI [FI] FI 2000 1 NOT KEPT (OPEN) / A 00004 NH WH [WH] WH 1000 1 NOT KEPT (OPEN)'
-     || ' / A 00005 VT FI [FI] FI 9 0 NO HOLDER TODAY / A 00006 VT FI [] FI 7 0 NO HOLDER TODAY'
-     || ' / B 00001 MA FI [FI] FI 210 1 KEPT IN ROLE / B 00001 MA WH [WH] WH 110 1 KEPT IN ROLE'
-     || ' / B 00003 NH WELLS FI [FI] NATIONAL 61 1 KEPT IN ROLE / B 00003 NH WH [WH] WH 310 1 KEPT OUT OF ROLE'),
+     -- 00001 has no NATIONAL holder: Chase and Wells FI count for FI, so Ann (WIFI) has them in role.  00003 has Hal
+     -- (NATIONAL): Wells FI counts for NATIONAL there, out of role for Bob (FI), in role for Hal.
+     'A 00001 MA FI [FI] FI FI 200 1 KEPT IN ROLE / A 00001 MA FI [IFA] FI FI 50 1 KEPT IN ROLE / A 00001 MA NATIONAL (CHASE) [FI] NATIONAL FI 30 1 KEPT IN ROLE'
+     || ' / A 00001 MA WELLS FI [WH] NATIONAL FI 40 1 KEPT IN ROLE / A 00001 MA WH [WH] WH WH 100 1 KEPT IN ROLE'
+     || ' / A 00002 MA FI [FI] FI FI 20 1 KEPT IN ROLE / A 00002 MA WH [WH] WH WH 10 1 KEPT IN ROLE'
+     || ' / A 00003 NH FI [FI] FI FI 400 1 KEPT IN ROLE / A 00003 NH WELLS FI [FI] NATIONAL NATIONAL 60 1 KEPT OUT OF ROLE / A 00003 NH WH [WH] WH WH 300 1 KEPT IN ROLE'
+     || ' / A 00004 NH FI [FI] FI FI 2000 1 NOT KEPT (OPEN) / A 00004 NH WH [WH] WH WH 1000 1 NOT KEPT (OPEN)'
+     || ' / A 00005 VT FI [FI] FI FI 9 0 NO HOLDER TODAY / A 00006 VT FI [] FI FI 7 0 NO HOLDER TODAY'
+     || ' / B 00001 MA FI [FI] FI FI 210 1 KEPT IN ROLE / B 00001 MA WH [WH] WH WH 110 1 KEPT IN ROLE'
+     || ' / B 00003 NH WELLS FI [FI] NATIONAL NATIONAL 61 1 KEPT IN ROLE / B 00003 NH WH [WH] WH WH 310 1 KEPT OUT OF ROLE'),
  chk('TD_MAP_ZIP', (SELECT string_agg(concat_ws(' ', zip_code, role, n_role_holders, n_role_firms), ' / ' ORDER BY zip_code, role) FROM ssdb_integration.lr_strategy.td_map_zip),
      '00001 WIFI 2 2 / 00002 FI 1 1 / 00002 WIFI 2 2 / 00003 FI 1 1 / 00003 NATIONAL 1 1 / 00003 WH 1 1'),
  chk('TD_MAP_WHOLESALER: zips, in role, states, then main = in role + out of role, overlap, in assigned states | sales, in own ZIPs (own source)',
      (SELECT string_agg(concat_ws(' ', source, wholesaler, '[' || kept || role || ']', est_source, n_zips, n_zips_in_role, states, i(opp_main), i(opp_in_role),
                                   i(opp_out_of_role), i(opp_overlap), i(opp_in_assigned_states), '|', i(sales_main), i(sales_main_in_own_zips)),
                         ' / ' ORDER BY source, wholesaler, est_source) FROM ssdb_integration.lr_strategy.td_map_wholesaler),
-     'A Ann A [YWIFI] A 2 2 MA 380 310 70 310 380 | 80 50 / A Ann A [YWIFI] B 2 2 MA 320 320 0 320 320 | - -'
+     'A Ann A [YWIFI] A 2 2 MA 380 380 0 380 380 | 80 50 / A Ann A [YWIFI] B 2 2 MA 320 320 0 320 320 | - -'
      || ' / A Bob B [YFI] A 2 2 MA NH 480 420 60 0 460 | 0 0 / A Bob B [YFI] B 2 2 MA NH 61 0 61 0 61 | - -'
      || ' / A Cy C [YWH] A 1 1 NH 300 300 0 0 - | 0 0 / A Cy C [YWH] B 1 1 NH 310 310 0 0 - | - -'
      || ' / A Dee D [YWIFI] A 2 0 MA 50 50 0 0 - | 0 0 / A Dee D [YWIFI] B 2 0 MA 0 0 0 0 - | - -'
      || ' / A Eve E [N] A 1 0 NH 3000 0 3000 0 - | 20 20 / A Eve E [N] B 1 0 NH 0 0 0 0 - | - -'
      || ' / A Fay F [Y] A 1 0 VT 0 0 0 0 - | 0 0 / A Fay F [Y] B 1 0 VT 0 0 0 0 - | - -'
      || ' / A JAY J [] A 1 0 VT 0 0 0 0 - | 0 0 / A JAY J [] B 1 0 VT 0 0 0 0 - | - -'
-     || ' / B Gil G [YWIFI] A 2 2 MA 400 330 70 330 - | - - / B Gil G [YWIFI] B 2 2 MA 320 320 0 320 - | 0 0'
+     || ' / B Gil G [YWIFI] A 2 2 MA 400 400 0 400 - | - - / B Gil G [YWIFI] B 2 2 MA 320 320 0 320 - | 0 0'
      || ' / B Hal H [YNATIONAL] A 1 1 NH 760 60 700 0 - | - - / B Hal H [YNATIONAL] B 1 1 NH 371 61 310 0 - | 40 40'),
  chk('result columns', (SELECT string_agg(column_name, ',' ORDER BY column_index) FROM duckdb_columns() WHERE table_name = 'full_result'),
      'section,source,k1,k2,n,mm_opp,pct,must_be_zero'),
@@ -124,15 +129,15 @@ SELECT
      || ' / B|11 HOLDERS NOT ON THE ROSTER (NOT KEPT)|-|0|-|-|0 / B|12 ASSIGNED_STATES CODE NOT A TERRITORY STATE (OR TWICE)|-|0|-|-|1'),
  chk('ROLES', sec('ROLES'), 'A|FI|-|1|-|-|0 / A|WH|-|2|-|-|0 / A|WIFI|-|2|-|-|0 / B|NATIONAL|-|1|-|-|0 / B|WIFI|-|1|-|-|0'),
  chk('OPPORTUNITY', sec('OPPORTUNITY'),
-     'A|FI|KEPT IN ROLE|4|670|-|0 / A|FI|NO HOLDER TODAY|2|16|-|0 / A|FI|NOT KEPT (OPEN)|1|2000|-|0 / A|NATIONAL|KEPT OUT OF ROLE|3|130|-|0'
-     || ' / A|WH|KEPT IN ROLE|3|410|-|0 / A|WH|NOT KEPT (OPEN)|1|1000|-|0'
-     || ' / B|FI|KEPT IN ROLE|1|210|-|0 / B|NATIONAL|KEPT IN ROLE|1|61|-|0 / B|WH|KEPT IN ROLE|1|110|-|0 / B|WH|KEPT OUT OF ROLE|1|310|-|0'),
+     'A|FI|KEPT IN ROLE|4|670|-|0 / A|FI|NO HOLDER TODAY|2|16|-|0 / A|FI|NOT KEPT (OPEN)|1|2000|-|0 / A|NATIONAL (CHASE)|KEPT IN ROLE|1|30|-|0'
+     || ' / A|WELLS FI|KEPT IN ROLE|1|40|-|0 / A|WELLS FI|KEPT OUT OF ROLE|1|60|-|0 / A|WH|KEPT IN ROLE|3|410|-|0 / A|WH|NOT KEPT (OPEN)|1|1000|-|0'
+     || ' / B|FI|KEPT IN ROLE|1|210|-|0 / B|WELLS FI|KEPT IN ROLE|1|61|-|0 / B|WH|KEPT IN ROLE|1|110|-|0 / B|WH|KEPT OUT OF ROLE|1|310|-|0'),
  chk('OPPORTUNITY adds up to the main map (A 4226, B 691)',
      (SELECT string_agg(source || ' ' || i(o), ' ' ORDER BY source) FROM (SELECT source, SUM(mm_opp) AS o FROM full_result WHERE section = 'OPPORTUNITY' GROUP BY source)),
      'A 4226 B 691'),
  chk('OVERLAP', sec('OVERLAP'),
      'A|FI|1 KEPT HOLDERS, 1 FIRM(S)|2|420|-|0 / A|NATIONAL|1 KEPT HOLDERS, 1 FIRM(S)|1|60|-|0 / A|WH|1 KEPT HOLDERS, 1 FIRM(S)|1|300|-|0'
-     || ' / A|WIFI|2 KEPT HOLDERS, 2 FIRM(S)|2|380|-|0 / B|NATIONAL|1 KEPT HOLDERS, 1 FIRM(S)|1|61|-|0 / B|WH|1 KEPT HOLDERS, 1 FIRM(S)|1|310|-|0'
+     || ' / A|WIFI|2 KEPT HOLDERS, 2 FIRM(S)|2|450|-|0 / B|NATIONAL|1 KEPT HOLDERS, 1 FIRM(S)|1|61|-|0 / B|WH|1 KEPT HOLDERS, 1 FIRM(S)|1|310|-|0'
      || ' / B|WIFI|2 KEPT HOLDERS, 2 FIRM(S)|1|320|-|0'),
  chk('SALES: rows and percent only', sec('SALES'),
      'A|NO SELLER (BLANK OR OPEN)|NOT IN A ZIP THE SELLER HOLDS|1|-|4.3|0 / A|SELLER HOLDS NO TERRITORY|NOT IN A ZIP THE SELLER HOLDS|1|-|8.7|0'
@@ -140,9 +145,12 @@ SELECT
      || ' / A|SELLER NOT KEPT|IN A ZIP THE SELLER HOLDS|1|-|17.4|0 / B|SELLER KEPT|IN A ZIP THE SELLER HOLDS|1|-|100.0|0'),
  chk('TIE', sec('TIE'),
      'A|MAIN MAP CELLS WHOSE NEW_DIST IS NOT WH, FI, WELLS WH, WELLS FI OR NATIONAL (CHASE)|-|0|0|-|1'
+     || ' / A|NATIONAL FINE CHANNELS BY NEW_TERR_CHANNEL (INFORMATION)|NATIONAL (CHASE) -> FI|1|30|-|0'
+     || ' / A|NATIONAL FINE CHANNELS BY NEW_TERR_CHANNEL (INFORMATION)|WELLS FI -> FI|2|100|-|0'
      || ' / A|ROWS WITH NEW_DIST WH, FI, WELLS WH, WELLS FI OR NATIONAL (CHASE) AND CHANNEL NOT NATIONAL, WH OR FI|-|1|5|-|1'
      || ' / A|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|-|1'
      || ' / B|MAIN MAP CELLS WHOSE NEW_DIST IS NOT WH, FI, WELLS WH, WELLS FI OR NATIONAL (CHASE)|-|0|0|-|1'
+     || ' / B|NATIONAL FINE CHANNELS BY NEW_TERR_CHANNEL (INFORMATION)|WELLS FI -> BK|1|61|-|0'
      || ' / B|ROWS WITH NEW_DIST WH, FI, WELLS WH, WELLS FI OR NATIONAL (CHASE) AND CHANNEL NOT NATIONAL, WH OR FI|-|0|0|-|1'
      || ' / B|TD_MAP_CELL MINUS THE UNION, MAIN MAP (N 1 = THEY DIFFER)|-|0|0|-|1'),
  chk('no wholesaler name in the result or in TD_MAP_CELL, TD_MAP_ZIP',

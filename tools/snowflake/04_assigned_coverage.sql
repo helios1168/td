@@ -10,33 +10,38 @@ use schema lr_strategy;
 --agrees, DATASET_LOG 2026-11-15).  Opportunity is the main map: the union's CHANNEL NATIONAL, WH or FI (its fine
 --channels WH, FI, Wells WH, Wells FI, National (Chase) in NEW_DIST), once per cell as 02_model_extract.sql, never added
 --across estimates: every opportunity column comes with its estimate's SOURCE (EST_SOURCE).
---The assignments only label: KEPT, ROLE, ASSIGNED_STATES.  A role fits the dataset's CHANNEL: WH fits WH, FI fits FI,
---WIFI fits WH and FI, NATIONAL fits NATIONAL.  A piece is in role when its territory channel can hold what the role fits:
+--The assignments only label: KEPT, ROLE, ASSIGNED_STATES.  A cell's FIT_CHANNEL is the side its opportunity counts for:
+--WH or FI for those fine channels, and for Wells WH, Wells FI and National (Chase) NATIONAL where a kept NATIONAL wholesaler
+--has an in-role piece on the ZIP, otherwise the side Q29 (DATASET_LOG Settled) gives them, Wells WH WH, Wells FI and
+--National (Chase) FI (owner, 2026-11-17: "yes that's the right fix").  A role fits FIT_CHANNEL: WH fits WH, FI fits FI,
+--WIFI fits WH and FI, NATIONAL fits NATIONAL.  No cell changes holder: FIT_CHANNEL only says which role it counts for.  A piece is in role when its territory channel can hold what the role fits:
 --WH for WH, FI for FI, WH or FI for WIFI and NATIONAL.
 --Tables (replaced on every run).  TD_MAP_PIECE and TD_MAP_WHOLESALER hold wholesaler names and stay in Snowflake:
 --  TD_MAP_PIECE       every territory piece: SOURCE, WHOLESALER, KEPT, ROLE, ZIP_CODE, STATE, TERR_CHANNEL, PIECE_IN_ROLE,
 --                     IN_ASSIGNED_STATE (NULL when no states are assigned), and on a kept wholesaler's in-role piece
 --                     N_ROLE_HOLDERS, N_ROLE_FIRMS: the kept wholesalers of the same role, either source, with an in-role
 --                     piece on the ZIP (2 or more is an overlap).
---  TD_MAP_CELL        the main map's cells: EST_SOURCE, ZIP_CODE, STATE, DIST_CH, NEW_DIST, CHANNEL, MM_OPP, N_HOLDERS,
+--  TD_MAP_CELL        the main map's cells: EST_SOURCE, ZIP_CODE, STATE, DIST_CH, NEW_DIST, CHANNEL, NEW_TERR_CHANNEL,
+--                     FIT_CHANNEL, MM_OPP, N_HOLDERS,
 --                     HOLDER_STATUS: KEPT IN ROLE, KEPT OUT OF ROLE, NOT KEPT (OPEN), NO HOLDER TODAY.  No names.
 --  TD_MAP_WHOLESALER  one row per wholesaler x EST_SOURCE: KEPT, ROLE, ASSIGNED_STATES, N_ZIPS, N_ZIPS_IN_ROLE, STATES, the
 --                     opportunity of their pieces OPP_MAIN = OPP_IN_ROLE + OPP_OUT_OF_ROLE, OPP_OVERLAP (in role, on in-role
 --                     pieces whose ZIP has N_ROLE_HOLDERS 2 or more), OPP_IN_ASSIGNED_STATES (NULL when none).  On the wholesaler's
 --                     own source only: SALES_MAIN (their sales with the union's CHANNEL NATIONAL, WH or FI) and
 --                     SALES_MAIN_IN_OWN_ZIPS (of them, in a ZIP they hold in any channel).
---  (in role: the role fits the cell's CHANNEL, whatever the piece's channel: FI opportunity held today in an IFA piece is
+--  (in role: the role fits the cell's FIT_CHANNEL, whatever the piece's channel: FI opportunity held today in an IFA piece is
 --  in role for a WIFI or FI wholesaler.)
 --  TD_MAP_ZIP         ZIP x role: N_ROLE_HOLDERS, N_ROLE_FIRMS, the overlap layer for the maps.  No names.
 --Result: SECTION, SOURCE, K1, K2, N, MM_OPP, PCT, MUST_BE_ZERO.  No wholesaler name and no sales dollar: it can be sent back.
 --  ROSTER       K1 the count's name.  MUST_BE_ZERO = 1 rows must have N 0 before the tables are used.
 --  ROLES        K1 role.  N kept wholesalers.
---  OPPORTUNITY  SOURCE the estimate, K1 CHANNEL, K2 holder status.  N cells, MM_OPP.  Per estimate the rows are the main map.
+--  OPPORTUNITY  SOURCE the estimate, K1 NEW_DIST, K2 holder status.  N cells, MM_OPP.  Per estimate the rows are the main map.
 --  OVERLAP      SOURCE the estimate, K1 role, K2 kept holders of the role on the ZIP and their firms.  N ZIPs with the estimate's opportunity in the
 --               channels the role fits, MM_OPP the
 --               estimate's main-map opportunity there in the channels the role fits.
 --  SALES        K1 the seller, K2 where the sale is.  N rows, PCT of the source's main-map sales.
---  TIE          the tables against the union.
+--  TIE          the tables against the union, and (information) the national fine channels by the union's NEW_TERR_CHANNEL,
+--               the channel the dataset gives their new-state holder, to read against Q29's side.
 --A wholesaler is matched by name in upper case with single spaces.  ZIP_CODE is LPAD(LEFT(TRIM(..), 5), 5, '0').
 
 SET union_tbl  = 'ssdb_integration.lr_strategy.sales_opp_2026_11_9';
@@ -70,16 +75,16 @@ GROUP BY source, zip_code, ch, nm;
 
 --3 the main map's opportunity, once per cell, by SOURCE x ZIP x DIST_CH x NEW_DIST x CHANNEL
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_cell AS
-SELECT source, zip_code, MIN(st) AS st, dist_ch, new_dist, channel, SUM(opp) AS mm_opp
+SELECT source, zip_code, MIN(st) AS st, dist_ch, new_dist, channel, ntc, SUM(opp) AS mm_opp
 FROM (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, MIN(NULLIF(UPPER(TRIM(state)), '')) AS st,
              COALESCE(UPPER(TRIM(dist_ch)), '') AS dist_ch, UPPER(TRIM(new_dist)) AS new_dist, UPPER(TRIM(channel)) AS channel,
-             MAX(CASE WHEN mm_opp > 0 THEN mm_opp END) AS opp
+             COALESCE(UPPER(TRIM(new_terr_channel)), '') AS ntc, MAX(CASE WHEN mm_opp > 0 THEN mm_opp END) AS opp
       FROM IDENTIFIER($union_tbl)
       WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI')
       GROUP BY source, fiscal_yr, LPAD(LEFT(TRIM(zip_code), 5), 5, '0'), cbd_id, firm, parent, firm_key, firm_crd, product_v2,
                dist_ch, new_dist, file_new_dist, channel, new_terr_channel
       HAVING MAX(CASE WHEN mm_opp > 0 THEN mm_opp END) IS NOT NULL)
-GROUP BY source, zip_code, dist_ch, new_dist, channel;
+GROUP BY source, zip_code, dist_ch, new_dist, channel, ntc;
 
 --3b the main map's sales rows, with whether the seller holds a territory and holds the sale's ZIP
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_sale AS
@@ -117,33 +122,37 @@ FROM ssdb_integration.lr_strategy.tmp_m_piece p
 LEFT JOIN ssdb_integration.lr_strategy.td_map_zip z ON z.zip_code = p.zip_code AND z.role = p.role;
 
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.td_map_cell AS
-SELECT c.source AS est_source, c.zip_code, c.st AS state, c.dist_ch, c.new_dist, c.channel, c.mm_opp,
-       COUNT(p.nm) AS n_holders,
+WITH f AS (SELECT c.*, CASE WHEN c.new_dist IN ('WELLS WH', 'WELLS FI', 'NATIONAL (CHASE)') AND n.zip_code IS NOT NULL THEN 'NATIONAL'
+                            WHEN c.new_dist IN ('WH', 'WELLS WH') THEN 'WH' ELSE 'FI' END AS fit_channel
+           FROM ssdb_integration.lr_strategy.tmp_m_cell c
+           LEFT JOIN ssdb_integration.lr_strategy.td_map_zip n ON n.zip_code = c.zip_code AND n.role = 'NATIONAL')
+SELECT f.source AS est_source, f.zip_code, f.st AS state, f.dist_ch, f.new_dist, f.channel, f.ntc AS new_terr_channel, f.fit_channel,
+       f.mm_opp, COUNT(p.nm) AS n_holders,
        CASE WHEN COUNT(p.nm) = 0 THEN 'NO HOLDER TODAY'
-            WHEN MAX(CASE WHEN p.kept = 'Y' AND (p.role = c.channel OR (p.role = 'WIFI' AND c.channel IN ('WH', 'FI'))) THEN 1 ELSE 0 END) = 1
+            WHEN MAX(CASE WHEN p.kept = 'Y' AND (p.role = f.fit_channel OR (p.role = 'WIFI' AND f.fit_channel IN ('WH', 'FI'))) THEN 1 ELSE 0 END) = 1
                  THEN 'KEPT IN ROLE'
             WHEN MAX(CASE WHEN p.kept = 'Y' THEN 1 ELSE 0 END) = 1 THEN 'KEPT OUT OF ROLE'
             ELSE 'NOT KEPT (OPEN)' END AS holder_status
-FROM ssdb_integration.lr_strategy.tmp_m_cell c
-LEFT JOIN ssdb_integration.lr_strategy.tmp_m_piece p ON p.source = c.source AND p.zip_code = c.zip_code AND p.ch = c.dist_ch
-GROUP BY c.source, c.zip_code, c.st, c.dist_ch, c.new_dist, c.channel, c.mm_opp;
+FROM f
+LEFT JOIN ssdb_integration.lr_strategy.tmp_m_piece p ON p.source = f.source AND p.zip_code = f.zip_code AND p.ch = f.dist_ch
+GROUP BY f.source, f.zip_code, f.st, f.dist_ch, f.new_dist, f.channel, f.ntc, f.fit_channel, f.mm_opp;
 
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.td_map_wholesaler AS
 WITH w AS (SELECT DISTINCT source, nm, wholesaler, kept, role, assigned_states FROM ssdb_integration.lr_strategy.tmp_m_piece),
-     e AS (SELECT DISTINCT source AS est_source FROM ssdb_integration.lr_strategy.tmp_m_cell),
+     e AS (SELECT DISTINCT est_source FROM ssdb_integration.lr_strategy.td_map_cell),
      zc AS (SELECT source, nm, COUNT(DISTINCT zip_code) AS n_zips, COUNT(DISTINCT CASE WHEN piece_in_role = 1 THEN zip_code END) AS n_zips_in_role
             FROM ssdb_integration.lr_strategy.tmp_m_piece GROUP BY source, nm),
      sl AS (SELECT source, nm, LISTAGG(st, ' ') WITHIN GROUP (ORDER BY st) AS states
             FROM (SELECT DISTINCT source, nm, st FROM ssdb_integration.lr_strategy.tmp_m_piece WHERE st IS NOT NULL) GROUP BY source, nm),
-     o AS (SELECT p.source, p.nm, c.source AS est_source, SUM(c.mm_opp) AS opp_main,
-                  SUM(CASE WHEN p.kept = 'Y' AND (p.role = c.channel OR (p.role = 'WIFI' AND c.channel IN ('WH', 'FI'))) THEN c.mm_opp ELSE 0 END) AS opp_in_role,
-                  SUM(CASE WHEN p.kept = 'Y' AND (p.role = c.channel OR (p.role = 'WIFI' AND c.channel IN ('WH', 'FI'))) AND z.n_role_holders > 1
+     o AS (SELECT p.source, p.nm, c.est_source, SUM(c.mm_opp) AS opp_main,
+                  SUM(CASE WHEN p.kept = 'Y' AND (p.role = c.fit_channel OR (p.role = 'WIFI' AND c.fit_channel IN ('WH', 'FI'))) THEN c.mm_opp ELSE 0 END) AS opp_in_role,
+                  SUM(CASE WHEN p.kept = 'Y' AND (p.role = c.fit_channel OR (p.role = 'WIFI' AND c.fit_channel IN ('WH', 'FI'))) AND z.n_role_holders > 1
                            THEN c.mm_opp ELSE 0 END) AS opp_overlap,
                   SUM(CASE WHEN p.in_assigned_state = 1 THEN c.mm_opp ELSE 0 END) AS opp_in_assigned_states
            FROM ssdb_integration.lr_strategy.tmp_m_piece p
-           JOIN ssdb_integration.lr_strategy.tmp_m_cell c ON c.zip_code = p.zip_code AND c.dist_ch = p.ch
+           JOIN ssdb_integration.lr_strategy.td_map_cell c ON c.zip_code = p.zip_code AND c.dist_ch = p.ch
            LEFT JOIN ssdb_integration.lr_strategy.td_map_zip z ON z.zip_code = p.zip_code AND z.role = p.role AND p.piece_in_role = 1
-           GROUP BY p.source, p.nm, c.source),
+           GROUP BY p.source, p.nm, c.est_source),
      sa AS (SELECT source, nm, SUM(amt) AS sales_main, SUM(CASE WHEN in_own_zip = 1 THEN amt ELSE 0 END) AS sales_in_own
             FROM ssdb_integration.lr_strategy.tmp_m_sale GROUP BY source, nm)
 SELECT w.source, w.wholesaler, w.kept, w.role, w.assigned_states, e.est_source, zc.n_zips, zc.n_zips_in_role, sl.states,
@@ -190,14 +199,14 @@ sale AS (SELECT s.source, s.amt,
          FROM ssdb_integration.lr_strategy.tmp_m_sale s
          LEFT JOIN ssdb_integration.lr_strategy.tmp_m_roster r ON r.source = s.source AND r.nm = s.nm),
 fit AS (SELECT role, channel FROM (VALUES ('WH', 'WH'), ('FI', 'FI'), ('WIFI', 'WH'), ('WIFI', 'FI'), ('NATIONAL', 'NATIONAL')) AS v (role, channel)),
-ov AS (SELECT c.source, z.role, z.zip_code,
+ov AS (SELECT c.est_source AS source, z.role, z.zip_code,
               CASE WHEN z.n_role_holders >= 4 THEN '4+' ELSE CAST(z.n_role_holders AS VARCHAR) END || ' KEPT HOLDERS, '
                   || CAST(z.n_role_firms AS VARCHAR) || ' FIRM(S)' AS band,
               SUM(c.mm_opp) AS opp
        FROM ssdb_integration.lr_strategy.td_map_zip z
        JOIN fit ON fit.role = z.role
-       JOIN ssdb_integration.lr_strategy.tmp_m_cell c ON c.zip_code = z.zip_code AND c.channel = fit.channel
-       GROUP BY c.source, z.role, z.zip_code, z.n_role_holders, z.n_role_firms)
+       JOIN ssdb_integration.lr_strategy.td_map_cell c ON c.zip_code = z.zip_code AND c.fit_channel = fit.channel
+       GROUP BY c.est_source, z.role, z.zip_code, z.n_role_holders, z.n_role_firms)
 SELECT 'ROSTER' AS section, rc.source, v.name AS k1, CAST(NULL AS VARCHAR) AS k2,
        CASE v.i WHEN 1 THEN rc.c01 WHEN 2 THEN rc.c02 WHEN 3 THEN rc.c03 WHEN 4 THEN rc.c04 WHEN 5 THEN rc.c05 WHEN 6 THEN rc.c06
                 WHEN 7 THEN rc.c07 WHEN 8 THEN rc.c08 WHEN 9 THEN rc.c09 WHEN 10 THEN rc.c10 ELSE rc.c12 END AS n,
@@ -215,8 +224,8 @@ LEFT JOIN ssdb_integration.lr_strategy.tmp_m_roster r ON r.source = h.source AND
 UNION ALL
 SELECT 'ROLES', source, role, NULL, COUNT(*), NULL, NULL, 0 FROM ro WHERE kept = 'Y' AND role <> '' GROUP BY source, role
 UNION ALL
-SELECT 'OPPORTUNITY', est_source, channel, holder_status, COUNT(*), SUM(mm_opp), NULL, 0
-FROM ssdb_integration.lr_strategy.td_map_cell GROUP BY est_source, channel, holder_status
+SELECT 'OPPORTUNITY', est_source, new_dist, holder_status, COUNT(*), SUM(mm_opp), NULL, 0
+FROM ssdb_integration.lr_strategy.td_map_cell GROUP BY est_source, new_dist, holder_status
 UNION ALL
 SELECT 'OVERLAP', source, role, band, COUNT(*), SUM(opp), NULL, 0 FROM ov GROUP BY source, role, band
 UNION ALL
@@ -233,6 +242,11 @@ SELECT 'TIE', source, 'MAIN MAP CELLS WHOSE NEW_DIST IS NOT WH, FI, WELLS WH, WE
        COUNT(CASE WHEN new_dist NOT IN ('WH', 'FI', 'WELLS WH', 'WELLS FI', 'NATIONAL (CHASE)') THEN 1 END),
        SUM(CASE WHEN new_dist NOT IN ('WH', 'FI', 'WELLS WH', 'WELLS FI', 'NATIONAL (CHASE)') THEN mm_opp ELSE 0 END), NULL, 1
 FROM ssdb_integration.lr_strategy.tmp_m_cell GROUP BY source
+UNION ALL
+SELECT 'TIE', est_source, 'NATIONAL FINE CHANNELS BY NEW_TERR_CHANNEL (INFORMATION)', new_dist || ' -> ' || new_terr_channel,
+       COUNT(*), SUM(mm_opp), NULL, 0
+FROM ssdb_integration.lr_strategy.td_map_cell WHERE new_dist IN ('WELLS WH', 'WELLS FI', 'NATIONAL (CHASE)')
+GROUP BY est_source, new_dist, new_terr_channel
 UNION ALL
 SELECT 'TIE', source, 'ROWS WITH NEW_DIST WH, FI, WELLS WH, WELLS FI OR NATIONAL (CHASE) AND CHANNEL NOT NATIONAL, WH OR FI', NULL,
        COUNT(CASE WHEN bad THEN 1 END), COALESCE(SUM(CASE WHEN bad THEN mm_opp END), 0), NULL, 1

@@ -1851,3 +1851,16 @@ MUST_BE_ZERO check 0, both TIE checks 0. $MM, firm 1 then firm 2; each total is 
 - Main-map sales, percent of the source's: kept seller in their own ZIP 89.9 and 86.6, kept outside 3.8 and 6.9, not
   kept 2.0 and 1.2, seller holding no territory 4.3 and 5.2.
 
+### 2026-11-17: the national fine channels count for the WH or FI side where no NATIONAL wholesaler is
+
+The WIFI baseline put the National channel (38% of the main map) out of role: the dataset's `CHANNEL` is National for
+Wells WH, Wells FI and National (Chase) on every row, and no wholesaler had the NATIONAL role. Owner, 2026-11-17: "should
+we use new_dist instead which shows the fine channel?", then, to the session's plain account (count them for the WH or FI
+side through Q29 where no kept NATIONAL wholesaler holds the ZIP, for them where one does, no cell changing holder):
+"yes that's the right fix". `TD_MAP_CELL` gains `FIT_CHANNEL` (WH, FI or NATIONAL: Wells WH WH, Wells FI and National
+(Chase) FI, NATIONAL on a ZIP where a kept NATIONAL wholesaler has an in-role piece) and `NEW_TERR_CHANNEL`; the role fit
+reads `FIT_CHANNEL` everywhere (holder status, in role, overlap); the OPPORTUNITY section is by `NEW_DIST`. A TIE row
+(information) gives the national fine channels by the union's `NEW_TERR_CHANNEL`, the new-state holder's channel the
+dataset carries, to read against Q29's side; its values were not looked at before. Test green in DuckDB, failing when
+the national fine channels never fall to WH or FI; not run in Snowflake.
+
