@@ -1913,3 +1913,13 @@ ourselves here on the m5". Three worker runs in parallel, reviewed by the sessio
   closed).
 None of it has run in Snowflake.
 
+### 2026-11-17: where the CRD to company ID mapping lives
+
+Owner, 2026-11-17: "how can we pull the latest firm_crd to cbd_id mapping from the latest dataset", then "recall how we did
+the mapping to not break tableau. i.e. cbd_id is actually firm_crd". The Tableau layout (2026-11-01, owner: "you will
+replace cbd_id with crd, firm with broker_name, and you can leave parent as all null"; 01 statement 17,
+`x.firm_crd AS cbd_id, x.broker_name AS firm`) means the union table's `CBD_ID` is the CRD and `FIRM` the broker name: it
+carries no company ID. `explore/crd_cbd_map.sql` reads firm 1's market metrics opportunity (fiscal 2025) and applies 01
+statement 2's company ID rule: a listed broker name's fixed ID, else the row's CBD_ID, company 0 its CLIENT_FIRM_ID. One
+row per CRD x broker name x company ID with the rule used and the split flags. DuckDB smoke test only.
+

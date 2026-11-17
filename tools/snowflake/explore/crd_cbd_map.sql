@@ -2,45 +2,55 @@ use role rl_ssdb_Integration_Lr_Strategy_Rw;
 use database ssdb_Integration;
 use schema lr_strategy;
 
---The FIRM_CRD to CBD_ID mapping as the latest union table carries it.  Read-only, one Run All file, one result.
---One row per SOURCE x FIRM_CRD x CBD_ID, with the firm names, parents and channels seen on that pair, and flags for
---the splits: firm 1 made CBD_ID to split one CRD by channel (owner, 2026-10-30), so a CRD can have several CBD_IDs and a
---CBD_ID can cover several CRDs.  No wholesaler and no sales: MM_OPP is opportunity (not confidential), N_ROWS counts
---rows.  Firm names may be shared (owner, 2026-11-09).
+--The FIRM_CRD to company ID (CBD_ID) mapping, from firm 1's market metrics opportunity, fiscal year 2025, with the company
+--ID rule of 01_opportunity_sales.sql statement 2 (tmp_o1_rows_s1): a listed broker name takes its fixed ID (the names
+--below, s1_opp_sales.sql:475-479), otherwise the row's CBD_ID, company 0 taking its CLIENT_FIRM_ID.  Read-only, one Run All
+--file, one result.
+--Not from the union or Tableau table: there CBD_ID holds the CRD and FIRM the broker name (owner, 2026-11-01: "you will
+--replace cbd_id with crd, firm with broker_name, and you can leave parent as all null", 01 statement 17), so it carries no
+--company ID.
+--One row per FIRM_CRD x BROKER_NAME x COMPANY_ID.  No wholesaler and no sales: AMT is the feed's GLOBAL_SALES, the
+--market's opportunity, as 01 reads it.  Firm names may be shared (owner, 2026-11-09).
 --Columns:
---  SOURCE, FIRM_CRD, CBD_ID           the pair (trimmed, blank as NULL)
---  FIRMS, PARENTS                     the distinct firm names and parents on the pair, ' | ' between them
---  DIST_CH, NEW_DIST                  the distinct channels on the pair, ' | ' between them
---  N_ROWS, MM_OPP                     rows of the union on the pair, and their positive MM_OPP summed (a cell repeated on
---                                     several holder rows counts each time: a guide to size, not a total)
---  N_CBD_FOR_CRD, N_CRD_FOR_CBD       how many CBD_IDs the CRD has in this SOURCE, and how many CRDs the CBD_ID has
---  CBD_IS_CRD                         1 when CBD_ID equals FIRM_CRD (the union may carry the CRD as CBD_ID)
---Filter as needed, e.g. N_CBD_FOR_CRD > 1 for the split CRDs.
+--  FIRM_CRD, BROKER_NAME, COMPANY_ID   the mapping (COMPANY_ID is the CBD_ID 01 uses)
+--  RULE                                BY NAME, CLIENT FIRM ID (company 0) or CBD_ID: which part of the rule gave it
+--  FEED_CBD_IDS, DIST_CH               the raw CBD_IDs and the feed's channels on the row group, ' | ' between them
+--  N_ROWS, AMT                         feed rows and their opportunity
+--  N_COMPANY_FOR_CRD                   company IDs the CRD maps to (2+ is a split CRD: firm 1 split it by channel,
+--                                      owner 2026-10-30)
+--  N_COMPANY_FOR_CRD_NAME              company IDs the CRD x broker name maps to (2+: the name does not decide either)
+--  N_CRD_FOR_COMPANY                   CRDs the company ID covers
 
-SET union_tbl = 'ssdb_integration.lr_strategy.sales_opp_2026_11_9';
+SET mm_tbl = 'life_prod.lif_murkylake.wc_market_metrics_opportunity';
 
 WITH
-u AS (SELECT source, NULLIF(TRIM(CAST(firm_crd AS VARCHAR)), '') AS firm_crd, NULLIF(TRIM(CAST(cbd_id AS VARCHAR)), '') AS cbd_id,
-             NULLIF(TRIM(firm), '') AS firm, NULLIF(TRIM(parent), '') AS parent, NULLIF(TRIM(dist_ch), '') AS dist_ch,
-             NULLIF(TRIM(new_dist), '') AS new_dist, mm_opp
-      FROM IDENTIFIER($union_tbl)),
-p AS (SELECT source, firm_crd, cbd_id, COUNT(*) AS n_rows, SUM(CASE WHEN mm_opp > 0 THEN mm_opp ELSE 0 END) AS mm_opp
-      FROM u GROUP BY source, firm_crd, cbd_id),
-f AS (SELECT source, firm_crd, cbd_id, LISTAGG(firm, ' | ') WITHIN GROUP (ORDER BY firm) AS firms
-      FROM (SELECT DISTINCT source, firm_crd, cbd_id, firm FROM u WHERE firm IS NOT NULL) GROUP BY source, firm_crd, cbd_id),
-pa AS (SELECT source, firm_crd, cbd_id, LISTAGG(parent, ' | ') WITHIN GROUP (ORDER BY parent) AS parents
-       FROM (SELECT DISTINCT source, firm_crd, cbd_id, parent FROM u WHERE parent IS NOT NULL) GROUP BY source, firm_crd, cbd_id),
-d AS (SELECT source, firm_crd, cbd_id, LISTAGG(dist_ch, ' | ') WITHIN GROUP (ORDER BY dist_ch) AS dist_chs
-      FROM (SELECT DISTINCT source, firm_crd, cbd_id, dist_ch FROM u WHERE dist_ch IS NOT NULL) GROUP BY source, firm_crd, cbd_id),
-nd AS (SELECT source, firm_crd, cbd_id, LISTAGG(new_dist, ' | ') WITHIN GROUP (ORDER BY new_dist) AS new_dists
-       FROM (SELECT DISTINCT source, firm_crd, cbd_id, new_dist FROM u WHERE new_dist IS NOT NULL) GROUP BY source, firm_crd, cbd_id)
-SELECT p.source, p.firm_crd, p.cbd_id, f.firms, pa.parents, d.dist_chs AS dist_ch, nd.new_dists AS new_dist, p.n_rows, p.mm_opp,
-       COUNT(DISTINCT p.cbd_id) OVER (PARTITION BY p.source, p.firm_crd) AS n_cbd_for_crd,
-       COUNT(DISTINCT p.firm_crd) OVER (PARTITION BY p.source, p.cbd_id) AS n_crd_for_cbd,
-       CASE WHEN p.cbd_id = p.firm_crd THEN 1 ELSE 0 END AS cbd_is_crd
-FROM p
-LEFT JOIN f ON EQUAL_NULL(f.source, p.source) AND EQUAL_NULL(f.firm_crd, p.firm_crd) AND EQUAL_NULL(f.cbd_id, p.cbd_id)
-LEFT JOIN pa ON EQUAL_NULL(pa.source, p.source) AND EQUAL_NULL(pa.firm_crd, p.firm_crd) AND EQUAL_NULL(pa.cbd_id, p.cbd_id)
-LEFT JOIN d ON EQUAL_NULL(d.source, p.source) AND EQUAL_NULL(d.firm_crd, p.firm_crd) AND EQUAL_NULL(d.cbd_id, p.cbd_id)
-LEFT JOIN nd ON EQUAL_NULL(nd.source, p.source) AND EQUAL_NULL(nd.firm_crd, p.firm_crd) AND EQUAL_NULL(nd.cbd_id, p.cbd_id)
-ORDER BY p.source, p.firm_crd, p.cbd_id;
+cn AS (SELECT broker_name, company_id FROM (VALUES
+         ('WELLS FARGO CLEARING SERVICES, LLC', '1822'),
+         ('WELLS FARGO CLEARING SERVICES, LLC - BANK', '1823'),
+         ('CETERA INVESTMENT SERVICES LLC', '46'),
+         ('LPL FINANCIAL LLC - INDEPENDENT', '8'),
+         ('LPL FINANCIAL LLC - BANK', '8'),
+         ('LPL FINANCIAL LLC', '8')) AS v (broker_name, company_id)),
+o AS (SELECT NULLIF(TRIM(CAST(firm_crd AS VARCHAR)), '') AS firm_crd, UPPER(TRIM(broker_name)) AS broker_name,
+             NULLIF(TRIM(CAST(cbd_id AS VARCHAR)), '') AS cbd_id, NULLIF(TRIM(CAST(client_firm_id AS VARCHAR)), '') AS client_firm_id,
+             NULLIF(UPPER(TRIM(dist_ch)), '') AS dist_ch, global_sales AS amt
+      FROM IDENTIFIER($mm_tbl) WHERE fiscal_yr = '2025'),
+m AS (SELECT o.*, COALESCE(cn.company_id, CASE WHEN o.cbd_id = '0' THEN o.client_firm_id ELSE o.cbd_id END) AS company_id,
+             CASE WHEN cn.company_id IS NOT NULL THEN 'BY NAME' WHEN o.cbd_id = '0' THEN 'CLIENT FIRM ID' ELSE 'CBD_ID' END AS rule
+      FROM o LEFT JOIN cn ON cn.broker_name = o.broker_name),
+g AS (SELECT firm_crd, broker_name, company_id, MIN(rule) AS rule, COUNT(*) AS n_rows, SUM(amt) AS amt
+      FROM m GROUP BY firm_crd, broker_name, company_id),
+fc AS (SELECT firm_crd, broker_name, company_id, LISTAGG(cbd_id, ' | ') WITHIN GROUP (ORDER BY cbd_id) AS feed_cbd_ids
+       FROM (SELECT DISTINCT firm_crd, broker_name, company_id, cbd_id FROM m WHERE cbd_id IS NOT NULL)
+       GROUP BY firm_crd, broker_name, company_id),
+fd AS (SELECT firm_crd, broker_name, company_id, LISTAGG(dist_ch, ' | ') WITHIN GROUP (ORDER BY dist_ch) AS dist_chs
+       FROM (SELECT DISTINCT firm_crd, broker_name, company_id, dist_ch FROM m WHERE dist_ch IS NOT NULL)
+       GROUP BY firm_crd, broker_name, company_id)
+SELECT g.firm_crd, g.broker_name, g.company_id, g.rule, fc.feed_cbd_ids, fd.dist_chs AS dist_ch, g.n_rows, g.amt,
+       COUNT(DISTINCT g.company_id) OVER (PARTITION BY g.firm_crd) AS n_company_for_crd,
+       COUNT(DISTINCT g.company_id) OVER (PARTITION BY g.firm_crd, g.broker_name) AS n_company_for_crd_name,
+       COUNT(DISTINCT g.firm_crd) OVER (PARTITION BY g.company_id) AS n_crd_for_company
+FROM g
+LEFT JOIN fc ON EQUAL_NULL(fc.firm_crd, g.firm_crd) AND EQUAL_NULL(fc.broker_name, g.broker_name) AND EQUAL_NULL(fc.company_id, g.company_id)
+LEFT JOIN fd ON EQUAL_NULL(fd.firm_crd, g.firm_crd) AND EQUAL_NULL(fd.broker_name, g.broker_name) AND EQUAL_NULL(fd.company_id, g.company_id)
+ORDER BY g.firm_crd, g.broker_name, g.company_id;
