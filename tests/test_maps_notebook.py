@@ -43,21 +43,30 @@ def test_the_setup_cell_names_the_uploads():
     assert "upload tools/maps/look.py and" in setup and "reference/2025/areas.csv.gz" in setup
 
 
-def test_the_drawing_cell_writes_both_pdfs():
+def _drawing(n=4):
+    """(look, drawing-cell namespace, ctx): `n` ZIPs 00001.. as squares 0.1 degree apart in a CO / KS frame."""
     import geopandas as gpd
-    import pandas as pd
     from shapely.geometry import box
 
     look = _load_look()
     ns = {"look": look}
     exec(next(c for c in _cells() if c.startswith("# Drawing")), ns)
     sq = lambda x, y: box(-100 + x, 40 + y, -99.9 + x, 40.1 + y)
-    zips = ["00001", "00002", "00003", "00004"]
-    shapes = gpd.GeoSeries([sq(0, 0), sq(0.1, 0), sq(5, 0), sq(0, 0.1)], crs="EPSG:4326").to_crs(epsg=5070)
+    zips = [f"{i + 1:05d}" for i in range(n)]
+    shapes = gpd.GeoSeries([sq(0, 0), sq(0.1, 0), sq(5, 0), sq(0, 0.1)] + [sq(0.2 * i, 0.5) for i in range(max(n - 4, 0))],
+                           crs="EPSG:4326").to_crs(epsg=5070)
     polys = dict(zip(zips, shapes))
     st = dict(zip(["CO", "KS"], gpd.GeoSeries([box(-102, 39, -99.95, 41), box(-99.95, 39, -94, 41)], crs="EPSG:4326").to_crs(epsg=5070)))
     ctx = SimpleNamespace(polys=polys, st=st, gap=look.no_zcta_land(polys, st), weights={"A": {"31000": 9e6}, "B": {"31000": 7e6}},
                           areas={"31000": ("Testville, CO Metro Area", -99.9, 40.05)})
+    return look, ns, ctx
+
+
+def test_the_drawing_cell_writes_both_pdfs():
+    import pandas as pd
+
+    look, ns, ctx = _drawing()
+    zips = list(ctx.polys)
     zip_role = pd.DataFrame({"ZIP_CODE": zips[:3], "ROLE": ["WIFI"] * 3, "N_ROLE_HOLDERS": [2, 1, 4], "N_ROLE_FIRMS": [2, 1, 2]})
     zip_cell = pd.DataFrame({"EST_SOURCE": ["A", "A", "B"], "ZIP_CODE": ["00001", "00003", "00001"], "OPP": [10e6, 5e6, 7e6],
                              "OPP_IN_ROLE": [10e6, 0, 7e6], "OPP_OUT_OF_ROLE": [0, 0, 0], "OPP_OPEN": [0, 5e6, 0],
@@ -91,3 +100,59 @@ def test_the_drawing_cell_writes_both_pdfs():
     # territories: A WH, A FI, B WH; overview: 1 role, 2 estimates x (status, opportunity), 1 sales source.  Wholesalers: Ann and Bob
     assert (over, whol) == (9, 2)
     assert os.path.getsize(os.path.join(out, "w.pdf")) > 1000
+
+
+def _paths(fig, hatched=False):
+    """The ZIP outlines the page's main map draws in a collection of z-order 2 (kept) or 1 with a hatch (open): their bounds."""
+    ax = fig.axes[0]
+    cs = [c for c in ax.collections if (c.get_hatch() if hatched else c.get_zorder() == 2)]
+    return [tuple(round(v) for v in p.get_extents().extents) for c in cs for p in c.get_paths()]
+
+
+def test_the_read_cell_keeps_aks_and_his_out_of_the_territory_query():
+    read = _cells()[1]
+    assert "WHERE terr_channel IN ('WH', 'FI') AND COALESCE(state, '') NOT IN ({nc})" in read
+
+
+def test_the_fifths_draw_every_positive_zip_once_whatever_the_labels():
+    import pandas as pd
+
+    look, ns, ctx = _drawing(9)
+    zips = list(ctx.polys)
+    for vals in ([1, 2, 3, 4, 5], [3, 3, 3, 3, 3], [1e-9, 2e-9, 3e-9, 4e-9, 5e-9], [5, 5, 7, 7, 7], [0, 4, 4, 0, 9]):
+        df = pd.DataFrame({"ZIP_CODE": zips[:5], "V": vals})
+        cats, colours = ns["fifths"](df, "V", "Blues", ctx.polys)
+        drawn = sorted(z for zs in cats.values() for z in zs)
+        assert drawn == sorted(df.loc[df["V"] > 0, "ZIP_CODE"]), (vals, cats)
+        assert set(cats) == set(colours) and len(cats) == min(5, sum(v > 0 for v in vals))
+    # the page itself: one outline per positive ZIP
+    cats, colours = ns["fifths"](pd.DataFrame({"ZIP_CODE": zips[:5], "V": [1e-9, 2e-9, 3e-9, 4e-9, 5e-9]}), "V", "Blues", ctx.polys)
+    fig = ns["category_page"]("t", cats, colours, ctx, ["A"], ["c"])
+    assert len(_paths(fig)) == 5
+
+
+def test_the_territory_page_paints_each_zip_once_as_its_first_kept_holder_in_a_stable_legend():
+    import pandas as pd
+
+    look, ns, ctx = _drawing(7)
+    z = list(ctx.polys)
+    row = lambda w, k, zz: dict(SOURCE="A", WHOLESALER=w, KEPT=k, ZIP_CODE=zz, TERR_CHANNEL="WH")
+    # Ann: z0, z1, z2; Bob (kept) also z1, z3; Cal (not kept): z1, z2, z4; Dee (not kept) alone on z5; z6 is held by Cal only
+    terr = pd.DataFrame([row("Ann", "Y", z[0]), row("Ann", "Y", z[1]), row("Ann", "Y", z[2]), row("Bob", "Y", z[1]),
+                         row("Bob", "Y", z[3]), row("Cal", "N", z[1]), row("Cal", "N", z[2]), row("Cal", "N", z[4]),
+                         row("Dee", "N", z[5]), row("Cal", "N", z[6]), row("Ann", "Y", z[0])])
+    figs = list(ns["territory_pages"](terr, ctx))
+    assert len(figs) == 1
+    kept = _paths(figs[0])
+    # kept-held ZIPs z0..z3, each once, though z1 and z2 are also held by a not-kept holder
+    assert sorted(kept) == sorted(tuple(round(v) for v in ctx.polys[k].bounds) for k in z[:4])
+    # the hatched open layer is the not-kept-only ZIPs z4, z5, z6, not z1 or z2
+    hatch = [pp for c in figs[0].axes[0].collections if c.get_hatch() for pp in c.get_paths()]
+    covered = lambda k: any(pp.contains_point(ctx.polys[k].representative_point().coords[0]) for pp in hatch)
+    assert [covered(k) for k in z] == [False] * 4 + [True] * 3
+    assert "7 ZIPs: 4 held by the 2 kept wholesalers, 3 only by a wholesaler not kept.  2 ZIPs with 2 holders" in figs[0].texts[1].get_text()
+    legend = lambda f: [t.get_text() for t in f.legends[0].get_texts()]
+    marks = lambda f: sorted((t.get_text(), round(t.get_position()[0]), round(t.get_position()[1])) for t in f.axes[0].texts)
+    shuffled = list(ns["territory_pages"](terr.sample(frac=1, random_state=3).reset_index(drop=True), ctx))[0]
+    assert legend(shuffled)[:2] == ["01 Ann", "02 Bob"] == legend(figs[0])[:2]
+    assert legend(shuffled) == legend(figs[0]) and marks(shuffled) == marks(figs[0])
