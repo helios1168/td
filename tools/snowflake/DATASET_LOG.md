@@ -1894,3 +1894,22 @@ outlined, and their numbers per estimate. `tests/test_maps_notebook.py` runs the
 overview and 2 wholesaler pages) with the repo's newer geopandas and matplotlib; not run in Snowflake, where the
 notebook's versions are older (geopandas 1.0.1, matplotlib 3.9.2 on the py39 channel, the 2026-11-15 research).
 
+### 2026-11-17: the maps in zip_pages' look; the masked export
+
+Owner, 2026-11-17: "I want the look and feel of those maps", "yes and use subagents", then "lets go ahead and produce maps
+ourselves here on the m5". Three worker runs in parallel, reviewed by the session and a reviewer:
+- `tools/maps/look.py` (3762dd7): zip_pages.py's td-free constants, helpers and drawers, Python 3.9, imported by
+  zip_pages.py. Re-rendering `runs/exp/contig/ifa/conus/ifa_conus_v2` before and after with `PYTHONHASHSEED=0` gave
+  identical pixels in the default and `--style exec --palette clean` looks (unseeded, the base differs from itself on
+  `zip_IFA.png`). render.py's code hash covers tools/maps, so earlier T1 renders now read stale.
+- `05_maps.ipynb` (1134107, 80aef7d after review): territory pages per firm x channel WH and FI in the clean channel-page
+  look (each kept wholesaler a district, not-kept holders' ZIPs one hatched open fill, a ZIP of a kept and a not-kept
+  holder drawn as the kept one), overview and wholesaler pages in the same frame; ZCTAs at full detail simplified 250 m in
+  shapely as td/output.py; look.py and areas.csv.gz read from `@td_maps`; pages written as images in the PDFs. Review fixes:
+  the fifths keyed by number (equal money labels overwrote each other), the territory read limited to CONUS.
+- `06_map_extract.sql` and `map_extract.py` (654e376): the TD_MAP_* tables with each wholesaler as R<n> from
+  td_holder_key (read only) and no sales columns, for previews on the m5. Under review: the owner-typed ROLE and
+  ASSIGNED_STATES must be exported only as safe projections (the session's ruling: 06 is the masking boundary and fails
+  closed).
+None of it has run in Snowflake.
+
