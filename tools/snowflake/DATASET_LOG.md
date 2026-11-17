@@ -1864,3 +1864,18 @@ reads `FIT_CHANNEL` everywhere (holder status, in role, overlap); the OPPORTUNIT
 dataset carries, to read against Q29's side; its values were not looked at before. Test green in DuckDB, failing when
 the national fine channels never fall to WH or FI; not run in Snowflake.
 
+### 2026-11-17: 04 with FIT_CHANNEL, the WIFI baseline again
+
+Result `data/safe/04_assigned_coverage_2026-11-17-0203.csv`, same roster. Every MUST_BE_ZERO check 0. $MM, firm 1 then
+firm 2, totals 106,555.9 and 104,679.1 as before.
+
+- Kept in role 98,519.3 (92.5%) and 100,126.6 (95.7%): the 41,016.7 and 40,232.9 of the National channel moved from out
+  of role to in role, nothing else moved. Not kept (open) 7,925.2 (7.4%, FI held in IFA) and 2,894.8 (2.8%: WH held in
+  PRI 2,579.9, Wells FI held in IFA 314.9). No holder today 111.4 and 1,657.8 (firm 2's Wells WH 408.7 all of it, and
+  FI 1,213.3: the blank `DIST_CH`).
+- `NEW_TERR_CHANNEL` agrees with Q29 on every national cell: firm 1 National (Chase) and Wells FI FI, Wells WH WH; firm 2
+  BK and BK, BD (firm 2's codes for FI and WH).
+- Overlap (WIFI, now with the national fine channels): 1 kept holder 9 ZIPs / 89.9 (firm 2's estimate 8 / 90.1), 2
+  holders 3,924 / 52,300.5 (3,868 / 51,341.2), 3 holders 3,353 / 46,559.6 (3,315 / 45,782.2), 4 or more 341 / 7,595.9
+  (334 / 7,455.7), all across both firms.
+
