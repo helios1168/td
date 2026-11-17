@@ -1,4 +1,5 @@
-"""tools/snowflake/05_maps.ipynb: every code cell parses as Python 3.9 (the Snowflake warehouse runtime), and its drawing cell,
+"""tools/snowflake/05_maps.ipynb: the notebook runs on Python 3.12 (owner, 2026-11-17); every code cell also parses as Python 3.9
+(the stricter, older bound), the setup cell stops naming a package that cannot be imported, and its drawing cell,
 run here on made-up tables shaped like the 04 tables, writes both PDFs with the expected page counts.  The setup, read and run
 cells need Snowflake and are only checked to parse.  The drawing cell takes the shared look from `look`: tools/maps/look.py
 when it exists, else tools/maps/zip_pages.py (the same names)."""
@@ -32,6 +33,7 @@ def _load_look():
 
 
 def test_every_code_cell_parses_as_python_39():
+    # the lower bound: the notebook targets 3.12, but the older 3.9 grammar is the stricter parse and stays harmless
     for i, src in enumerate(_cells()):
         ast.parse(src, f"cell {i}", feature_version=(3, 9))
         compile(src, f"cell {i}", "exec")
@@ -41,6 +43,26 @@ def test_the_setup_cell_names_the_uploads():
     setup = _cells()[0]
     assert "td_maps" in setup and "look.py" in setup and "areas.csv.gz" in setup and "session.file.get" in setup
     assert "upload tools/maps/look.py and" in setup and "reference/2025/areas.csv.gz" in setup
+
+
+def test_the_setup_cell_stops_naming_the_missing_package():
+    setup = _cells()[0]
+    check = setup[:setup.index("from snowflake")]       # the version printout, before the Snowflake session
+    assert "sys.version" in check and "pip install geopandas" in check
+    for pkg in ("matplotlib", "shapely", "pyproj", "geopandas", "pandas"):
+        assert f'"{pkg}"' in check
+    saved = sys.modules.get("geopandas", ...)
+    sys.modules["geopandas"] = None                      # makes `import geopandas` raise ImportError
+    try:
+        exec(compile(check, "setup check", "exec"), {})
+        raise AssertionError("no error for the missing geopandas")
+    except RuntimeError as e:
+        assert str(e).startswith("geopandas cannot be imported") and "Packages" in str(e) and "pip install geopandas" in str(e)
+    finally:
+        if saved is ...:
+            del sys.modules["geopandas"]
+        else:
+            sys.modules["geopandas"] = saved
 
 
 def _drawing(n=4):

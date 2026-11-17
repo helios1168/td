@@ -1,5 +1,5 @@
 """tests/test_maps_look.py -- `tools/maps/look.py`, the td-free look of the territory maps that a
-Snowflake warehouse-runtime notebook (Python 3.9) imports: it parses as Python 3.9, imports nothing
+Snowflake notebook (Python 3.12) imports: it parses as Python 3.9 (the stricter lower bound), imports nothing
 from `td` (or any of the repo's tools), and its colouring and label placement work on made-up shapes.
 """
 from __future__ import annotations
@@ -26,6 +26,7 @@ def _load():
 
 
 def test_look_parses_as_python_39():
+    # the lower bound: the runtime is 3.12, the 3.9 grammar is the stricter parse
     _tree()
 
 
