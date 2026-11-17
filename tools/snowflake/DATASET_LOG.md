@@ -1832,3 +1832,22 @@ main map). `03_assignments.sql` gains `ASSIGNED_STATES` (codes checked against t
 column by column. Both tests green in DuckDB, 04's failing when the holder join drops the source or WIFI stops fitting
 FI; not run in Snowflake.
 
+### 2026-11-17: 04 on the WIFI baseline, first run
+
+`03_assignments.sql` with no edits (every WH or FI holder KEPT Y, ROLE WIFI: firm 1 35 of 100 holders, firm 2 56 of 74),
+then `04_assigned_coverage.sql`; result `data/safe/04_assigned_coverage_2026-11-17-0134.csv` (65 rows). Every
+MUST_BE_ZERO check 0, both TIE checks 0. $MM, firm 1 then firm 2; each total is the profile's main map (106,555.9 and
+104,678.9, the second within rounding).
+
+- Kept in role: FI 41,337.8 and 46,198.5, WH 16,164.8 and 13,695.1 (firm 1 53.9%, firm 2 57.2%).
+- Kept out of role: the National channel, 41,016.7 and 40,232.9 (38.5%, 38.4%): the dataset's `CHANNEL` puts Wells WH,
+  Wells FI and National (Chase) in National on every row and no wholesaler has the NATIONAL role, so WIFI does not fit it.
+- Not kept (open): firm 1 FI 7,925.2 (the FI cells held today in IFA, `DIST_CH` IFA); firm 2 WH 2,579.9 (held in PRI) and
+  National 314.9.
+- No holder today: firm 1 111.4; firm 2 1,658.0 (mostly the blank `DIST_CH`).
+- Overlap (WIFI, ZIPs with the estimate's WH or FI opportunity): 2 kept holders 3,285 ZIPs / 31,539.0 (firm 2's
+  estimate 3,214 / 30,640.9), 3 holders 2,933 / 30,820.7 (2,886 / 30,037.5), 4 or more 246 / 3,079.4 (236 / 2,909.3),
+  every one across both firms; one holder only 8 ZIPs / 89.0 (7 / 89.2).
+- Main-map sales, percent of the source's: kept seller in their own ZIP 89.9 and 86.6, kept outside 3.8 and 6.9, not
+  kept 2.0 and 1.2, seller holding no territory 4.3 and 5.2.
+
