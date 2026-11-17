@@ -1879,3 +1879,18 @@ firm 2, totals 106,555.9 and 104,679.1 as before.
   holders 3,924 / 52,300.5 (3,868 / 51,341.2), 3 holders 3,353 / 46,559.6 (3,315 / 45,782.2), 4 or more 341 / 7,595.9
   (334 / 7,455.7), all across both firms.
 
+### 2026-11-17: the maps notebook
+
+Owner, 2026-11-17: "ok lets do it". `05_maps.ipynb`, a warehouse-runtime Snowflake notebook (geopandas and matplotlib from
+the Anaconda channel), reads `TD_MAP_PIECE`, `TD_MAP_CELL`, `TD_MAP_ZIP`, `TD_MAP_WHOLESALER`, the census ZCTA and state
+shapes (`ST_ASWKB(ST_SIMPLIFY(geo_boundary, 100))`, metres) and the union's main-map sales by ZIP, draws in EPSG:5070 for
+display only, and puts two PDFs on `@td_maps/<run time>/` with `session.file.put(..., auto_compress=False)`. No territory
+changes: every page draws the 04 tables as they are. CONUS only (the ZIP's territory or union state not AK, HI, PR, GU,
+VI, AS, MP; states by FIPS). Overview: per role the kept holders with an in-role piece on each ZIP (1, 2, 3, 4+); per
+estimate the main map by holder status (a ZIP takes the first of open, no holder, out of role it has opportunity in) and
+by fifths of opportunity; per firm main-map sales by fifths. Wholesalers: one page per kept wholesaler with a role, zoomed
+to their pieces: in role sole, in role shared, out of role only, other kept holders of the role in grey, assigned states
+outlined, and their numbers per estimate. `tests/test_maps_notebook.py` runs the drawing cell on made-up tables (6
+overview and 2 wholesaler pages) with the repo's newer geopandas and matplotlib; not run in Snowflake, where the
+notebook's versions are older (geopandas 1.0.1, matplotlib 3.9.2 on the py39 channel, the 2026-11-15 research).
+
