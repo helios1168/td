@@ -2,7 +2,7 @@
 test_map_extract.py -- `tools/snowflake/map_extract.py`: 06_map_extract.sql's CSV split into one file per layer.
 
 A tiny made-up CSV (the SQL's columns): each layer lands in its own file with its own columns and rows, a leading-zero ZIP stays
-a string, NULL is an empty cell, and a nonzero MUST_BE_ZERO check refuses with nothing written.
+a string, NULL is an empty cell, and a MUST_BE_ZERO check that is nonzero, empty or non-numeric, or has an empty or invalid flag, refuses with nothing written.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _row(**kw):
     return [kw.get(c.lower(), "") for c in HEAD]
 
 
-def _csv(path, value="0"):
+def _csv(path, value="0", flag="1"):
     rows = [_row(layer="PIECE", source="A", holder="R5", kept="Y", role="WIFI", zip_code="02134", state="MA", terr_channel="WH",
                  piece_in_role="1", n_role_holders="2", n_role_firms="2"),
             _row(layer="CELL", est_source="A", zip_code="02134", state="MA", dist_ch="WH", new_dist="WH", channel="WH",
@@ -35,7 +35,7 @@ def _csv(path, value="0"):
             _row(layer="WHOLESALER", source="A", holder="R5", kept="Y", role="WIFI", est_source="A", n_zips="1", n_zips_in_role="1",
                  states="MA", opp_main="100", opp_in_role="100", opp_out_of_role="0", opp_overlap="50"),
             _row(layer="CHECKS", source="A", name="WHOLESALERS WITH NO KEY ROW (RUN 02_model_extract.sql FIRST)", value=value,
-                 must_be_zero="1"),
+                 must_be_zero=flag),
             _row(layer="CHECKS", source="A", name="ROWS IN THE ZIP LAYER", value="1", must_be_zero="0")]
     with open(path, "w", newline="", encoding="utf-8") as fh:
         csv.writer(fh, lineterminator="\n").writerows([HEAD] + rows)
@@ -71,3 +71,23 @@ def test_must_be_zero_refuses():
         else:
             raise AssertionError("a nonzero MUST_BE_ZERO check did not refuse")
         assert not os.path.exists(out)
+
+
+def _refuses(**kw):
+    with tempfile.TemporaryDirectory() as tmp:
+        src, out = os.path.join(tmp, "result.csv"), os.path.join(tmp, "out")
+        _csv(src, **kw)
+        try:
+            _run(src, out)
+        except SystemExit as e:
+            assert "NO KEY ROW" in str(e.code), e.code
+        else:
+            raise AssertionError(f"{kw} did not refuse")
+        assert not os.path.exists(out)
+
+
+def test_empty_or_bad_check_refuses():
+    _refuses(value="")
+    _refuses(value="abc")
+    _refuses(flag="")
+    _refuses(flag="2")

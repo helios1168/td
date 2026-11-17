@@ -3,7 +3,8 @@
     "$TD_PY" tools/snowflake/map_extract.py $TD_REPO/data/safe/<result>.csv [--out DIR]
 
 One file per LAYER, with that layer's columns only (the SQL's header comment lists them).  HOLDER is the surrogate R<n>, there is
-no wholesaler name and no sales value in the input.  Refuses (exit 1), writing nothing, while a MUST_BE_ZERO check is not 0, or when
+no wholesaler name and no sales value in the input.  Refuses (exit 1), writing nothing, while a CHECKS row has a MUST_BE_ZERO that is not exactly 0 or 1, or 1 with a VALUE that is not
+numeric zero (empty and non-numeric included), or when
 the CSV has no CHECKS row or a layer has no row.  Default out: $TD_REPO/data/safe/map_extract_<csv stem>/ (data/safe/ is git-excluded).
 """
 from __future__ import annotations
@@ -23,15 +24,27 @@ LAYERS = {
 }
 
 
+def _passes(r):
+    """MUST_BE_ZERO exactly 0 or 1, and when 1 a VALUE that parses as numeric zero (an empty or non-numeric one fails)."""
+    if r["must_be_zero"] not in ("0", "1"):
+        return False
+    if r["must_be_zero"] == "0":
+        return True
+    try:
+        return float(r["value"]) == 0
+    except ValueError:
+        return False
+
+
 def read(path):
     with open(path, newline="", encoding="utf-8-sig") as fh:
         rows = [{k.strip().lower(): (v or "") for k, v in r.items()} for r in csv.DictReader(fh)]
     checks = [r for r in rows if r["layer"] == "CHECKS"]
     if not checks:
         sys.exit("refused: no CHECKS rows, the file cannot be verified")
-    bad = [r for r in checks if r["must_be_zero"] == "1" and float(r["value"] or 0) != 0]
+    bad = [r for r in checks if not _passes(r)]
     if bad:
-        sys.exit("refused: " + "; ".join(f"{r['source']} {r['name']} = {r['value']}" for r in bad))
+        sys.exit("refused: " + "; ".join(f"{r['source']} {r['name']}: MUST_BE_ZERO {r['must_be_zero']!r}, VALUE {r['value']!r}" for r in bad))
     empty = [k for k in LAYERS if not any(r["layer"] == k for r in rows)]
     if empty:
         sys.exit(f"refused: no rows for layer {', '.join(empty)}")

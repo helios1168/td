@@ -4,14 +4,15 @@
 # one R<n>, the same name in the other source another R<n>, the CHECKS (a wholesaler with no key counted per source, a duplicated
 # HOLDER_N), and that no wholesaler name, no holder id and no sales value is anywhere in the result.  The script is read only:
 # no INSERT, CREATE or DROP outside comments, and the key table is unchanged.  A second run adds a key for the keyless one and a
-# duplicate number.  Prints "06_map_extract_test: ok" or stops at the first failed check.  Run from anywhere: sh 06_map_extract_test.sh
+# duplicate number.  A third run puts a made-up name and number in ROLE, KEPT, STATE, ASSIGNED_STATES and STATES: none leaves, the
+# safe tokens survive, the CHECKS count them.  Prints "06_map_extract_test: ok" or stops at the first failed check.  Run from anywhere: sh 06_map_extract_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 if grep -v '^--' "$here/06_map_extract.sql" | grep -Eiq 'insert|create|drop|delete|update|alter|truncate'; then echo "06_map_extract.sql is not read only"; exit 1; fi
 # the script as DuckDB runs it, into a fresh full_result (the stand-ins as in 02_model_extract_test.sh)
 emit_sql() {
 echo 'DROP TABLE IF EXISTS full_result;'
-sed -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/" -e '/^use /d' -e '/^SET /d' -e 's/^WITH$/CREATE TABLE full_result AS WITH/' \
+sed -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/" -e "s/', '')/', '', 'g')/" -e "s/' +', ' ')/' +', ' ', 'g')/" -e 's/REGEXP_LIKE(/regexp_matches(/g' -e '/^use /d' -e '/^SET /d' -e 's/^WITH$/CREATE TABLE full_result AS WITH/' \
     -e 's/IDENTIFIER(\$piece_tbl)/ssdb_integration.lr_strategy.piece_t/' \
     -e 's/IDENTIFIER(\$cell_tbl)/ssdb_integration.lr_strategy.cell_t/' \
     -e 's/IDENTIFIER(\$zip_tbl)/ssdb_integration.lr_strategy.zip_t/' \
@@ -129,6 +130,39 @@ SELECT
      c('A', 'WHOLESALERS WITH NO KEY ROW (RUN 02_model_extract.sql FIRST)') || ' ' || c('B', 'WHOLESALERS WITH NO KEY ROW (RUN 02_model_extract.sql FIRST)')
      || ' ' || c('A', 'KEY HOLDER_N DUPLICATED') || ' ' || c('B', 'KEY HOLDER_N DUPLICATED'), '0/1 1/1 1/1 1/1'),
  chk('run 2: the key was not touched by the script (the two rows are the ones inserted above)', (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.holder_key), 7);
+-- run 3: owner-typed text where ROLE, KEPT, STATE, ASSIGNED_STATES and STATES are, 'Zed Q 98765' a made-up name and number: none of it may leave
+INSERT INTO ssdb_integration.lr_strategy.piece_t VALUES
+  ('A','Zorblat Quimby','Zed Q 98765','WIFI','00010','MA','WH',0,NULL,NULL,NULL),
+  ('A','Zorblat Quimby','Y','Zed Q 98765','00011','MA','WH',0,NULL,NULL,NULL),
+  ('A','Zorblat Quimby','Y','WIFI','00012','Zed Q 98765','WH',0,NULL,NULL,NULL);
+INSERT INTO ssdb_integration.lr_strategy.zip_t VALUES ('00099','Zed Q 98765',1,1);
+INSERT INTO ssdb_integration.lr_strategy.wh_t VALUES
+  ('A','Zorblat Quimby','Y','Zed Q 98765','CA zed NV','B',1,1,'MA Q 98765 NH',777,0,0,0,NULL,0,0),
+  ('B','Orson Blixt','Zed Q 98765','','ca nv','B',1,0,'  TX   zed  98765 ',778,0,0,0,NULL,0,0);
+SQL
+emit_sql
+cat <<'SQL'
+SELECT
+ chk('run 3: no typed name or number anywhere in the result (zed, 98765)',
+     (SELECT COUNT(*) FROM full_result f WHERE strpos(lower(CAST(f AS VARCHAR)), 'zed') > 0 OR strpos(CAST(f AS VARCHAR), '98765') > 0), 0),
+ chk('run 3: WHOLESALER: ROLE and KEPT INVALID, the two-capital-letter tokens kept in order (CA zed NV -> CA NV, ca nv -> nothing, TX zed 98765 -> TX)',
+     (SELECT string_agg(concat_ws('|', source, role, kept, assigned_states, states), ' / ' ORDER BY opp_main) FROM full_result WHERE layer = 'WHOLESALER' AND opp_main IN (777, 778)),
+     'A|INVALID|Y|CA NV|MA NH / B||INVALID||TX'),
+ chk('run 3: PIECE: KEPT INVALID, ROLE INVALID, STATE NULL, the rest as it is',
+     (SELECT string_agg(concat_ws('|', zip_code, kept, role, COALESCE(state, '-')), ' / ' ORDER BY zip_code) FROM full_result WHERE layer = 'PIECE' AND zip_code IN ('00010', '00011', '00012')),
+     '00010|INVALID|WIFI|MA / 00011|Y|INVALID|MA / 00012|Y|WIFI|-'),
+ chk('run 3: ZIP: ROLE INVALID', (SELECT role FROM full_result WHERE layer = 'ZIP' AND zip_code = '00099'), 'INVALID'),
+ chk('run 3: CHECKS count them, A: piece role, kept, state 1 1 1, wholesaler role 1 kept 0 assigned 1 states 1',
+     c('A', 'PIECE ROWS WITH ROLE EXPORTED AS INVALID') || ' ' || c('A', 'PIECE ROWS WITH KEPT EXPORTED AS INVALID') || ' ' || c('A', 'PIECE ROWS WITH STATE REMOVED')
+     || ' ' || c('A', 'WHOLESALER ROWS WITH ROLE EXPORTED AS INVALID') || ' ' || c('A', 'WHOLESALER ROWS WITH KEPT EXPORTED AS INVALID')
+     || ' ' || c('A', 'WHOLESALER ROWS WITH ASSIGNED_STATES TOKENS REMOVED') || ' ' || c('A', 'WHOLESALER ROWS WITH STATES TOKENS REMOVED'),
+     '1/1 1/1 1/1 1/1 0/1 1/1 1/1'),
+ chk('run 3: CHECKS count them, B: piece 0 0 0, wholesaler role 0 kept 1 assigned 1 states 1, ZIP role 1',
+     c('B', 'PIECE ROWS WITH ROLE EXPORTED AS INVALID') || ' ' || c('B', 'PIECE ROWS WITH KEPT EXPORTED AS INVALID') || ' ' || c('B', 'PIECE ROWS WITH STATE REMOVED')
+     || ' ' || c('B', 'WHOLESALER ROWS WITH ROLE EXPORTED AS INVALID') || ' ' || c('B', 'WHOLESALER ROWS WITH KEPT EXPORTED AS INVALID')
+     || ' ' || c('B', 'WHOLESALER ROWS WITH ASSIGNED_STATES TOKENS REMOVED') || ' ' || c('B', 'WHOLESALER ROWS WITH STATES TOKENS REMOVED')
+     || ' ' || c(NULL, 'ZIP ROWS WITH ROLE EXPORTED AS INVALID'),
+     '0/1 0/1 0/1 0/1 1/1 1/1 1/1 1/1');
 SELECT '06_map_extract_test: ok';
 SQL
 } | duckdb -bail -noheader -list
