@@ -11,6 +11,10 @@ browser, it also opens that page for the last result (Snowsight shows a query's 
 always exits 0 and writes only to stdout: Helix's :sh hides the output of a failing command, and shows stderr instead of
 stdout when a command writes both. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
 
+Output into the buffer: `run_sql.py --insert <file.sql>` (Helix F6, :insert-output) prints the same output as `-- ` comment
+lines, so the inserted text does not run next time, and only for a file under data/safe/: anywhere else (a tracked
+file) it prints one comment line instead, since a result can hold names.
+
 One login a day: `run_sql.py --serve` (tools/snowflake/sql_session.ps1, in its own terminal pane) logs in once, keeps that
 session alive and runs each file F5 sends it on 127.0.0.1:PORT, guarded by a token in data/safe/sql_session.token.  With
 no session running, F5 logs in itself (a browser login each time: the account's ALLOW_ID_TOKEN is false, owner
@@ -126,6 +130,32 @@ def serve(port=PORT, connect=None):
             print(f"ran {os.path.relpath(req['path'], ROOT)}", flush=True)
 
 
+def in_safe(path):
+    return os.path.abspath(path).startswith(os.path.join(ROOT, "data", "safe") + os.sep)
+
+
+def as_comment(out, path):
+    """The output as SQL comment lines for :insert-output, or one line refusing when path is not under data/safe/."""
+    if not in_safe(path):
+        return "-- not inserted: F6 inserts output only into a file under data\\safe\\ (a result can hold names); F5 shows it\n"
+    return "".join(f"-- {line}\n" for line in out.splitlines()) or "-- (no output)\n"
+
+
+def run(path):
+    """The output of running path: by the session when one is running, else after logging in."""
+    out = send(path)
+    if out is None:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            print("no SQL session running (start .\\tools\\snowflake\\sql_session.ps1 to log in once): logging in")
+            try:
+                main(path)
+            except BaseException:
+                traceback.print_exc(file=buf)
+        out = buf.getvalue()
+    return out
+
+
 def send(path, port=PORT):
     """The output of path run by the session, or None when no session is running."""
     try:
@@ -145,16 +175,14 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr = sys.stdout  # Helix 25.07.1 shows stderr instead of stdout when there is any (the connector's login notes)
     try:
-        if sys.argv[1:] == ["--serve"]:
+        args = sys.argv[1:]
+        if args == ["--serve"]:
             serve()
-        elif len(sys.argv) != 2:
-            raise SystemExit("name the SQL file: run_sql.py <file.sql> (Helix: %{buffer_name})")
+        elif len(args) == 2 and args[0] == "--insert":
+            print(as_comment(run(args[1]) if in_safe(args[1]) else "", args[1]), end="")  # a tracked file is not even run
+        elif len(args) != 1:
+            raise SystemExit("name the SQL file: run_sql.py [--insert] <file.sql> (Helix: %{buffer_name})")
         else:
-            out = send(sys.argv[1])
-            if out is None:
-                print("no SQL session running (start .\\tools\\snowflake\\sql_session.ps1 to log in once): logging in")
-                main(sys.argv[1])
-            else:
-                print(out, end="")
+            print(run(args[0]), end="")
     except BaseException:  # ponytail: exit 0 with the traceback printed, or Helix's :sh shows only "status 1"
         traceback.print_exc(file=sys.stdout)

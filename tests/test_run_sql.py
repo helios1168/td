@@ -166,6 +166,15 @@ def test_the_session_runs_what_f5_sends_and_refuses_a_wrong_token():
         assert out3.startswith("refused"), out3
 
 
+def test_insert_output_is_comments_and_only_into_data_safe():
+    safe = os.path.join(run_sql.ROOT, "data", "safe", "x.sql")
+    assert run_sql.as_comment("a\n\nb", safe) == "-- a\n-- \n-- b\n"
+    assert run_sql.as_comment("", safe) == "-- (no output)\n"
+    for path in (os.path.join(run_sql.ROOT, "tools", "snowflake", "04_assigned_coverage.sql"),
+                 os.path.join(run_sql.ROOT, "data", "safety.sql"), os.path.join(run_sql.ROOT, "data", "safe")):
+        assert run_sql.as_comment("ROSTER Ann Lee", path).startswith("-- not inserted"), path
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
