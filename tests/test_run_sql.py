@@ -152,7 +152,10 @@ def test_the_session_runs_what_f5_sends_and_refuses_a_wrong_token():
             time.sleep(0.1)
             sql = os.path.join(d, "q.sql")
             open(sql, "w").write("select 7")
-            out1, out2 = run_sql.send(sql, port), run_sql.send(sql, port)
+            opened = []
+            run_sql.webbrowser.open = opened.append
+            open(run_sql.URL, "w").write("https://app.example/#/q/00000000-0000-0000-0000-000000000000/detail")
+            out1, out2 = run_sql.send(sql, port), run_sql.send(sql, port, browser=False)
             open(run_sql.TOKEN, "w").write("wrong")
             out3 = run_sql.send(sql, port)
         finally:
@@ -161,14 +164,16 @@ def test_the_session_runs_what_f5_sends_and_refuses_a_wrong_token():
                     sys.modules.pop(k, None)
                 else:
                     sys.modules[k] = v
-        assert out1.startswith("ran ") and "1 rows x 1 columns" in out1 and out1 == out2, out1
+        assert out1.startswith("ran ") and "1 rows x 1 columns" in out1 and "opened https://app.example" in out1, out1
+        assert "opened" not in out2 and "1 rows x 1 columns" in out2 and len(opened) == 1, (out2, opened)
         assert logins == [1], logins  # one login for both runs
         assert out3.startswith("refused"), out3
 
 
 def test_stdin_gives_the_selection_back_then_the_output_as_comments():
     seen = []
-    def fake_run(path):
+    def fake_run(path, browser=True):
+        assert browser is False  # F6 opens no browser tab
         seen.append(open(path, encoding="utf-8", newline="").read())
         return "ran x\nA  B\n1  2"
     assert run_sql.piped(b"select 1;\n", fake_run) == b"select 1;\n-- ran x\n-- A  B\n-- 1  2\n"

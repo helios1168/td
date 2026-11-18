@@ -13,7 +13,8 @@ stdout when a command writes both. 03 with roster edits goes through run_03_04.p
 
 Output into the buffer: `run_sql.py --stdin` (Helix F6, :pipe on the selection, any buffer, a scratch one too) runs the SQL
 it reads and prints it back unchanged with the output after it as `-- ` comment lines, so the result lands under the
-query and does not run next time.  It goes through data/safe/_pipe.sql, so the session can run it.
+query and does not run next time, and opens no browser tab (F5 does).  It goes through data/safe/_pipe.sql, so the
+session can run it.
 
 One login a day: `run_sql.py --serve` (tools/snowflake/sql_session.ps1, in its own terminal pane) logs in once, keeps that
 session alive and runs each file F5 sends it on 127.0.0.1:PORT, guarded by a token in data/safe/sql_session.token.  With
@@ -44,8 +45,9 @@ PORT = 47821
 QID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
 
 
-def snowsight_url(qid, path=URL):
+def snowsight_url(qid, path=None):
     """The saved query-detail URL with its query ID swapped for qid, or None when no URL is saved."""
+    path = path or URL
     if not os.path.exists(path):
         return None
     with open(path, encoding="utf-8") as f:
@@ -64,7 +66,7 @@ def snapshot(cols, rows, n_stmt, secs):
             f"\n\n{len(df)} rows x {len(cols)} columns{more}. {n_stmt} statements in {secs:.0f} s. All rows: data/safe/last.csv")
 
 
-def main(path, conn=None):
+def main(path, conn=None, browser=True):
     import snowflake.connector
     print(f"ran {os.path.relpath(path, ROOT)}")
     with open(path, encoding="utf-8") as f:
@@ -92,12 +94,12 @@ def main(path, conn=None):
         w.writerow(last[0])
         w.writerows(last[1])
     print(snapshot(*last, n, time.time() - t))
-    url = snowsight_url(qid)
+    url = snowsight_url(qid) if browser else None
     if url:
         webbrowser.open(url)
         print(f"opened {url}")
     else:
-        print(f"query ID {qid} (save a Snowsight query-detail URL in data/safe/snowsight_url.txt to open it in the browser)")
+        print(f"query ID {qid}" + ("" if not browser else " (save a Snowsight query-detail URL in data/safe/snowsight_url.txt to open it in the browser)"))
     return 0
 
 
@@ -123,7 +125,7 @@ def serve(port=PORT, connect=None):
                 buf = io.StringIO()
                 with contextlib.redirect_stdout(buf):
                     try:
-                        main(req["path"], conn)
+                        main(req["path"], conn, req.get("browser", True))
                     except BaseException:
                         traceback.print_exc(file=buf)
                 f.write(buf.getvalue())
@@ -137,28 +139,28 @@ def piped(data, runner=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as f:
         f.write(text)
-    out = (runner or run)(path)
+    out = (runner or run)(path, browser=False)  # F6: no browser tab, F5 opens it
     nl = "\r\n" if "\r\n" in text else "\n"
     sep = "" if text.endswith("\n") else nl
     return (text + sep + "".join(f"-- {line}{nl}" for line in out.splitlines())).encode("utf-8")
 
 
-def run(path):
+def run(path, browser=True):
     """The output of running path: by the session when one is running, else after logging in."""
-    out = send(path)
+    out = send(path, browser=browser)
     if out is None:
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             print("no SQL session running (start .\\tools\\snowflake\\sql_session.ps1 to log in once): logging in")
             try:
-                main(path)
+                main(path, browser=browser)
             except BaseException:
                 traceback.print_exc(file=buf)
         out = buf.getvalue()
     return out
 
 
-def send(path, port=PORT):
+def send(path, port=PORT, browser=True):
     """The output of path run by the session, or None when no session is running."""
     try:
         with open(TOKEN) as f:
@@ -168,7 +170,7 @@ def send(path, port=PORT):
         return None
     with c, c.makefile("rw", encoding="utf-8", newline="\n") as f:
         c.settimeout(None)
-        f.write(json.dumps({"token": token, "path": os.path.abspath(path)}) + "\n")
+        f.write(json.dumps({"token": token, "path": os.path.abspath(path), "browser": browser}) + "\n")
         f.flush()
         return f.read()
 
