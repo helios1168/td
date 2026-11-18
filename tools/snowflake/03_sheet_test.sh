@@ -33,7 +33,8 @@ INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('  ','Utah',NULL,'WH'), (NULL,'Utah',NULL,'NATIONAL'), (chr(9),'Utah',NULL,'WH'),
   ('Al Pim','Utah',NULL,NULL), ('Mo Ng','Utah',NULL,'WH'), ('Mo Ng','  ',NULL,'WH'),
   ('Cal Poe OR/ Di Fox','Iowa',NULL,'WH'), ('Ed Gray/Zed Zo oR new two','Nevada',NULL,'NATIONAL'), ('Ed Gray','Nevada',NULL,'WH'),
-  ('jo lin or Ty Ash','Utah',NULL,'FI'), ('Jo Lin','Utah',NULL,'FI');
+  ('jo lin or Ty Ash','Utah',NULL,'FI'), ('Jo Lin','Utah',NULL,'FI'),
+  ('TBD','Utah',NULL,'WH'), ('n/a','Utah',NULL,'NATIONAL'), (' Open ','Utah',NULL,'FI');
 CREATE MACRO UUID_STRING(ns, nm) AS md5(ns || nm);
 CREATE TABLE ssdb_integration.lr_strategy.hk_t (source TEXT, holder_id TEXT, holder_n INTEGER, first_seen TIMESTAMP);
 SQL

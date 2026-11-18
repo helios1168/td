@@ -20,14 +20,14 @@ SET sheet_tbl = 'ssdb_integration.lr_strategy.channel_contacts';
 SET terr_tbl  = 'ssdb_integration.lr_strategy.territories_tableau';
 WITH
 sp AS (SELECT x.rid, x.st, x.ch, x.cm, p.index AS ix,
-              NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
+              NULLIF(NULLIF(NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
                                                     THEN SPLIT_PART(p.value, ',', 2) || ' ' || SPLIT_PART(p.value, ',', 1)
-                                                    ELSE p.value END, '\\s+', ' '))), '') AS k,
+                                                    ELSE p.value END, '\\s+', ' '))), ''), 'N/A'), 'OPEN'), 'TBD') AS k,
               CASE WHEN POSITION(',' IN p.value) > 0 THEN 1 ELSE 0 END AS comma
        FROM (SELECT ROW_NUMBER() OVER (ORDER BY name, state, channel, comment) AS rid,
                     NULLIF(UPPER(TRIM(state)), '') AS st, NULLIF(UPPER(TRIM(channel)), '') AS ch,
                     CASE WHEN NULLIF(TRIM(comment), '') IS NULL THEN 0 ELSE 1 END AS cm,
-                    REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
+                    REGEXP_REPLACE(CASE WHEN UPPER(TRIM(name)) IN ('N/A', 'OPEN', 'TBD') THEN '' ELSE COALESCE(name, '') END, '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
              FROM IDENTIFIER($sheet_tbl)) x,
        LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p),
 sn AS (SELECT sp.*, COUNT(k) OVER (PARTITION BY rid) AS n_names FROM sp),

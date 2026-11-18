@@ -18,7 +18,7 @@ INSERT INTO ssdb_integration.lr_strategy.terr_t (source, name, state, channel, c
 CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, comment TEXT, channel TEXT);
 INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('ann  LEE','MAINE',NULL,'WH'), ('Bob Smith','OHIO',NULL,'REGIONAL'), ('Bob Smith','IOWA',NULL,'NATIONAL'),
-  ('New Hire','IOWA',NULL,'WH'), ('Pat Open','IOWA',NULL,'WH'), ('  ','UTAH',NULL,'WH'),
+  ('New Hire','IOWA',NULL,'WH'), ('Pat Open','IOWA',NULL,'WH'), ('  ','UTAH',NULL,'WH'), ('TBD','UTAH',NULL,'WH'), ('Ann Lee or tbd','UTAH',NULL,'WH'), ('N/A','IOWA',NULL,'FI'), ('open','IOWA',NULL,'WH'),
   ('Ann Lee OR Cy Zed / Lee, Ann','IOWA',NULL,'FI'), ('Dee Fox or New Hire','UTAH',NULL,'NATIONAL'), ('Ed'||chr(160)||'Fox','UTAH',NULL,'WH');
 SQL
 sed -e "s/LISTAGG(DISTINCT ch, ' ') WITHIN GROUP (ORDER BY ch)/string_agg(DISTINCT ch, ' ' ORDER BY ch)/g" \

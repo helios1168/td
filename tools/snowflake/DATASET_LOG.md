@@ -1963,3 +1963,9 @@ give `holder` (R<n>) instead of source and wholesaler, resolved through `td_hold
 name-free `--key edits` block of 03 before the owner's block (`run_03_04.ps1` splices only the owner block and still finds its
 markers). `explore/sheet_slots.sql` lists the sheet by key, no names: per slot the candidate keys, per key its channels and
 ZIPs in WH and FI. Not run in Snowflake: the DuckDB tests translate `SPLIT_TO_TABLE`, `LISTAGG ... WITHIN GROUP` and `UUID_STRING`.
+### 2026-11-18: placeholder names in the sheet are open seats
+
+Owner, 2026-11-18: "only remaining rows in unmatched names are the “or” cases, N/A, Open, and TBd". A NAME cell, or one
+name of an "A or B" cell, that reads N/A, OPEN or TBD (any case) is an open seat like a blank one, in 03 and the three
+sheet readers. The whole cell is checked before the split, since the slash splitter would cut N/A into N and A.
+

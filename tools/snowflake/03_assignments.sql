@@ -91,7 +91,7 @@ JOIN IDENTIFIER($holder_tbl) k ON k.source = b.source AND k.holder_id = UUID_STR
 --spaces.  A name no holder has comes back as EDIT NOT MATCHED with source SHEET, a person on two channels as TWO ANSWERS,
 --an unknown or blank channel or state as not a listed value (BLANK CHANNEL, BLANK_STATE).  Every other WH or FI holder
 --is KEPT N, so their territory shows as open (only when the sheet names anyone), a person named only inside a cell with
---several names is on the sheet.  A slot with no name (an open seat) sets nothing.  The key edits and the owner edits below
+--several names is on the sheet.  A slot with no name, or only N/A, OPEN or TBD (an open seat), sets nothing.  The key edits and the owner edits below
 --come later, so they win.
 --TMP_M_SHEET: one row per name in a sheet cell (RID the sheet row, K the match key, N_NAMES the names in the cell).
 --The cell's text gets a | at each split and one at the end, SPLIT_TO_TABLE cuts on it.
@@ -99,12 +99,12 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_sheet AS
 SELECT rid, name, ch, st, k, n_names FROM (
   SELECT rid, name, ch, st, k, COUNT(k) OVER (PARTITION BY rid) AS n_names FROM (
     SELECT x.rid, TRIM(p.value) AS name, x.ch, x.st,
-           NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0 THEN SPLIT_PART(p.value, ',', 2) || ' ' || SPLIT_PART(p.value, ',', 1)
-                                 ELSE p.value END, '\\s+', ' '))), '') AS k
+           NULLIF(NULLIF(NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0 THEN SPLIT_PART(p.value, ',', 2) || ' ' || SPLIT_PART(p.value, ',', 1)
+                                 ELSE p.value END, '\\s+', ' '))), ''), 'N/A'), 'OPEN'), 'TBD') AS k
     FROM (SELECT ROW_NUMBER() OVER (ORDER BY name, state, channel) AS rid,
                  NULLIF(UPPER(TRIM(REGEXP_REPLACE(channel, '\\s+', ' '))), '') AS ch,
                  NULLIF(UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))), '') AS st,
-                 REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
+                 REGEXP_REPLACE(CASE WHEN UPPER(TRIM(name)) IN ('N/A', 'OPEN', 'TBD') THEN '' ELSE COALESCE(name, '') END, '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
           FROM IDENTIFIER($sheet_tbl)) x,
     LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p))
 WHERE k IS NOT NULL;

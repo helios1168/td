@@ -32,7 +32,7 @@ INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('Ann Lee','Massachusetts','secret comment','NATIONAL'), ('Orr, Abe or Bo Ray',' New  Hampshire',NULL,'regional'),
   ('Bo Ray / Dot Kim/New Hire','MA',NULL,'WH'), ('New Hire','John Roe','secret','Jane Doe'),
   (NULL,'Utah',NULL,'WH'), ('  ','Utah',NULL,'WH'), (chr(9),'Utah',NULL,'NATIONAL'), ('Pat New or new  hire','Utah',NULL,'FI'),
-  ('Cy Day OR Ann Lee','Utah',NULL,NULL), ('Bo Ray',NULL,NULL,'WIFI');
+  ('Cy Day OR Ann Lee','Utah',NULL,NULL), ('Bo Ray',NULL,NULL,'WIFI'), ('tbd','Utah',NULL,'FI');
 SQL
 # DuckDB has no LISTAGG ... WITHIN GROUP: string_agg with ORDER BY.  SPLIT_TO_TABLE: unnest of string_split.
 sed -e "s/LISTAGG(\(DISTINCT \)\{0,1\}\([a-z]*\), '\([ a-z]*\)') WITHIN GROUP (ORDER BY \([a-z, ]*\))/string_agg(\1\2, '\3' ORDER BY \4)/" \
@@ -57,7 +57,7 @@ SELECT chk('the result',
   || ' / SLOT|NEW HAMPSHIRE|REGIONAL|2|CRBG:R3 or EQH:R4|-|-|-|-'
   || ' / SLOT|OTHER|OTHER|1|NEW1|-|-|-|-'
   || ' / SLOT|UTAH|(blank)|2|EQH:R6 or CRBG:R1 or EQH:R2|-|-|-|-'
-  || ' / SLOT|UTAH|FI|2|NEW2 or NEW1|-|-|-|-'
+  || ' / SLOT|UTAH|FI|0|(open)|-|-|-|- / SLOT|UTAH|FI|2|NEW2 or NEW1|-|-|-|-'
   || ' / SLOT|UTAH|NATIONAL|0|(open)|-|-|-|-'
   || ' / SLOT|UTAH|WH|0|(open)|-|-|-|-'
   || ' / SLOT|UTAH|WH|0|(open)|-|-|-|-'

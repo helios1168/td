@@ -21,13 +21,13 @@ SET terr_tbl   = 'ssdb_integration.lr_strategy.territories_tableau';
 SET holder_tbl = 'ssdb_integration.lr_strategy.td_holder_key';
 WITH
 sp AS (SELECT x.rid, x.st, x.ch, p.index AS ix,
-              NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
+              NULLIF(NULLIF(NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
                                                     THEN SPLIT_PART(p.value, ',', 2) || ' ' || SPLIT_PART(p.value, ',', 1)
-                                                    ELSE p.value END, '\\s+', ' '))), '') AS k
+                                                    ELSE p.value END, '\\s+', ' '))), ''), 'N/A'), 'OPEN'), 'TBD') AS k
        FROM (SELECT ROW_NUMBER() OVER (ORDER BY name, state, channel, comment) AS rid,
                     NULLIF(UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))), '') AS st,
                     NULLIF(UPPER(TRIM(REGEXP_REPLACE(channel, '\\s+', ' '))), '') AS ch,
-                    REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
+                    REGEXP_REPLACE(CASE WHEN UPPER(TRIM(name)) IN ('N/A', 'OPEN', 'TBD') THEN '' ELSE COALESCE(name, '') END, '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
              FROM IDENTIFIER($sheet_tbl)) x,
        LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p),
 sn AS (SELECT sp.*, COUNT(k) OVER (PARTITION BY rid) AS n_names FROM sp),
