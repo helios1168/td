@@ -119,7 +119,7 @@ WHERE k IS NOT NULL;
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role, note, assigned_states)
 SELECT COALESCE(b.source, 'SHEET'), COALESCE(b.wholesaler, MIN(s.name)), 'Y',
        CASE WHEN s.ch = 'REGIONAL' THEN 'WIFI' ELSE COALESCE(s.ch, 'BLANK CHANNEL') END,
-       CASE WHEN MAX(s.n_names) > 1 THEN 'EITHER' END,
+       CASE WHEN MAX(s.n_names) > 1 THEN 'EITHER' ELSE 'SHEET' END,
        LISTAGG(DISTINCT COALESCE(c.code, REPLACE(s.st, ' ', '_'), 'BLANK_STATE'), ' ')
          WITHIN GROUP (ORDER BY COALESCE(c.code, REPLACE(s.st, ' ', '_'), 'BLANK_STATE'))
 FROM ssdb_integration.lr_strategy.tmp_m_sheet s
@@ -139,8 +139,8 @@ LEFT JOIN (SELECT source, wholesaler, UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITI
                                    ELSE wholesaler END, '\\s+', ' '))) AS k
            FROM ssdb_integration.lr_strategy.tmp_m_base) b ON b.k = s.k
 GROUP BY s.k, b.source, b.wholesaler, s.ch;
-INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept)
-SELECT source, wholesaler, 'N' FROM ssdb_integration.lr_strategy.tmp_m_base
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, note)
+SELECT source, wholesaler, 'N', 'SHEET' FROM ssdb_integration.lr_strategy.tmp_m_base
 WHERE zips_wh + zips_fi > 0
   AND UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN wholesaler) > 0 THEN SPLIT_PART(wholesaler, ',', 2) || ' ' || SPLIT_PART(wholesaler, ',', 1)
                                    ELSE wholesaler END, '\\s+', ' '))) NOT IN (SELECT k FROM ssdb_integration.lr_strategy.tmp_m_sheet)
@@ -160,6 +160,8 @@ INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigne
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R108', NULL, 'WIFI', NULL, 'CA1_R105R');
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R105', NULL, 'WIFI', NULL, 'CA1_R105R');
 --key edits: end
+--every edit so far that is not the sheet's came from the key edits block: mark it, so the owner edits below win over it
+UPDATE ssdb_integration.lr_strategy.tmp_m_edit SET note = 'KEY' WHERE note IS NULL;
 
 --owner edits: begin
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) VALUES
@@ -173,18 +175,19 @@ e0 AS (SELECT CASE WHEN NULLIF(TRIM(x.holder), '') IS NULL THEN UPPER(TRIM(x.sou
               CASE WHEN NULLIF(TRIM(x.holder), '') IS NULL THEN UPPER(TRIM(REGEXP_REPLACE(TRIM(x.wholesaler), '\\s+', ' '))) ELSE k.nm END AS nm,
               UPPER(TRIM(x.kept)) AS kept, UPPER(TRIM(x.role)) AS role,
               UPPER(TRIM(REGEXP_REPLACE(REPLACE(x.assigned_states, ',', ' '), '\\s+', ' '))) AS assigned_states, x.edited_at,
-              CASE WHEN x.note = 'EITHER' THEN 1 ELSE 0 END AS either
+              CASE WHEN x.note = 'EITHER' THEN 1 ELSE 0 END AS either,
+              --the block an edit comes from, in Run All order: the sheet 1, key edits 2, owner edits 3.  A later block wins
+              --whatever the timestamps (two statements can share a CURRENT_TIMESTAMP), inside a block the later statement.
+              CASE WHEN x.note IN ('SHEET', 'EITHER') THEN 1 WHEN x.note = 'KEY' THEN 2 ELSE 3 END AS tier
        FROM ssdb_integration.lr_strategy.tmp_m_edit x
        LEFT JOIN ssdb_integration.lr_strategy.tmp_m_hk k ON k.holder = UPPER(TRIM(x.holder))
        WHERE COALESCE(x.source, '') <> 'EXAMPLE'
          AND (NULLIF(TRIM(x.scenario), '') IS NULL OR UPPER(TRIM(x.scenario)) = UPPER(TRIM($scenario)))),
-ea AS (SELECT source, nm, 'KEPT' AS fld, kept AS val, edited_at FROM e0 WHERE kept IS NOT NULL
-       UNION ALL SELECT source, nm, 'ROLE', role, edited_at FROM e0 WHERE role IS NOT NULL
-       UNION ALL SELECT source, nm, 'ASSIGNED_STATES', assigned_states, edited_at FROM e0 WHERE assigned_states IS NOT NULL),
-el AS (SELECT source, nm, fld, MAX(edited_at) AS edited_at FROM ea GROUP BY source, nm, fld),
-ev AS (SELECT ea.source, ea.nm, ea.fld, MAX(ea.val) AS val, COUNT(DISTINCT ea.val) AS n
-       FROM ea JOIN el ON el.source = ea.source AND el.nm = ea.nm AND el.fld = ea.fld AND el.edited_at = ea.edited_at
-       GROUP BY ea.source, ea.nm, ea.fld),
+ea AS (SELECT source, nm, 'KEPT' AS fld, kept AS val, edited_at, tier FROM e0 WHERE kept IS NOT NULL
+       UNION ALL SELECT source, nm, 'ROLE', role, edited_at, tier FROM e0 WHERE role IS NOT NULL
+       UNION ALL SELECT source, nm, 'ASSIGNED_STATES', assigned_states, edited_at, tier FROM e0 WHERE assigned_states IS NOT NULL),
+er AS (SELECT ea.*, RANK() OVER (PARTITION BY source, nm, fld ORDER BY tier DESC, edited_at DESC) AS rk FROM ea),
+ev AS (SELECT source, nm, fld, MAX(val) AS val, COUNT(DISTINCT val) AS n FROM er WHERE rk = 1 GROUP BY source, nm, fld),
 e AS (SELECT source, nm, MAX(CASE WHEN fld = 'KEPT' THEN val END) AS kept, MAX(CASE WHEN fld = 'ROLE' THEN val END) AS role,
              MAX(CASE WHEN fld = 'ASSIGNED_STATES' THEN val END) AS assigned_states, MAX(n) AS n
       FROM ev GROUP BY source, nm),
