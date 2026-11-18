@@ -11,7 +11,10 @@ import csv
 import io
 import os
 import sys
+import socket
 import tempfile
+import threading
+import time
 import types
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -120,6 +123,47 @@ def test_then_runs_the_named_file_after_in_one_session():
                     sys.modules[k] = v
         assert SEEN == ["update x\n--then tools/after.sql\n\nselect 'after'"], SEEN
         assert "then tools/after.sql" in buf.getvalue()
+
+
+def free_port():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def test_the_session_runs_what_f5_sends_and_refuses_a_wrong_token():
+    with tempfile.TemporaryDirectory() as d:
+        run_sql.TOKEN, run_sql.OUT, run_sql.URL = os.path.join(d, "tok"), os.path.join(d, "last.csv"), os.path.join(d, "none.txt")
+        port = free_port()
+        assert run_sql.send(os.path.join(d, "q.sql"), port) is None  # no session: F5 logs in itself
+        fake = fake_connector([[(7,)]])
+        logins = []
+        conn = fake.connect()
+        conn.__enter__().is_closed = lambda: False
+        saved = {k: sys.modules.get(k) for k in ("snowflake", "snowflake.connector")}
+        sys.modules.update({"snowflake": types.SimpleNamespace(connector=fake), "snowflake.connector": fake})
+        try:
+            th = threading.Thread(target=run_sql.serve, args=(port, lambda: logins.append(1) or conn.__enter__()), daemon=True)
+            th.start()
+            for _ in range(100):
+                if os.path.exists(run_sql.TOKEN):
+                    break
+                time.sleep(0.02)
+            time.sleep(0.1)
+            sql = os.path.join(d, "q.sql")
+            open(sql, "w").write("select 7")
+            out1, out2 = run_sql.send(sql, port), run_sql.send(sql, port)
+            open(run_sql.TOKEN, "w").write("wrong")
+            out3 = run_sql.send(sql, port)
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    sys.modules.pop(k, None)
+                else:
+                    sys.modules[k] = v
+        assert out1.startswith("ran ") and "1 rows x 1 columns" in out1 and out1 == out2, out1
+        assert logins == [1], logins  # one login for both runs
+        assert out3.startswith("refused"), out3
 
 
 if __name__ == "__main__":

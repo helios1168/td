@@ -10,13 +10,22 @@ line names the file it ran. The connection is [default] in
 browser, it also opens that page for the last result (Snowsight shows a query's results to the user who ran it). It
 always exits 0 and writes only to stdout: Helix's :sh hides the output of a failing command, and shows stderr instead of
 stdout when a command writes both. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
+
+One login a day: `run_sql.py --serve` (tools/snowflake/sql_session.ps1, in its own terminal pane) logs in once, keeps that
+session alive and runs each file F5 sends it on 127.0.0.1:PORT, guarded by a token in data/safe/sql_session.token.  With
+no session running, F5 logs in itself (a browser login each time: the account's ALLOW_ID_TOKEN is false, owner
+2026-11-18).  The session keeps SET variables and temporary tables between runs, as a Snowsight worksheet does.
 """
 from __future__ import annotations
 
+import contextlib
 import csv
 import io
+import json
 import os
 import re
+import secrets
+import socket
 import sys
 import time
 import traceback
@@ -26,6 +35,8 @@ ROWS = 50
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT = os.path.join(ROOT, "data", "safe", "last.csv")
 URL = os.path.join(ROOT, "data", "safe", "snowsight_url.txt")
+TOKEN = os.path.join(ROOT, "data", "safe", "sql_session.token")
+PORT = 47821
 QID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
 
 
@@ -49,7 +60,7 @@ def snapshot(cols, rows, n_stmt, secs):
             f"\n\n{len(df)} rows x {len(cols)} columns{more}. {n_stmt} statements in {secs:.0f} s. All rows: data/safe/last.csv")
 
 
-def main(path):
+def main(path, conn=None):
     import snowflake.connector
     print(f"ran {os.path.relpath(path, ROOT)}")
     with open(path, encoding="utf-8") as f:
@@ -59,7 +70,7 @@ def main(path):
         with open(os.path.join(ROOT, then), encoding="utf-8") as f:
             sql += "\n" + f.read()
     t, n, last, qid = time.time(), 0, None, None
-    with snowflake.connector.connect(connection_name="default") as conn:
+    with (contextlib.nullcontext(conn) if conn else snowflake.connector.connect(connection_name="default")) as conn:
         try:
             for cur in conn.execute_stream(io.StringIO(sql)):
                 n += 1
@@ -86,12 +97,64 @@ def main(path):
     return 0
 
 
+def serve(port=PORT, connect=None):
+    """Log in once and run each file a client sends, in that one session, until stopped (Ctrl+C)."""
+    import snowflake.connector
+    connect = connect or (lambda: snowflake.connector.connect(connection_name="default", client_session_keep_alive=True))
+    conn, token = connect(), secrets.token_hex(16)
+    os.makedirs(os.path.dirname(TOKEN), exist_ok=True)
+    with open(TOKEN, "w") as f:
+        f.write(token)
+    with socket.create_server(("127.0.0.1", port)) as srv:
+        print(f"logged in; F5 now runs in this session (port {port}). Ctrl+C stops it.", flush=True)
+        while True:
+            c, _ = srv.accept()
+            with c, c.makefile("rw", encoding="utf-8", newline="\n") as f:
+                req = json.loads(f.readline() or "{}")
+                if req.get("token") != token:
+                    f.write("refused: wrong session token (restart sql_session.ps1)\n")
+                    continue
+                if conn.is_closed():
+                    conn = connect()
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    try:
+                        main(req["path"], conn)
+                    except BaseException:
+                        traceback.print_exc(file=buf)
+                f.write(buf.getvalue())
+            print(f"ran {os.path.relpath(req['path'], ROOT)}", flush=True)
+
+
+def send(path, port=PORT):
+    """The output of path run by the session, or None when no session is running."""
+    try:
+        with open(TOKEN) as f:
+            token = f.read().strip()
+        c = socket.create_connection(("127.0.0.1", port), timeout=2)
+    except OSError:
+        return None
+    with c, c.makefile("rw", encoding="utf-8", newline="\n") as f:
+        c.settimeout(None)
+        f.write(json.dumps({"token": token, "path": os.path.abspath(path)}) + "\n")
+        f.flush()
+        return f.read()
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr = sys.stdout  # Helix 25.07.1 shows stderr instead of stdout when there is any (the connector's login notes)
     try:
-        if len(sys.argv) != 2:
+        if sys.argv[1:] == ["--serve"]:
+            serve()
+        elif len(sys.argv) != 2:
             raise SystemExit("name the SQL file: run_sql.py <file.sql> (Helix: %{buffer_name})")
-        main(sys.argv[1])
+        else:
+            out = send(sys.argv[1])
+            if out is None:
+                print("no SQL session running (start .\\tools\\snowflake\\sql_session.ps1 to log in once): logging in")
+                main(sys.argv[1])
+            else:
+                print(out, end="")
     except BaseException:  # ponytail: exit 0 with the traceback printed, or Helix's :sh shows only "status 1"
         traceback.print_exc(file=sys.stdout)
