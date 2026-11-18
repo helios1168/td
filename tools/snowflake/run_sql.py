@@ -11,9 +11,9 @@ browser, it also opens that page for the last result (Snowsight shows a query's 
 always exits 0 and writes only to stdout: Helix's :sh hides the output of a failing command, and shows stderr instead of
 stdout when a command writes both. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
 
-Output into the buffer: `run_sql.py --insert <file.sql>` (Helix F6, :insert-output) prints the same output as `-- ` comment
-lines, so the inserted text does not run next time, and only for a file under data/safe/: anywhere else (a tracked
-file) it prints one comment line instead, since a result can hold names.
+Output into the buffer: `run_sql.py --stdin` (Helix F6, :pipe on the selection, any buffer, a scratch one too) runs the SQL
+it reads and prints it back unchanged with the output after it as `-- ` comment lines, so the result lands under the
+query and does not run next time.  It goes through data/safe/_pipe.sql, so the session can run it.
 
 One login a day: `run_sql.py --serve` (tools/snowflake/sql_session.ps1, in its own terminal pane) logs in once, keeps that
 session alive and runs each file F5 sends it on 127.0.0.1:PORT, guarded by a token in data/safe/sql_session.token.  With
@@ -130,15 +130,17 @@ def serve(port=PORT, connect=None):
             print(f"ran {os.path.relpath(req['path'], ROOT)}", flush=True)
 
 
-def in_safe(path):
-    return os.path.abspath(path).startswith(os.path.join(ROOT, "data", "safe") + os.sep)
-
-
-def as_comment(out, path):
-    """The output as SQL comment lines for :insert-output, or one line refusing when path is not under data/safe/."""
-    if not in_safe(path):
-        return "-- not inserted: F6 inserts output only into a file under data\\safe\\ (a result can hold names); F5 shows it\n"
-    return "".join(f"-- {line}\n" for line in out.splitlines()) or "-- (no output)\n"
+def piped(data, runner=None):
+    """The selection back unchanged, then the output of running it as `-- ` comments, in the selection's line ending."""
+    text = data.decode("utf-8")
+    path = os.path.join(ROOT, "data", "safe", "_pipe.sql")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+    out = (runner or run)(path)
+    nl = "\r\n" if "\r\n" in text else "\n"
+    sep = "" if text.endswith("\n") else nl
+    return (text + sep + "".join(f"-- {line}{nl}" for line in out.splitlines())).encode("utf-8")
 
 
 def run(path):
@@ -178,10 +180,11 @@ if __name__ == "__main__":
         args = sys.argv[1:]
         if args == ["--serve"]:
             serve()
-        elif len(args) == 2 and args[0] == "--insert":
-            print(as_comment(run(args[1]) if in_safe(args[1]) else "", args[1]), end="")  # a tracked file is not even run
+        elif args == ["--stdin"]:
+            sys.stdout.flush()
+            sys.stdout.buffer.write(piped(sys.stdin.buffer.read()))  # bytes: no CRLF translation of the echoed SQL
         elif len(args) != 1:
-            raise SystemExit("name the SQL file: run_sql.py [--insert] <file.sql> (Helix: %{buffer_name})")
+            raise SystemExit("name the SQL file: run_sql.py <file.sql> (Helix: %{buffer_name}), or --stdin, or --serve")
         else:
             print(run(args[0]), end="")
     except BaseException:  # ponytail: exit 0 with the traceback printed, or Helix's :sh shows only "status 1"
