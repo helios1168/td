@@ -1,10 +1,10 @@
 """Run one SQL file against Snowflake the way Snowsight's Run All does: every statement in one session, then a snapshot
 of the last statement's result (its first rows) on screen and all of its rows in data/safe/last.csv (gitignored).
 
-    .\\.venv\\Scripts\\python.exe tools\\snowflake\\run_sql.py [file.sql]
+    .\\.venv\\Scripts\\python.exe tools\\snowflake\\run_sql.py <file.sql>
 
-With no file it runs the .sql file saved last under tools/ or data/safe/: Helix before 25.07 has no %{buffer_name}, so
-the F5 binding (tools/snowflake/README.md) is :write then this, and the popup's first line names the file it ran. The connection is [default] in
+The file is always named: guessing it (the .sql saved last) ran the wrong script (owner, 2026-11-17). The popup's first
+line names the file it ran. The connection is [default] in
 ~/.snowflake/connections.toml. With data/safe/snowsight_url.txt holding any Snowsight query-detail URL copied from the
 browser, it also opens that page for the last result (Snowsight shows a query's results to the user who ran it). It
 always exits 0 and prints any error, since Helix's :sh hides the output of a failing command. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
@@ -36,15 +36,6 @@ def snowsight_url(qid, path=URL):
     if not QID.search(url):
         raise SystemExit(f"{path}: no query ID in it; paste a Snowsight query-detail URL from the browser")
     return QID.sub(qid, url, count=1)
-
-
-def newest_sql(root=ROOT):
-    """The .sql file under tools/ or data/safe/ saved last (the buffer F5 just wrote)."""
-    found = [os.path.join(d, f) for top in ("tools", os.path.join("data", "safe"))
-             for d, _, fs in os.walk(os.path.join(root, top)) for f in fs if f.lower().endswith(".sql")]
-    if not found:
-        raise SystemExit("no .sql file under tools/ or data/safe/")
-    return max(found, key=os.path.getmtime)
 
 
 def snapshot(cols, rows, n_stmt, secs):
@@ -92,6 +83,8 @@ def main(path):
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     try:
-        main(sys.argv[1] if len(sys.argv) > 1 else newest_sql())
+        if len(sys.argv) != 2:
+            raise SystemExit("name the SQL file: run_sql.py <file.sql> (Helix: %{buffer_name})")
+        main(sys.argv[1])
     except BaseException:  # ponytail: exit 0 with the traceback printed, or Helix's :sh shows only "status 1"
         traceback.print_exc(file=sys.stdout)

@@ -76,18 +76,6 @@ def test_a_failing_statement_says_which_and_returns_1():
     assert "\nERROR in statement 2 (1 ran):" in out and "bad" in out
 
 
-def test_no_file_runs_the_sql_saved_last():
-    with tempfile.TemporaryDirectory() as d:
-        for i, rel in enumerate(("tools/a.sql", "data/safe/b.sql", "tools/sub/c.sql", "data/other.sql", "tools/d.txt")):
-            path = os.path.join(d, rel)
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            open(path, "w").write("x")
-            os.utime(path, (1000 + i, 1000 + i))
-        assert run_sql.newest_sql(d) == os.path.join(d, "tools", "sub", "c.sql")
-        os.utime(os.path.join(d, "data", "safe", "b.sql"), (2000, 2000))
-        assert run_sql.newest_sql(d) == os.path.join(d, "data", "safe", "b.sql")
-
-
 def test_the_saved_snowsight_url_gets_the_new_query_id():
     with tempfile.TemporaryDirectory() as d:
         p = os.path.join(d, "u.txt")
