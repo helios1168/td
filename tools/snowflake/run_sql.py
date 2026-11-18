@@ -7,7 +7,8 @@ The file is always named: guessing it (the .sql saved last) ran the wrong script
 line names the file it ran. The connection is [default] in
 ~/.snowflake/connections.toml. With data/safe/snowsight_url.txt holding any Snowsight query-detail URL copied from the
 browser, it also opens that page for the last result (Snowsight shows a query's results to the user who ran it). It
-always exits 0 and prints any error, since Helix's :sh hides the output of a failing command. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
+always exits 0 and writes only to stdout: Helix's :sh hides the output of a failing command, and shows stderr instead of
+stdout when a command writes both. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
 """
 from __future__ import annotations
 
@@ -82,6 +83,7 @@ def main(path):
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr = sys.stdout  # Helix 25.07.1 shows stderr instead of stdout when there is any (the connector's login notes)
     try:
         if len(sys.argv) != 2:
             raise SystemExit("name the SQL file: run_sql.py <file.sql> (Helix: %{buffer_name})")
