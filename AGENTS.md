@@ -37,6 +37,7 @@ The owner runs everything on a Windows 11 work machine: PowerShell in Windows Te
 - **The owner's work clone cannot push** (owner, 2026-11-18: "remember that I'm unable to push to the repo so there is no data leakage concern"): names in files or buffers on that machine leak nowhere. Masking still applies to everything that reaches the agent and to everything the agent commits.
 - **The owner's own files go in the gitignored `data\safe\`**, which a clone does not have, so `git pull` never conflicts with them: a script creates the folder and copies a template there (`new_fix_names.ps1`). `.helix/ignore` shows it in Helix's picker and search.
 - **What the owner sends back** is a masked result (`R<n>` keys, counts, fixed labels), uploaded as `data\safe\last.csv` right after the F5 that made it. A result with names stays on their screen: say which, every time.
+- **A lookup the owner will filter saves its result** as the transient table `td_x_<file>` in `lr_strategy` (replaced on every run, a `ROW_N` column its order, the last statement `SELECT * EXCLUDE (row_n) … ORDER BY row_n`), so a scratch file can `SELECT … FROM td_x_<file> WHERE …` with F6 (owner, 2026-11-18). Transient, not temporary: it outlives the session.
 - **PowerShell, not bash**: `New-Item -ItemType Directory -Force`, `Copy-Item`, `$env:VAR`; Windows Terminal splits with Alt+Shift+D. PowerShell treats `%` as `ForEach-Object`. Scripts cannot be run here: say what was and was not tested.
 
 ## Tests

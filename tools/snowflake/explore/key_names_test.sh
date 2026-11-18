@@ -33,8 +33,8 @@ t = re.sub(r"LATERAL SPLIT_TO_TABLE\((x\.[a-z_]+), '\|'\) p",
            r"LATERAL (SELECT unnest(string_split(\1, '|')) AS value, generate_subscripts(string_split(\1, '|'), 1) AS index) p", t)
 t = re.sub(r"LISTAGG\((.*?), ('[^']*')\)\s*WITHIN GROUP \(ORDER BY (.*?)\)( AS [a-z_]+)", r"string_agg(\1, \2 ORDER BY \3)\4", t, flags=re.S)
 t = t.replace("IDENTIFIER($sheet_tbl)", "ssdb_integration.lr_strategy.sheet_t").replace("IDENTIFIER($terr_tbl)", "ssdb_integration.lr_strategy.terr_t")
-t = t.replace("IDENTIFIER($holder_tbl)", "ssdb_integration.lr_strategy.hk_t").replace("\nWITH\n", "\nCREATE TABLE res AS WITH\n", 1)
-t = re.sub(r"\nORDER BY CASE WHEN kv.holder_n IS NULL(.*);\n", r"\nORDER BY CASE WHEN kv.holder_n IS NULL\1;\n", t)
+t = t.replace("IDENTIFIER($holder_tbl)", "ssdb_integration.lr_strategy.hk_t").replace("CREATE OR REPLACE TRANSIENT TABLE ssdb_integration.lr_strategy.td_x_key_names AS", "CREATE TABLE res AS")
+t = t.replace("FROM ssdb_integration.lr_strategy.td_x_key_names ORDER BY row_n", "FROM res ORDER BY row_n")
 print(t)
 PY
 cat <<'SQL'

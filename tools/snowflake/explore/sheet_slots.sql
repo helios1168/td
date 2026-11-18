@@ -1,7 +1,9 @@
 use role rl_ssdb_Integration_Lr_Strategy_Rw;
 use database ssdb_Integration;
 use schema lr_strategy;
---The shortlist sheet's slots by holder key, NO NAMES and no comment text: safe to send to an agent.  Read only, one result.
+--Saves its result as the transient table td_x_sheet_slots (replaced on every run, ROW_N its order) for filtering in a
+--scratch file with F6, e.g. SELECT * FROM td_x_sheet_slots WHERE ...  The last statement shows it.
+--The shortlist sheet's slots by holder key, NO NAMES and no comment text: safe to send to an agent.  It writes only its td_x table, one result.
 --Owner, 2026-11-18: "should we just work directly with the wholesaler name keys? so i can explicitly give you the logic
 --while still masking names".  A NAME cell may hold several names (Ann Lee or Bo Ray, Ann Lee / Bo Ray: split on the whole
 --word OR in any case and on a slash), the key is 03's: a comma flipped, upper case, single spaces.  A holder is a name in the
@@ -19,6 +21,7 @@ use schema lr_strategy;
 SET sheet_tbl  = 'ssdb_integration.lr_strategy.channel_contacts';
 SET terr_tbl   = 'ssdb_integration.lr_strategy.territories_tableau';
 SET holder_tbl = 'ssdb_integration.lr_strategy.td_holder_key';
+CREATE OR REPLACE TRANSIENT TABLE ssdb_integration.lr_strategy.td_x_sheet_slots AS
 WITH
 sp AS (SELECT x.rid, x.st, x.ch, p.index AS ix,
               NULLIF(NULLIF(NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
@@ -78,8 +81,9 @@ slots AS (SELECT l.state, l.channel, l.n_names, c.cands
           JOIN (SELECT rid, LISTAGG(tok, ' or ') WITHIN GROUP (ORDER BY ix, so, nn) AS cands FROM tk GROUP BY rid) c ON c.rid = l.rid),
 hs AS (SELECT DISTINCT source, holder_n, current_channels, zips_wh, zips_fi FROM hn
        WHERE holder_n IS NOT NULL AND k IN (SELECT k FROM sl WHERE k IS NOT NULL))
-SELECT section, state, channel, n_names, candidates, holder, current_channels, zips_wh, zips_fi FROM (
+SELECT section, state, channel, n_names, candidates, holder, current_channels, zips_wh, zips_fi,
+       ROW_NUMBER() OVER (ORDER BY o, state, channel, candidates, holder) AS row_n FROM (
   SELECT 1 AS o, 'SLOT' AS section, state, channel, n_names, cands AS candidates, CAST(NULL AS VARCHAR) AS holder,
          CAST(NULL AS VARCHAR) AS current_channels, CAST(NULL AS INTEGER) AS zips_wh, CAST(NULL AS INTEGER) AS zips_fi FROM slots
-  UNION ALL SELECT 2, 'HOLDER', NULL, NULL, NULL, NULL, source || ':R' || CAST(holder_n AS VARCHAR), current_channels, zips_wh, zips_fi FROM hs)
-ORDER BY o, state, channel, candidates, holder;
+  UNION ALL SELECT 2, 'HOLDER', NULL, NULL, NULL, NULL, source || ':R' || CAST(holder_n AS VARCHAR), current_channels, zips_wh, zips_fi FROM hs);
+SELECT * EXCLUDE (row_n) FROM ssdb_integration.lr_strategy.td_x_sheet_slots ORDER BY row_n;

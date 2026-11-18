@@ -29,7 +29,7 @@ sed -e "s/LISTAGG(DISTINCT ch, ' ') WITHIN GROUP (ORDER BY ch)/string_agg(DISTIN
     -e "s/REGEXP_SUBSTR(\([a-z.]*\), '\[^ \]+\$')/regexp_extract(\1, '[^ ]+\$')/g" \
     -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
-    -e 's/^WITH$/CREATE TABLE res AS WITH/' -e 's/^ORDER BY u.sheet_name, hk.src, hk.holder;$/;/' \
+    -e 's/^CREATE OR REPLACE TRANSIENT TABLE ssdb_integration.lr_strategy.td_x_sheet_unmatched AS$/CREATE TABLE res AS/' -e 's/FROM ssdb_integration.lr_strategy.td_x_sheet_unmatched ORDER BY row_n/FROM res ORDER BY row_n/' \
     "$here/sheet_unmatched.sql"
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
