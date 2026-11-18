@@ -26,13 +26,21 @@ class Err(Exception):
     pass
 
 
+def fake_split(stream, remove_comments):
+    """connector 4.8.1's split_statements on these inputs (checked on a scratch install): pieces on ;, comment lines
+    dropped, a comment-only piece as '' and a bare ; as ';'."""
+    assert remove_comments
+    text = "\n".join(l for l in stream.read().splitlines() if not l.strip().startswith("--"))
+    parts = [p.strip() + ";" for p in text.split(";")]
+    return [(p, False) for p in parts[:-1]] + [(parts[-1][:-1].strip(), None)]
+
+
 SEEN = []
 
 
 def fake_connector(results):
     """Each item: rows (a cursor with one column X), None (a cursor with no description) or Err (raised)."""
-    def stream(f, **kw):
-        assert kw == {"remove_comments": True}, kw  # a comment-only last piece would be an empty statement
+    def stream(f):
         SEEN.append(f.getvalue())
         for r in results:
             if r is Err:
@@ -40,6 +48,8 @@ def fake_connector(results):
             yield types.SimpleNamespace(description=[("X",)] if r is not None else None, fetchall=lambda r=r: r,
                                         sfqid=f"0000000{len(r) if r else 0}-0000-0000-0000-000000000000")
     conn = types.SimpleNamespace(execute_stream=stream)
+    util = types.SimpleNamespace(split_statements=fake_split)
+    sys.modules["snowflake.connector.util_text"] = util
     return types.SimpleNamespace(connect=lambda **kw: contextlib.nullcontext(conn), errors=types.SimpleNamespace(Error=Err))
 
 
@@ -122,7 +132,7 @@ def test_then_runs_the_named_file_after_in_one_session():
                     sys.modules.pop(k, None)
                 else:
                     sys.modules[k] = v
-        assert SEEN == ["update x\n--then tools/after.sql\n\nselect 'after'"], SEEN
+        assert SEEN == ["update x\n\nselect 'after'"], SEEN  # the --then file appended, the --then line itself a comment
         assert "then tools/after.sql" in buf.getvalue()
 
 
@@ -200,6 +210,11 @@ def test_then_follows_nested_files_and_refuses_a_loop():
         finally:
             run_sql.ROOT = root
         assert got == "--then s/fix.sql\n\nupdate x\n--then s/unmatched.sql\n\nselect u", got
+
+
+def test_statements_drops_what_snowflake_refuses_as_empty():
+    got = run_sql.statements("select 1;;\n-- c\nselect 2;\n;\n-- ran x\n-- A B\n", fake_split)
+    assert got == "select 1;\nselect 2;", repr(got)
 
 
 if __name__ == "__main__":

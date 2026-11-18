@@ -70,6 +70,12 @@ def with_then(sql, seen=()):
     return sql
 
 
+def statements(sql, split):
+    """sql as its statements, comments removed, without the pieces Snowflake refuses as empty: a comment-only one (a
+    last --then line, F6's earlier output) or a bare ; (a doubled ;;).  split is the connector's split_statements."""
+    return "\n".join(s for s, _ in split(io.StringIO(sql), remove_comments=True) if s.strip(" \t\r\n;"))
+
+
 def snapshot(cols, rows, n_stmt, secs):
     """The last result as Snowsight shows it: a table of its first ROWS rows, then its size."""
     import pandas as pd
@@ -88,9 +94,8 @@ def main(path, conn=None, browser=True):
     t, n, last, qid = time.time(), 0, None, None
     with (contextlib.nullcontext(conn) if conn else snowflake.connector.connect(connection_name="default")) as conn:
         try:
-            # remove_comments: a trailing comment-only piece (F6's earlier output, a last --then line) is otherwise sent as a
-            # statement of its own and Snowflake refuses it as empty (connector 4.8.1 split_statements)
-            for cur in conn.execute_stream(io.StringIO(sql), remove_comments=True):
+            from snowflake.connector.util_text import split_statements
+            for cur in conn.execute_stream(io.StringIO(statements(sql, split_statements))):
                 n += 1
                 if cur.description:
                     last, qid = ([d[0] for d in cur.description], cur.fetchall()), cur.sfqid
