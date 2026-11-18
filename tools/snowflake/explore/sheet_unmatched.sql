@@ -6,7 +6,7 @@ use schema lr_strategy;
 --beside the holders of either firm with the same last name, to tell a spelling difference from a new hire.  The key is
 --03's: a name with a comma flipped, upper case, single spaces.  Read only, one result.  A name with no candidate has
 --one row with the holder columns blank.  Fix a spelling difference in the sheet table, then Run All 03.
-SET sheet_tbl = 'ssdb_integration.lr_strategy.REPLACE_WITH_THE_SHEET_TABLE';
+SET sheet_tbl = 'ssdb_integration.lr_strategy.channel_contacts';
 SET terr_tbl  = 'ssdb_integration.lr_strategy.territories_tableau';
 WITH
 s AS (SELECT NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0

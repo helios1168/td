@@ -11,8 +11,8 @@ use schema lr_strategy;
 --  STATE      each STATE value that no territory row has as its STATE: rows and names
 --  MATCH      the sheet's names by the firms that have a holder with that key (CRBG, EQH, CRBG EQH, or NO HOLDER)
 --  NOT IN SHEET   per firm, the WH or FI holders whose key is not in the sheet
---Set sheet_tbl to the uploaded table.
-SET sheet_tbl = 'ssdb_integration.lr_strategy.REPLACE_WITH_THE_SHEET_TABLE';
+--sheet_tbl is the uploaded sheet, channel_contacts.
+SET sheet_tbl = 'ssdb_integration.lr_strategy.channel_contacts';
 SET terr_tbl  = 'ssdb_integration.lr_strategy.territories_tableau';
 WITH
 s AS (SELECT NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0

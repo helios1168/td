@@ -1944,7 +1944,7 @@ The owner uploaded a preliminary assignments sheet (NAME, STATE, COMMENT, CHANNE
 DC), CHANNEL NATIONAL 56 rows (14 names), REGIONAL 60 (30), WH 50 (8); 40 slots with no name; 49 names, all "First
 Last"; on one key (a comma name flipped, upper case, single spaces) 20 match a CRBG holder, 12 an EQH holder, none both,
 17 none; WH or FI holders not on the sheet: CRBG 15, EQH 44. Owner, 2026-11-18: "regional = wifi. 2 is the shortlist of
-names, we want to flag the open territories. and yes lets go". So 03 (`SET sheet_tbl`) makes each named person KEPT Y,
+names, we want to flag the open territories. and yes lets go". The table is `channel_contacts` (owner). So 03 (`SET sheet_tbl`) makes each named person KEPT Y,
 ROLE from CHANNEL (REGIONAL is WIFI, NATIONAL, WH), ASSIGNED_STATES the codes of their slots' states, and every other WH
 or FI holder KEPT N, whose territory 04 then shows as NOT KEPT (OPEN). A name no holder has comes back as EDIT NOT
 MATCHED (source SHEET); `explore/sheet_unmatched.sql` (names, owner's screen only) puts each beside the holders with its

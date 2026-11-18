@@ -40,7 +40,7 @@ use schema lr_strategy;
 
 SET terr_tbl      = 'ssdb_integration.lr_strategy.territories_tableau';
 SET assign_tbl    = 'ssdb_integration.lr_strategy.td_assignments';
-SET sheet_tbl     = 'ssdb_integration.lr_strategy.REPLACE_WITH_THE_SHEET_TABLE';
+SET sheet_tbl     = 'ssdb_integration.lr_strategy.channel_contacts';
 
 --the roster before edits
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_base AS
