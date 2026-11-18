@@ -74,6 +74,9 @@ channels."
   at this point. you may update the global conventions to reflect this"; it replaces the 2026-10-30 rule: "the real
   concern is people or individual's names. or sales dollars associated with firm names"). Other people's names stay
   out too, and carrier tables stay behind the table variables (unchanged code).
+- Terminal steps for the owner's Windows machine come as one script in the repo, run with the `.venv` activated, not
+  as commands to type (owner, 2026-11-17: "going forward jsut include the shell commands as a script I can run and be
+  done instead of manually typing things from this screen"). First: `tools/snowflake/setup_snow.ps1`.
 
 ## Settled
 
