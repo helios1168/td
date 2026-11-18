@@ -69,13 +69,16 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_edit (sourc
 --is KEPT Y, ROLE from CHANNEL (REGIONAL is WIFI), ASSIGNED_STATES the codes of their rows' STATE (full names).  A person
 --matches a holder of either firm on one key: a name with a comma flipped ("Lee, Ann" to "Ann Lee"), upper case, single
 --spaces.  A name no holder has comes back as EDIT NOT MATCHED with source SHEET, a person on two channels as TWO ANSWERS,
---an unknown channel or state as not a listed value.  Every other WH or FI holder is KEPT N, so their territory shows as
---open (only when the sheet names anyone).  A slot with no name (an open seat) sets nothing.  The owner edits below come
---later, so they win.
+--an unknown or blank channel or state as not a listed value (BLANK CHANNEL, BLANK_STATE).  Every other WH or FI holder
+--is KEPT N, so their territory shows as open (only when the sheet names anyone).  A slot with no name (an open seat)
+--sets nothing.  The owner edits below come later, so they win.
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role, assigned_states)
-SELECT COALESCE(b.source, 'SHEET'), COALESCE(b.wholesaler, MIN(s.name)), 'Y', CASE WHEN s.ch = 'REGIONAL' THEN 'WIFI' ELSE s.ch END,
-       LISTAGG(DISTINCT COALESCE(c.code, REPLACE(s.st, ' ', '_')), ' ') WITHIN GROUP (ORDER BY COALESCE(c.code, REPLACE(s.st, ' ', '_')))
-FROM (SELECT TRIM(name) AS name, UPPER(TRIM(channel)) AS ch, UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))) AS st,
+SELECT COALESCE(b.source, 'SHEET'), COALESCE(b.wholesaler, MIN(s.name)), 'Y',
+       CASE WHEN s.ch = 'REGIONAL' THEN 'WIFI' ELSE COALESCE(s.ch, 'BLANK CHANNEL') END,
+       LISTAGG(DISTINCT COALESCE(c.code, REPLACE(s.st, ' ', '_'), 'BLANK_STATE'), ' ')
+         WITHIN GROUP (ORDER BY COALESCE(c.code, REPLACE(s.st, ' ', '_'), 'BLANK_STATE'))
+FROM (SELECT TRIM(name) AS name, NULLIF(UPPER(TRIM(REGEXP_REPLACE(channel, '\\s+', ' '))), '') AS ch,
+             NULLIF(UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))), '') AS st,
              NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
                                    ELSE name END, '\\s+', ' '))), '') AS k
       FROM IDENTIFIER($sheet_tbl)) s
@@ -102,8 +105,10 @@ WHERE zips_wh + zips_fi > 0
   AND UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN wholesaler) > 0 THEN SPLIT_PART(wholesaler, ',', 2) || ' ' || SPLIT_PART(wholesaler, ',', 1)
                                    ELSE wholesaler END, '\\s+', ' '))) NOT IN
       (SELECT UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
-                                   ELSE name END, '\\s+', ' '))) FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(TRIM(name), '') IS NOT NULL)
-  AND EXISTS (SELECT 1 FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(TRIM(name), '') IS NOT NULL);
+                                   ELSE name END, '\\s+', ' '))) FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
+                                   ELSE name END, '\\s+', ' '))), '') IS NOT NULL)
+  AND EXISTS (SELECT 1 FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
+                                   ELSE name END, '\\s+', ' '))), '') IS NOT NULL);
 
 --owner edits: begin
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) VALUES

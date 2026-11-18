@@ -2,7 +2,8 @@
 # Runs sheet_profile.sql in DuckDB on a made-up sheet and territories table and checks its one result against answers
 # worked out by hand: a name matched to both firms whatever its case and spacing, "Last, First" flipped to match CRBG,
 # a double space in a holder's name, a vacancy (OPEN) and a non-WH/FI holder left out of NOT IN SHEET, a blank name,
-# state and channel, an empty comment not counted, a state no territory has (Texas, XX), a name with no holder.
+# state and channel, an empty comment not counted, a full state name (Texas), a name with no holder, and a name typed
+# as a CHANNEL and as a STATE (Jane Doe, John Roe) shown only as OTHER.
 # Prints "sheet_profile_test: ok" or stops at the failed check.  Run from anywhere: sh sheet_profile_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -17,13 +18,14 @@ INSERT INTO ssdb_integration.lr_strategy.terr_t (source, name, state, channel, c
 CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, comment TEXT, channel TEXT);
 INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('Ann Lee','MA',NULL,'WH'), ('ann  lee','nh','',' wh'), ('Orr, Abe','Texas','keep','FI'), ('Bo Ray',NULL,NULL,NULL),
-  ('No One','XX',NULL,'NATIONAL'), ('  ','MA',NULL,'FI');
+  ('No One','John Roe',NULL,'Jane Doe'), ('  ','MA',NULL,'FI');
 SQL
 sed -e "s/LISTAGG(DISTINCT h.src, ' ') WITHIN GROUP (ORDER BY h.src)/string_agg(DISTINCT h.src, ' ' ORDER BY h.src)/" \
     -e "s/'\\\\\\\\s+', ' ')/'\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' \
     -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
     -e 's/^WITH$/CREATE TABLE res AS WITH/' \
+    -e 's/ FROM VALUES$/ FROM (VALUES/' -e "s/('WYOMING', 'WY'))/('WYOMING', 'WY')) v(column1, column2))/" \
     -e 's/^SELECT section, item, n_rows, n_names FROM r ORDER BY o, item;$/SELECT row_number() OVER (ORDER BY o, item) AS i, section, item, n_rows, n_names FROM r;/' \
     "$here/sheet_profile.sql"
 cat <<'SQL'
@@ -33,8 +35,8 @@ SELECT chk('the result',
   (SELECT string_agg(concat_ws('|', section, item, COALESCE(CAST(n_rows AS VARCHAR), '-'), COALESCE(CAST(n_names AS VARCHAR), '-')), ' / ' ORDER BY i) FROM res),
   'ROWS|blank channel|1|1 / ROWS|blank name|1|- / ROWS|blank state|1|1 / ROWS|name written with a comma|1|1'
   || ' / ROWS|names on 2+ rows|-|1 / ROWS|rows|6|4 / ROWS|with a comment|1|1'
-  || ' / CHANNEL|(blank)|1|1 / CHANNEL|FI|2|1 / CHANNEL|NATIONAL|1|1 / CHANNEL|WH|2|1'
-  || ' / STATE|TEXAS|1|1 / STATE|XX|1|1'
+  || ' / CHANNEL|(blank)|1|1 / CHANNEL|FI|2|1 / CHANNEL|OTHER|1|1 / CHANNEL|WH|2|1'
+  || ' / STATE|(blank)|1|1 / STATE|OTHER|1|1 / STATE|full state name|1|1 / STATE|two-letter code|3|1'
   || ' / MATCH|CRBG|1|1 / MATCH|CRBG EQH|2|1 / MATCH|EQH|1|1 / MATCH|NO HOLDER|1|1'
   || ' / NOT IN SHEET|EQH|-|1');
 SELECT 'sheet_profile_test: ok';

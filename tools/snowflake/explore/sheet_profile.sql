@@ -7,8 +7,9 @@ use schema lr_strategy;
 --comma is flipped ("Lee, Ann" to "Ann Lee"), then upper case, single spaces.  CRBG writes "Last, First", EQH "First Last".
 --Sections:
 --  ROWS       rows, names, names on 2+ rows, blanks, comments, names written with a comma
---  CHANNEL    each CHANNEL value: rows and names
---  STATE      each STATE value that no territory row has as its STATE: rows and names
+--  CHANNEL    NATIONAL, REGIONAL, WH, FI, WIFI, (blank) or OTHER: rows and names
+--  STATE      a territory's two-letter code, a full state name, (blank) or OTHER: rows and names
+--No sheet text but those labels reaches the result.
 --  MATCH      the sheet's names by the firms that have a holder with that key (CRBG, EQH, CRBG EQH, or NO HOLDER)
 --  NOT IN SHEET   per firm, the WH or FI holders whose key is not in the sheet
 --sheet_tbl is the uploaded sheet, channel_contacts.
@@ -27,6 +28,18 @@ t AS (SELECT UPPER(TRIM(source)) AS src, UPPER(TRIM(channel)) AS ch, UPPER(TRIM(
                                                    THEN SPLIT_PART(nm, ',', 2) || ' ' || SPLIT_PART(nm, ',', 1)
                                                    ELSE nm END, '\\s+', ' '))), '') AS k
       FROM (SELECT source, channel, state, COALESCE(NULLIF(TRIM(clean_name), ''), name) AS nm FROM IDENTIFIER($terr_tbl))),
+fs AS (SELECT column1 AS st FROM VALUES
+       ('ALABAMA', 'AL'), ('ALASKA', 'AK'), ('ARIZONA', 'AZ'), ('ARKANSAS', 'AR'), ('CALIFORNIA', 'CA'),
+       ('COLORADO', 'CO'), ('CONNECTICUT', 'CT'), ('DELAWARE', 'DE'), ('DISTRICT OF COLUMBIA', 'DC'),
+       ('FLORIDA', 'FL'), ('GEORGIA', 'GA'), ('HAWAII', 'HI'), ('IDAHO', 'ID'), ('ILLINOIS', 'IL'),
+       ('INDIANA', 'IN'), ('IOWA', 'IA'), ('KANSAS', 'KS'), ('KENTUCKY', 'KY'), ('LOUISIANA', 'LA'), ('MAINE', 'ME'),
+       ('MARYLAND', 'MD'), ('MASSACHUSETTS', 'MA'), ('MICHIGAN', 'MI'), ('MINNESOTA', 'MN'), ('MISSISSIPPI', 'MS'),
+       ('MISSOURI', 'MO'), ('MONTANA', 'MT'), ('NEBRASKA', 'NE'), ('NEVADA', 'NV'), ('NEW HAMPSHIRE', 'NH'),
+       ('NEW JERSEY', 'NJ'), ('NEW MEXICO', 'NM'), ('NEW YORK', 'NY'), ('NORTH CAROLINA', 'NC'),
+       ('NORTH DAKOTA', 'ND'), ('OHIO', 'OH'), ('OKLAHOMA', 'OK'), ('OREGON', 'OR'), ('PENNSYLVANIA', 'PA'),
+       ('RHODE ISLAND', 'RI'), ('SOUTH CAROLINA', 'SC'), ('SOUTH DAKOTA', 'SD'), ('TENNESSEE', 'TN'),
+       ('TEXAS', 'TX'), ('UTAH', 'UT'), ('VERMONT', 'VT'), ('VIRGINIA', 'VA'), ('WASHINGTON', 'WA'),
+       ('WEST VIRGINIA', 'WV'), ('WISCONSIN', 'WI'), ('WYOMING', 'WY')),
 h AS (SELECT DISTINCT src, k, CASE WHEN ch IN ('WH', 'FI') THEN 1 ELSE 0 END AS whfi
       FROM t WHERE k IS NOT NULL AND k <> 'OPEN' AND src IS NOT NULL),
 m AS (SELECT sk.k, COALESCE(LISTAGG(DISTINCT h.src, ' ') WITHIN GROUP (ORDER BY h.src), '') AS srcs
@@ -39,9 +52,13 @@ r AS (
   UNION ALL SELECT 1, 'ROWS', 'blank channel', SUM(CASE WHEN ch IS NULL THEN 1 ELSE 0 END), COUNT(DISTINCT CASE WHEN ch IS NULL THEN k END) FROM s
   UNION ALL SELECT 1, 'ROWS', 'with a comment', SUM(cm), COUNT(DISTINCT CASE WHEN cm = 1 THEN k END) FROM s
   UNION ALL SELECT 1, 'ROWS', 'name written with a comma', SUM(comma), COUNT(DISTINCT CASE WHEN comma = 1 THEN k END) FROM s
-  UNION ALL SELECT 2, 'CHANNEL', COALESCE(ch, '(blank)'), COUNT(*), COUNT(DISTINCT k) FROM s GROUP BY ch
-  UNION ALL SELECT 3, 'STATE', st, COUNT(*), COUNT(DISTINCT k) FROM s
-            WHERE st IS NOT NULL AND st NOT IN (SELECT st FROM t WHERE st IS NOT NULL) GROUP BY st
+  UNION ALL SELECT 2, 'CHANNEL', l, COUNT(*), COUNT(DISTINCT k)
+            FROM (SELECT k, CASE WHEN ch IS NULL THEN '(blank)' WHEN ch IN ('NATIONAL', 'REGIONAL', 'WH', 'FI', 'WIFI') THEN ch
+                                 ELSE 'OTHER' END AS l FROM s) GROUP BY l
+  UNION ALL SELECT 3, 'STATE', l, COUNT(*), COUNT(DISTINCT k)
+            FROM (SELECT k, CASE WHEN st IS NULL THEN '(blank)' WHEN st IN (SELECT st FROM t WHERE st IS NOT NULL) THEN 'two-letter code'
+                                 WHEN UPPER(REGEXP_REPLACE(st, '\\s+', ' ')) IN (SELECT st FROM fs) THEN 'full state name'
+                                 ELSE 'OTHER' END AS l FROM s) GROUP BY l
   UNION ALL SELECT 4, 'MATCH', CASE WHEN m.srcs = '' THEN 'NO HOLDER' ELSE m.srcs END, COUNT(*), COUNT(DISTINCT s.k)
             FROM s JOIN m ON m.k = s.k GROUP BY m.srcs
   UNION ALL SELECT 5, 'NOT IN SHEET', src, NULL, COUNT(DISTINCT k) FROM h
