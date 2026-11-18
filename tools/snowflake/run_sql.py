@@ -3,8 +3,9 @@ of the last statement's result (its first rows) on screen and all of its rows in
 
     .\\.venv\\Scripts\\python.exe tools\\snowflake\\run_sql.py <file.sql>
 
-A line `--then <path>` (repo-relative) runs that file next in the same session, so its result is the one shown:
-data/safe/fix_names.sql ends with `--then tools/snowflake/explore/sheet_unmatched.sql`.  The file is always named: guessing it (the .sql saved last) ran the wrong script (owner, 2026-11-17). The popup's first
+A line `--then <path>` (repo-relative) runs that file next in the same session, so its result is the one shown, and
+that file's own --then lines after it: data/safe/fix_names.sql ends with `--then tools/snowflake/explore/sheet_unmatched.sql`,
+and a scratch buffer holding only `--then data/safe/fix_names.sql` runs both with F6, the output under that line.  The file is always named: guessing it (the .sql saved last) ran the wrong script (owner, 2026-11-17). The popup's first
 line names the file it ran. The connection is [default] in
 ~/.snowflake/connections.toml. With data/safe/snowsight_url.txt holding any Snowsight query-detail URL copied from the
 browser, it also opens that page for the last result (Snowsight shows a query's results to the user who ran it). It
@@ -57,6 +58,18 @@ def snowsight_url(qid, path=None):
     return QID.sub(qid, url, count=1)
 
 
+def with_then(sql, seen=()):
+    """sql with each `--then <path>` file appended after it, and theirs after them (a loop is refused)."""
+    for then in re.findall(r"^--then\s+(\S+)\s*$", sql, re.M):
+        key = os.path.normcase(os.path.normpath(then))
+        if key in seen:
+            raise SystemExit(f"--then loop: {then} runs itself")
+        print(f"then {then}")
+        with open(os.path.join(ROOT, then), encoding="utf-8") as f:
+            sql += "\n" + with_then(f.read(), seen + (key,))
+    return sql
+
+
 def snapshot(cols, rows, n_stmt, secs):
     """The last result as Snowsight shows it: a table of its first ROWS rows, then its size."""
     import pandas as pd
@@ -71,10 +84,7 @@ def main(path, conn=None, browser=True):
     print(f"ran {os.path.relpath(path, ROOT)}")
     with open(path, encoding="utf-8") as f:
         sql = f.read()
-    for then in re.findall(r"^--then\s+(\S+)\s*$", sql, re.M):
-        print(f"then {then}")
-        with open(os.path.join(ROOT, then), encoding="utf-8") as f:
-            sql += "\n" + f.read()
+    sql = with_then(sql)
     t, n, last, qid = time.time(), 0, None, None
     with (contextlib.nullcontext(conn) if conn else snowflake.connector.connect(connection_name="default")) as conn:
         try:

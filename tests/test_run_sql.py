@@ -181,6 +181,26 @@ def test_stdin_gives_the_selection_back_then_the_output_as_comments():
     assert run_sql.piped(b"select\r\n 1;\r\n", fake_run) == b"select\r\n 1;\r\n-- ran x\r\n-- A  B\r\n-- 1  2\r\n"
     assert seen == ["select 1;\n", "select 1;", "select\r\n 1;\r\n"]  # the SQL run is the selection, unchanged
 
+def test_then_follows_nested_files_and_refuses_a_loop():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "s"))
+        open(os.path.join(d, "s", "fix.sql"), "w").write("update x\n--then s/unmatched.sql\n")
+        open(os.path.join(d, "s", "unmatched.sql"), "w").write("select u")
+        open(os.path.join(d, "s", "loop.sql"), "w").write("--then s/loop.sql\n")
+        root, run_sql.ROOT = run_sql.ROOT, d
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                got = run_sql.with_then("--then s/fix.sql\n")
+                try:
+                    run_sql.with_then("--then s/loop.sql\n")
+                    raise AssertionError("a --then loop must refuse")
+                except SystemExit as e:
+                    assert "loop" in str(e)
+        finally:
+            run_sql.ROOT = root
+        assert got == "--then s/fix.sql\n\nupdate x\n--then s/unmatched.sql\n\nselect u", got
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
