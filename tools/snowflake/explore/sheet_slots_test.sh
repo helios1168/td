@@ -43,7 +43,7 @@ sed -e "s/LISTAGG(\(DISTINCT \)\{0,1\}\([a-z]*\), '\([ a-z]*\)') WITHIN GROUP (O
     -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/' \
     -e 's/IDENTIFIER(\$holder_tbl)/ssdb_integration.lr_strategy.hk_t/' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
-    -e 's/^CREATE OR REPLACE TRANSIENT TABLE ssdb_integration.lr_strategy.td_x_sheet_slots AS$/CREATE TABLE res AS/' -e 's/FROM ssdb_integration.lr_strategy.td_x_sheet_slots ORDER BY row_n/FROM res ORDER BY row_n/' "$here/sheet_slots.sql"
+    -e 's/^CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.sheet_slots AS$/CREATE TABLE res AS/' -e 's/FROM ssdb_integration.lr_strategy.sheet_slots ORDER BY row_n/FROM res ORDER BY row_n/' "$here/sheet_slots.sql"
 cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;

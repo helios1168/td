@@ -1,9 +1,10 @@
 use role rl_ssdb_Integration_Lr_Strategy_Rw;
 use database ssdb_Integration;
 use schema lr_strategy;
---Saves its result as the transient table td_x_sheet_slots (replaced on every run, ROW_N its order) for filtering in a
---scratch file with F6, e.g. SELECT * FROM td_x_sheet_slots WHERE ...  The last statement shows it.
---The shortlist sheet's slots by holder key, NO NAMES and no comment text: safe to send to an agent.  It writes only its td_x table, one result.
+--Saves its result as the temporary table sheet_slots (replaced on every run, ROW_N its order) for filtering in a
+--scratch file with F6, e.g. SELECT * FROM sheet_slots WHERE ...  It lives as long as the session: with
+--sql_session.ps1 running, F5 here then F6 there share it.  The last statement shows it.
+--The shortlist sheet's slots by holder key, NO NAMES and no comment text: safe to send to an agent.  It writes only its temporary table, one result.
 --Owner, 2026-11-18: "should we just work directly with the wholesaler name keys? so i can explicitly give you the logic
 --while still masking names".  A NAME cell may hold several names (Ann Lee or Bo Ray, Ann Lee / Bo Ray: split on the whole
 --word OR in any case and on a slash), the key is 03's: a comma flipped, upper case, single spaces.  A holder is a name in the
@@ -21,7 +22,7 @@ use schema lr_strategy;
 SET sheet_tbl  = 'ssdb_integration.lr_strategy.channel_contacts';
 SET terr_tbl   = 'ssdb_integration.lr_strategy.territories_tableau';
 SET holder_tbl = 'ssdb_integration.lr_strategy.td_holder_key';
-CREATE OR REPLACE TRANSIENT TABLE ssdb_integration.lr_strategy.td_x_sheet_slots AS
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.sheet_slots AS
 WITH
 sp AS (SELECT x.rid, x.st, x.ch, p.index AS ix,
               NULLIF(NULLIF(NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value) > 0
@@ -86,4 +87,4 @@ SELECT section, state, channel, n_names, candidates, holder, current_channels, z
   SELECT 1 AS o, 'SLOT' AS section, state, channel, n_names, cands AS candidates, CAST(NULL AS VARCHAR) AS holder,
          CAST(NULL AS VARCHAR) AS current_channels, CAST(NULL AS INTEGER) AS zips_wh, CAST(NULL AS INTEGER) AS zips_fi FROM slots
   UNION ALL SELECT 2, 'HOLDER', NULL, NULL, NULL, NULL, source || ':R' || CAST(holder_n AS VARCHAR), current_channels, zips_wh, zips_fi FROM hs);
-SELECT * EXCLUDE (row_n) FROM ssdb_integration.lr_strategy.td_x_sheet_slots ORDER BY row_n;
+SELECT * EXCLUDE (row_n) FROM ssdb_integration.lr_strategy.sheet_slots ORDER BY row_n;
