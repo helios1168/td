@@ -188,7 +188,13 @@ def load_table(conn, kind, cache_dir=GEO_DIR, tol=TOL_M):
     if not os.path.exists(path):
         print(f"reading {table} from Snowflake (once; cached in {path})", flush=True)
         query(conn, "ALTER SESSION SET GEOGRAPHY_OUTPUT_FORMAT='WKB'")
-        rows = query(conn, f"SELECT {key}, ST_ASWKB(ST_SIMPLIFY(geo_boundary, {tol})) FROM {DB}.{table}")
+        # preserve_collapsed TRUE: by default a small polygon simplified away comes back NULL; the shape as is if it still does
+        rows = query(conn, f"SELECT {key}, ST_ASWKB(COALESCE(ST_SIMPLIFY(geo_boundary, {tol}, TRUE), geo_boundary)) FROM {DB}.{table}")
+        empty = [r[0] for r in rows if r[1] is None]
+        if empty:
+            print(f"{table}: {len(empty)} rows have no boundary, left out: {', '.join(map(str, empty[:20]))}"
+                  + (" ..." if len(empty) > 20 else ""), flush=True)
+        rows = [r for r in rows if r[1] is not None]
         keys = [r[0] for r in rows]
         geoms = shapely.from_wkb([wkb_bytes(r[1]) for r in rows])
         geoms = project(geoms)

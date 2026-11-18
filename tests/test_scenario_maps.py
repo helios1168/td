@@ -286,15 +286,21 @@ def test_shapes_are_cached_by_table_and_tolerance_and_read_from_snowflake_once()
             class C(Cur):
                 def execute(self, sql):
                     conn.queries.append(sql)
-                    self.rows = [("20", poly)]
+                    self.rows = [("20", poly), ("21", None)]          # 21: no boundary (NULL), left out and reported
             return C()
 
     with tempfile.TemporaryDirectory() as d:
         conn = C2([])
-        a = sm.load_table(conn, "state", d)
+        buf = io.StringIO()
+        old, sys.stdout = sys.stdout, buf
+        try:
+            a = sm.load_table(conn, "state", d)
+        finally:
+            sys.stdout = old
+        assert "1 rows have no boundary, left out: 21" in buf.getvalue(), buf.getvalue()
         n = len(conn.queries)
         b = sm.load_table(conn, "state", d)
-        assert len(conn.queries) == n and any("ST_SIMPLIFY(geo_boundary, 250)" in q for q in conn.queries) and any("WKB" in q for q in conn.queries)
+        assert len(conn.queries) == n and any("COALESCE(ST_SIMPLIFY(geo_boundary, 250, TRUE), geo_boundary)" in q for q in conn.queries) and any("WKB" in q for q in conn.queries)
         assert list(a) == ["20"] and a["20"].equals(b["20"])
         assert os.listdir(d) == ["census_states_250m_5070.tsv.gz"]
         x0, y0, x1, y1 = a["20"].bounds
