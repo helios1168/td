@@ -41,6 +41,7 @@ ROWS = 50
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT = os.path.join(ROOT, "data", "safe", "last.csv")
 URL = os.path.join(ROOT, "data", "safe", "snowsight_url.txt")
+THEN = re.compile(r"^\s*--\s*then\s+(\S+)\s*$", re.M | re.I)  # --then <path>, -- then, indented, any case
 TOKEN = os.path.join(ROOT, "data", "safe", "sql_session.token")
 PORT = 47821
 QID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
@@ -60,7 +61,7 @@ def snowsight_url(qid, path=None):
 
 def with_then(sql, seen=()):
     """sql with each `--then <path>` file appended after it, and theirs after them (a loop is refused)."""
-    for then in re.findall(r"^--then\s+(\S+)\s*$", sql, re.M):
+    for then in THEN.findall(sql):
         key = os.path.normcase(os.path.normpath(then))
         if key in seen:
             raise SystemExit(f"--then loop: {then} runs itself")
@@ -102,6 +103,9 @@ def main(path, conn=None, browser=True):
         except snowflake.connector.errors.Error as e:
             print(f"ERROR in statement {n + 1} ({n} ran):\n{e}")
             return 1
+    if n == 0:
+        print("nothing to run: the SQL is only comments (a line that runs a file reads --then <path from the repo root>)")
+        return 0
     if last is None:
         print(f"{n} statements, none returned rows")
         return 0

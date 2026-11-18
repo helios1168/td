@@ -210,6 +210,8 @@ def test_then_follows_nested_files_and_refuses_a_loop():
         finally:
             run_sql.ROOT = root
         assert got == "--then s/fix.sql\n\nupdate x\n--then s/unmatched.sql\n\nselect u", got
+        for line in ("-- then s/unmatched.sql", "  --then s/unmatched.sql", "--THEN s/unmatched.sql\r"):
+            assert run_sql.THEN.findall(line) == ["s/unmatched.sql"], line
 
 
 def test_statements_drops_what_snowflake_refuses_as_empty():
