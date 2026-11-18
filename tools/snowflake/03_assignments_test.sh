@@ -36,7 +36,7 @@ SQL
 # The edits: rows beside the EXAMPLE row (one statement), then a later rule from the roster before edits.
 sed -e "s/LISTAGG(\([a-z]*\), ' ') WITHIN GROUP (ORDER BY [a-z]*)/string_agg(\1, ' ' ORDER BY \1)/" \
     -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/g" -e "s/\\\\\\\\s/\\\\s/g" -e "s/', '|')/', '|', 'g')/" \
-    -e "s/LATERAL SPLIT_TO_TABLE(\\(x\\.[a-z_]*\\), '|') p/LATERAL (SELECT unnest(string_split(\\1, '|')) AS value) p/" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
+    -e "s/LATERAL SPLIT_TO_TABLE(\\(x\\.[a-z_]*\\), '|') p/LATERAL (SELECT unnest(string_split(\\1, '|')) AS value) p/" -e "s/[\$]scenario/''/g" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e 's/TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()/TIMESTAMP DEFAULT now()/' \
     -e "s/^  ('EXAMPLE', 'Last, First', 'N', '');\$/  ('EXAMPLE', 'Last, First', 'N', ''), ('a', 'ann  LEE', 'n', ''), ('B', 'Gil Hu', 'Y', 'national'), ('B', 'gil hu', 'y', 'NATIONAL'), ('A', 'Abe Orr', 'Y', 'BOSS'), ('A', 'No One', 'Y', 'WH'), ('A', 'No One', 'Y', 'WH'), ('B', 'Ann Lee', 'N', ''), ('B', 'ann lee', 'Y', 'WH'), ('A', 'Bo Ray', 'N', '');/" \
     -e "s/^--key edits: end\$/INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role) VALUES ('R5', 'Y', 'FI'), ('R2', 'Y', 'WH'), ('R8', 'Y', 'WH'), ('R99', 'Y', 'WH'); INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, assigned_states) VALUES ('R1', 'MA'); INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, holder, kept) VALUES ('A', 'No One', 'R4', 'N');/" \

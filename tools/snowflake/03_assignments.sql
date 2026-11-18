@@ -34,8 +34,14 @@ use schema lr_strategy;
 --The shortlist sheet comes first.  A sheet cell with several names (Ann Lee or Bo Ray, Ann Lee / Bo Ray: split on the whole
 --word OR in any case and on a slash, any number of names) is each name on its own, each KEPT Y with the slot's role and states as
 --a single name, and the result's STATUS is EDITED (EITHER) for a wholesaler with such a row.  Owner, 2026-11-18: "yes option 1".
+--Scenario (SET scenario, '' for none): a key edit row with a SCENARIO applies only when it equals SET scenario (trimmed, any
+--case); a row with SCENARIO NULL applies to every scenario; with SET scenario '' the scenario rows are all ignored.  Rows
+--that do not apply are as if absent (not reported as unmatched).  A scenario no key edit names gives a first result row
+--STATUS SCENARIO NOT DEFINED (WHOLESALER the name); the table is still built, without scenario edits.  tools/maps/scenario_maps.py
+--replaces the value of the SET scenario line.
 --To change the roster: change the statements, Run All, then Run All 04_assigned_coverage.sql.
 --Result: STATUS first.  DEFAULT, EDITED and EDITED (EITHER) rows are fine.  Rows to fix come first:
+--  SCENARIO NOT DEFINED                   (first row) SET scenario is not '' and no key edit names it
 --  EDIT NOT MATCHED: NO SUCH WHOLESALER   the edit's SOURCE and name are not a holder of the territories table, or its
 --                                         HOLDER key resolves to no roster row (source KEY, the key in the WHOLESALER column)
 --  TWO ANSWERS IN ONE EDIT STATEMENT
@@ -52,6 +58,7 @@ SET terr_tbl      = 'ssdb_integration.lr_strategy.territories_tableau';
 SET assign_tbl    = 'ssdb_integration.lr_strategy.td_assignments';
 SET sheet_tbl     = 'ssdb_integration.lr_strategy.channel_contacts';
 SET holder_tbl    = 'ssdb_integration.lr_strategy.td_holder_key';
+SET scenario    = '';
 
 --the roster before edits
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_base AS
@@ -73,8 +80,8 @@ SELECT h.source, h.wholesaler, h.nm, hc.current_channels, h.zips_wh, h.zips_fi, 
 FROM h JOIN hc ON hc.source = h.source AND hc.nm = h.nm JOIN hs ON hs.source = h.source AND hs.nm = h.nm;
 
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_edit (source VARCHAR, wholesaler VARCHAR, holder VARCHAR,
-  kept VARCHAR, role VARCHAR, assigned_states VARCHAR, note VARCHAR, edited_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP());
---HOLDER is a key R<n>, NOTE is set only by the sheet below (EITHER: the row came from a cell with several names)
+  kept VARCHAR, role VARCHAR, assigned_states VARCHAR, note VARCHAR, scenario VARCHAR, edited_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP());
+--HOLDER is a key R<n>, SCENARIO a scenario name of the key edits (see SET scenario), NOTE is set only by the sheet below (EITHER: the row came from a cell with several names)
 
 --the roster's holder keys, R<n> of td_holder_key (read only) by source and normalized name, for the edits by key
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_hk AS
@@ -140,7 +147,18 @@ WHERE zips_wh + zips_fi > 0
   AND EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_m_sheet);
 
 --key edits: begin
---(edits by holder key R<n>, no names: INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states) VALUES ...)
+--(edits by holder key R<n>, no names: INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ...)
+--The three scenarios (owner, 2026-11-18, issue 147), the role only: the sheet gives each of R47, R108 and R105 two channels in
+--one state, this later statement's role wins.  R47 and R108 are CRBG and EQH in CA, R105 is EQH.
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R47', NULL, 'NATIONAL', NULL, 'CA1_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R108', NULL, 'WIFI', NULL, 'CA1_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R105', NULL, 'NATIONAL', NULL, 'CA1_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R47', NULL, 'WIFI', NULL, 'CA2_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R108', NULL, 'NATIONAL', NULL, 'CA2_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R105', NULL, 'NATIONAL', NULL, 'CA2_R105N');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R47', NULL, 'NATIONAL', NULL, 'CA1_R105R');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R108', NULL, 'WIFI', NULL, 'CA1_R105R');
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (holder, kept, role, assigned_states, scenario) VALUES ('R105', NULL, 'WIFI', NULL, 'CA1_R105R');
 --key edits: end
 
 --owner edits: begin
@@ -158,7 +176,8 @@ e0 AS (SELECT CASE WHEN NULLIF(TRIM(x.holder), '') IS NULL THEN UPPER(TRIM(x.sou
               CASE WHEN x.note = 'EITHER' THEN 1 ELSE 0 END AS either
        FROM ssdb_integration.lr_strategy.tmp_m_edit x
        LEFT JOIN ssdb_integration.lr_strategy.tmp_m_hk k ON k.holder = UPPER(TRIM(x.holder))
-       WHERE COALESCE(x.source, '') <> 'EXAMPLE'),
+       WHERE COALESCE(x.source, '') <> 'EXAMPLE'
+         AND (NULLIF(TRIM(x.scenario), '') IS NULL OR UPPER(TRIM(x.scenario)) = UPPER(TRIM($scenario)))),
 ea AS (SELECT source, nm, 'KEPT' AS fld, kept AS val, edited_at FROM e0 WHERE kept IS NOT NULL
        UNION ALL SELECT source, nm, 'ROLE', role, edited_at FROM e0 WHERE role IS NOT NULL
        UNION ALL SELECT source, nm, 'ASSIGNED_STATES', assigned_states, edited_at FROM e0 WHERE assigned_states IS NOT NULL),
@@ -200,10 +219,17 @@ FROM ssdb_integration.lr_strategy.tmp_m_edit e
 LEFT JOIN ssdb_integration.lr_strategy.tmp_m_base b
        ON UPPER(b.source) = UPPER(TRIM(e.source)) AND b.nm = UPPER(TRIM(REGEXP_REPLACE(TRIM(e.wholesaler), '\\s+', ' ')))
 WHERE COALESCE(e.source, '') <> 'EXAMPLE' AND NULLIF(TRIM(e.holder), '') IS NULL AND b.source IS NULL
+  AND (NULLIF(TRIM(e.scenario), '') IS NULL OR UPPER(TRIM(e.scenario)) = UPPER(TRIM($scenario)))
 UNION ALL
 SELECT DISTINCT 'EDIT NOT MATCHED: NO SUCH WHOLESALER', 'KEY', TRIM(e.holder), NULL, NULL, NULL, NULL, NULL, e.kept, e.role, e.assigned_states
 FROM ssdb_integration.lr_strategy.tmp_m_edit e
 LEFT JOIN ssdb_integration.lr_strategy.tmp_m_hk k ON k.holder = UPPER(TRIM(e.holder))
-WHERE NULLIF(TRIM(e.holder), '') IS NOT NULL AND k.holder IS NULL)
-ORDER BY CASE WHEN status LIKE 'EDIT NOT MATCHED%' THEN 0 WHEN status IN ('DEFAULT', 'EDITED', 'EDITED (EITHER)') THEN 2 ELSE 1 END, source,
+WHERE NULLIF(TRIM(e.holder), '') IS NOT NULL AND k.holder IS NULL
+  AND (NULLIF(TRIM(e.scenario), '') IS NULL OR UPPER(TRIM(e.scenario)) = UPPER(TRIM($scenario)))
+UNION ALL
+SELECT 'SCENARIO NOT DEFINED', NULL, $scenario, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+FROM (SELECT 1 AS one)
+WHERE NULLIF(TRIM($scenario), '') IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM ssdb_integration.lr_strategy.tmp_m_edit WHERE UPPER(TRIM(scenario)) = UPPER(TRIM($scenario))))
+ORDER BY CASE WHEN status = 'SCENARIO NOT DEFINED' THEN -1 WHEN status LIKE 'EDIT NOT MATCHED%' THEN 0 WHEN status IN ('DEFAULT', 'EDITED', 'EDITED (EITHER)') THEN 2 ELSE 1 END, source,
          CASE WHEN zips_wh + zips_fi > 0 THEN 0 ELSE 1 END, wholesaler;
