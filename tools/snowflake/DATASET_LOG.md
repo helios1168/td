@@ -1815,8 +1815,8 @@ in DuckDB (8 runs); not run in Snowflake, where the later-wins order rests on tw
 Owner, 2026-11-16: "we should not be adding or changing any structure not already in the datasets. we are not doing
 territory design at this point yet. we are simply looking at the current state, with the additional assignments data and
 want to do simple analytics first. be sure that you are not making any changes to the current state territories as they
-stand today outside of the additional structures already baked into the existing datasets". The area modes (e4a9a6c)
-are reverted (cf85c20): they changed which ZIPs a wholesaler has. The capture rule of 2026-11-15 (claims by role, need
+stand today outside of the additional structures already baked into the existing datasets". The area modes (4c5b101)
+are reverted (051c308): they changed which ZIPs a wholesaler has. The capture rule of 2026-11-15 (claims by role, need
 by national presence, the #67 fallback recomputed per ZIP) is a new structure too: `04_assigned_coverage.sql` is to be
 reworked to read today's territories as they are (a cell's holder is the territories table's holder of ZIP x `DIST_CH`,
 which the union's `OLD_TERR_WHOLESALER` matches, profile 2026-11-15) and the dataset's own `NEW_DIST` and `CHANNEL`,
@@ -1903,16 +1903,16 @@ notebook's versions are older (geopandas 1.0.1, matplotlib 3.9.2 on the py39 cha
 
 Owner, 2026-11-17: "I want the look and feel of those maps", "yes and use subagents", then "lets go ahead and produce maps
 ourselves here on the m5". Three worker runs in parallel, reviewed by the session and a reviewer:
-- `tools/maps/look.py` (3762dd7): zip_pages.py's td-free constants, helpers and drawers, Python 3.9, imported by
+- `tools/maps/look.py` (f07e511): zip_pages.py's td-free constants, helpers and drawers, Python 3.9, imported by
   zip_pages.py. Re-rendering `runs/exp/contig/ifa/conus/ifa_conus_v2` before and after with `PYTHONHASHSEED=0` gave
   identical pixels in the default and `--style exec --palette clean` looks (unseeded, the base differs from itself on
   `zip_IFA.png`). render.py's code hash covers tools/maps, so earlier T1 renders now read stale.
-- `05_maps.ipynb` (1134107, 80aef7d after review): territory pages per firm x channel WH and FI in the clean channel-page
+- `05_maps.ipynb` (e5f23c4, c81f72c after review): territory pages per firm x channel WH and FI in the clean channel-page
   look (each kept wholesaler a district, not-kept holders' ZIPs one hatched open fill, a ZIP of a kept and a not-kept
   holder drawn as the kept one), overview and wholesaler pages in the same frame; ZCTAs at full detail simplified 250 m in
   shapely as td/output.py; look.py and areas.csv.gz read from `@td_maps`; pages written as images in the PDFs. Review fixes:
   the fifths keyed by number (equal money labels overwrote each other), the territory read limited to CONUS.
-- `06_map_extract.sql` and `map_extract.py` (654e376): the TD_MAP_* tables with each wholesaler as R<n> from
+- `06_map_extract.sql` and `map_extract.py` (fb8e0ee): the TD_MAP_* tables with each wholesaler as R<n> from
   td_holder_key (read only) and no sales columns, for previews on the m5. Under review: the owner-typed ROLE and
   ASSIGNED_STATES must be exported only as safe projections (the session's ruling: 06 is the masking boundary and fails
   closed).
@@ -1931,7 +1931,7 @@ row per CRD x broker name x company ID with the rule used and the split flags. D
 ### 2026-11-17: the first notebook run, on the WIFI baseline
 
 Owner, 2026-11-17: "ok that worked" (geopandas installed through the Snowflake PyPI artifact repository on a Python 3.12
-Workspaces notebook, ae16109), then "ok the run works and pdf's look great". `look.py` and `areas.csv.gz` stay on the
+Workspaces notebook, 1853b37), then "ok the run works and pdf's look great". `look.py` and `areas.csv.gz` stay on the
 `@td_maps` root (the owner asked whether the workspace would do; it would need a change to the Setup cell, not made). The
 roster is still 03's default (every WH or FI holder kept, as WIFI), so the overview is the merger before any roster
 decision. Not yet put to the owner: a kept holder beats a not-kept one on a shared ZIP, pages are pictures, wholesaler
