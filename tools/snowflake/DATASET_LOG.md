@@ -1974,3 +1974,17 @@ A non-breaking space (CHR(160)) from the spreadsheet explains both (no `\s` matc
 sheet's NAME has CHR(160) read as a space before the placeholder check and the split, in 03 and the three readers.
 Not confirmed on the owner's data at the time of the change (the owner had perhaps not pulled a3e9b00).
 
+### 2026-11-18: scenarios and the scenario maps (issue #147)
+
+The sheet's three keys on two channels (EQH:R105 NATIONAL and REGIONAL in one state; CRBG:R47 and EQH:R108, the
+California cell "R47 or R108" in both the CA NATIONAL and CA REGIONAL slot) are an "or" at channel level. Owner,
+2026-11-18: "I believe we will want to consider these as scenarios". A scenario is the shortlist sheet plus one named
+set of choices for its "or" cases, one answer per person, defined by keys in 03's key edits block (`SET scenario`).
+Three, covering every option: CA1_R105N (R47 NATIONAL, R108 WIFI, R105 NATIONAL), CA2_R105N (R47 WIFI, R108 NATIONAL,
+R105 NATIONAL), CA1_R105R (R47 NATIONAL, R108 WIFI, R105 WIFI); the all-"either" baseline is dropped. The maps
+(owner: "one CONUS map per scenario, and then individual census division level maps also by scenario. We do not need
+wholesaler specific maps or graphics. BUT the assigned wholesaler should be labeled in the PDFs"; "Can we include all
+3 versions? Each is a useful view"; "Go"): per scenario CONUS and the 9 divisions x NATIONAL, REGIONAL, WH x views A
+(whole states), B (held ZIPs inside the assigned states, the rest tinted), C (today's in-role territories, a page per
+firm), 120 pages, drawn on the owner's terminal by `tools/maps/scenario_maps.ps1`; the notebook retires.
+
