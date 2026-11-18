@@ -88,7 +88,9 @@ def main(path, conn=None, browser=True):
     t, n, last, qid = time.time(), 0, None, None
     with (contextlib.nullcontext(conn) if conn else snowflake.connector.connect(connection_name="default")) as conn:
         try:
-            for cur in conn.execute_stream(io.StringIO(sql)):
+            # remove_comments: a trailing comment-only piece (F6's earlier output, a last --then line) is otherwise sent as a
+            # statement of its own and Snowflake refuses it as empty (connector 4.8.1 split_statements)
+            for cur in conn.execute_stream(io.StringIO(sql), remove_comments=True):
                 n += 1
                 if cur.description:
                     last, qid = ([d[0] for d in cur.description], cur.fetchall()), cur.sfqid

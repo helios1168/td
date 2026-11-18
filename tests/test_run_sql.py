@@ -31,7 +31,8 @@ SEEN = []
 
 def fake_connector(results):
     """Each item: rows (a cursor with one column X), None (a cursor with no description) or Err (raised)."""
-    def stream(f):
+    def stream(f, **kw):
+        assert kw == {"remove_comments": True}, kw  # a comment-only last piece would be an empty statement
         SEEN.append(f.getvalue())
         for r in results:
             if r is Err:
