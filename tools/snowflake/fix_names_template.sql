@@ -1,5 +1,5 @@
 use role rl_ssdb_Integration_Lr_Strategy_Rw;
-use database ssdb_integration;
+use database ssdb_Integration;
 use schema lr_strategy;
 --Spelling fixes in the shortlist sheet channel_contacts.  new_fix_names.ps1 copies this template to data\safe\fix_names.sql
 --(gitignored): fill in the names there, never here, then F5.  Per person, one UPDATE: the sheet's spelling (exact,
