@@ -158,7 +158,12 @@ def fetch_scenario(conn, scenario, sql03, sql04, edits, split):
     if not last or set(status) - set(OK_STATUS):
         print(f"{scenario}: NOT DRAWN, 03's STATUS counts {dict(status) or 'none (no result)'}; fix the edits, nothing is drawn for it")
         return None
-    run_sql(conn, sql04, split)
+    r04 = run_sql(conn, sql04, split)
+    bad = [] if r04 is None else [r for r in r04[1] if dict(zip(r04[0], r))["MUST_BE_ZERO"] == 1 and dict(zip(r04[0], r))["N"] not in (0, None)]
+    if r04 is None or bad:
+        print(f"{scenario}: NOT DRAWN, 04's must-be-zero checks not 0: "
+              + ("no result" if r04 is None else "; ".join(f"{dict(zip(r04[0], r))['K1']} = {dict(zip(r04[0], r))['N']}" for r in bad)))
+        return None
     roster = query(conn, f"SELECT source, wholesaler, kept, role, assigned_states FROM {DB}.td_assignments")
     pieces = query(conn, f"SELECT source, wholesaler, kept, role, zip_code, state, terr_channel, piece_in_role FROM {DB}.td_map_piece")
     return roster, pieces
@@ -263,6 +268,8 @@ def label_point(geo, g):
 def prepare(roster, pieces, geo):
     """ctx: the kept people with a role, each one's held in-role area by state, the open (not kept) area by firm, channel
     and state, one colour per person (colouring_far over their union shapes, so it holds on every page)."""
+    geo.pt_cache.clear()  # keyed by id(): a geometry of the previous scenario may be gone and its id reused
+    geo.path_cache.clear()
     people = {}
     for src, name, kept, role, states in roster:
         src, role = (src or "").upper(), (role or "").upper()
@@ -271,10 +278,14 @@ def prepare(roster, pieces, geo):
                                                   states=sorted(set(str(states or "").replace(",", " ").upper().split()) & set(geo.states)),
                                                   all_states=str(states or "").upper())
     held, opened = collections.defaultdict(set), collections.defaultdict(set)
+    no_shape = set()
     for src, name, kept, role, z, st, tc, inrole in pieces:
         src, st, tc = (src or "").upper(), (st or "").upper(), (tc or "").upper()
-        if st not in geo.states or z not in geo.zips:
-            continue                                            # not CONUS, or no ZCTA shape
+        if st not in geo.states:
+            continue                                            # not CONUS: not drawn by design
+        if z not in geo.zips:
+            no_shape.add(z)                                     # a CONUS ZIP that is no ZCTA: reported, not drawn
+            continue
         if src not in FIRMS:
             raise SystemExit(f"td_map_piece has source {src!r}; the pages draw {FIRMS}")
         if str(kept or "").upper() == "Y":
@@ -284,7 +295,7 @@ def prepare(roster, pieces, geo):
             opened[(src, tc), st].add(z)
     union = lambda d: {k: shapely.union_all([geo.zips[z] for z in v]) for k, v in d.items()}
     ctx = SimpleNamespace(geo=geo, people=sorted(people.values(), key=lambda p: (p.name.upper(), p.source, p.name)),
-                          held=collections.defaultdict(dict), opened=collections.defaultdict(dict))
+                          held=collections.defaultdict(dict), opened=collections.defaultdict(dict), no_shape=len(no_shape))
     for (key, st), g in union(held).items():
         ctx.held[key][st] = g
     for (key, st), g in union(opened).items():
@@ -378,7 +389,12 @@ def draw_page(ctx, title, g, ch, view, firm):
                 items.append((pt.x, pt.y, p.name))
     segs = [r for s in vis for r in geo.segs[s]]
     ax.add_collection(LineCollection(segs, colors="#606060", linewidths=0.5, linestyle=(0, (4, 2)), zorder=3))
-    look.place_labels(ax, items, fs=7, marker=False, near=[(0, 0, "center", "center")], color="#111111", fontweight="bold")
+    placed = look.place_labels(ax, items, fs=7, marker=False, near=[(0, 0, "center", "center")], color="#111111", fontweight="bold")
+    left = collections.Counter(s for _, _, s in items) - collections.Counter(x.get_text() for x in placed)
+    for x, y, s in items:                                       # crowded out: set at its point anyway, a name is never dropped
+        if left[s] > 0:
+            left[s] -= 1
+            ax.text(x, y, s, fontsize=7, color="#111111", fontweight="bold", ha="center", va="center", zorder=6)
     n = len(shown)
     handles = [Patch(facecolor=ctx.colour[p.key], alpha=0.75, edgecolor="#202020",
                      label=(f"{p.name}\n" if n <= 20 else f"{p.name}  ") + f"{p.role} · {p.all_states or 'no states assigned'}") for p in shown]
@@ -432,8 +448,9 @@ def _init(geo):
 
 def draw_scenario(scenario, roster, pieces, path):
     t = time.time()
-    n = write_pdf(path, pages(scenario, prepare(roster, pieces, _GEO)))
-    return path, n, time.time() - t
+    ctx = prepare(roster, pieces, _GEO)
+    n = write_pdf(path, pages(scenario, ctx))
+    return path, n, time.time() - t, ctx.no_shape
 
 
 def main(argv=None):
@@ -491,8 +508,8 @@ def main(argv=None):
                 futs[name] = concurrent.futures.Future()
                 futs[name].set_result(draw_scenario(*args_))
     for name, fut in futs.items():
-        path, n, secs = fut.result()
-        print(f"{os.path.relpath(path, ROOT)}: {n} pages in {secs:.0f} s")
+        path, n, secs, no_shape = fut.result()
+        print(f"{os.path.relpath(path, ROOT)}: {n} pages in {secs:.0f} s; {no_shape} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn")
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))

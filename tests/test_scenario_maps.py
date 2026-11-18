@@ -125,6 +125,29 @@ def test_a_scenario_with_a_bad_status_is_refused_with_counts_and_no_names():
     assert "SET scenario = 'A'" in good.streams[0] and "select 2" in good.streams[1] and len(roster) == 1 and len(pieces) == 1
 
 
+
+def test_a_scenario_whose_04_checks_are_not_zero_is_refused():
+    sql03 = "SET scenario = '';\nselect 1;\n"
+
+    class Conn04(Conn):
+        def execute_stream(self, stream):
+            self.streams.append(stream.read())
+            if len(self.streams) == 1:
+                return [Cur(["STATUS", "WHOLESALER"], [("EDITED", "x")])]
+            cols = ["SECTION", "SOURCE", "K1", "K2", "N", "MM_OPP", "PCT", "MUST_BE_ZERO"]
+            return [Cur(cols, [("ROSTER", None, "ok check", None, 0, None, None, 1), ("ROSTER", None, "bad check", None, 3, None, None, 1),
+                               ("ROSTER", None, "a count", None, 9, None, None, 0)])]
+    c = Conn04([])
+    buf = io.StringIO()
+    old, sys.stdout = sys.stdout, buf
+    try:
+        assert sm.fetch_scenario(c, "A", sql03, "select 2;", None, _split) is None
+    finally:
+        sys.stdout = old
+    assert "NOT DRAWN" in buf.getvalue() and "bad check = 3" in buf.getvalue() and "ok check" not in buf.getvalue() and "a count" not in buf.getvalue()
+    assert c.queries == []                                                  # the tables were not read
+
+
 # ---- the made-up world: 18 box states (6 columns x 3 rows), division k = two neighbours in a row, 2 ZIPs per state
 CODES = [r + c for r in "ABC" for c in "ABCDEF"]
 S = 500_000.0
@@ -210,6 +233,21 @@ def test_one_scenario_is_120_pages_in_order_with_exact_titles_and_the_labels_leg
             hatched_pages += bool(hatch)
     assert seen == _expected_titles(geo) and len(seen) == 120
     assert open_pages > 40 and hatched_pages == open_pages
+
+
+def test_a_crowded_out_label_is_still_set_and_shapeless_zips_are_counted():
+    geo = fake_geo()
+    pieces = fake_pieces() + [("CRBG", "Bo R", "Y", "WIFI", "99999", "AB", "WH", 1), ("CRBG", "Bo R", "Y", "WIFI", "88888", "ZZ", "WH", 1)]
+    ctx = sm.prepare(ROSTER, pieces, geo)
+    assert ctx.no_shape == 1                                    # 99999 is CONUS (state AB) with no shape; ZZ is not CONUS
+    keep, sm.look.place_labels = sm.look.place_labels, lambda ax, items, **kw: []   # every label crowded out
+    try:
+        g = geo.geographies[0]
+        fig = sm.draw_page(ctx, "t", g, "REGIONAL", "A whole states", None)
+    finally:
+        sm.look.place_labels = keep
+    texts = {x.get_text() for ax in fig.axes for x in ax.texts}
+    assert {"Bo R", "Flo R"} <= texts, texts
 
 
 def test_a_division_page_draws_only_its_states_and_the_pdf_is_pages_as_images():
