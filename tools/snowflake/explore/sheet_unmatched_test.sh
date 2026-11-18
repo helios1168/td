@@ -19,7 +19,8 @@ CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, commen
 INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('ann  LEE','MAINE',NULL,'WH'), ('Bob Smith','OHIO',NULL,'REGIONAL'), ('Bob Smith','IOWA',NULL,'NATIONAL'),
   ('New Hire','IOWA',NULL,'WH'), ('Pat Open','IOWA',NULL,'WH'), ('  ','UTAH',NULL,'WH'), ('TBD','UTAH',NULL,'WH'), ('Ann Lee or tbd','UTAH',NULL,'WH'), ('N/A','IOWA',NULL,'FI'), ('open','IOWA',NULL,'WH'),
-  ('Ann Lee OR Cy Zed / Lee, Ann','IOWA',NULL,'FI'), ('Dee Fox or New Hire','UTAH',NULL,'NATIONAL'), ('Ed'||chr(160)||'Fox','UTAH',NULL,'WH');
+  ('Ann Lee OR Cy Zed / Lee, Ann','IOWA',NULL,'FI'), ('Dee Fox or New Hire','UTAH',NULL,'NATIONAL'), ('Ed'||chr(160)||'Fox','UTAH',NULL,'WH'), ('Ty O'||chr(8217)||'Neil','UTAH',NULL,'WH'),
+  ('Ann Lee'||chr(160)||'or'||chr(160)||'Dee Fox','OHIO',NULL,'WH'), ('TBD'||chr(160),'OHIO',NULL,'WH');
 SQL
 sed -e "s/LISTAGG(DISTINCT ch, ' ') WITHIN GROUP (ORDER BY ch)/string_agg(DISTINCT ch, ' ' ORDER BY ch)/g" \
     -e "s/'\\\\\\\\s+', ' ')/'\\\\s+', ' ', 'g')/g" -e "s/\\\\\\\\s/\\\\s/g" -e "s/', '|')/', '|', 'g')/" \
@@ -39,8 +40,9 @@ SELECT chk('the result',
                                COALESCE(CAST(holder_odd_char AS VARCHAR), '-'), COALESCE(holder_channels, '-')), ' / '
           ORDER BY sheet_name, holder_source, holder) FROM res),
   'Bob Smith|BOB SMITH|0|NATIONAL REGIONAL|CRBG|Smith, Robert|ROBERT SMITH|0|FI WH / Bob Smith|BOB SMITH|0|NATIONAL REGIONAL|EQH|Jo Smith|JO SMITH|0|WH'
-  || ' / Cy Zed|CY ZED|0|FI|EQH|Al Zed|AL ZED|0|FI / Dee Fox|DEE FOX|0|NATIONAL|-|-|-|-|-'
-  || ' / Ed~Fox|ED~FOX|1|WH|-|-|-|-|- / New Hire|NEW HIRE|0|NATIONAL WH|-|-|-|-|- / Pat Open|PAT OPEN|0|WH|-|-|-|-|-');
+  || ' / Cy Zed|CY ZED|0|FI|EQH|Al Zed|AL ZED|0|FI / Dee Fox|DEE FOX|0|NATIONAL WH|-|-|-|-|-'
+  || ' / Ed Fox|ED FOX|0|WH|-|-|-|-|- / New Hire|NEW HIRE|0|NATIONAL WH|-|-|-|-|- / Pat Open|PAT OPEN|0|WH|-|-|-|-|-'
+  || ' / Ty O'||chr(8217)||'Neil|TY O'||chr(8217)||'NEIL|1|WH|-|-|-|-|-');
 SELECT 'sheet_unmatched_test: ok';
 SQL
 } | duckdb -bail -noheader -list

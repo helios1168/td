@@ -1969,3 +1969,8 @@ Owner, 2026-11-18: "only remaining rows in unmatched names are the “or” case
 name of an "A or B" cell, that reads N/A, OPEN or TBD (any case) is an open seat like a blank one, in 03 and the three
 sheet readers. The whole cell is checked before the split, since the slash splitter would cut N/A into N and A.
 
+Later the same day the two "or" cells and the three placeholders still showed as unmatched after the owner's fixes.
+A non-breaking space (CHR(160)) from the spreadsheet explains both (no `\s` match around "or", no exact N/A), so the
+sheet's NAME has CHR(160) read as a space before the placeholder check and the split, in 03 and the three readers.
+Not confirmed on the owner's data at the time of the change (the owner had perhaps not pulled a3e9b00).
+
