@@ -250,6 +250,34 @@ def test_a_crowded_out_label_is_still_set_and_shapeless_zips_are_counted():
     assert {"Bo R", "Flo R"} <= texts, texts
 
 
+def test_pages_drawn_in_chunks_assemble_in_order_into_one_pdf():
+    assert sm.chunks(25, 10) == [(0, 10), (10, 20), (20, 25)]
+    geo = fake_geo()
+    sm._init(geo)
+    sm._CTX.clear()
+    n = len(sm.specs(geo))
+    parts = [sm.draw_chunk("CA1_R105N", ROSTER, fake_pieces(), lo, hi) for lo, hi in reversed(sm.chunks(n))]  # any order
+    pngs = [png for _, ps, _ in sorted(parts) for png in ps]
+    assert len(pngs) == n == 120 and all(png[:8] == b"\x89PNG\r\n\x1a\n" for png in pngs)
+    first = sm.draw_chunk("CA1_R105N", ROSTER, fake_pieces(), 0, 1)[1][0]
+    assert pngs[0] == first                                     # page 0 is the CONUS page, whichever chunk ran first
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "x.pdf")
+        assert sm.assemble(path, pngs) == 120
+        assert len(sm.re.findall(rb"/Type\s*/Page[^s]", open(path, "rb").read())) == 120
+
+
+def test_chunks_draw_in_spawned_processes_as_on_windows():
+    import concurrent.futures, multiprocessing
+    sys.path.insert(0, str(ROOT / "tools" / "maps"))           # the child imports scenario_maps by name, as on Windows
+    import scenario_maps as sm2
+    geo = fake_geo()
+    with concurrent.futures.ProcessPoolExecutor(2, mp_context=multiprocessing.get_context("spawn"),
+                                                initializer=sm2._init, initargs=(geo,)) as pool:
+        got = [f.result() for f in [pool.submit(sm2.draw_chunk, "S", ROSTER, fake_pieces(), lo, hi) for lo, hi in ((0, 2), (2, 4))]]
+    assert [lo for lo, _, _ in got] == [0, 2] and all(len(p) == 2 for _, p, _ in got)
+
+
 def test_a_division_page_draws_only_its_states_and_the_pdf_is_pages_as_images():
     geo, ctx = _drawn()
     with tempfile.TemporaryDirectory() as d:

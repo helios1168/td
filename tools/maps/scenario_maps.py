@@ -414,13 +414,16 @@ def draw_page(ctx, title, g, ch, view, firm):
     return fig
 
 
-def pages(scenario, ctx):
-    """(title, figure) for every page, in order: geography, channel, view."""
-    for g in ctx.geo.geographies:
-        for ch in ROLE_OF:
-            for view, firm in VIEWS:
-                title = f"{scenario} · {view} · {ch} · {g.name}"
-                yield title, draw_page(ctx, title, g, ch, view, firm)
+def specs(geo):
+    """Every page as (geography, channel, view, firm), in order: geography, channel, view."""
+    return [(g, ch, view, firm) for g in geo.geographies for ch in ROLE_OF for view, firm in VIEWS]
+
+
+def pages(scenario, ctx, lo=0, hi=None):
+    """(title, figure) for the pages lo..hi (all by default), in order."""
+    for g, ch, view, firm in specs(ctx.geo)[lo:hi]:
+        title = f"{scenario} · {view} · {ch} · {g.name}"
+        yield title, draw_page(ctx, title, g, ch, view, firm)
 
 
 def write_pdf(path, figs, inspect=None):
@@ -452,11 +455,41 @@ def _init(geo):
     _GEO = geo
 
 
-def draw_scenario(scenario, roster, pieces, path):
-    t = time.time()
-    ctx = prepare(roster, pieces, _GEO)
-    n = write_pdf(path, pages(scenario, ctx))
-    return path, n, time.time() - t, ctx.no_shape
+CHUNK = 10    # pages per task: a scenario's 120 pages spread over every worker
+_CTX = {}
+
+
+def draw_chunk(scenario, roster, pieces, lo, hi):
+    """Pages lo..hi of `scenario` as PNG bytes, with the count of CONUS ZIPs that have no shape.  A worker builds a
+    scenario's areas (prepare) once and keeps only the last scenario's."""
+    if scenario not in _CTX:
+        _CTX.clear()
+        _CTX[scenario] = prepare(roster, pieces, _GEO)
+    ctx, out = _CTX[scenario], []
+    for _, fig in pages(scenario, ctx, lo, hi):
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=DPI, facecolor="white")
+        out.append(buf.getvalue())
+    return lo, out, ctx.no_shape
+
+
+def assemble(path, pngs):
+    """The PDF of the pages (PNG bytes, in order), each a picture."""
+    import matplotlib.image
+    with PdfPages(path) as pdf:
+        for png in pngs:
+            pic = Figure(figsize=FIGSIZE, dpi=DPI)
+            axis = pic.add_axes([0, 0, 1, 1])
+            axis.imshow(matplotlib.image.imread(io.BytesIO(png), format="png"), interpolation="none", aspect="auto")
+            axis.set_axis_off()
+            pdf.savefig(pic, dpi=DPI)
+    if not pngs:
+        raise RuntimeError(f"{path}: no page to draw")
+    return len(pngs)
+
+
+def chunks(n, size=CHUNK):
+    return [(lo, min(lo + size, n)) for lo in range(0, n, size)]
 
 
 def main(argv=None):
@@ -465,7 +498,7 @@ def main(argv=None):
     ap.add_argument("--list", action="store_true", help="print the scenario names in 03_assignments.sql")
     ap.add_argument("--scenario", action="append", default=[], help="a scenario to draw (repeatable)")
     ap.add_argument("--all", action="store_true", help="draw every scenario")
-    ap.add_argument("--jobs", type=int, help="PDFs drawn at once (default: one per scenario, up to the CPUs)")
+    ap.add_argument("--jobs", type=int, help="drawing processes (default: the CPUs less one, at most 8); 1 draws in this process")
     args = ap.parse_args(argv)
     with open(SQL03, encoding="utf-8") as f:
         sql03 = f.read()
@@ -492,30 +525,34 @@ def main(argv=None):
     from snowflake.connector.util_text import split_statements
     out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M"))
     os.makedirs(out, exist_ok=True)
-    jobs = args.jobs or min(len(chosen), os.cpu_count() or 1)
-    t0, refused, futs, pool = time.time(), [], {}, None
+    jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
+    t0, refused, futs, pool, n_pages, started = time.time(), [], {}, None, None, {}
     with connect() as conn:
         for name in chosen:
             got = fetch_scenario(conn, name, sql03, sql04, edits, split_statements)
-            print(f"{name}: 03 and 04 done at {time.time() - t0:.0f} s", flush=True)
+            print(f"{name}: 03 and 04 done at {time.time() - t0:.0f} s; drawing", flush=True)
             if got is None:
                 refused.append(name)
                 continue
-            if _GEO is None and pool is None:
+            if n_pages is None:
                 geo = load_geo(conn)
+                n_pages = len(specs(geo))
+                _init(geo)
                 if jobs > 1:
                     pool = concurrent.futures.ProcessPoolExecutor(jobs, initializer=_init, initargs=(geo,))
+            started[name] = time.time()
+            for lo, hi in chunks(n_pages):
+                if pool:
+                    futs[name, lo] = pool.submit(draw_chunk, name, got[0], got[1], lo, hi)
                 else:
-                    _init(geo)
-            args_ = (name, got[0], got[1], os.path.join(out, f"{name}.pdf"))
-            if pool:
-                futs[name] = pool.submit(draw_scenario, *args_)
-            else:
-                futs[name] = concurrent.futures.Future()
-                futs[name].set_result(draw_scenario(*args_))
-    for name, fut in futs.items():
-        path, n, secs, no_shape = fut.result()
-        print(f"{os.path.relpath(path, ROOT)}: {n} pages in {secs:.0f} s; {no_shape} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn")
+                    futs[name, lo] = concurrent.futures.Future()
+                    futs[name, lo].set_result(draw_chunk(name, got[0], got[1], lo, hi))
+    for name in [s for s in chosen if s in started]:
+        parts = sorted(futs[k].result() for k in futs if k[0] == name)
+        path = os.path.join(out, f"{name}.pdf")
+        n = assemble(path, [png for _, pngs, _ in parts for png in pngs])
+        print(f"{os.path.relpath(path, ROOT)}: {n} pages, drawn in {time.time() - started[name]:.0f} s; "
+              f"{parts[0][2]} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn", flush=True)
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
