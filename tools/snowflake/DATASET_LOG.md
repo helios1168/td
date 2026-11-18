@@ -1950,3 +1950,16 @@ or FI holder KEPT N, whose territory 04 then shows as NOT KEPT (OPEN). A name no
 MATCHED (source SHEET); `explore/sheet_unmatched.sql` (names, owner's screen only) puts each beside the holders with its
 last name. Open slots set nothing (nothing is redrawn). The owner's hand edits come after the sheet and win.
 
+### 2026-11-18: or-cells and edits by holder key (03), the slot list by key
+
+The owner's sheet has cells with several names. Owner, 2026-11-18: "yes option 1" (a cell like "Ann Lee or Bo Ray" or "Ann Lee / Bo Ray"
+becomes each name on its own). 03 splits on the whole word OR in any case and on a slash, any number of names (`SPLIT_TO_TABLE`
+on a `|` put at each split): each matched name is KEPT Y with the slot's role and states as a single name, the result's STATUS
+is `EDITED (EITHER)` for a wholesaler any of whose sheet rows came from such a cell (the error statuses win), a split name no
+holder has is EDIT NOT MATCHED (source SHEET), and the KEPT N rule uses the same names. `sheet_profile.sql` counts them
+(`names with OR or /`, MATCH counts split names) and `sheet_unmatched.sql` uses them. Owner, 2026-11-18: "should we just work
+directly with the wholesaler name keys? so i can explicitly give you the logic while still masking names". So an edit row may
+give `holder` (R<n>) instead of source and wholesaler, resolved through `td_holder_key` (read only: 02 creates it), in a
+name-free `--key edits` block of 03 before the owner's block (`run_03_04.ps1` splices only the owner block and still finds its
+markers). `explore/sheet_slots.sql` lists the sheet by key, no names: per slot the candidate keys, per key its channels and
+ZIPs in WH and FI. Not run in Snowflake: the DuckDB tests translate `SPLIT_TO_TABLE`, `LISTAGG ... WITHIN GROUP` and `UUID_STRING`.

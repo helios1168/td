@@ -3,7 +3,9 @@
 # worked out by hand: a name matched to both firms whatever its case and spacing, "Last, First" flipped to match CRBG,
 # a double space in a holder's name, a vacancy (OPEN) and a non-WH/FI holder left out of NOT IN SHEET, a blank name,
 # state and channel, an empty comment not counted, a full state name (Texas), a name with no holder, and a name typed
-# as a CHANNEL and as a STATE (Jane Doe, John Roe) shown only as OTHER.
+# as a CHANNEL and as a STATE (Jane Doe, John Roe) shown only as OTHER, and cells with several names (Gil Hu OR Ann Lee / Zed Zo,
+# Orr, Abe or New Guy): rows and split names counted apart, names on 2+ rows counted over cells, MATCH counting split names, a name
+# only inside such a cell (Gil Hu) not in NOT IN SHEET.
 # Prints "sheet_profile_test: ok" or stops at the failed check.  Run from anywhere: sh sheet_profile_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -14,14 +16,18 @@ CREATE TABLE ssdb_integration.lr_strategy.terr_t (source TEXT, name TEXT, zip_co
   clean_name TEXT, clean_id TEXT);
 INSERT INTO ssdb_integration.lr_strategy.terr_t (source, name, state, channel, clean_name) VALUES
   ('CRBG','Lee, Ann','MA','WH',NULL), ('CRBG','x','NH','FI','Orr, Abe'), ('CRBG','Kim, Dot','MA','IFA',NULL),
-  ('EQH','Ann Lee','MA','FI','  '), ('EQH','Gil Hu','ma','WH',NULL), ('EQH','Open','MA','FI',NULL), ('EQH','Bo  Ray','CT','WH',NULL);
+  ('EQH','Ann Lee','MA','FI','  '), ('EQH','Gil Hu','ma','WH',NULL), ('EQH','Open','MA','FI',NULL), ('EQH','Bo  Ray','CT','WH',NULL),
+  ('EQH','Cy Day','MA','WH',NULL);
 CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, comment TEXT, channel TEXT);
 INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('Ann Lee','MA',NULL,'WH'), ('ann  lee','nh','',' wh'), ('Orr, Abe','Texas','keep','FI'), ('Bo Ray',NULL,NULL,NULL),
-  ('No One','John Roe',NULL,'Jane Doe'), ('  ','MA',NULL,'FI');
+  ('No One','John Roe',NULL,'Jane Doe'), ('  ','MA',NULL,'FI'),
+  ('Gil Hu OR Ann Lee / Zed Zo','CT',NULL,'WH'), ('Orr, Abe or New Guy','Iowa',NULL,'REGIONAL');
 SQL
 sed -e "s/LISTAGG(DISTINCT h.src, ' ') WITHIN GROUP (ORDER BY h.src)/string_agg(DISTINCT h.src, ' ' ORDER BY h.src)/" \
-    -e "s/'\\\\\\\\s+', ' ')/'\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' \
+    -e "s/'\\\\\\\\s+', ' ')/'\\\\s+', ' ', 'g')/g" -e "s/\\\\\\\\s/\\\\s/g" -e "s/', '|')/', '|', 'g')/" \
+    -e "s/LATERAL SPLIT_TO_TABLE(\\(x\\.[a-z_]*\\), '|') p/LATERAL (SELECT unnest(string_split(\\1, '|')) AS value, generate_subscripts(string_split(\\1, '|'), 1) AS index) p/" \
+    -e '/^use /d' -e '/^SET /d' \
     -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
     -e 's/^WITH$/CREATE TABLE res AS WITH/' \
@@ -33,11 +39,11 @@ CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THE
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
 SELECT chk('the result',
   (SELECT string_agg(concat_ws('|', section, item, COALESCE(CAST(n_rows AS VARCHAR), '-'), COALESCE(CAST(n_names AS VARCHAR), '-')), ' / ' ORDER BY i) FROM res),
-  'ROWS|blank channel|1|1 / ROWS|blank name|1|- / ROWS|blank state|1|1 / ROWS|name written with a comma|1|1'
-  || ' / ROWS|names on 2+ rows|-|1 / ROWS|rows|6|4 / ROWS|with a comment|1|1'
-  || ' / CHANNEL|(blank)|1|1 / CHANNEL|FI|2|1 / CHANNEL|OTHER|1|1 / CHANNEL|WH|2|1'
-  || ' / STATE|(blank)|1|1 / STATE|OTHER|1|1 / STATE|full state name|1|1 / STATE|two-letter code|3|1'
-  || ' / MATCH|CRBG|1|1 / MATCH|CRBG EQH|2|1 / MATCH|EQH|1|1 / MATCH|NO HOLDER|1|1'
+  'ROWS|blank channel|1|1 / ROWS|blank name|1|- / ROWS|blank state|1|1 / ROWS|name written with a comma|2|1'
+  || ' / ROWS|names on 2+ rows|-|2 / ROWS|names with OR or /|2|5 / ROWS|rows|8|7 / ROWS|with a comment|1|1'
+  || ' / CHANNEL|(blank)|1|1 / CHANNEL|FI|2|1 / CHANNEL|OTHER|1|1 / CHANNEL|REGIONAL|1|2 / CHANNEL|WH|3|3'
+  || ' / STATE|(blank)|1|1 / STATE|OTHER|1|1 / STATE|full state name|2|2 / STATE|two-letter code|4|3'
+  || ' / MATCH|CRBG|2|1 / MATCH|CRBG EQH|3|1 / MATCH|EQH|2|2 / MATCH|NO HOLDER|3|3'
   || ' / NOT IN SHEET|EQH|-|1');
 SELECT 'sheet_profile_test: ok';
 SQL
