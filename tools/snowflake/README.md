@@ -36,6 +36,7 @@ runs one script, `01_opportunity_sales.sql`; `explore/` files are references (ru
 | `run_03_04.ps1` | 03 (roster edits from the gitignored `data\safe\03_edits.sql`) then 04 through `snow`, CSV output in `data\safe\` |
 | `explore/sheet_profile.sql` | the owner's preliminary assignments sheet (NAME, STATE, COMMENT, CHANNEL; `SET sheet_tbl`) profiled before it feeds 03, counts only: rows, CHANNEL and unknown STATE values, names matched to each firm's holders on one key ("Last, First" flipped, upper case, single spaces), WH or FI holders not in the sheet. Test: `sh explore/sheet_profile_test.sh` |
 | `explore/sheet_unmatched.sql` | names, for the owner's screen only: the shortlist sheet's names no holder has, each beside the holders with the same last name (spelling difference or new hire). Test: `sh explore/sheet_unmatched_test.sh` |
+| `fix_names_template.sql`, `new_fix_names.ps1` | spelling fixes in `channel_contacts`: the script copies the template to the gitignored `data\safe\fix_names.sql`, where the names are filled in; run with F5 |
 | `explore/policy_tables.sql` | every table the role can read with a policy-number column, and its firm and channel columns. Run on its own; not tested |
 | `explore/schema.sql` | the source tables' columns (run 2026-10-30) |
 | `audit.js` | the audit workflow: the documents' claims checked against the code, `DATA_MODEL.md` the reference (`DATASET_LOG.md`, Conventions, Audit) |
