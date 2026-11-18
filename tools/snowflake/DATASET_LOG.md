@@ -76,7 +76,9 @@ channels."
   out too, and carrier tables stay behind the table variables (unchanged code).
 - Terminal steps for the owner's Windows machine come as one script in the repo, run with the `.venv` activated, not
   as commands to type (owner, 2026-11-17: "going forward jsut include the shell commands as a script I can run and be
-  done instead of manually typing things from this screen"). First: `tools/snowflake/setup_snow.ps1`.
+  done instead of manually typing things from this screen"). The first, `setup_snow.ps1` (the snow CLI and
+  `%USERPROFILE%\.snowflake\connections.toml`), ran and was removed with the connection file (owner: "it ran and works
+  delete the connection details from repo").
 
 ## Settled
 

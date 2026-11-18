@@ -1,9 +1,0 @@
-[default]
-account = "<account>"
-user = "<user>"
-authenticator = "externalbrowser"
-role = "RL_SSDB_INTEGRATION_LR_STRATEGY_RW"
-warehouse = "WH_LIFE_GP_XS"
-database = "SSDB_INTEGRATION"
-schema = "LR_STRATEGY"
-client_store_temporary_credential = true
