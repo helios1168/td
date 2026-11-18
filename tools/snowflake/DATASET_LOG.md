@@ -1923,3 +1923,12 @@ carries no company ID. `explore/crd_cbd_map.sql` reads firm 1's market metrics o
 statement 2's company ID rule: a listed broker name's fixed ID, else the row's CBD_ID, company 0 its CLIENT_FIRM_ID. One
 row per CRD x broker name x company ID with the rule used and the split flags. DuckDB smoke test only.
 
+### 2026-11-17: the first notebook run, on the WIFI baseline
+
+Owner, 2026-11-17: "ok that worked" (geopandas installed through the Snowflake PyPI artifact repository on a Python 3.12
+Workspaces notebook, ae16109), then "ok the run works and pdf's look great". `look.py` and `areas.csv.gz` stay on the
+`@td_maps` root (the owner asked whether the workspace would do; it would need a change to the Setup cell, not made). The
+roster is still 03's default (every WH or FI holder kept, as WIFI), so the overview is the merger before any roster
+decision. Not yet put to the owner: a kept holder beats a not-kept one on a shared ZIP, pages are pictures, wholesaler
+pages have no insets.
+
