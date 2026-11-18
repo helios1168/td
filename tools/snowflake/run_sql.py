@@ -5,19 +5,37 @@ of the last statement's result (its first rows) on screen and all of its rows in
 
 With no file it runs the .sql file saved last under tools/ or data/safe/: Helix before 25.07 has no %{buffer_name}, so
 the F5 binding (tools/snowflake/README.md) is :write then this, and the popup's first line names the file it ran. The connection is [default] in
-~/.snowflake/connections.toml. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
+~/.snowflake/connections.toml. With data/safe/snowsight_url.txt holding any Snowsight query-detail URL copied from the
+browser, it also opens that page for the last result (Snowsight shows a query's results to the user who ran it). It
+always exits 0 and prints any error, since Helix's :sh hides the output of a failing command. 03 with roster edits goes through run_03_04.ps1: this runs a file exactly as it is.
 """
 from __future__ import annotations
 
 import csv
 import io
 import os
+import re
 import sys
 import time
+import traceback
+import webbrowser
 
 ROWS = 50
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT = os.path.join(ROOT, "data", "safe", "last.csv")
+URL = os.path.join(ROOT, "data", "safe", "snowsight_url.txt")
+QID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
+
+
+def snowsight_url(qid, path=URL):
+    """The saved query-detail URL with its query ID swapped for qid, or None when no URL is saved."""
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        url = f.read().strip()
+    if not QID.search(url):
+        raise SystemExit(f"{path}: no query ID in it; paste a Snowsight query-detail URL from the browser")
+    return QID.sub(qid, url, count=1)
 
 
 def newest_sql(root=ROOT):
@@ -43,13 +61,13 @@ def main(path):
     print(f"ran {os.path.relpath(path, ROOT)}")
     with open(path, encoding="utf-8") as f:
         sql = f.read()
-    t, n, last = time.time(), 0, None
+    t, n, last, qid = time.time(), 0, None, None
     with snowflake.connector.connect(connection_name="default") as conn:
         try:
             for cur in conn.execute_stream(io.StringIO(sql)):
                 n += 1
                 if cur.description:
-                    last = ([d[0] for d in cur.description], cur.fetchall())
+                    last, qid = ([d[0] for d in cur.description], cur.fetchall()), cur.sfqid
         except snowflake.connector.errors.Error as e:
             print(f"ERROR in statement {n + 1} ({n} ran):\n{e}")
             return 1
@@ -62,9 +80,18 @@ def main(path):
         w.writerow(last[0])
         w.writerows(last[1])
     print(snapshot(*last, n, time.time() - t))
+    url = snowsight_url(qid)
+    if url:
+        webbrowser.open(url)
+        print(f"opened {url}")
+    else:
+        print(f"query ID {qid} (save a Snowsight query-detail URL in data/safe/snowsight_url.txt to open it in the browser)")
     return 0
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else newest_sql()))
+    try:
+        main(sys.argv[1] if len(sys.argv) > 1 else newest_sql())
+    except BaseException:  # ponytail: exit 0 with the traceback printed, or Helix's :sh shows only "status 1"
+        traceback.print_exc(file=sys.stdout)

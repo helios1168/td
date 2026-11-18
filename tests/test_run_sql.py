@@ -29,7 +29,8 @@ def fake_connector(results):
         for r in results:
             if r is Err:
                 raise Err("SQL compilation error: bad")
-            yield types.SimpleNamespace(description=[("X",)] if r is not None else None, fetchall=lambda r=r: r)
+            yield types.SimpleNamespace(description=[("X",)] if r is not None else None, fetchall=lambda r=r: r,
+                                        sfqid=f"0000000{len(r) if r else 0}-0000-0000-0000-000000000000")
     conn = types.SimpleNamespace(execute_stream=stream)
     return types.SimpleNamespace(connect=lambda **kw: contextlib.nullcontext(conn), errors=types.SimpleNamespace(Error=Err))
 
@@ -51,6 +52,7 @@ def run(results):
 def _run():
     with tempfile.TemporaryDirectory() as d:
         run_sql.OUT = os.path.join(d, "safe", "last.csv")
+        run_sql.URL = os.path.join(d, "none.txt")
         sql = os.path.join(d, "q.sql")
         open(sql, "w").write("select 1")
         buf = io.StringIO()
@@ -84,6 +86,21 @@ def test_no_file_runs_the_sql_saved_last():
         assert run_sql.newest_sql(d) == os.path.join(d, "tools", "sub", "c.sql")
         os.utime(os.path.join(d, "data", "safe", "b.sql"), (2000, 2000))
         assert run_sql.newest_sql(d) == os.path.join(d, "data", "safe", "b.sql")
+
+
+def test_the_saved_snowsight_url_gets_the_new_query_id():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "u.txt")
+        assert run_sql.snowsight_url("x", p) is None
+        open(p, "w").write("https://app.example/#/compute/history/queries/01bc2d3e-0000-4a5b-0000-abcdefabcdef/detail\n")
+        new = "01ffffff-1111-2222-3333-444444444444"
+        assert run_sql.snowsight_url(new, p) == f"https://app.example/#/compute/history/queries/{new}/detail"
+        open(p, "w").write("https://app.example/#/compute/history")
+        try:
+            run_sql.snowsight_url(new, p)
+            raise AssertionError("a URL with no query ID must refuse")
+        except SystemExit as e:
+            assert "no query ID" in str(e)
 
 
 if __name__ == "__main__":
