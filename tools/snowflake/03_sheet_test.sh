@@ -3,7 +3,7 @@
 # result against answers worked out by hand: a REGIONAL person matched to a CRBG "Last, First" holder whatever the case
 # and spacing, kept WIFI with the codes of two full state names; a NATIONAL person on two states; a person on two
 # channels (TWO ANSWERS); an unknown state (NARNIA) and channel (BOSS), a blank state and a blank channel flagged; a name no holder has (EDIT NOT MATCHED,
-# source SHEET); a cell with several names (Cal Poe OR Di Fox, Ed Gray/Zed Zo oR new two, jo lin or Ty Ash: the word OR in any
+# source SHEET); a cell with several names (Cal Poe OR/ Di Fox: OR then a slash is one split, Ed Gray/Zed Zo oR new two, jo lin or Ty Ash: the word OR in any
 # case, a slash without spaces, three names, a name only inside such a cell not KEPT N) each name on its own, STATUS EDITED
 # (EITHER, also when the person has a single-name row on the same channel too: Jo Lin), a split name no holder has EDIT NOT MATCHED, a person in an or-cell and on another channel TWO ANSWERS (an error
 # status wins over EITHER); open seats (no name, a tab-only name) setting nothing; WH or FI holders not on the sheet KEPT N; a holder in neither WH
@@ -32,7 +32,7 @@ INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('Dot Kim','Narnia',NULL,'WH'), ('Bo Ray','Connecticut',NULL,'BOSS'), ('New Hire','Iowa',NULL,'WH'),
   ('  ','Utah',NULL,'WH'), (NULL,'Utah',NULL,'NATIONAL'), (chr(9),'Utah',NULL,'WH'),
   ('Al Pim','Utah',NULL,NULL), ('Mo Ng','Utah',NULL,'WH'), ('Mo Ng','  ',NULL,'WH'),
-  ('Cal Poe OR Di Fox','Iowa',NULL,'WH'), ('Ed Gray/Zed Zo oR new two','Nevada',NULL,'NATIONAL'), ('Ed Gray','Nevada',NULL,'WH'),
+  ('Cal Poe OR/ Di Fox','Iowa',NULL,'WH'), ('Ed Gray/Zed Zo oR new two','Nevada',NULL,'NATIONAL'), ('Ed Gray','Nevada',NULL,'WH'),
   ('jo lin or Ty Ash','Utah',NULL,'FI'), ('Jo Lin','Utah',NULL,'FI');
 CREATE MACRO UUID_STRING(ns, nm) AS md5(ns || nm);
 CREATE TABLE ssdb_integration.lr_strategy.hk_t (source TEXT, holder_id TEXT, holder_n INTEGER, first_seen TIMESTAMP);

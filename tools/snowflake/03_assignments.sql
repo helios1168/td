@@ -104,7 +104,7 @@ SELECT rid, name, ch, st, k, n_names FROM (
     FROM (SELECT ROW_NUMBER() OVER (ORDER BY name, state, channel) AS rid,
                  NULLIF(UPPER(TRIM(REGEXP_REPLACE(channel, '\\s+', ' '))), '') AS ch,
                  NULLIF(UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))), '') AS st,
-                 REGEXP_REPLACE(COALESCE(name, ''), '\\s+[Oo][Rr]\\s+|\\s*/\\s*', '|') || '|' AS nm_split
+                 REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
           FROM IDENTIFIER($sheet_tbl)) x,
     LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p))
 WHERE k IS NOT NULL;

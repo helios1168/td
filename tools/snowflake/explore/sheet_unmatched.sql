@@ -14,7 +14,7 @@ s AS (SELECT NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN p.value)
                                                   ELSE p.value END, '\\s+', ' '))), '') AS k,
              TRIM(p.value) AS name, x.ch
       FROM (SELECT UPPER(TRIM(channel)) AS ch,
-                   REGEXP_REPLACE(COALESCE(name, ''), '\\s+[Oo][Rr]\\s+|\\s*/\\s*', '|') || '|' AS nm_split
+                   REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
             FROM IDENTIFIER($sheet_tbl)) x,
       LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p),
 h AS (SELECT DISTINCT UPPER(TRIM(source)) AS src, nm AS holder, UPPER(TRIM(channel)) AS ch,

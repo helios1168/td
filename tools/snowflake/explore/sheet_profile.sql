@@ -27,7 +27,7 @@ sp AS (SELECT x.rid, x.st, x.ch, x.cm, p.index AS ix,
        FROM (SELECT ROW_NUMBER() OVER (ORDER BY name, state, channel, comment) AS rid,
                     NULLIF(UPPER(TRIM(state)), '') AS st, NULLIF(UPPER(TRIM(channel)), '') AS ch,
                     CASE WHEN NULLIF(TRIM(comment), '') IS NULL THEN 0 ELSE 1 END AS cm,
-                    REGEXP_REPLACE(COALESCE(name, ''), '\\s+[Oo][Rr]\\s+|\\s*/\\s*', '|') || '|' AS nm_split
+                    REGEXP_REPLACE(COALESCE(name, ''), '(\\s+[Oo][Rr])?\\s*/\\s*|\\s+[Oo][Rr]\\s+', '|') || '|' AS nm_split
              FROM IDENTIFIER($sheet_tbl)) x,
        LATERAL SPLIT_TO_TABLE(x.nm_split, '|') p),
 sn AS (SELECT sp.*, COUNT(k) OVER (PARTITION BY rid) AS n_names FROM sp),
