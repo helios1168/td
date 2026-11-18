@@ -40,6 +40,7 @@ use schema lr_strategy;
 
 SET terr_tbl      = 'ssdb_integration.lr_strategy.territories_tableau';
 SET assign_tbl    = 'ssdb_integration.lr_strategy.td_assignments';
+SET sheet_tbl     = 'ssdb_integration.lr_strategy.REPLACE_WITH_THE_SHEET_TABLE';
 
 --the roster before edits
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_base AS
@@ -62,6 +63,47 @@ FROM h JOIN hc ON hc.source = h.source AND hc.nm = h.nm JOIN hs ON hs.source = h
 
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_edit (source VARCHAR, wholesaler VARCHAR, kept VARCHAR,
   role VARCHAR, assigned_states VARCHAR, edited_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP());
+
+--the shortlist sheet (SET sheet_tbl: NAME, STATE, COMMENT, CHANNEL, one row per state x channel slot).  Owner,
+--2026-11-18: "regional = wifi. 2 is the shortlist of names, we want to flag the open territories".  Each named person
+--is KEPT Y, ROLE from CHANNEL (REGIONAL is WIFI), ASSIGNED_STATES the codes of their rows' STATE (full names).  A person
+--matches a holder of either firm on one key: a name with a comma flipped ("Lee, Ann" to "Ann Lee"), upper case, single
+--spaces.  A name no holder has comes back as EDIT NOT MATCHED with source SHEET, a person on two channels as TWO ANSWERS,
+--an unknown channel or state as not a listed value.  Every other WH or FI holder is KEPT N, so their territory shows as
+--open (only when the sheet names anyone).  A slot with no name (an open seat) sets nothing.  The owner edits below come
+--later, so they win.
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role, assigned_states)
+SELECT COALESCE(b.source, 'SHEET'), COALESCE(b.wholesaler, MIN(s.name)), 'Y', CASE WHEN s.ch = 'REGIONAL' THEN 'WIFI' ELSE s.ch END,
+       LISTAGG(DISTINCT COALESCE(c.code, REPLACE(s.st, ' ', '_')), ' ') WITHIN GROUP (ORDER BY COALESCE(c.code, REPLACE(s.st, ' ', '_')))
+FROM (SELECT TRIM(name) AS name, UPPER(TRIM(channel)) AS ch, UPPER(TRIM(REGEXP_REPLACE(state, '\\s+', ' '))) AS st,
+             NULLIF(UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
+                                   ELSE name END, '\\s+', ' '))), '') AS k
+      FROM IDENTIFIER($sheet_tbl)) s
+LEFT JOIN (SELECT column1 AS st, column2 AS code FROM VALUES
+       ('ALABAMA', 'AL'), ('ALASKA', 'AK'), ('ARIZONA', 'AZ'), ('ARKANSAS', 'AR'), ('CALIFORNIA', 'CA'),
+       ('COLORADO', 'CO'), ('CONNECTICUT', 'CT'), ('DELAWARE', 'DE'), ('DISTRICT OF COLUMBIA', 'DC'),
+       ('FLORIDA', 'FL'), ('GEORGIA', 'GA'), ('HAWAII', 'HI'), ('IDAHO', 'ID'), ('ILLINOIS', 'IL'),
+       ('INDIANA', 'IN'), ('IOWA', 'IA'), ('KANSAS', 'KS'), ('KENTUCKY', 'KY'), ('LOUISIANA', 'LA'), ('MAINE', 'ME'),
+       ('MARYLAND', 'MD'), ('MASSACHUSETTS', 'MA'), ('MICHIGAN', 'MI'), ('MINNESOTA', 'MN'), ('MISSISSIPPI', 'MS'),
+       ('MISSOURI', 'MO'), ('MONTANA', 'MT'), ('NEBRASKA', 'NE'), ('NEVADA', 'NV'), ('NEW HAMPSHIRE', 'NH'),
+       ('NEW JERSEY', 'NJ'), ('NEW MEXICO', 'NM'), ('NEW YORK', 'NY'), ('NORTH CAROLINA', 'NC'),
+       ('NORTH DAKOTA', 'ND'), ('OHIO', 'OH'), ('OKLAHOMA', 'OK'), ('OREGON', 'OR'), ('PENNSYLVANIA', 'PA'),
+       ('RHODE ISLAND', 'RI'), ('SOUTH CAROLINA', 'SC'), ('SOUTH DAKOTA', 'SD'), ('TENNESSEE', 'TN'),
+       ('TEXAS', 'TX'), ('UTAH', 'UT'), ('VERMONT', 'VT'), ('VIRGINIA', 'VA'), ('WASHINGTON', 'WA'),
+       ('WEST VIRGINIA', 'WV'), ('WISCONSIN', 'WI'), ('WYOMING', 'WY')) c ON c.st = s.st
+LEFT JOIN (SELECT source, wholesaler, UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN wholesaler) > 0 THEN SPLIT_PART(wholesaler, ',', 2) || ' ' || SPLIT_PART(wholesaler, ',', 1)
+                                   ELSE wholesaler END, '\\s+', ' '))) AS k
+           FROM ssdb_integration.lr_strategy.tmp_m_base) b ON b.k = s.k
+WHERE s.k IS NOT NULL
+GROUP BY s.k, b.source, b.wholesaler, s.ch;
+INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept)
+SELECT source, wholesaler, 'N' FROM ssdb_integration.lr_strategy.tmp_m_base
+WHERE zips_wh + zips_fi > 0
+  AND UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN wholesaler) > 0 THEN SPLIT_PART(wholesaler, ',', 2) || ' ' || SPLIT_PART(wholesaler, ',', 1)
+                                   ELSE wholesaler END, '\\s+', ' '))) NOT IN
+      (SELECT UPPER(TRIM(REGEXP_REPLACE(CASE WHEN POSITION(',' IN name) > 0 THEN SPLIT_PART(name, ',', 2) || ' ' || SPLIT_PART(name, ',', 1)
+                                   ELSE name END, '\\s+', ' '))) FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(TRIM(name), '') IS NOT NULL)
+  AND EXISTS (SELECT 1 FROM IDENTIFIER($sheet_tbl) WHERE NULLIF(TRIM(name), '') IS NOT NULL);
 
 --owner edits: begin
 INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) VALUES

@@ -18,6 +18,8 @@ INSERT INTO ssdb_integration.lr_strategy.terr_t (source, name, zip_code, state, 
   ('A','Abe Orr','02134','MA','IFA',NULL), ('A','Bo Ray','02139','MA','FI',NULL), ('A','Dot Kim','02134','MA','WH',NULL), ('A','Cal Poe','02134','MA','IFA',NULL),
   ('A','Open','02136','MA','FI',NULL), ('A','  ','02137','MA','FI',NULL),
   ('B','Ann Lee','02134','MA','WH',NULL), ('B','Gil Hu','02134','ma','FI',NULL), ('B','Gil Hu','02134','MA','PRI',NULL);
+-- no shortlist sheet rows: the sheet sets nothing (03_sheet_test.sh tests the sheet)
+CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, comment TEXT, channel TEXT);
 SQL
 # DuckDB has no LISTAGG ... WITHIN GROUP: string_agg with ORDER BY.  REGEXP_REPLACE as in 02_model_extract_test.sh.
 # The edits: rows beside the EXAMPLE row (one statement), then a later rule from the roster before edits.
@@ -27,6 +29,9 @@ sed -e "s/LISTAGG(\([a-z]*\), ' ') WITHIN GROUP (ORDER BY [a-z]*)/string_agg(\1,
     -e "s/^  ('EXAMPLE', 'Last, First', 'N', '');\$/  ('EXAMPLE', 'Last, First', 'N', ''), ('a', 'ann  LEE', 'n', ''), ('B', 'Gil Hu', 'Y', 'national'), ('B', 'gil hu', 'y', 'NATIONAL'), ('A', 'Abe Orr', 'Y', 'BOSS'), ('A', 'No One', 'Y', 'WH'), ('A', 'No One', 'Y', 'WH'), ('B', 'Ann Lee', 'N', ''), ('B', 'ann lee', 'Y', 'WH'), ('A', 'Bo Ray', 'N', '');/" \
     -e "s/^--owner edits: end\$/INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, kept, role) SELECT source, wholesaler, 'Y', 'FI' FROM ssdb_integration.lr_strategy.tmp_m_base WHERE wholesaler ILIKE '%ray%' AND current_channels = 'FI'; INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, assigned_states) VALUES ('A', 'Bo Ray', 'ma,  nh'), ('B', 'Gil Hu', 'MA XX'), ('A', 'Dot Kim', 'MA XX'); INSERT INTO ssdb_integration.lr_strategy.tmp_m_edit (source, wholesaler, assigned_states) VALUES ('A', 'Ann Lee', 'NH'), ('B', 'Gil Hu', 'MA');/" \
     -e 's/^SELECT status, source, wholesaler, current_channels, zips_wh, zips_fi, zips_other, states, kept, role, assigned_states FROM ($/CREATE TABLE full_result AS &/' \
+    -e "s/LISTAGG(DISTINCT \(.*\), ' ') WITHIN GROUP (ORDER BY \(.*\))\$/string_agg(DISTINCT \1, ' ' ORDER BY \2)/" \
+    -e 's/ FROM VALUES$/ FROM (VALUES/' -e "s/('WYOMING', 'WY')) c ON/('WYOMING', 'WY')) v(column1, column2)) c ON/" \
+    -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/g' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
     -e 's/IDENTIFIER(\$assign_tbl)/ssdb_integration.lr_strategy.assign_t/' "$here/03_assignments.sql"
 cat <<'SQL'
