@@ -28,6 +28,16 @@ One file per question. Read `STATE.md` and the issue you were given first.
 - Background solver runs with `"$TD_PY" -u`. A script under `tools/<sub>/` that imports `td` puts the repo root on `sys.path` itself.
 - One environment, `.venv`, from `requirements.txt`. Pin pyproj wherever plans are compared (3.7.2 and 3.8.0 build different ZIP graphs).
 
+## Developer experience (the owner's work machine)
+
+The owner runs everything on a Windows 11 work machine: PowerShell in Windows Terminal, Helix 25.07.1 (`[editor] shell = ["powershell", "-NoProfile", "-Command"]`), the repo cloned with `.venv` from `requirements.txt` plus `snowflake-cli`, the connection `[default]` in `%USERPROFILE%\.snowflake\connections.toml`.
+
+- **Nothing is pasted from the agent's screen** (owner, 2026-11-18: "I cannot paste from here to my work computer, anything you need me to run needs to be a script which I got pull and run"). Every command, query or edit the owner runs is a committed file: tell them the one line to type, e.g. `:sh git pull` then `:sh .\tools\snowflake\<script>.ps1`, or "open `<file>.sql`, F5". No SQL, PowerShell or config snippets to copy.
+- **SQL runs with F5 in Helix**: `F5 = [':write', ':sh .\.venv\Scripts\python.exe tools\snowflake\run_sql.py %{buffer_name}']`. `tools/snowflake/run_sql.py` runs the whole file in one session (Snowsight's Run All), shows the last result's first 50 rows in a popup and all of it in `data\safe\last.csv`, opens its Snowsight page if `data\safe\snowsight_url.txt` holds a query URL, and runs a `--then <path>` file after. It writes only stdout and exits 0: Helix shows stderr instead of stdout when there is any and hides a failing command's output.
+- **Anything with names lives in the gitignored `data\safe\`**, which a clone does not have: a script creates the folder and copies a name-free template there (`new_fix_names.ps1`), the owner fills in names. Helix hides gitignored paths from completion: give the full path.
+- **What the owner sends back** is a masked result (`R<n>` keys, counts, fixed labels), uploaded as `data\safe\last.csv` right after the F5 that made it. A result with names stays on their screen: say which, every time.
+- **PowerShell, not bash**: `New-Item -ItemType Directory -Force`, `Copy-Item`, `$env:VAR`; Windows Terminal splits with Alt+Shift+D. PowerShell treats `%` as `ForEach-Object`. Scripts cannot be run here: say what was and was not tested.
+
 ## Tests
 
 `"$TD_PY" tests/run_all.py 2>&1 | rg -v '^\s*PASS '` from the repo or worktree root prints only the failures, SKIP lines and the summary. `run_all.py` has no per-test skip: a test that returns early counts as PASS, so read the SKIP lines. Do not wrap it in `rtk test`: rtk keeps only the last 5 lines, which can hide a FAIL.

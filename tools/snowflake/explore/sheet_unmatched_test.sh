@@ -19,12 +19,12 @@ CREATE TABLE ssdb_integration.lr_strategy.sheet_t (name TEXT, state TEXT, commen
 INSERT INTO ssdb_integration.lr_strategy.sheet_t VALUES
   ('ann  LEE','MAINE',NULL,'WH'), ('Bob Smith','OHIO',NULL,'REGIONAL'), ('Bob Smith','IOWA',NULL,'NATIONAL'),
   ('New Hire','IOWA',NULL,'WH'), ('Pat Open','IOWA',NULL,'WH'), ('  ','UTAH',NULL,'WH'),
-  ('Ann Lee OR Cy Zed / Lee, Ann','IOWA',NULL,'FI'), ('Dee Fox or New Hire','UTAH',NULL,'NATIONAL');
+  ('Ann Lee OR Cy Zed / Lee, Ann','IOWA',NULL,'FI'), ('Dee Fox or New Hire','UTAH',NULL,'NATIONAL'), ('Ed'||chr(160)||'Fox','UTAH',NULL,'WH');
 SQL
 sed -e "s/LISTAGG(DISTINCT ch, ' ') WITHIN GROUP (ORDER BY ch)/string_agg(DISTINCT ch, ' ' ORDER BY ch)/g" \
     -e "s/'\\\\\\\\s+', ' ')/'\\\\s+', ' ', 'g')/g" -e "s/\\\\\\\\s/\\\\s/g" -e "s/', '|')/', '|', 'g')/" \
     -e "s/LATERAL SPLIT_TO_TABLE(\\(x\\.[a-z_]*\\), '|') p/LATERAL (SELECT unnest(string_split(\\1, '|')) AS value) p/" \
-    -e '/^use /d' -e '/^SET /d' \
+    -e '/^use /d' -e '/^SET /d' -e 's/REGEXP_LIKE(/regexp_matches(/g' \
     -e "s/REGEXP_SUBSTR(\([a-z.]*\), '\[^ \]+\$')/regexp_extract(\1, '[^ ]+\$')/g" \
     -e 's/IDENTIFIER(\$sheet_tbl)/ssdb_integration.lr_strategy.sheet_t/' \
     -e 's/IDENTIFIER(\$terr_tbl)/ssdb_integration.lr_strategy.terr_t/' \
@@ -34,9 +34,13 @@ cat <<'SQL'
 CREATE MACRO chk(name, got, want) AS CASE WHEN got IS NOT DISTINCT FROM want THEN 'ok'
   ELSE error(name || ': got ' || COALESCE(CAST(got AS VARCHAR), 'NULL') || ', want ' || CAST(want AS VARCHAR)) END;
 SELECT chk('the result',
-  (SELECT string_agg(concat_ws('|', sheet_name, sheet_channels, COALESCE(holder_source, '-'), COALESCE(holder, '-'), COALESCE(holder_channels, '-')), ' / '
+  (SELECT string_agg(concat_ws('|', replace(sheet_name, chr(160), '~'), replace(sheet_key, chr(160), '~'), sheet_odd_char, sheet_channels,
+                               COALESCE(holder_source, '-'), COALESCE(holder, '-'), COALESCE(holder_key, '-'),
+                               COALESCE(CAST(holder_odd_char AS VARCHAR), '-'), COALESCE(holder_channels, '-')), ' / '
           ORDER BY sheet_name, holder_source, holder) FROM res),
-  'Bob Smith|NATIONAL REGIONAL|CRBG|Smith, Robert|FI WH / Bob Smith|NATIONAL REGIONAL|EQH|Jo Smith|WH / Cy Zed|FI|EQH|Al Zed|FI / Dee Fox|NATIONAL|-|-|- / New Hire|NATIONAL WH|-|-|- / Pat Open|WH|-|-|-');
+  'Bob Smith|BOB SMITH|0|NATIONAL REGIONAL|CRBG|Smith, Robert|ROBERT SMITH|0|FI WH / Bob Smith|BOB SMITH|0|NATIONAL REGIONAL|EQH|Jo Smith|JO SMITH|0|WH'
+  || ' / Cy Zed|CY ZED|0|FI|EQH|Al Zed|AL ZED|0|FI / Dee Fox|DEE FOX|0|NATIONAL|-|-|-|-|-'
+  || ' / Ed~Fox|ED~FOX|1|WH|-|-|-|-|- / New Hire|NEW HIRE|0|NATIONAL WH|-|-|-|-|- / Pat Open|PAT OPEN|0|WH|-|-|-|-|-');
 SELECT 'sheet_unmatched_test: ok';
 SQL
 } | duckdb -bail -noheader -list

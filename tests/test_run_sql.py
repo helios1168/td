@@ -23,9 +23,13 @@ class Err(Exception):
     pass
 
 
+SEEN = []
+
+
 def fake_connector(results):
     """Each item: rows (a cursor with one column X), None (a cursor with no description) or Err (raised)."""
-    def stream(_):
+    def stream(f):
+        SEEN.append(f.getvalue())
         for r in results:
             if r is Err:
                 raise Err("SQL compilation error: bad")
@@ -89,6 +93,33 @@ def test_the_saved_snowsight_url_gets_the_new_query_id():
             raise AssertionError("a URL with no query ID must refuse")
         except SystemExit as e:
             assert "no query ID" in str(e)
+
+
+def test_then_runs_the_named_file_after_in_one_session():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "tools"))
+        open(os.path.join(d, "tools", "after.sql"), "w").write("select 'after'")
+        root, run_sql.ROOT = run_sql.ROOT, d
+        try:
+            SEEN.clear()
+            fake = fake_connector([[(1,)]])
+            saved = {k: sys.modules.get(k) for k in ("snowflake", "snowflake.connector")}
+            sys.modules.update({"snowflake": types.SimpleNamespace(connector=fake), "snowflake.connector": fake})
+            run_sql.OUT, run_sql.URL = os.path.join(d, "last.csv"), os.path.join(d, "none.txt")
+            sql = os.path.join(d, "fix.sql")
+            open(sql, "w").write("update x\n--then tools/after.sql\n")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                run_sql.main(sql)
+        finally:
+            run_sql.ROOT = root
+            for k, v in saved.items():
+                if v is None:
+                    sys.modules.pop(k, None)
+                else:
+                    sys.modules[k] = v
+        assert SEEN == ["update x\n--then tools/after.sql\n\nselect 'after'"], SEEN
+        assert "then tools/after.sql" in buf.getvalue()
 
 
 if __name__ == "__main__":
