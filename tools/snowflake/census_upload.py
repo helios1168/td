@@ -52,9 +52,12 @@ def ingest_local_geopackage():
         
     print(f"Targeting local archive: {FULL_LOCAL_PATH}")
     print("--- Initializing Snowflake Native DB Connection ---")
+    import tomllib  # user and account come from your connections.toml, kept out of the repo
+    with open(os.path.join(os.path.expanduser("~"), ".snowflake", "connections.toml"), "rb") as f:
+        _conn = tomllib.load(f)["default"]
     ctx = snowflake.connector.connect(
-        user='<user>',
-        account='<account>',
+        user=_conn["user"],
+        account=_conn["account"],
         warehouse='WH_LIFE_GP_XS',
         database='SSDB_INTEGRATION',
         schema='LR_STRATEGY',
