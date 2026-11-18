@@ -1,0 +1,3 @@
+# Helix: show the gitignored data/safe/ (the owner's local files with names) in the file picker and search.
+# Git still ignores it: nothing in it is ever committed.
+!data/safe/
