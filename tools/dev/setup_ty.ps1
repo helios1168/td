@@ -21,7 +21,8 @@ $noBom = New-Object System.Text.UTF8Encoding $false            # Windows PowerSh
 $block = "`n# ty, the Python language server, from $repo\.venv (tools\dev\setup_ty.ps1)`n[language-server.ty]`ncommand = '$ty'`nargs = [`"server`"]`n"
 if (Test-Path $cfg) {
     $text = [System.IO.File]::ReadAllText($cfg)
-    if ($text -match '(?m)^\s*\[language-server\.ty\]') {
+    # ty already defined either way TOML allows: its own table, or `ty = ...` inside a [language-server] table
+    if ($text -match '(?m)^\s*\[language-server\.ty\]' -or $text -match '(?ms)^\s*\[language-server\]\s*$(?:(?!^\s*\[).)*?^\s*ty\s*=') {
         Write-Output "$cfg already has [language-server.ty], left as it is:"
         Select-String -Path $cfg -Pattern 'language-server\.ty' -Context 0, 3 | ForEach-Object { $_.ToString() }
     } else {

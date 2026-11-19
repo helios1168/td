@@ -997,3 +997,12 @@ if __name__ == "__main__":
         if k.startswith("test_"):
             v()
             print("ok", k)
+
+
+def test_draft_refuses_product_switches():
+    for extra in (["--include-all-products"], ["--exclude-products", "FIXED"]):
+        try:
+            sm.main(["--draft", "x"] + extra)
+            raise AssertionError(f"no error for --draft with {extra}")
+        except SystemExit as e:
+            assert e.code == 2, e.code                                # argparse's usage error, before anything is read

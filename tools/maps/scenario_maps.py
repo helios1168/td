@@ -5,7 +5,7 @@
 
 FIXED annuity is left out of the opportunity and the sales by default (owner, 2026-11-19: "default is exclude"): 04 and 08 get their
 `SET exclude_products` line replaced with the run's list.  -IncludeFixed (--include-all-products) leaves it empty and adds `-allproducts`
-to the run folder's name; --exclude-products INDEX RILA (repeatable) leaves out those PRODUCT_V2 values instead and adds `-exINDEX-RILA`.
+to the run folder's name; --exclude-products "INDEX RILA" (quoted, or the switch repeated) leaves out those PRODUCT_V2 values instead and adds `-exINDEX-RILA`.
 The summary line and the gap summary page say "excluding FIXED" or "all products".
 
 Nothing is repeated across scenarios (owner, 2026-11-18: "we don't ever duplicate something"): a page that comes out the same
@@ -1182,6 +1182,8 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, help="drawing processes (default: the CPUs less one, at most 8); 1 draws in this process")
     args = ap.parse_args(argv)
     if args.draft:
+        if args.include_all_products or args.exclude_products:
+            ap.error("--draft draws a saved draft as it was built: product switches do not apply (rebuild the draft from a run with them)")
         return main_draft(args)
     with open(SQL03, encoding="utf-8") as f:
         sql03 = f.read()
