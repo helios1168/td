@@ -13,16 +13,23 @@
   <div class="brand">
     <h1>Territory coverage</h1>
     <p id="runline"></p>
+    <p class="made" id="made" hidden></p>
   </div>
-  <div class="ctl"><span class="lab" id="l-sc">Scenario</span><div class="seg" id="c-sc" role="group" aria-labelledby="l-sc"></div></div>
-  <div class="ctl"><span class="lab" id="l-est">Estimate of the market</span><div class="seg" id="c-est" role="group" aria-labelledby="l-est"></div></div>
-  <div class="ctl"><span class="lab">Products</span><span class="fixed" id="c-products"></span></div>
-  <span class="rule" aria-hidden="true"></span>
-  <div class="ctl"><span class="lab" id="l-view">View</span><div class="seg" id="c-view" role="group" aria-labelledby="l-view"></div></div>
-  <div class="ctl"><span class="lab" id="l-ch">Channel</span><div class="seg" id="c-ch" role="group" aria-labelledby="l-ch"></div></div>
-  <label class="ctl"><span class="lab">Focus</span><select id="c-focus"></select></label>
-  <label class="ctl find"><span class="lab">Find</span><input id="c-find" type="search" list="find-list" autocomplete="off" spellcheck="false">
-    <datalist id="find-list"></datalist></label>
+  <div class="rows">
+    <div class="row">
+      <div class="ctl"><span class="lab" id="l-of">View of</span><div class="seg" id="c-of" role="group" aria-labelledby="l-of"></div></div>
+      <label class="ctl"><span class="lab"><span id="l-sc">Scenario</span> <span class="id" id="sc-id"></span></span><select id="c-sc"></select></label>
+      <div class="ctl"><span class="lab" id="l-est">Estimate of the market</span><div class="seg" id="c-est" role="group" aria-labelledby="l-est"></div></div>
+      <div class="ctl"><span class="lab">Products</span><span class="fixed" id="c-products"></span></div>
+    </div>
+    <div class="row">
+      <div class="ctl"><span class="lab" id="l-view">Colour each ZIP by</span><div class="seg" id="c-view" role="group" aria-labelledby="l-view"></div></div>
+      <div class="ctl"><span class="lab" id="l-ch">Channel</span><div class="seg" id="c-ch" role="group" aria-labelledby="l-ch"></div></div>
+      <label class="ctl"><span class="lab">Focus</span><select id="c-focus"></select></label>
+      <label class="ctl find"><span class="lab">Find</span><input id="c-find" type="search" list="find-list" autocomplete="off" spellcheck="false">
+        <datalist id="find-list"></datalist></label>
+    </div>
+  </div>
   <p class="found" id="found" role="status"></p>
 </header>
 <main>
@@ -33,13 +40,13 @@
     <aside class="over card" id="card" aria-label="Selection" hidden></aside>
     <div id="tip" hidden></div>
   </section>
-  <section class="tables">
-    <div class="tbl" id="t-pairs"></div>
-    <div class="tbl" id="t-fill"></div>
+  <section class="tables" aria-label="Wholesalers and tables">
+    <div class="strip" id="strip"></div>
+    <div class="tbl" id="t-main"></div>
   </section>
   <aside class="side">
     <section class="totals" id="totals" aria-label="Totals"></section>
-    <section class="detail" id="detail" aria-label="People"></section>
+    <section class="detail" id="detail" aria-label="The focused state"></section>
   </aside>
 </main>
 <dialog id="licence-box">

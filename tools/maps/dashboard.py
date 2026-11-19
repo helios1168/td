@@ -65,9 +65,10 @@ STATE_NAME = {"AL": "Alabama", "AZ": "Arizona", "AR": "Arkansas", "CA": "Califor
 
 # The four classes of the page (owner, 2026-11-19, #153, DATASET_LOG) over 07's seven (DETAIL, unchanged): label, colour, plain
 # meaning, the 07 classes it holds.  Colours run from quiet to loud in the Corebridge palette (pm/docs/brand.md): three steps of the
-# violets while someone covers the ZIP today, Dark Orange (a secondary colour, for data) when no one does or no one is assigned.
+# violets while someone covers the ZIP today (a tint of Violet, as the guidelines allow in charts: Light Violet itself is lost on the
+# white land; Orchid; Violet), Dark Orange (a secondary colour, for data) when no one does or no one is assigned.
 DETAIL = [c for c, *_ in sm.GAP_CLASSES]
-CLASSES = [("Uncontested", "#E0E0FB", "The assigned person already covers it today, alone.", ("COVERED",)),
+CLASSES = [("Uncontested", "#C9C9F5", "The assigned person already covers it today, alone.", ("COVERED",)),
            ("Contested", "#C053EF", "Two or more people on the roster cover it today; one keeps it.", ("OVERLAP",)),
            ("Transition", "#4F00CA", "Someone other than the assigned person covers it today; it moves to the assigned person.", ("HELD BY ANOTHER", "GAP (HELD TODAY)")),
            ("Open", "#EC602F", "No one covers it today, or no one is assigned.", ("GAP (UNHELD)", "OPEN SEAT HELD", "OPEN SEAT UNHELD"))]
