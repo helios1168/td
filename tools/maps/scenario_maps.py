@@ -524,6 +524,9 @@ GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most $
                "Names: the person(s) assigned to the state in this channel.  Legend: ZIPs and the $MM of their cells in this channel, on this page.")
 
 
+USD_PER_MM = 1e6   # MM_OPP is in dollars despite its name (04's result, e.g. 41,337,760,848.76 for $41.3B): the pages show $MM
+
+
 def gap_prepare(cell, pair, names):
     """What the pages need, from the TD_GAP_CELL and TD_GAP_PAIR results ((columns, rows)) and names {key: name}: ests,
     zips {(est, channel): {zip: (state, class, $MM)}} (class = the ZIP's cells' class with most MM_OPP), assigned {(channel, state):
@@ -531,7 +534,7 @@ def gap_prepare(cell, pair, names):
     order = [c for c, *_ in GAP_CLASSES]
     by_zip, assigned, table = {}, {}, {}
     for r in (dict(zip(cell[0], x)) for x in cell[1]):
-        est, ch, cls, mm = r["EST_SOURCE"], r["CHANNEL"], r["CLASS"], float(r["MM_OPP"] or 0)
+        est, ch, cls, mm = r["EST_SOURCE"], r["CHANNEL"], r["CLASS"], float(r["MM_OPP"] or 0) / USD_PER_MM
         if cls not in order or ch not in GAP_ALL_CH:
             raise SystemExit(f"TD_GAP_CELL has CLASS {cls!r}, CHANNEL {ch!r}; the pages know {order} and {GAP_ALL_CH}")
         table[est, ch, cls] = table.get((est, ch, cls), 0.0) + mm
@@ -544,7 +547,7 @@ def gap_prepare(cell, pair, names):
     who = lambda k: f"{k} {names[k]}" if k in names else k
     pairs = {}
     for r in (dict(zip(pair[0], x)) for x in pair[1]):
-        pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0)))
+        pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0) / USD_PER_MM))
     return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, table=table,
                            assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
                            pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})

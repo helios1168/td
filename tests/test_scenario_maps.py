@@ -344,6 +344,9 @@ PERSON_COLS = ["SCENARIO", "EST_SOURCE", "HOLDER", "SOURCE", "ROLE", "ASSIGNED_S
 SUMMARY_COLS = ["SECTION", "SCENARIO", "EST_SOURCE", "CHANNEL", "ITEM", "N_ZIPS", "MM_OPP", "PCT", "MUST_BE_ZERO"]
 
 
+USD = 1e6   # TD_GAP_* MM_OPP is in dollars: $1,000,000 must show as 1.0 $MM on the pages
+
+
 def fake_cells():
     """Every ZIP has a NATIONAL cell for each estimate (class by ZIP index); AA1 also has a second, bigger NATIONAL cell of
     another class (the class with most $ wins) and a REGIONAL one; state AA is assigned R1 and R2 (names joined); one OPEN cell."""
@@ -351,15 +354,15 @@ def fake_cells():
     for est in ("LOW", "HIGH"):
         for i, code in enumerate(CODES):
             for j, z in enumerate((code + "1", code + "2")):
-                rows.append(("S", est, z, code, "D", 1.0 + j, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 7], 1, "R1"))
-        rows.append(("S", est, "AA1", "AA", "D", 5.0, "NATIONAL", "R1 R2", "GAP", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
-        rows.append(("S", est, "AA1", "AA", "D", 2.0, "REGIONAL", "R3", "OVERLAP", 2, "R1 R2"))
-        rows.append(("S", est, "BA1", "BA", "D", 7.0, "OPEN", None, "OPEN SEAT HELD", 1, "R1"))
+                rows.append(("S", est, z, code, "D", (1.0 + j) * USD, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 7], 1, "R1"))
+        rows.append(("S", est, "AA1", "AA", "D", 5.0 * USD, "NATIONAL", "R1 R2", "GAP", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
+        rows.append(("S", est, "AA1", "AA", "D", 2.0 * USD, "REGIONAL", "R3", "OVERLAP", 2, "R1 R2"))
+        rows.append(("S", est, "BA1", "BA", "D", 7.0 * USD, "OPEN", None, "OPEN SEAT HELD", 1, "R1"))
     return rows
 
 
 def fake_pairs():
-    return [("S", est, "NATIONAL", "R1", "R2", 3, 100.0 + k) for est in ("LOW", "HIGH") for k in range(20)] + [("S", "LOW", "WH", "R1", "R9", 1, 1.0)]
+    return [("S", est, "NATIONAL", "R1", "R2", 3, (100.0 + k) * USD) for est in ("LOW", "HIGH") for k in range(20)] + [("S", "LOW", "WH", "R1", "R9", 1, 1.0 * USD)]
 
 
 def _gd():
