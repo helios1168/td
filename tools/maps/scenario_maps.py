@@ -593,9 +593,10 @@ def write_pdf(path, figs, inspect=None):
 # class, colour, hatch edge colour (None: solid), hatch; the order breaks ties for the class of a ZIP
 GAP_CLASSES = [("COVERED", "#b9e6b0", None, None), ("OVERLAP", "#e8541f", None, None), ("HELD BY ANOTHER", "#8e5bb5", None, None),
                ("GAP", "#f2c200", None, None), ("OPEN SEAT HELD", "#c4c4c4", "#6a6a6a", "////"),
-               ("OPEN SEAT UNHELD", "#efefef", "#a8a8a8", "////"), ("DOUBLE ASSIGNED", "#000000", None, None)]
-GAP_CH = ("NATIONAL", "REGIONAL", "WH")           # the channels with a page; OPEN (no one assigned) is in the summary table only
-GAP_ALL_CH = GAP_CH + ("OPEN",)
+               ("OPEN SEAT UNHELD", "#efefef", "#a8a8a8", "////")]
+OPEN_CLASSES = ("OPEN SEAT HELD", "OPEN SEAT UNHELD")   # only on the OPEN page: an open seat has no channel (no one is assigned)
+GAP_CH = ("NATIONAL", "REGIONAL", "WH", "OPEN")   # the channels with a page; OPEN is the open seats
+GAP_ALL_CH = GAP_CH
 GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most $MM of opportunity (MM_OPP); a ZIP with no cell in the channel is blank.  "
                "Names: the person(s) assigned to the state in this channel.  Legend: ZIPs and the $MM of their cells in this channel, on this page.")
 
@@ -643,6 +644,8 @@ def draw_gap_page(gd, geo, title, g, ch, est):
             mm[cls] += m
     handles = []
     for cls, col, edge, hatch in GAP_CLASSES:
+        if (cls in OPEN_CLASSES) != (ch == "OPEN"):
+            continue                                       # a class that cannot be on this page is not in its legend
         paths = [path_of(geo, geo.zips[z]) for z in by[cls]]
         if paths:
             c = PathCollection(paths, facecolor=col, edgecolor=edge or col, linewidth=0 if hatch else 0.1, hatch=hatch, zorder=1)

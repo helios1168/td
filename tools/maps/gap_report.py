@@ -75,7 +75,7 @@ def overlaps(summary, pairs):
 def gaps(summary):
     st = [(r["CHANNEL"], *r["ITEM"].split(" | ", 1), r) for r in summary if r["SECTION"] == "STATE" and " | " in r["ITEM"]]
     out = ""
-    for ch in sorted({s[0] for s in st}):
+    for ch in sorted({s[0] for s in st} - {"OPEN"}):              # OPEN has no GAP: its seats are the table below
         g = top([s[3] for s in st if s[0] == ch and s[2] == "GAP"], "MM_OPP", 15)
         out += f"Top 15 states by GAP, {ch}:\n\n" + table(["state", "ZIPs", "$B"], [[r["ITEM"].split(" | ")[0], r["N_ZIPS"], b(r["MM_OPP"])] for r in g]) + "\n"
     seat = collections.defaultdict(lambda: [0, 0.0])

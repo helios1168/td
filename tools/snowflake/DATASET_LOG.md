@@ -2041,3 +2041,12 @@ split state's cell the sole holder's in full when COVERED, else equal shares), s
 from their assigned states (state shapes), a state split between N people of the role counting 1/N each: "their part of
 it", as recommended and approved. 07's OPP_ASSIGNED is unchanged (it still says what each person is on the hook for).
 
+### 2026-11-18: open seats get their own gap page
+
+Owner, 2026-11-18: "Open seat figures are 0 though". An open seat's cell has channel OPEN (no one assigned in any
+channel), and the gap pages were drawn for NATIONAL, REGIONAL and WH only while every legend listed the open-seat
+classes, so they always read 0 ZIPs. The figures were right in `gap_summary.csv` and the summary page ($11.4B, CRBG
+estimate, CA1_R105N). Now an OPEN page per estimate draws the open seats; each page's legend has only the classes that
+can be on it (the open-seat classes on OPEN only); DOUBLE ASSIGNED is gone from the legend (07 no longer makes it).
+A run is 12 map pages and 9 gap pages per scenario, before sharing.
+

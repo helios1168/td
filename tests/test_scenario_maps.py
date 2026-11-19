@@ -354,7 +354,7 @@ def fake_cells():
     for est in ("LOW", "HIGH"):
         for i, code in enumerate(CODES):
             for j, z in enumerate((code + "1", code + "2")):
-                rows.append(("S", est, z, code, "D", (1.0 + j) * USD, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 7], 1, "R1"))
+                rows.append(("S", est, z, code, "D", (1.0 + j) * USD, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 4], 1, "R1"))   # the 4 classes of a channel
         rows.append(("S", est, "AA1", "AA", "D", 5.0 * USD, "NATIONAL", "R1 R2", "GAP", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
         rows.append(("S", est, "AA1", "AA", "D", 2.0 * USD, "REGIONAL", "R3", "OVERLAP", 2, "R1 R2"))
         rows.append(("S", est, "BA1", "BA", "D", 7.0 * USD, "OPEN", None, "OPEN SEAT HELD", 1, "R1"))
@@ -391,8 +391,8 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
     sm._init(geo)
     got = list(sm.gap_pages("S", gd, geo))
     expect = ["D overlaps and gaps · summary"] + [f"D overlaps and gaps · {ch} · {est} estimate · {g}"
-                                                     for g in ["CONUS"] + [d for d, _ in geo.divisions] for ch in ("NATIONAL", "REGIONAL", "WH") for est in ("HIGH", "LOW")]
-    assert [t for t, _ in got] == expect and len(got) == 61
+                                                     for g in ["CONUS"] + [d for d, _ in geo.divisions] for ch in ("NATIONAL", "REGIONAL", "WH", "OPEN") for est in ("HIGH", "LOW")]
+    assert [t for t, _ in got] == expect and len(got) == 81
     assert all(f.get_suptitle() == t for t, f in got)
     for title, fig in got[1:]:
         _, ch, est, gname = title.split(" · ")
@@ -401,7 +401,10 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
         legend = " ".join(t.get_text() for t in fig.legends[0].get_texts())
         for cls in CLASSES:
             mine = [v for v in zs.values() if v[1] == cls]
-            assert f"{cls}\n{len(mine):,} ZIPs · ${sum(v[2] for v in mine):,.1f} MM" in legend, (title, cls, legend)
+            on_page = (cls in sm.OPEN_CLASSES) == (ch == "OPEN")         # open seats only on the OPEN page, the rest never there
+            assert (f"{cls}\n" in legend) == on_page and (not on_page or f"{cls}\n{len(mine):,} ZIPs · ${sum(v[2] for v in mine):,.1f} MM" in legend), (title, cls, legend)
+        if ch == "OPEN" and "BA" in states and est == "LOW":
+            assert "OPEN SEAT HELD\n1 ZIPs · $7.0 MM" in legend, legend          # the open seat BA1 is drawn
         assert sum(len(c.get_paths()) for c in fig.axes[0].collections if c.get_gid() in CLASSES) == len(zs)
         names = {t.get_text() for t in fig.axes[0].texts}
         assert ("Ann N / Bo R" in names) == (ch == "NATIONAL" and "AA" in states) and ("Cy W" in names) == (ch == "REGIONAL" and "AA" in states), title
@@ -555,19 +558,19 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
         rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
         assert rc == 0 and files == sorted(gap_files + ["maps.pdf"]), files
-        assert pdfs == {"maps.pdf": 12 + 7} and "safe to send to an agent" in out, (pdfs, out)
+        assert pdfs == {"maps.pdf": 12 + 9} and "safe to send to an agent" in out, (pdfs, out)
         assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)
         # two scenarios the same: every page and row once
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N")
-        assert rc == 0 and pdfs == {"maps.pdf": 19} and csvs["gap_cell.csv"] == 1 + len(fake_cells()), (pdfs, csvs)
+        assert rc == 0 and pdfs == {"maps.pdf": 21} and csvs["gap_cell.csv"] == 1 + len(fake_cells()), (pdfs, csvs)
         # CA2 moves Ann (CRBG, NATIONAL) to WIFI: NATIONAL and REGIONAL pages A, B and C CRBG differ (6 more); C EQH, WH and gaps shared
         moved = lambda name: [r if r[1] != "Ann N" or name == "CA1_R105N" else r[:3] + ("WIFI",) + r[4:] for r in ROSTER]
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", moved)
-        assert rc == 0 and pdfs == {"maps.pdf": 19 + 6}, pdfs
+        assert rc == 0 and pdfs == {"maps.pdf": 21 + 6}, pdfs
         # CA1_R105R's 07 refused: the 12 map pages are all three scenarios', the 7 gap pages the other two's, not "all scenarios"
         labels.clear()
         rc, out, files, pdfs, csvs = run(lambda sql: BAD if "CA1_R105R" in sql else GOOD, f07, "CA1_R105N,CA2_R105N,CA1_R105R")
-        assert rc == 1 and pdfs == {"maps.pdf": 19} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 7, (rc, pdfs, labels)
+        assert rc == 1 and pdfs == {"maps.pdf": 21} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 9, (rc, pdfs, labels)
         rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, the maps still drawn, exit 1
         assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "dollars lost" in out, (files, out)
         rc, out, files, pdfs, csvs = run(GOOD, os.path.join(tempfile.gettempdir(), "07_does_not_exist.sql"))
