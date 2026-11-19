@@ -383,7 +383,7 @@ def test_the_dev_command_reads_a_run_folder_and_writes_keys_only():
             drawn = len(p["zipGeom"])
             assert drawn == 10 and all(any(h[i] >= 0 for h in p["today"]["h"].values()) for i in range(drawn))   # made-up territories: every shape is someone's in a firm
             assert dev(d)[1] == text                                 # the made-up parts are the same every time
-            assert p["has"] == {"pair": True, "load": True, "plan": False, "today": True} and not dev(d, "--without", "pair", "load")[2]["has"]["pair"]
+            assert p["has"] == {"pair": True} and not dev(d, "--without", "pair", "load")[2]["has"]["pair"]      # a pair file of another run can be left out: then no pair tie-out
             os.remove(os.path.join(d, "gap_pair.csv"))
             try:
                 dash.read_dev(d)

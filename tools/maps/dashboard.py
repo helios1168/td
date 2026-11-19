@@ -281,7 +281,7 @@ def payload(geo, runs, names=None, products_label="products not recorded", run_l
     in_div = {s for _, divs in REGIONS for _, codes in divs for s in codes.split()}
     out.update(
         run=run_label, products=products_label, scenarios=scenarios, ests=ests, channels=list(CHANNELS), roleOf=dict(sm.ROLE_OF),
-        labels=scenario_labels(people, names), madeUp=list(made_up), has={k: any(runs[s].get(k) for s in scenarios) for k in ("pair", "load", "plan", "today")},
+        labels=scenario_labels(people, names), madeUp=list(made_up), has={"pair": any(runs[s].get("pair") for s in scenarios)},        # no pair table (dev, a file of another run left out): no pair tie-out
         detail=DETAIL, classes=[{"label": c, "color": col, "help": text, "of": [DETAIL.index(d) for d in of]} for c, col, text, of in CLASSES],
         status=[dict(zip(("label", "color", "help"), s)) for s in STATUS],
         keys=keys, names={k: str(names[k]) for k in keys if names and names.get(k)}, colour=[colour[k] for k in keys], tcolour=[tcolour[i] for i in range(len(keys))],
