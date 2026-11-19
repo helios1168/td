@@ -597,8 +597,18 @@ GAP_CLASSES = [("COVERED", "#b9e6b0", None, None), ("OVERLAP", "#e8541f", None, 
 OPEN_CLASSES = ("OPEN SEAT HELD", "OPEN SEAT UNHELD")   # only on the OPEN page: an open seat has no channel (no one is assigned)
 GAP_CH = ("NATIONAL", "REGIONAL", "WH", "OPEN")   # the channels with a page; OPEN is the open seats
 GAP_ALL_CH = GAP_CH
-GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most $MM of opportunity (MM_OPP); a ZIP with no cell in the channel is blank.  "
-               "Names: the person(s) assigned to the state in this channel.  Legend: ZIPs and the $MM of their cells in this channel, on this page.")
+GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most \\$MM of opportunity (MM_OPP); a ZIP with no cell in the channel is blank.  "
+               "Names: the person(s) assigned to the state in this channel.  Legend: ZIPs and the \\$MM of their cells in this channel, on this page.")
+
+
+# The FILL page (owner, 2026-11-18: "how do I see exactly where we need to fill to cover the all opportunity for CONUS in a single
+# view"): every channel at once, a ZIP in the colour of its unfilled class with most $; covered, overlap and held by another are
+# not fill (they are covered, or bargained) and show as NO FILL NEEDED.
+FILL_CLASSES = [("GAP (UNHELD)", "#f2b700", None, None), ("GAP (HELD TODAY)", "#f9e7a1", None, None),
+                ("OPEN SEAT UNHELD", "#9a9a9a", "#4a4a4a", "////"), ("OPEN SEAT HELD", "#d4d4d4", "#7a7a7a", "////")]
+NO_FILL = ("NO FILL NEEDED (covered, or bargained)", "#eef3ec", None, None)
+FILL_CAPTION = ("Every channel at once: a ZIP has the colour of its unfilled class (GAP or OPEN SEAT, any channel) with the most \\$MM; a ZIP whose cells are all "
+                "COVERED, OVERLAP or HELD BY ANOTHER needs no fill.  Legend: ZIPs in that colour, and the \\$MM of that class over every ZIP on this page.")
 
 
 USD_PER_MM = 1e6   # MM_OPP is in dollars despite its name (04's result, e.g. 41,337,760,848.76 for $41.3B): the pages show $MM
@@ -618,21 +628,53 @@ def gap_prepare(cell, pair, names):
         keys = str(r["ASSIGNED"] or "").replace(",", " ").split()
         if keys and ch in GAP_CH:
             assigned.setdefault((ch, str(r["STATE"]).upper()), set()).update(keys)
-        z = by_zip.setdefault((est, ch), {}).setdefault(str(r["ZIP_CODE"]), [str(r["STATE"]).upper(), {}])
-        z[1][cls] = z[1].get(cls, 0.0) + mm
-    zips = {k: {z: (st, max(order, key=lambda c: d.get(c, -1.0)), sum(d.values())) for z, (st, d) in v.items()} for k, v in by_zip.items()}
+        for k in (ch, "FILL"):                             # FILL: the ZIP's cells of every channel
+            z = by_zip.setdefault((est, k), {}).setdefault(str(r["ZIP_CODE"]), [str(r["STATE"]).upper(), {}])
+            z[1][cls] = z[1].get(cls, 0.0) + mm
+    zips = {k: {z: (st, max(order, key=lambda c: d.get(c, -1.0)), sum(d.values())) for z, (st, d) in v.items()} for k, v in by_zip.items() if k[1] != "FILL"}
+    fill_order = [c for c, *_ in FILL_CLASSES]
+    fill = {est: {z: (st, max(fill_order, key=lambda c: d.get(c, -1.0)) if any(d.get(c, 0) > 0 for c in fill_order) else NO_FILL[0], d)
+                  for z, (st, d) in v.items()} for (est, k), v in by_zip.items() if k == "FILL"}
     who = lambda k: f"{k} {names[k]}" if k in names else k
     pairs = {}
     for r in (dict(zip(pair[0], x)) for x in pair[1]):
         pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0) / USD_PER_MM))
-    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, table=table, names=dict(names), load=[],
+    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, fill=fill, table=table, names=dict(names), load=[],
                            assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
                            pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})
 
 
 def gap_specs(geo, gd):
-    """The gap pages after the summary as (geography, channel, estimate): geography, channel, estimate."""
-    return [(g, ch, est) for g in geo.geographies for ch in GAP_CH for est in gd.ests]
+    """The gap pages after the summary as (geography, channel, estimate): geography, then the FILL pages (every channel), then
+    channel x estimate."""
+    return [(g, ch, est) for g in geo.geographies for ch in ("FILL",) + GAP_CH for est in gd.ests]
+
+
+def draw_fill_page(gd, geo, title, g, est):
+    """Every channel's unfilled opportunity on one map: each ZIP in its unfilled class with most $ (NO_FILL when none)."""
+    fig, ax, vis = base_page(geo, g)
+    by, mm = collections.defaultdict(list), collections.Counter()
+    for z, (st, cls, d) in gd.fill.get(est, {}).items():
+        if st in g.states and z in geo.zips:
+            by[cls].append(z)
+            for c, v in d.items():
+                mm[c] += v
+    handles = []
+    for cls, col, edge, hatch in FILL_CLASSES + [NO_FILL]:
+        paths = [path_of(geo, geo.zips[z]) for z in by[cls]]
+        if paths:
+            c = PathCollection(paths, facecolor=col, edgecolor=edge or col, linewidth=0 if hatch else 0.1, hatch=hatch, zorder=1)
+            c.set_gid(cls)
+            ax.add_collection(c)
+        dollars = f" · ${mm[cls]:,.1f} MM" if cls != NO_FILL[0] else ""
+        handles.append(Patch(facecolor=col, edgecolor=edge or "#202020", hatch=hatch, label=f"{cls}\n{len(by[cls]):,} ZIPs{dollars}"))
+    state_lines_and_labels(ax, geo, vis, [])
+    total = sum(mm[c] for c, *_ in FILL_CLASSES)
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.752, 0.95), fontsize=9, frameon=False, handlelength=1.4, borderaxespad=0,
+               labelspacing=0.9, title=f"where to fill, every channel · {est} estimate · {g.name}\nunfilled ${total:,.1f} MM", title_fontsize=9, alignment="left")
+    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.975)
+    fig.text(0.01, 0.015, FILL_CAPTION, fontsize=8.5, color="#404040")
+    return fig
 
 
 def draw_gap_page(gd, geo, title, g, ch, est):
@@ -695,7 +737,7 @@ def gap_pages(scenario, gd, geo, lo=0, hi=None):
         else:
             g, ch, est = spec
             title = f"D overlaps and gaps · {ch} · {est} estimate · {g.name}"
-            yield title, draw_gap_page(gd, geo, title, g, ch, est)
+            yield title, (draw_fill_page(gd, geo, title, g, est) if ch == "FILL" else draw_gap_page(gd, geo, title, g, ch, est))
 
 
 # ---------------------------------------------------------------- the run

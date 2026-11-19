@@ -2060,3 +2060,12 @@ kind today (a WH piece for WH, a WH or FI piece otherwise: mostly holders not on
 when no one does. Named HELD TODAY, not "held off sheet": a shortlisted person of another channel can be that holder.
 The maps colour them pale and strong yellow; `gap_report.py` lists each state's gap with the two parts.
 
+### 2026-11-18: the FILL page, every channel on one map
+
+Owner, 2026-11-18: "how do I see exactly where we need to fill to cover the all opportunity for CONUS in a single view?"
+The gaps part of `maps.pdf` now starts, after the summary, with a FILL page per estimate: every channel's cells at once,
+each ZIP in the colour of its unfilled class with most $ (GAP (UNHELD), GAP (HELD TODAY), OPEN SEAT UNHELD, OPEN SEAT
+HELD), a ZIP whose cells are all COVERED, OVERLAP or HELD BY ANOTHER as NO FILL NEEDED; the legend has each class's
+exact $ over the page's ZIPs and the unfilled total. Also fixed: the gap pages' captions had two "$" and matplotlib set
+the text between them as maths (garbled); escaped.
+
