@@ -2115,3 +2115,8 @@ ranking) carry `SET exclude_products = 'FIXED';` (PRODUCT_V2, the one product ma
 IOVA, VARIABLE); `scenario_maps.ps1 -IncludeFixed` runs with every product. Every number reported before this entry
 includes fixed (e.g. main map $106.56B CRBG, $104.68B EQH; the gaps, loads, seat ranks and draft of 2026-11-18/19).
 
+### 2026-11-19: who bargains in a split state: the assigned people only (#149 decision 3)
+
+Owner, 2026-11-19: "ok start with just the assigned people". Holders who are not assigned to the state are a hand-over
+(captured at c2 = 0.28 by the winner); an off-sheet person the owner places on the sheet for a state is assigned there.
+
