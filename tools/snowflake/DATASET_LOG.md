@@ -2080,3 +2080,10 @@ was true (a ZIP with any unfilled $ takes a fill colour) but not "covered": it h
 is now TO BARGAIN (no unfilled $, some overlap or held by another) and COVERED (every cell covered). The CONUS page adds
 the unfilled $ not on the map (cells with no state, ZIPs with no ZCTA shape), so the page ties to gap_summary.
 
+### 2026-11-18: open-seat ranking in scope; sales on the owner's screen; θ and λ kept
+
+Owner, 2026-11-18, to "1. Is the open-seat ranking in scope (staffing support, with you choosing)? 2. OK to use sales
+in Snowflake with the results on your screen only? 3. Keep θ = 0.40 and λ = 0.30 for now?": "1 yes, 2 yes, 3 yes".
+Candidates for an open seat are ranked with the archived bargaining utility (tools/maps/legacy/td/model.py:18):
+neighbours by the marginal Nash gain log(1 + U/g), current holders by U. Plan: https://github.com/helios1168/td/issues/151
+
