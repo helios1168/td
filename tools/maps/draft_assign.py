@@ -85,10 +85,12 @@ def math_sum(mass, c):
     return sum(mass.get(z, 0.0) for z in c)
 
 
-def territory(state_zips, adj, assignees, covered, mass):
+def territory(state_zips, adj, assignees, covered, mass, held=None):
     """One role's T: ({zip: (person, reason)}, no_seed [(state, person)], unreachable [zip]).  `state_zips` {state: [zips]} of the
     graph, `adj` its adjacency, `assignees` {state: [keys]}, `covered` {zip: {person: $}} (COVERED cells held by one person), `mass`
-    {zip: $ over both estimates}."""
+    {zip: $ over both estimates}, `held` {zip: set of people holding any of its cells today}: an assignee of a split state with no
+    COVERED seed is seeded with the state's ZIPs they hold today that no one else's seed took (shared with others: OVERLAP, HELD BY
+    ANOTHER), lowest key first (the first real data had five such people, each sharing all of their ZIPs with the other assignee)."""
     T, no_seed, split = {}, [], []
     eligible = {}
     for s, ps in sorted(assignees.items()):
@@ -102,6 +104,10 @@ def territory(state_zips, adj, assignees, covered, mass):
             if c:
                 own[z] = min(c, key=lambda p: (-c[p], keynum(p)))
         reason = {z: "seed" for z in own}
+        for p in sorted(set(ps) - set(own.values()), key=keynum):
+            got = {z: p for z in zs if z not in own and p in (held or {}).get(z, ())}
+            own.update(got)
+            reason.update({z: "held seed" for z in got})
         eligible[s] = set(own.values())
         no_seed += [(s, p) for p in sorted(ps, key=keynum) if p not in eligible[s]]
         frontier = sorted(own)
@@ -156,6 +162,7 @@ def one_scenario(graph, adj, cells, people):
     ledger, m1, report = [], [], {}
     mass = {r: {e: collections.Counter() for e in (EST, EST2)} for r in ROLES}
     covered = {r: collections.defaultdict(collections.Counter) for r in ROLES}
+    held = {r: collections.defaultdict(set) for r in ROLES}
     chan_usd = collections.Counter()
     for c in cells:
         ch, usd, est = c["CHANNEL"], float(c["MM_OPP"] or 0), c["EST_SOURCE"]
@@ -165,6 +172,7 @@ def one_scenario(graph, adj, cells, people):
         r, z = role_of_channel(ch), c["ZIP_CODE"]
         mass[r].setdefault(est, collections.Counter())[z] += usd
         holders = str(c["HOLDERS"] or "").split()
+        held[r][z].update(holders)
         if c["CLASS"] == "COVERED" and len(holders) == 1:
             covered[r][z][holders[0]] += usd
     T = {}
@@ -178,7 +186,7 @@ def one_scenario(graph, adj, cells, people):
         both = collections.Counter()
         for e in mass[r]:
             both.update(mass[r][e])
-        T[r], no_seed, unreach = territory(state_zips, adj, assignees, cov, both)
+        T[r], no_seed, unreach = territory(state_zips, adj, assignees, cov, both, held[r])
         owner = {z: p for z, (p, _) in T[r].items() if p}
         pcs = pieces_of(owner, adj, mass[r][EST])
         ch = CHANNEL_OF_ROLE[r]

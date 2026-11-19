@@ -1365,3 +1365,12 @@ Owner-approved (#112 comments): the band is the dollar window [L, U] (`band_lo`/
 Six WIFI-family maps (ne-48-bal, ne-48-bal-r2, ne-cmp-tierP, ne-50-filight, nw34-50, w1-52 balanced) and IFA K48-K54 in one long table, 1,232,100 rows, 13 scenarios, in the archived 12-column `all_scenarios_nationwide_zcta_long` schema; owner pages titled with the scenario names (`WIFI_K50_N16_WH11_FI20_WIFI3 · National: 16 districts`). Owner approved the PDFs and the dataset. Naming, sources, load and caveats: `results/snowflake_2026-10-22/README.md`.
 
 Regenerate: `tools/export/snowflake.py data|render <out_dir>` (scenario list in `SCENARIOS`).
+
+## 2026-11-19: draft assignment of the shortlist, M1 (#152)
+
+`tools/maps/draft_assign.py` on the owner's 2026-11-18 run (`gap_cell.csv`, `gap_person.csv`, keys only), the drawn 2025
+ZCTA graph with connectors and the one-state land gaps; results in `results/draft/2026-11-19/` (ledger, cells, M1).
+Per scenario (all three alike outside TX national): NATIONAL 11 of 11 one piece, WH 7 of 7, WIFI 26 of 27. The one
+failure is R2 (CO NM NV): NV does not touch CO or NM, a second piece of $0.80B (0.64 τ). In split states, R14 (NC) and
+R33 (WI) hold none of their state today and get none of it in the draft. $0.68B (CRBG estimate) of cells are in ZIPs that
+are not ZCTAs and have no person. A draft, not a plan: the split-state lines are provisional until #149.

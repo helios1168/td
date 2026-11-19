@@ -178,3 +178,13 @@ def test_m1_adjacency_joins_an_approved_land_gap_of_one_state_as_m1_does():
          "gaps": {("a", "b"): 5.0, ("a", "c"): 5.0}}
     adj = da.m1_adjacency(g)
     assert "b" in adj["a"] and "c" not in adj["a"], adj               # same-state gap joins, a gap across states does not
+
+
+def test_an_assignee_with_no_covered_zip_is_seeded_with_the_zips_they_share_today():
+    # one state of 4 in a line a-b-c-d, assignees R1 and R2; R1 alone covers a; R2 covers nothing but shares c with R1
+    g = {"vertices": ["a", "b", "c", "d"], "edges": [("a", "b"), ("b", "c"), ("c", "d")], "state": dict.fromkeys("abcd", "AA")}
+    adj = da.audit.adjacency(g)
+    T, no_seed, _ = da.territory({"AA": list("abcd")}, adj, {"AA": ["R1", "R2"]}, {"a": {"R1": 5.0}}, {}, {"a": {"R1"}, "c": {"R1", "R2"}})
+    assert {z: T[z][0] for z in "abcd"} == {"a": "R1", "b": "R1", "c": "R2", "d": "R2"} and T["c"][1] == "held seed" and no_seed == [], (T, no_seed)
+    T, no_seed, _ = da.territory({"AA": list("abcd")}, adj, {"AA": ["R1", "R2"]}, {"a": {"R1": 5.0}}, {}, {"a": {"R1"}})
+    assert no_seed == [("AA", "R2")]                                     # holds nothing: still reported, not invented
