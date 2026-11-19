@@ -2007,3 +2007,16 @@ states are split between two people of one channel, which is the sheet's design,
 state's cells against the set of its assigned people (COVERED when one of them is the only holder, counted for that
 person only; OVERLAP, HELD BY ANOTHER, GAP as before); DOUBLE ASSIGNED is no longer produced.
 
+### 2026-11-18: area-adjusted load, not strict balance
+
+Owner, 2026-11-18: "The basis comes from the stakeholders for 3. We will also have some flexibility. We no longer
+strictly care about balance. Essentially the larger your territory is by area the more opportunity you're allowed to
+have above target. Similarly the smaller the territory is the smaller your opportunity can be. This is to reflect the
+fact that smaller territories are easier to manage and travel through", then "go with how you recommend". So each
+assigned person's expected $ = base x (area / the channel's median area) ^ 0.5; load = assigned $ (07's OPP_ASSIGNED)
+/ expected $, reported, never a gate. Base: WIFI (REGIONAL) the stakeholders' $1.25B on the Snowflake opportunity per
+estimate; NATIONAL and WH the channel's attributed $ / 11 and / 12. Area: the ZIPs of the cells attributed to the
+person (a split state: those they hold alone and an equal share of the rest), from the cached ZCTA shapes in EPSG:5070
+(land and water). `tools/maps/scenario_maps.py` writes `<scenario>_gap_load.csv` (keys only) and lists the heaviest and
+lightest for their area on the gaps PDF's summary page.
+

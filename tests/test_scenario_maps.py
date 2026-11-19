@@ -413,6 +413,26 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
     assert "119.0" in text and "105.0" in text and "104.0" not in text     # the pairs 105..119 only
 
 
+def test_load_is_dollars_against_the_area_adjusted_expectation():
+    cc = ["EST_SOURCE", "ZIP_CODE", "CHANNEL", "ASSIGNED", "CLASS", "HOLDERS", "MM_OPP"]
+    cells = [("E", "a1", "REGIONAL", "R1", "COVERED", "R1", 1e9), ("E", "a2", "REGIONAL", "R1", "GAP", None, 5e8),
+             ("E", "b1", "REGIONAL", "R2", "COVERED", "R2", 5e8),
+             ("E", "c1", "REGIONAL", "R1 R2", "COVERED", "R1", 4e8), ("E", "c2", "REGIONAL", "R1 R2", "GAP", None, 1e8),
+             ("E", "d1", "NATIONAL", "R3", "COVERED", "R3", 11e9), ("E", "o1", "OPEN", None, "OPEN SEAT UNHELD", None, 9e9)]
+    pc = ["EST_SOURCE", "HOLDER", "ROLE", "OPP_ASSIGNED"]
+    people = [("E", "R1", "WIFI", 2e9), ("E", "R2", "WIFI", 1e9), ("E", "R3", "NATIONAL", 11e9), ("E", "R9", "WH", 0)]
+    area = {"a1": 100, "a2": 300, "b1": 400, "c1": 50, "c2": 100, "d1": 200, "o1": 999}
+    cols, rows = sm.gap_load("S", {"cell": (cc, cells), "person": (pc, people)}, area)
+    got = {r[2]: dict(zip(cols, r)) for r in rows}
+    # R1: a1 + a2 + c1 (covered alone in the split state) + half of c2 = 500 km2; R2: b1 + half of c2 = 450; median 475
+    assert (got["R1"]["AREA_KM2"], got["R2"]["AREA_KM2"], got["R1"]["MEDIAN_AREA_KM2"]) == (500.0, 450.0, 475.0)
+    assert abs(got["R1"]["EXPECTED_USD"] - 1.25e9 * (500 / 475) ** 0.5) < 1 and abs(got["R1"]["LOAD_RATIO"] - 1.559) < 0.001
+    assert abs(got["R2"]["LOAD_RATIO"] - 0.822) < 0.001
+    # national base: the channel's attributed $ (11e9) / 11 = 1e9, its own median: load 11
+    assert got["R3"]["BASE_USD"] == 1e9 and got["R3"]["LOAD_RATIO"] == 11.0
+    assert "R9" not in got                                            # no assigned $: no load row
+
+
 class GapConn(Conn):
     """07's result on execute_stream, the TD_GAP tables and the names on cursor().execute."""
     def __init__(self, summary):
@@ -496,7 +516,7 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         with open(f07, "w") as f:
             f.write("SET scenario    = '';\nselect 1;\n")
         rc, out, files, pdfs, csvs = run(GOOD, f07)
-        assert rc == 0 and files == sorted([f"CA1_R105N_gap_{k}.csv" for k in ("cell", "pair", "person", "summary")] + ["CA1_R105N.pdf", "CA1_R105N_gaps.pdf"]), files
+        assert rc == 0 and files == sorted([f"CA1_R105N_gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load")] + ["CA1_R105N.pdf", "CA1_R105N_gaps.pdf"]), files
         assert pdfs == {"CA1_R105N.pdf": 120, "CA1_R105N_gaps.pdf": 61} and "safe to send to an agent" in out, (pdfs, out)
         assert csvs["CA1_R105N_gap_cell.csv"] == 1 + len(fake_cells()) and csvs["CA1_R105N_gap_summary.csv"] == 1 + len(GOOD)
         rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, main PDF still drawn, exit 1

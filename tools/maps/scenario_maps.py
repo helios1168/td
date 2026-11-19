@@ -212,10 +212,64 @@ def fetch_gap(conn, scenario, sql07, split):
     return got
 
 
+# Area-adjusted load (owner, 2026-11-18: "the larger your territory is by area the more opportunity you're allowed to have
+# above target ... the smaller the territory is the smaller your opportunity can be"; "go with how you recommend"):
+# expected $ = base x (area / the channel's median area) ^ BETA, load = assigned $ / expected $, reported, never a gate.
+BETA = 0.5                                   # expected $ grows with the square root of area (travel across the territory)
+BASE_USD = {"REGIONAL": 1.25e9}              # WIFI: the stakeholders' $1.25B per territory
+K_OF = {"NATIONAL": 11, "WH": 12}            # national and WH: the channel's attributed $ / K (owner's 11 and 12)
+CHANNEL_OF_ROLE = {v: k for k, v in ROLE_OF.items()}
+LOAD_COLS = ["SCENARIO", "EST_SOURCE", "HOLDER", "ROLE", "CHANNEL", "AREA_KM2", "ASSIGNED_USD", "BASE_USD", "MEDIAN_AREA_KM2",
+             "EXPECTED_USD", "LOAD_RATIO"]
+
+
+def gap_load(scenario, gap, zip_area):
+    """(columns, rows) of each assigned person's area-adjusted load per estimate.  A person's area is the land area (EPSG:5070,
+    km2, from the cached ZCTA shapes: land and water) of the ZIPs of the cells attributed to them: all of them in a state they
+    alone are assigned, in a split state the ZIPs they hold alone (COVERED) and an equal share of the others."""
+    cell = [dict(zip(gap["cell"][0], r)) for r in gap["cell"][1]]
+    person = [dict(zip(gap["person"][0], r)) for r in gap["person"][1]]
+    w = collections.defaultdict(float)                         # (est, holder, zip) -> share of the ZIP's area
+    chan_usd = collections.Counter()
+    for c in cell:
+        est, ch, z = c["EST_SOURCE"], c["CHANNEL"], str(c["ZIP_CODE"])
+        chan_usd[est, ch] += float(c["MM_OPP"] or 0)
+        keys = str(c["ASSIGNED"] or "").split()
+        if not keys or ch == "OPEN":
+            continue
+        holders = str(c["HOLDERS"] or "").split()
+        if len(keys) == 1:
+            share = {keys[0]: 1.0}
+        elif c["CLASS"] == "COVERED" and len(holders) == 1 and holders[0] in keys:
+            share = {holders[0]: 1.0}
+        else:
+            share = {k: 1.0 / len(keys) for k in keys}
+        for k, s in share.items():
+            w[est, k, z] = max(w[est, k, z], s)
+    area = collections.Counter()
+    for (est, k, z), s in w.items():
+        area[est, k] += s * zip_area.get(z, 0.0)
+    rows, by_ch = [], collections.defaultdict(list)
+    for p in person:
+        ch = CHANNEL_OF_ROLE.get(str(p["ROLE"] or "").upper())
+        if ch and float(p["OPP_ASSIGNED"] or 0) > 0:
+            by_ch[p["EST_SOURCE"], ch].append(p)
+    for (est, ch), ps in sorted(by_ch.items()):
+        base = BASE_USD.get(ch) or chan_usd[est, ch] / K_OF[ch]
+        areas = sorted(area[est, p["HOLDER"]] for p in ps if area[est, p["HOLDER"]] > 0)
+        med = areas[len(areas) // 2] if len(areas) % 2 else (sum(areas[len(areas) // 2 - 1:len(areas) // 2 + 1]) / 2 if areas else 0.0)
+        for p in sorted(ps, key=lambda p: p["HOLDER"]):
+            a, usd = area[est, p["HOLDER"]], float(p["OPP_ASSIGNED"] or 0)
+            exp = base * (a / med) ** BETA if a > 0 and med > 0 else None
+            rows.append((scenario, est, p["HOLDER"], p["ROLE"], ch, round(a, 1), round(usd, 2), round(base, 2), round(med, 1),
+                         None if exp is None else round(exp, 2), None if exp is None else round(usd / exp, 3)))
+    return LOAD_COLS, rows
+
+
 def write_gap_csvs(out, scenario, gap):
-    """<scenario>_gap_<cell|pair|person|summary>.csv in `out`: the paths."""
+    """<scenario>_gap_<cell|pair|person|summary|load>.csv in `out`: the paths."""
     paths = []
-    for k in ("cell", "pair", "person", "summary"):
+    for k in ("cell", "pair", "person", "summary") + (("load",) if "load" in gap else ()):
         path = os.path.join(out, f"{scenario}_gap_{k}.csv")
         with open(path, "w", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
@@ -548,7 +602,7 @@ def gap_prepare(cell, pair, names):
     pairs = {}
     for r in (dict(zip(pair[0], x)) for x in pair[1]):
         pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0) / USD_PER_MM))
-    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, table=table,
+    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, table=table, names=dict(names), load=[],
                            assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
                            pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})
 
@@ -592,6 +646,15 @@ def draw_gap_summary(scenario, gd):
         lines += [f"{ch:10}" + "".join(f"{gd.table.get((est, ch, c), 0.0):>18,.1f}" for c, *_ in GAP_CLASSES) for ch in GAP_ALL_CH]
         lines += ["", f"{est} estimate: top 15 overlap pairs by $MM", f"{'channel':10}{'holder A':<34}{'holder B':<34}{'ZIPs':>8}{'$MM':>12}"]
         lines += [f"{ch:10}{a[:32]:<34}{b[:32]:<34}{n:>8,}{mm:>12,.1f}" for ch, a, b, n, mm in gd.pairs.get(est, [])] + [""]
+        load = sorted((r for r in getattr(gd, "load", []) if r["EST_SOURCE"] == est and r["LOAD_RATIO"] is not None),
+                      key=lambda r: -r["LOAD_RATIO"])
+        if load:
+            who = lambda k: f"{k} {gd.names.get(k, '')}".strip()
+            fmt = lambda r: (f"{r['CHANNEL']:10}{who(r['HOLDER'])[:32]:<34}{r['AREA_KM2']:>12,.0f}{r['ASSIGNED_USD'] / USD_PER_MM:>12,.1f}"
+                             f"{r['EXPECTED_USD'] / USD_PER_MM:>12,.1f}{r['LOAD_RATIO']:>8.2f}")
+            head = f"{'channel':10}{'person':<34}{'area km2':>12}{'$MM':>12}{'expect $MM':>12}{'load':>8}"
+            lines += [f"{est} estimate: load = $ / expected $ for the area (base x (area/median)^{BETA}); over 1: heavy for its area", head]
+            lines += [fmt(r) for r in load[:8]] + ["  ..."] + [fmt(r) for r in load[-8:]] + [""]
     fig.suptitle(f"{scenario} · D overlaps and gaps · summary", fontsize=17, fontweight="bold", y=0.975)
     fig.text(0.02, 0.93, "\n".join(lines), family="monospace", fontsize=min(9.0, 560 / (1.3 * len(lines))), va="top")
     return fig
@@ -736,8 +799,10 @@ def main(argv=None):
             for lo, hi in chunks(n_pages):
                 futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
             if gap:
+                gap["load"] = gap_load(name, gap, {z: g.area / 1e6 for z, g in geo.zips.items()})
                 send += write_gap_csvs(out, name, gap)
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
+                gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
                 gaps[name] = (gd, skipped, time.time())
                 for lo, hi in chunks(1 + len(gap_specs(geo, gd))):
