@@ -46,7 +46,9 @@ button { cursor: pointer; }
 main { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 23vw, 450px); grid-template-rows: minmax(0, 1fr) clamp(190px, 27vh, 310px); min-height: 0; }
 .map-wrap { position: relative; min-height: 0; background: var(--wash-2); }
 #map { position: absolute; inset: 0; }
-.nomap { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; font-size: 15px; }
+.nomap { position: absolute; inset: 0; display: grid; place-content: center; gap: 6px; padding: 40px; text-align: center; font-size: 15px; background: var(--wash-2); }
+.nomap p:nth-child(2) { font-size: 20px; font-weight: 700; max-width: 30ch; margin: 0 auto; }
+.nomap .sub { font-size: 12px; max-width: 60ch; }
 .over { position: absolute; z-index: 2; }
 .over.top { top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: calc(100% - 430px); }
 .caption { left: 12px; bottom: 10px; max-width: min(74ch, calc(100% - 24px)); background: rgba(255, 255, 255, .92); padding: 6px 10px; border-radius: 8px; font-size: 12px; color: var(--ink); }

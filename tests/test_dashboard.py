@@ -206,7 +206,7 @@ def test_the_owners_run_ties_out_is_under_the_size_bound_and_builds_the_same_twi
         assert size <= 25 * 1024 * 1024 == dash.MAX_BYTES, size
         assert text == again
         assert p["names"] == {} and all(re.fullmatch(r"R\d+", k) for k in p["keys"])
-        assert URL.findall(text.replace(licence_of(text), "")) == []
+        assert URL.findall(text.replace(licence_of(text), "").replace(library_of(text), "")) == []
 
 
 def test_shared_rows_are_exported_once_with_the_scenarios_that_have_them():
@@ -271,15 +271,32 @@ VENDORED_URLS = {"http://www.w3.org/2000/svg", "http://www.w3.org/1999/xhtml", "
                  "https://github.com/mapbox/mapbox-gl-js/issues/2907"}
 
 
-def test_the_page_has_no_url_outside_the_vendored_licence_and_embeds_the_library_untouched():
+def library_of(text):
+    """The inline module script that is the vendored library (the one before the page's own)."""
+    return re.search(r'<script type="module">\n(/\*\*\n\* MapLibre GL JS\n.*?)</script>', text, re.S).group(1)
+
+
+def test_the_page_has_no_url_outside_the_vendored_library_and_licence_and_embeds_the_library_untouched():
     with built(names=NAMES) as (text, p, _):
-        licence = licence_of(text)
+        licence, lib = licence_of(text), library_of(text)
         assert licence == open(os.path.join(dash.VENDOR, "LICENSE.txt"), encoding="utf-8").read() and "Redistribution" in licence
-        assert URL.findall(text.replace(licence, "")) == [], URL.findall(text.replace(licence, ""))[:5]
-        assert not re.search(r"<(script|link|img|iframe)[^>]*\s(src|href)\s*=", text, re.I) and "@import" not in text and "url(" not in text.replace(licence, "")
-        for el, name in dash.VENDORED.items():                     # the library is in the page byte for byte (gzip, base64)
+        ours = text.replace(licence, "").replace(lib, "")
+        assert len(ours) == len(text) - len(licence) - len(lib) and URL.findall(ours) == [], URL.findall(ours)[:5]
+        assert not re.search(r"<(script|link|img|iframe)[^>]*\s(src|href)\s*=", text, re.I) and "@import" not in ours and "url(" not in ours
+        assert "import(" not in ours and not re.search(r"^\s*import\s", ours, re.M)          # nothing is imported: no blob: module (owner's bug, 2026-11-19)
+        # the library is its file's code, character for character, up to the closing export{...}; that became the page's global with the same names
+        raw = open(os.path.join(dash.VENDOR, dash.LIBRARY), encoding="utf-8").read()
+        code, _, tail = raw.rpartition("export{")
+        names = [x.split(" as ") for x in tail.split("}")[0].split(",")]
+        assert lib.startswith(code) and lib[len(code):] == "globalThis.maplibregl={" + ",".join(f"{pub}:{loc}" for loc, pub in names) + "};\n\n"
+        assert {"Map", "NavigationControl", "setWorkerUrl"} <= {pub for _, pub in names} and len(names) > 50 and tail.split("}", 1)[1].strip() == "};\n//# sourceMappingURL=maplibre-gl.mjs.map"[1:]
+        assert set(URL.findall(raw)) <= VENDORED_URLS, sorted(set(URL.findall(raw)) - VENDORED_URLS)
+        for el, name in dash.VENDORED.items():                     # the worker and the stylesheet are in the page gzip + base64
             blob = re.search(rf'<script type="text/plain" id="{el}">([A-Za-z0-9+/=]+)</script>', text).group(1)
             raw = open(os.path.join(dash.VENDOR, name), "rb").read()
+            if el == "v-worker":                                   # as a classic script: the file's code up to its closing export, in a strict function
+                raw = b'(function(){"use strict";' + raw[:raw.rindex(b"export{")] + b"})();\n"
+                assert raw.count(b"export{") == 0 and b"import.meta" not in raw          # nothing a classic script cannot hold
             assert gzip.decompress(base64.b64decode(blob)) == raw, name
             assert set(URL.findall(raw.decode("utf-8"))) <= VENDORED_URLS, sorted(set(URL.findall(raw.decode("utf-8"))) - VENDORED_URLS)
     for name, sha in VENDORED_SHA256.items():
@@ -374,6 +391,34 @@ def test_the_page_opens_in_chromium_ties_out_and_asks_for_nothing_online():
     with built(fake_runs(summary_off=5.0)) as (_, _, path):
         (bad,) = run(path, look)
         assert bad[0] == "check bad" and bad[1].startswith("Does not tie to the run’s summary."), bad
+
+
+CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"script-src 'unsafe-inline'; worker-src {}\">"
+
+
+def test_the_map_starts_under_a_policy_that_refuses_blob_imports_and_says_what_to_do_when_it_cannot():
+    """Owner's bug, 2026-11-19: a stakeholder's viewer refused v1's dynamic import of a blob: URL ("failed to fetch dynamically imported
+    module").  The page imports nothing now: under a policy with inline scripts and blob: workers only, the map starts; with no worker
+    allowed at all it says what to do, in the map's place, and does not wait for ever (every run here has a timeout)."""
+    node = shutil.which("node")
+    shot = str(ROOT / "tools" / "maps" / "dashboard_shot.mjs")
+    if not node or subprocess.run([node, shot, "--which"], capture_output=True).returncode != 0:
+        print("SKIP  the page in headless Chromium: no node, or no browser (set TD_CHROME)")
+        return
+    look = "--dump=[document.body.dataset.map, document.querySelector('#map canvas') !== null, (document.querySelector('.nomap') || {}).textContent || '', document.querySelector('.capsule').textContent]"
+    with built(names=NAMES) as (text, _, path):
+        got = {}
+        for name, policy in (("none", None), ("blob workers", "blob:"), ("no workers", "'none'")):
+            copy = os.path.join(os.path.dirname(path), "copy.html")
+            with open(copy, "w", encoding="utf-8") as f:
+                f.write(text if policy is None else text.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + CSP.format(policy), 1))
+            r = subprocess.run([node, shot, copy, "-", "--size=1400x900", look], capture_output=True, text=True, timeout=120)
+            assert "requests not local: []" in r.stdout and "TIMED OUT" not in r.stdout, (name, r.stdout + r.stderr)
+            got[name] = json.loads(next(line[6:] for line in r.stdout.splitlines() if line.startswith("dump: ")))
+    assert got["none"] == ["idle", True, "", "$388.3MM"] == got["blob workers"], got          # the map draws with no policy and under the sandbox's
+    state, canvas, said, total = got["no workers"]
+    assert state == "failed" and not canvas and total == "$388.3MM", got["no workers"]          # the totals are there without the map
+    assert "The map could not start here." in said and "Save the file, then open it in Chrome or Edge (not in a Teams or email preview)." in said, said
 
 
 def test_a_state_assigned_in_a_channel_with_no_cell_there_still_shows_its_person():

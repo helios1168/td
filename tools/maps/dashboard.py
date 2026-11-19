@@ -5,8 +5,8 @@ rows drive the map.  scenario_maps.py writes it next to maps.pdf with names (you
     python tools/maps/dashboard.py --dev data/safe/dev_dashboard --out data/safe/dev_dashboard/dashboard.html
 
 build(geo, runs, out_path, names=None, products_label=...) assembles dashboard.html + dashboard.css + dashboard.js (the template,
-next to this file), the vendored MapLibre GL JS 6.19.0 (vendor/, BSD-3-Clause, byte-identical to the npm tarball, embedded gzip +
-base64) and the data (payload) into one file.  `runs` is {scenario: {cell, pair, person, load, summary, seat}}, each the (columns,
+next to this file), the vendored MapLibre GL JS 6.19.0 (vendor/, BSD-3-Clause, the npm tarball's files: the library as an inline
+module script (library()), its worker and stylesheet gzip + base64) and the data (payload) into one file.  `runs` is {scenario: {cell, pair, person, load, summary, seat}}, each the (columns,
 rows) table a run has (seat: seat_prepare's masked table, or None); the scenario is the key, a table's own SCENARIO column is not read.
 The page computes every number on screen from the exported cells, so what tests/test_dashboard.py ties out is what is shown.
 Nothing here adds a name: `names` {key: name} comes from the caller (the owner's run), and without it people are keys R<n>.
@@ -32,7 +32,8 @@ import look  # noqa: E402  (CRS, colouring)
 import scenario_maps as sm  # noqa: E402  (the classes and their colours, ROLE_OF, the shape loaders)
 
 VENDOR = os.path.join(HERE, "vendor", "maplibre-gl-6.19.0")
-VENDORED = {"v-js": "maplibre-gl.mjs", "v-worker": "maplibre-gl-worker.mjs", "v-css": "maplibre-gl.css"}   # element id -> file
+VENDORED = {"v-worker": "maplibre-gl-worker.mjs", "v-css": "maplibre-gl.css"}   # element id -> file, embedded gzip + base64
+LIBRARY = "maplibre-gl.mjs"                                                       # embedded as an inline module script (library())
 MAX_BYTES = 25 * 1024 * 1024   # the page's size budget (issue #153)
 Q = 10_000                     # coordinates are integers in 1/Q degree (about 11 m), a ring's first point then deltas
 CHANNELS = sm.GAP_CH           # NATIONAL, REGIONAL, WH, OPEN
@@ -230,12 +231,39 @@ def payload(geo, runs, names=None, products_label="products not recorded", run_l
     return out
 
 
+def code_of(name):
+    """(a vendored module's code up to its closing `export{...}`, the exported names [[local, public]])."""
+    with open(os.path.join(VENDOR, name), encoding="utf-8") as f:
+        text = f.read()
+    head, mark, tail = text.rpartition("export{")
+    pairs = [p.split(" as ") for p in tail.partition("}")[0].split(",")]
+    if not mark or not all(len(p) in (1, 2) and all(re.fullmatch(r"[\w$]+", n) for n in p) for p in pairs) or "<!--" in text:
+        raise SystemExit(f"{name}: no closing `export{{a as B, ...}}` (or it holds `<!--`)")
+    return head, pairs
+
+
 @functools.lru_cache(maxsize=None)
-def blob(path):
-    """A vendored file gzipped (mtime 0, so the build is the same bytes every time) and base64-coded: no '<' in it, and none of
-    the library's own strings (XML namespaces, links in its messages) is text in the page."""
-    with open(path, "rb") as f:
-        return base64.b64encode(gzip.compress(f.read(), 9, mtime=0)).decode("ascii")
+def library():
+    """maplibre-gl.mjs as the text of an inline module script: its code as it is up to its closing `export{...}`, which becomes
+    `globalThis.maplibregl={...}` with the same names; the source-map comment after it is dropped.  The page's own script reads that
+    object: an inline module cannot be imported, and the dynamic import of a blob: URL v1 used is refused by sandboxed viewers (mail
+    and file previews) and by some browser policies (owner's bug, 2026-11-19: "failed to fetch dynamically imported module")."""
+    head, pairs = code_of(LIBRARY)
+    return head + "globalThis.maplibregl={" + ",".join(f"{p[-1]}:{p[0]}" for p in pairs) + "};\n"
+
+
+@functools.lru_cache(maxsize=None)
+def blob(name):
+    """A vendored file gzipped (mtime 0, so the build is the same bytes every time) and base64-coded: no '<' in it.  The worker is
+    made a classic script, its code up to the closing `export{...}` inside a strict function: a page opened from disk (origin "null")
+    cannot start a module worker from a blob: URL, and MapLibre's own way round that, a data: URL, is refused where only blob:
+    workers are allowed; a classic blob: worker runs in both (measured in headless Chromium, 2026-11-19)."""
+    if name == VENDORED["v-worker"]:
+        data = ('(function(){"use strict";' + code_of(name)[0] + "})();\n").encode("utf-8")
+    else:
+        with open(os.path.join(VENDOR, name), "rb") as f:
+            data = f.read()
+    return base64.b64encode(gzip.compress(data, 9, mtime=0)).decode("ascii")
 
 
 def html(data):
@@ -243,11 +271,11 @@ def html(data):
     one mark, in one pass (nothing put in is read for marks)."""
     read = lambda *name: open(os.path.join(HERE, *name), encoding="utf-8").read()
     text = json.dumps(data, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
-    parts = {"CSS": read("dashboard.css"), "JS": read("dashboard.js"), "LICENCE": read(VENDOR, "LICENSE.txt"),
+    parts = {"CSS": read("dashboard.css"), "JS": read("dashboard.js"), "LICENCE": read(VENDOR, "LICENSE.txt"), "LIBRARY": library(),
              "DATA": text.replace("</", "<\\/").replace("<!--", "<\\u0021--"),                  # nothing in the data can close or confuse its <script>
-             "VENDOR": "\n".join(f'<script type="text/plain" id="{i}">{blob(os.path.join(VENDOR, f))}</script>' for i, f in VENDORED.items())}
+             "VENDOR": "\n".join(f'<script type="text/plain" id="{i}">{blob(f)}</script>' for i, f in VENDORED.items())}
     page, marks = read("dashboard.html"), re.compile("<!--(" + "|".join(parts) + ")-->")
-    if sorted(marks.findall(page)) != sorted(parts) or any("</script" in parts[k].lower() for k in ("CSS", "JS", "LICENCE")):
+    if sorted(marks.findall(page)) != sorted(parts) or any("</script" in parts[k].lower() for k in ("CSS", "JS", "LICENCE", "LIBRARY")):
         raise SystemExit(f"dashboard.html needs each of the marks {sorted(parts)} once (has {sorted(marks.findall(page))}), and no part may hold </script")
     return marks.sub(lambda m: parts[m.group(1)], page)
 

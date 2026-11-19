@@ -200,12 +200,15 @@ let map = null, painted = {col: [], dim: [], lit: false, tint: [], hover: -1, se
 const ring = (a) => { const r = []; let x = 0, y = 0; for (let i = 0; i < a.length; i += 2) { x += a[i]; y += a[i + 1]; r.push([x / P.q, y / P.q]); } r.push(r[0]); return r; };
 const shape = (g) => ({type: 'MultiPolygon', coordinates: g.map((poly) => poly.map(ring))});
 const ZBOX = [];
+// The library is the inline module script before this one (globalThis.maplibregl): nothing is imported, since a dynamic import of a
+// blob: URL is refused by sandboxed viewers and some policies.  Its worker still needs a URL: a blob: of the worker as a classic
+// script, the URL ending ".cjs" so MapLibre starts it as one (dashboard.py's blob() says why).
 async function startMap() {
   const gunzip = async (id) => new Response(new Blob([Uint8Array.from(atob($(id).textContent), (c) => c.charCodeAt(0))]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-  const blobUrl = (text) => URL.createObjectURL(new Blob([text], {type: 'text/javascript'}));
+  const gl = globalThis.maplibregl;
+  if (!gl) throw new Error('the map library did not run');
   document.head.appendChild(Object.assign(document.createElement('style'), {textContent: await gunzip('v-css')}));
-  const gl = await import(blobUrl(await gunzip('v-js')));
-  gl.setWorkerUrl(blobUrl(await gunzip('v-worker')));
+  gl.setWorkerUrl(URL.createObjectURL(new Blob([await gunzip('v-worker')], {type: 'text/javascript'})) + '#.cjs');
   const zips = P.zipGeom.map((g, id) => {
     const geometry = shape(g), b = [180, 90, -180, -90];
     for (const poly of geometry.coordinates) for (const [x, y] of poly[0]) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); }
@@ -240,7 +243,11 @@ async function startMap() {
   m.on('mouseout', () => hover(null));
   m.on('idle', () => { document.body.dataset.map = 'idle'; });         // for whoever waits to look: the map has drawn what it was asked
   m.on('click', (e) => { const z = zipAt(e.point); if (z >= 0) go({sel: P.zips[z]}); });
-  await new Promise((done) => m.on('load', done));
+  await new Promise((done, fail) => {            // a worker that cannot start never loads the map: say so instead of waiting for ever
+    m.on('load', done);
+    m.on('error', (e) => fail(e.error || new Error('the map reported an error')));
+    setTimeout(() => fail(new Error('the map did not load in 30 seconds')), 30000);
+  });
   map = m;
   paint(null);
 }
@@ -552,4 +559,8 @@ $('find-list').innerHTML = P.keys.map((k) => `<option value="${esc(k)}">${esc(P.
 $('c-find').placeholder = Object.keys(P.names).length ? 'ZIP, key, name, state' : 'ZIP, key or state';
 readHash();
 render(null);
-startMap().catch((err) => { $('map').innerHTML = `<p class="nomap">The map could not start (${esc(err.message || err)}). The totals and tables beside it are complete; the map needs Chrome with WebGL.</p>`; });
+startMap().catch((err) => {
+  document.body.dataset.map = 'failed';
+  $('map').innerHTML = `<div class="nomap"><p><b>The map could not start here.</b></p><p>Save the file, then open it in Chrome or Edge (not in a Teams or email preview).</p>
+    <p class="sub">The totals and tables on this page are complete without it. Reason: ${esc(err.message || err)}.</p></div>`;
+});

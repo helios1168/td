@@ -7,7 +7,7 @@
 //     --dump=<js expression>       print `dump: <its JSON>`            --sleep=<ms>
 //
 // It drives the browser over the DevTools protocol in real time and waits for the page's own "the map has drawn" mark
-// (body[data-map=idle]) after every step: `chrome --screenshot --virtual-time-budget` cannot be used, the map's worker never answers
+// (body[data-map=idle], or failed when it could not start) after every step: `chrome --screenshot --virtual-time-budget` cannot be used, the map's worker never answers
 // under virtual time and the map comes out blank.  --no-sandbox: the GPU process does not start inside an agent sandbox; the page
 // is a local file and the last line printed lists every request that was not file:, blob: or data: (there must be none).
 import {spawn} from 'node:child_process';
@@ -60,7 +60,7 @@ try {
   await S('Emulation.setDeviceMetricsOverride', {width: W, height: H, deviceScaleFactor: 1, mobile: false});
   await S('Page.navigate', {url});
   const run = async (expression) => { const r = await S('Runtime.evaluate', {expression, awaitPromise: true, returnByValue: true}); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
-  const drawn = async () => { for (let t = 0; t < 240; t++) { await sleep(250); try { if (await run('document.body.dataset.map === "idle"')) return; } catch {} } code = 1; console.log('TIMED OUT waiting for the map to draw'); };
+  const drawn = async () => { for (let t = 0; t < 240; t++) { await sleep(250); try { if (await run('["idle", "failed"].includes(document.body.dataset.map)')) return; } catch {} } code = 1; console.log('TIMED OUT waiting for the map to draw'); };
   const press = async (key) => { const p = {key, code: key, windowsVirtualKeyCode: {Tab: 9, Enter: 13, Escape: 27}[key] || 0}; await S('Input.dispatchKeyEvent', {type: 'keyDown', ...p}); await S('Input.dispatchKeyEvent', {type: 'keyUp', ...p}); };
   await drawn();
   for (const a of steps) {
