@@ -609,7 +609,7 @@ class GapConn(Conn):
                 elif "td_gap_pair" in sql:
                     cols, self.rows = PAIR_COLS, fake_pairs()
                 elif "td_gap_person" in sql:
-                    cols, self.rows = PERSON_COLS, [("S", "LOW", "R1", "CRBG", "NATIONAL", "AA", 1.0, 2)]
+                    cols, self.rows = PERSON_COLS, [("S", est, "R1", "CRBG", "NATIONAL", "AA", 1.0, 2) for est in ("LOW", "HIGH")]
                 elif "td_seat_fit" in sql:
                     cols, self.rows = FIT_COLS, fake_fit()
                 elif "td_holder_key" in sql:
@@ -806,11 +806,14 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         assert rc == 1 and pdfs == {"maps.pdf": 23} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 11, (rc, pdfs, labels)
         # with 08: a summary, 2 seat pages and the 10 FILL and channel pages (13 gap pages); seat_fit.csv is safe to send, the names file is not
         rc, out, files, pdfs, csvs = run(GOOD, f07, sql08=f08)
-        assert rc == 0 and files == sorted(gap_files + ["dashboard.html", "maps.pdf", "seat_fit.csv", "seat_fit_names.csv"]) and pdfs == {"maps.pdf": 12 + 13}, (files, pdfs, out)
+        assert rc == 0 and files == sorted(gap_files + ["dashboard.html", "maps.pdf", "seat_fit.csv", "seat_fit_names.csv", "seat_plan.csv", "seat_plan_names.csv"]) and pdfs == {"maps.pdf": 12 + 13}, (files, pdfs, out)
         assert csvs["seat_fit.csv"] == 1 + 32 and csvs["seat_fit_names.csv"] == 1 + 32 and "td_state_adj: " in out, csvs
         send, screen = out.split("names and sales: your screen only:")
         assert "seat_fit.csv" in send.split("safe to send to an agent")[1] and "seat_fit_names.csv" not in send and "seat_fit_names.csv" in screen, out
         assert "dashboard.html" not in send and "dashboard.html" in screen, out          # the dashboard holds names: your screen only
+        # the optimal plan (seat_optimize.py): one summary line per estimate, seat_plan.csv safe to send (2 estimates x 2 seats, one plan: no holder to re-add), its names file not
+        assert "CA1_R105N LOW: re-adds 0 of 48, vacancies 0, plan BA=R2 CC=R9" in out and csvs["seat_plan.csv"] == 1 + 4 and csvs["seat_plan_names.csv"] == 1 + 4, (out, csvs)
+        assert "seat_plan.csv" in send.split("safe to send to an agent")[1] and "seat_plan_names.csv" not in send and "seat_plan_names.csv" in screen, out
         rc, out2, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", sql08=f08)      # two scenarios the same: every page and row once
         assert rc == 0 and pdfs == {"maps.pdf": 12 + 13} and csvs["seat_fit.csv"] == 1 + 32 and out2.count("td_state_adj: ") == 1, (pdfs, csvs, out2)
         # CA1_R105R's 08 refused (TIE not 0): its two seat pages say so, the other two share the real ones: 12 + 11 shared + 2 + 2

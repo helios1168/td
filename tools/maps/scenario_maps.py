@@ -30,7 +30,8 @@ keys R<n> only, safe to send to an agent; one file each for the run, as above) a
 With tools/snowflake/08_seat_fit.sql (issue #151) each scenario also runs it after 07 (after creating td_state_adj from the state
 shapes, two states adjacent when their shapes buffered by 1,000 m meet), refuses its seat output when a TIE row is not 0, and writes
 seat_fit.csv (masked: the open-seat ranking of 08 plus an opportunity-only LOAD_BAND, safe to send) and seat_fit_names.csv (names and
-sales U, G, DNASH: your screen only); the seat-fit page shows ranks only.  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
+sales U, G, DNASH: your screen only); the seat-fit page shows ranks only, then the "Optimal plan" (tools/maps/seat_optimize.py: each open seat
+to a neighbour, a re-added holder or vacant, total roster at most 49; also seat_plan.csv masked, safe to send, and seat_plan_names.csv, your screen only).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 With gap output the run also writes dashboard.html next to maps.pdf (issue #153, tools/maps/dashboard.py): one self-contained page for
 Chrome, opened from disk, with the same cells as the CSVs and the names next to the keys (your screen only).
@@ -75,6 +76,7 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import look  # noqa: E402  (the shared look: palettes, colouring_far, place_labels, polygon_path)
+import seat_optimize  # noqa: E402  (the open seats chosen by optimisation)
 
 SQL03 = os.path.join(ROOT, "tools", "snowflake", "03_assignments.sql")
 SQL04 = os.path.join(ROOT, "tools", "snowflake", "04_assigned_coverage.sql")
@@ -283,6 +285,7 @@ def make_state_adj(conn, states):
     query(conn, f"CREATE OR REPLACE TABLE {DB}.td_state_adj (state_a VARCHAR, state_b VARCHAR)")
     query(conn, f"INSERT INTO {DB}.td_state_adj (state_a, state_b) VALUES " + ", ".join(f"('{a}', '{b}')" for a, b in pairs))
     print(f"td_state_adj: {len(pairs)} state pairs", flush=True)
+    return pairs
 
 
 def fetch_seat(conn, scenario, sql08, split):
@@ -388,6 +391,43 @@ def seat_prepare(seat, names, load, state_area):
     return SimpleNamespace(cand=cand, masked=(list(cols) + ["LOAD_BAND"], masked), sales=(list(fcols) + ["NAME", "LOAD_AFTER"], sales))
 
 
+PLAN_COLS = ["SCENARIO", "EST_SOURCE", "PLAN", "SEAT", "CHOICE", "HOLDER", "BUNDLE", "F_RANK_GAP", "LOAD_BAND"]
+
+
+def plan_prepare(scenario, fit, person, adj, names, load, state_area):
+    """The optimal open-seat plan and the next 3 per estimate (seat_optimize.py), from fetch_seat's `fit` (columns, rows), gap["person"]
+    (columns, rows), adj [(a, b)], names {key: name}, gd.load (dicts) and state_area {state: km2}: plans {estimate: [plan]}, lines (one per
+    estimate: re-adds out of P, vacancies, plan), masked (PLAN_COLS: keys and shares, no U, G, name or sales, safe to send) and sales
+    (masked + NAME, U, F: your screen only), each (columns, rows).  Load band: opportunity only, with all the seats the person takes."""
+    fcols, frows = fit
+    fit = [dict(zip((c.upper() for c in fcols), x)) for x in frows]
+    pcols, prows = person
+    person = [dict(zip((c.upper() for c in pcols), x)) for x in prows]
+    load = {(r["EST_SOURCE"], r["HOLDER"]): r for r in load}
+    pairs = set(adj)
+    plans, lines, masked, sales = {}, [], [], []
+    for est in sorted({r["EST_SOURCE"] for r in fit}):
+        rows = [r for r in fit if r["EST_SOURCE"] == est]
+        usd = {r["SEAT"]: float(r["SEAT_MM_OPP"] or 0) for r in rows}
+        p = seat_optimize.roster_room(person, est)
+        plans[est] = got = seat_optimize.optimize(rows, pairs, p)
+        lines.append(seat_optimize.summary(est, got, p))
+        for no, plan in enumerate(got, 1):
+            took = collections.defaultdict(list)
+            for c in plan["choices"]:
+                if c["choice"] == "NEIGHBOUR":
+                    took[c["holder"]].append(c["seat"])
+            for c in plan["choices"]:
+                band = ""
+                if c["choice"] == "NEIGHBOUR":
+                    km2 = [state_area.get(t) for t in took[c["holder"]]]
+                    band = load_after(load, est, c["holder"], sum(usd[t] for t in took[c["holder"]]), None if None in km2 else sum(km2))[1]
+                row = (scenario, est, no, c["seat"], c["choice"], c["holder"], " ".join(c["bundle"]), round(plan["gap"], 6), band)
+                masked.append(row)
+                sales.append(row + (names.get(c["holder"], ""), round(c["u"], 2), round(plan["F"], 2)))
+    return SimpleNamespace(plans=plans, lines=lines, masked=(PLAN_COLS, masked), sales=(PLAN_COLS + ["NAME", "U", "F"], sales))
+
+
 def write_dedup_csv(path, per):
     """One CSV of {scenario: (columns, rows)}, each row once: its SCENARIO is the scenarios that have it, space-separated (always
     named, so a file read alone says who it covers).  Rows are compared with dollars (MM_OPP, OPP_*, *_USD) to the cent and other
@@ -417,6 +457,13 @@ def write_seat_csvs(out, seats):
     for {scenario: seat_prepare's result}, each row once as write_gap_csvs.  (the masked path, the names path)"""
     return (write_dedup_csv(os.path.join(out, "seat_fit.csv"), {s: v.masked for s, v in seats.items()}),
             write_dedup_csv(os.path.join(out, "seat_fit_names.csv"), {s: v.sales for s, v in seats.items()}))
+
+
+def write_plan_csvs(out, seats):
+    """seat_plan.csv (masked: safe to send) and seat_plan_names.csv (names, U and F: your screen only) in `out` for {scenario: plan_prepare's
+    result}, each row once as write_gap_csvs.  (the masked path, the names path)"""
+    return (write_dedup_csv(os.path.join(out, "seat_plan.csv"), {s: v.masked for s, v in seats.items()}),
+            write_dedup_csv(os.path.join(out, "seat_plan_names.csv"), {s: v.sales for s, v in seats.items()}))
 
 
 def write_gap_csvs(out, gaps):
@@ -899,9 +946,18 @@ def draw_seat_page(gd, title, est):
         lines += [f"  H{r['RANK']} {who(r['HOLDER'])}" for r in [r for r in rs if r["KIND"] == "HOLDER"][:3]]
         blocks.append(lines + [""])
     per = max(1, -(-len(blocks) // 3))
-    size = min(9.0, 560 / (1.3 * max(1, max((sum(len(b) for b in blocks[i:i + per]) for i in range(0, len(blocks), per)), default=1))))
+    size = min(9.0, 500 / (1.3 * max(1, max((sum(len(b) for b in blocks[i:i + per]) for i in range(0, len(blocks), per)), default=1))))
     for c, i in enumerate(range(0, len(blocks), per)):
         fig.text(0.02 + 0.33 * c, 0.93, "\n".join(line for b in blocks[i:i + per] for line in b), family="monospace", fontsize=size, va="top")
+    plan = getattr(gd.seat, "plan", None)
+    if plan and plan.plans.get(est):
+        got = plan.plans[est]
+        lines = [f"Optimal plan   (F gap of plans 2 to {len(got)}: " + (", ".join(f"{p['gap']:.1%}" for p in got[1:]) or "none") + ")"]
+        lines += [f"  {c['seat']:<3}{c['choice']:<11}{who(c['holder']) if c['holder'] else '':<28}" for c in got[0]["choices"]]
+        per = max(1, -(-(len(lines) - 1) // 3))
+        fig.text(0.02, 0.30, lines[0], family="monospace", fontsize=9.5, fontweight="bold", va="top")
+        for c, i in enumerate(range(1, len(lines), per)):
+            fig.text(0.02 + 0.33 * c, 0.27, "\n".join(lines[i:i + per]), family="monospace", fontsize=8.5, va="top")
     fig.text(0.01, 0.015, SEAT_CAPTION, fontsize=8.5, color="#404040")
     return fig
 
@@ -1231,7 +1287,7 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
     send = []
-    t0, refused, futs, pool, n_pages, started, gaps, adj = time.time(), [], {}, None, None, {}, {}, False
+    t0, refused, futs, pool, n_pages, started, gaps, adj = time.time(), [], {}, None, None, {}, {}, None
     with connect() as conn:
         for name in chosen:
             got = fetch_scenario(conn, name, sql03, sql04, edits, split_statements)
@@ -1253,9 +1309,8 @@ def main(argv=None):
             submit = (lambda fn, *a: pool.submit(fn, *a)) if pool else (lambda fn, *a: _done(fn(*a)))
             seat = None
             if gap and sql08:
-                if not adj:
-                    make_state_adj(conn, geo.states)
-                    adj = True
+                if adj is None:
+                    adj = make_state_adj(conn, geo.states)
                 seat = fetch_seat(conn, name, sql08, split_statements)
                 if seat is None:
                     refused.append(name + " (seat output only)")
@@ -1269,7 +1324,11 @@ def main(argv=None):
                 gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
                 gd.seat_pages = bool(sql08)         # 08 in the run: every scenario has the seat pages (a page saying so when its output was refused)
                 if seat:
-                    gd.seat = seat_prepare(seat, gd.names, gd.load, {s: g.area / 1e6 for s, g in geo.states.items()})
+                    areas = {s: g.area / 1e6 for s, g in geo.states.items()}
+                    gd.seat = seat_prepare(seat, gd.names, gd.load, areas)
+                    gd.seat.plan = plan_prepare(name, seat["fit"], gap["person"], adj, gd.names, gd.load, areas)
+                    for line in gd.seat.plan.lines:
+                        print(f"{name} {line}", flush=True)
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
                 gaps[name] = (gd, skipped, gap)
                 for lo, hi in chunks(len(gap_all(geo, gd))):
@@ -1293,6 +1352,9 @@ def main(argv=None):
     screen = []
     if seats:
         masked, names_csv = write_seat_csvs(out, seats)
+        send.append(masked)
+        screen.append(names_csv)
+        masked, names_csv = write_plan_csvs(out, {name: seat.plan for name, seat in seats.items()})
         send.append(masked)
         screen.append(names_csv)
     if gaps:                                    # the dashboard (issue #153): the scenarios with gap output, the names next to the keys
