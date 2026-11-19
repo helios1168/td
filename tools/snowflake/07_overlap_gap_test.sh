@@ -76,7 +76,7 @@ SELECT
  -- priority chain: z01 Chase, z02 Wells FI, z03 Wells WH with a NATIONAL person (Nan) assigned to MA go NATIONAL (z03 holders R8 R10 R15 is the 3-holder overlap)
  -- MA also has a WH (Walt) and a WIFI (Rita) person: z04 WH goes to WH, z04 FI to REGIONAL, z05 WH has only Rita holding: GAP of WH.  NH has no NATIONAL person:
  -- z06 Wells FI and z08 Chase fall to REGIONAL (not WH), z07 Wells WH to WH.  z08 held by Hank not Rita: HELD BY ANOTHER.  z09 VT: Rita and Rex both assigned (R5 R30
- -- by number): DOUBLE ASSIGNED first.  CT: Ray only, z10 GAP, z11 Wells WH falls through to REGIONAL, COVERED.  ME no one assigned: z12 and z14 held (z14 by a WH and a
+ -- by number, a state split between two people): held by Rita, one of them, so COVERED (for Rita only).  CT: Ray only, z10 GAP, z11 Wells WH falls through to REGIONAL, COVERED.  ME no one assigned: z12 and z14 held (z14 by a WH and a
  -- WIFI person), z13 UNHELD (Fred is FI, Nick not kept) and z15 has no state.  z16 two WIFI holders OVERLAP, z17 Hank only.  z01's IFA row is its own cell.
  chk('TD_GAP_CELL', (SELECT string_agg(concat_ws('|', est_source, zip_code, COALESCE(state, '-'), new_dist, i(mm_opp), channel, COALESCE(assigned, '-'), class, n_holders, COALESCE(holders, '-')),
                                         ' / ' ORDER BY est_source, zip_code, new_dist, mm_opp) FROM ssdb_integration.lr_strategy.td_gap_cell),
@@ -84,7 +84,7 @@ SELECT
      || ' / E1|z02|MA|WELLS FI|200|NATIONAL|R10|GAP|0|- / E1|z03|MA|WELLS WH|300|NATIONAL|R10|OVERLAP|3|R8 R10 R15'
      || ' / E1|z04|MA|FI|40|REGIONAL|R30|COVERED|1|R30 / E1|z04|MA|WH|400|WH|R20|COVERED|1|R20 / E1|z05|MA|WH|50|WH|R20|GAP|0|-'
      || ' / E1|z06|NH|WELLS FI|60|REGIONAL|R30|COVERED|1|R30 / E1|z07|NH|WELLS WH|70|WH|R20|COVERED|1|R20'
-     || ' / E1|z08|NH|NATIONAL (CHASE)|80|REGIONAL|R30|HELD BY ANOTHER|1|R35 / E1|z09|VT|FI|90|REGIONAL|R5 R30|DOUBLE ASSIGNED|1|R30'
+     || ' / E1|z08|NH|NATIONAL (CHASE)|80|REGIONAL|R30|HELD BY ANOTHER|1|R35 / E1|z09|VT|FI|90|REGIONAL|R5 R30|COVERED|1|R30'
      || ' / E1|z10|CT|FI|100|REGIONAL|R40|GAP|0|- / E1|z11|CT|WELLS WH|110|REGIONAL|R40|COVERED|1|R40'
      || ' / E1|z12|ME|WH|120|OPEN|-|OPEN SEAT HELD|1|R25 / E1|z13|ME|FI|130|OPEN|-|OPEN SEAT UNHELD|0|- / E1|z14|ME|NATIONAL (CHASE)|140|OPEN|-|OPEN SEAT HELD|2|R25 R30'
      || ' / E1|z15|-|FI|150|OPEN|-|OPEN SEAT UNHELD|0|- / E1|z16|MA|FI|160|REGIONAL|R30|OVERLAP|2|R30 R35 / E1|z17|MA|FI|170|REGIONAL|R30|HELD BY ANOTHER|1|R35'
@@ -97,12 +97,12 @@ SELECT
      'S1|E1|NATIONAL|R10|R15|1|300 / S1|E1|NATIONAL|R8|R10|2|480 / S1|E1|NATIONAL|R8|R15|1|300 / S1|E1|REGIONAL|R30|R35|1|160'
      || ' / S1|E2|NATIONAL|R8|R10|1|7'),
  -- per person: assigned = the cells attributed to them (Rita 40+160+170+60+80+90), by class, then the cells on ZIPs they hold in role that are not theirs
- -- (Rita: z04 WH 400, z05 WH 50, z14 OPEN 140), then ZIPs assigned.  Rex shares z09 (DOUBLE ASSIGNED, in OPP_ASSIGNED only).  Fred (FI) and Nick (not kept) are not people here.
+ -- (Rita: z04 WH 400, z05 WH 50, z14 OPEN 140), then ZIPs assigned.  Rex shares VT, but z09 is Rita's (she holds it): Rex has nothing.  Fred (FI) and Nick (not kept) are not people here.
  chk('TD_GAP_PERSON', (SELECT string_agg(concat_ws('|', est_source, holder, source, role, COALESCE(assigned_states, '-'), i(opp_assigned), i(opp_covered), i(opp_overlap), i(opp_gap),
                                                    i(opp_held_by_another), i(opp_held_elsewhere), n_zips_assigned), ' / '
                                          ORDER BY est_source, CAST(substr(holder, 2) AS INTEGER)) FROM ssdb_integration.lr_strategy.td_gap_person),
-     'E1|R5|B|WIFI|VT|90|0|0|0|0|0|1 / E1|R8|B|NATIONAL|-|0|0|0|0|0|480|0 / E1|R10|A|NATIONAL|MA|785|105|480|200|0|60|4 / E1|R15|A|NATIONAL|-|0|0|0|0|0|300|0'
-     || ' / E1|R20|A|WH|MA NH|520|470|0|50|0|40|3 / E1|R25|A|WH|-|0|0|0|0|0|260|0 / E1|R30|A|WIFI|MA NH VT|600|100|160|0|250|590|6'
+     'E1|R5|B|WIFI|VT|0|0|0|0|0|0|0 / E1|R8|B|NATIONAL|-|0|0|0|0|0|480|0 / E1|R10|A|NATIONAL|MA|785|105|480|200|0|60|4 / E1|R15|A|NATIONAL|-|0|0|0|0|0|300|0'
+     || ' / E1|R20|A|WH|MA NH|520|470|0|50|0|40|3 / E1|R25|A|WH|-|0|0|0|0|0|260|0 / E1|R30|A|WIFI|MA NH VT|600|190|160|0|250|590|6'
      || ' / E1|R35|A|WIFI|-|0|0|0|0|0|410|0 / E1|R40|A|WIFI|CT|210|110|0|100|0|0|2'
      || ' / E2|R5|B|WIFI|VT|0|0|0|0|0|0|0 / E2|R8|B|NATIONAL|-|0|0|0|0|0|7|0 / E2|R10|A|NATIONAL|MA|18|11|7|0|0|0|2 / E2|R15|A|NATIONAL|-|0|0|0|0|0|0|0'
      || ' / E2|R20|A|WH|MA NH|0|0|0|0|0|0|0 / E2|R25|A|WH|-|0|0|0|0|0|7|0 / E2|R30|A|WIFI|MA NH VT|0|0|0|0|0|0|0'
@@ -111,14 +111,14 @@ SELECT
  chk('CLASS', sec('CLASS'),
      'E1|NATIONAL|COVERED|1|105|4.0|0 / E1|NATIONAL|GAP|1|200|7.5|0 / E1|NATIONAL|OVERLAP|2|480|18.1|0'
      || ' / E1|OPEN|OPEN SEAT HELD|2|260|9.8|0 / E1|OPEN|OPEN SEAT UNHELD|2|280|10.5|0'
-     || ' / E1|REGIONAL|COVERED|3|210|7.9|0 / E1|REGIONAL|DOUBLE ASSIGNED|1|90|3.4|0 / E1|REGIONAL|GAP|1|100|3.8|0 / E1|REGIONAL|HELD BY ANOTHER|2|250|9.4|0 / E1|REGIONAL|OVERLAP|1|160|6.0|0'
+     || ' / E1|REGIONAL|COVERED|4|300|11.3|0 / E1|REGIONAL|GAP|1|100|3.8|0 / E1|REGIONAL|HELD BY ANOTHER|2|250|9.4|0 / E1|REGIONAL|OVERLAP|1|160|6.0|0'
      || ' / E1|WH|COVERED|2|470|17.7|0 / E1|WH|GAP|1|50|1.9|0'
      || ' / E2|NATIONAL|COVERED|1|11|44.0|0 / E2|NATIONAL|OVERLAP|1|7|28.0|0 / E2|OPEN|OPEN SEAT HELD|1|7|28.0|0'),
  chk('STATE', (SELECT string_agg(concat_ws('|', est_source, channel, item, i(n_zips), i(mm_opp)), ' / ' ORDER BY est_source, channel, item) FROM full_result WHERE section = 'STATE' AND est_source = 'E1'),
      'E1|NATIONAL|MA | COVERED|1|105 / E1|NATIONAL|MA | GAP|1|200 / E1|NATIONAL|MA | OVERLAP|2|480'
      || ' / E1|OPEN|(NO STATE) | OPEN SEAT UNHELD|1|150 / E1|OPEN|ME | OPEN SEAT HELD|2|260 / E1|OPEN|ME | OPEN SEAT UNHELD|1|130'
      || ' / E1|REGIONAL|CT | COVERED|1|110 / E1|REGIONAL|CT | GAP|1|100 / E1|REGIONAL|MA | COVERED|1|40 / E1|REGIONAL|MA | HELD BY ANOTHER|1|170 / E1|REGIONAL|MA | OVERLAP|1|160'
-     || ' / E1|REGIONAL|NH | COVERED|1|60 / E1|REGIONAL|NH | HELD BY ANOTHER|1|80 / E1|REGIONAL|VT | DOUBLE ASSIGNED|1|90'
+     || ' / E1|REGIONAL|NH | COVERED|1|60 / E1|REGIONAL|NH | HELD BY ANOTHER|1|80 / E1|REGIONAL|VT | COVERED|1|90'
      || ' / E1|WH|MA | COVERED|1|400 / E1|WH|MA | GAP|1|50 / E1|WH|NH | COVERED|1|70'),
  chk('TIE (all clean)', sec('TIE'),
      'E1|-|CELLS WITH NO CLASS|0|0|-|1 / E1|-|CLASSES MINUS TD_MAP_CELL, MAIN MAP (N_ZIPS 1 = THEY DIFFER)|0|0|-|1'
@@ -139,8 +139,8 @@ SELECT
  chk('Kay has no key: counted by the TIE row',
      sec('TIE'), 'E1|-|CELLS WITH NO CLASS|0|0|-|1 / E1|-|CLASSES MINUS TD_MAP_CELL, MAIN MAP (N_ZIPS 1 = THEY DIFFER)|0|0|-|1'
      || ' / E2|-|CELLS WITH NO CLASS|0|0|-|1 / E2|-|CLASSES MINUS TD_MAP_CELL, MAIN MAP (N_ZIPS 1 = THEY DIFFER)|0|0|-|1 / -|-|KEPT HOLDERS WITH NO td_holder_key ROW|1|-|-|1'),
- chk('z09: Kay makes 3 assigned, still DOUBLE ASSIGNED, her NULL key adds nothing to the string',
-     (SELECT class || ' ' || assigned FROM ssdb_integration.lr_strategy.td_gap_cell WHERE zip_code = 'z09'), 'DOUBLE ASSIGNED R5 R30');
+ chk('z09: Kay makes 3 assigned, still COVERED by Rita, her NULL key adds nothing to the string',
+     (SELECT class || ' ' || assigned FROM ssdb_integration.lr_strategy.td_gap_cell WHERE zip_code = 'z09'), 'COVERED R5 R30');
 SELECT '07_overlap_gap_test: second run ok';
 SQL
 } | duckdb -bail -noheader -list

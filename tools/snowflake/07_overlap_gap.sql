@@ -17,11 +17,13 @@ use schema lr_strategy;
 --HOLDERS of a cell are the kept people of the channel's role (OPEN: any of the three roles) with an in-role piece (TD_MAP_PIECE PIECE_IN_ROLE
 --1, either firm) on the ZIP, whatever the piece's channel.  Class, one per cell:
 --  OPEN seat      CHANNEL OPEN: OPEN SEAT HELD with a holder, OPEN SEAT UNHELD without
---  DOUBLE ASSIGNED  two or more people assigned to the state and channel (checked first)
 --  GAP            assigned, no holder
 --  OVERLAP        two or more holders
---  COVERED        one holder and it is the one assigned person
---  HELD BY ANOTHER  one holder and it is not the assigned person
+--  COVERED        one holder and it is an assigned person
+--  HELD BY ANOTHER  one holder and it is not an assigned person
+--A state the sheet splits between two or more people of one channel (several slots of a state, e.g. two REGIONAL) is not a
+--class of its own (owner's sheet, 2026-11-18): its cells are classed the same way against the set of its assigned people,
+--ASSIGNED lists them all, and a COVERED cell counts for its holder only.  DOUBLE ASSIGNED is no longer produced.
 --Tables (replaced on every run), SCENARIO is SET scenario trimmed:
 --  TD_GAP_CELL    SCENARIO, EST_SOURCE, ZIP_CODE, STATE, NEW_DIST, MM_OPP, CHANNEL, ASSIGNED (keys 'R12 R40' by number, NULL for OPEN), CLASS,
 --                 N_HOLDERS, HOLDERS (keys the same way).  One row per TD_MAP_CELL row.
@@ -110,15 +112,15 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_g_cls AS
 SELECT c.cid, TRIM($scenario) AS scenario, c.est_source, c.zip_code, c.state, c.new_dist, c.mm_opp, c.ch AS channel,
        c.asg_keys AS assigned,
        CASE WHEN c.ch = 'OPEN' THEN CASE WHEN COALESCE(h.n_h, 0) > 0 THEN 'OPEN SEAT HELD' ELSE 'OPEN SEAT UNHELD' END
-            WHEN c.n_asg >= 2 THEN 'DOUBLE ASSIGNED'
             WHEN COALESCE(h.n_h, 0) = 0 THEN 'GAP'
             WHEN h.n_h >= 2 THEN 'OVERLAP'
-            WHEN h.pid1 = c.asg_pid THEN 'COVERED'
+            WHEN ca.pid IS NOT NULL THEN 'COVERED'
             ELSE 'HELD BY ANOTHER' END AS class,
-       COALESCE(h.n_h, 0) AS n_holders, h.keys AS holders
+       COALESCE(h.n_h, 0) AS n_holders, h.keys AS holders, CASE WHEN h.n_h = 1 THEN h.pid1 END AS holder_pid, c.n_asg
 FROM ssdb_integration.lr_strategy.tmp_g_c1 c
 LEFT JOIN (SELECT cid, COUNT(*) AS n_h, LISTAGG(k, ' ') WITHIN GROUP (ORDER BY n) AS keys, MIN(pid) AS pid1
-           FROM ssdb_integration.lr_strategy.tmp_g_ch GROUP BY cid) h ON h.cid = c.cid;
+           FROM ssdb_integration.lr_strategy.tmp_g_ch GROUP BY cid) h ON h.cid = c.cid
+LEFT JOIN ssdb_integration.lr_strategy.tmp_g_ca ca ON ca.cid = c.cid AND ca.pid = h.pid1 AND h.n_h = 1;
 
 --7 the tables
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.td_gap_cell AS
@@ -144,6 +146,7 @@ WITH e AS (SELECT DISTINCT est_source FROM ssdb_integration.lr_strategy.tmp_g_cl
                     SUM(CASE WHEN c.class = 'HELD BY ANOTHER' THEN c.mm_opp ELSE 0 END) AS opp_held_by_another,
                     COUNT(DISTINCT c.zip_code) AS n_zips_assigned
              FROM ssdb_integration.lr_strategy.tmp_g_ca a JOIN ssdb_integration.lr_strategy.tmp_g_cls c ON c.cid = a.cid
+             WHERE c.class <> 'COVERED' OR c.holder_pid = a.pid
              GROUP BY a.pid, c.est_source),
      hld AS (SELECT h.pid, c.est_source, SUM(c.mm_opp) AS opp_held_elsewhere
              FROM ssdb_integration.lr_strategy.tmp_g_hold h

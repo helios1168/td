@@ -1998,3 +1998,12 @@ the rest WIFI (about 26), about 49 in all; a WIFI territory's target is about $1
 that priority (#148). Open: the $1.25B is read on the Snowflake estimates (MM_OPP per EST_SOURCE, never added), the only
 opportunity this phase has; the owner to confirm.
 
+### 2026-11-18: the first overlap and gap run; split states
+
+The owner ran the three scenarios with 07 (#148); the gap summaries' checks all hold (every cell one class, the classes
+add to TD_MAP_CELL within rounding, every kept holder keyed). DOUBLE ASSIGNED came out at about $18B of national (17%)
+and $30B of regional (28.6%) per estimate: the sheet has 56 NATIONAL and 60 REGIONAL rows over 50 states, so large
+states are split between two people of one channel, which is the sheet's design, not a conflict. So 07 classes a split
+state's cells against the set of its assigned people (COVERED when one of them is the only holder, counted for that
+person only; OVERLAP, HELD BY ANOTHER, GAP as before); DOUBLE ASSIGNED is no longer produced.
+
