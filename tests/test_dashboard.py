@@ -2,9 +2,10 @@
 divisions, 2 ZIPs each, 2 scenarios, 2 estimates, keys R1..R8, no Snowflake) and, when $TD_REPO/data/safe/dev_dashboard is there,
 from the owner's last run (keys only).  The exported cells tie out (07's classes one by one to the run's summary, and the page's
 four classes to their sum; region = its divisions = its states; today's cells to the same estimate), the today views cover every ZIP
-with a territory piece, the counts add up, the sales are in the page and in no CSV, no name is in a dev build, the page holds no
-http(s) URL outside the vendored library and licence, it is under the size bound, the build is the same bytes every time, and in
-headless Chromium the page itself reports the tie-out and asks for nothing online."""
+with a territory piece, the counts add up, the sales are in the page to the cent and in no CSV, no name is in a dev build, the page
+holds no http(s) URL outside the vendored library and licence, its shapes are gzipped and every one of them is there, it is under the
+size bound, the build is the same bytes every time, and in headless Chromium the page itself reports the tie-out, gives a split
+state's uncontested cell to the one person who covers it (07's rule) and asks for nothing online."""
 import base64
 import collections
 import contextlib
@@ -66,7 +67,8 @@ BASE = [("90001", "CA", "FI", 100e6, "REGIONAL", "R1 R2", "COVERED", "R1"), ("90
 
 # Today's territories (source, key, ZIP, state, channel): R7 (CRBG) and R8 (EQH) hold territory and are on no roster; 91002 has two
 # EQH WH holders; no CRBG FI territory in Oregon and no EQH territory on 92002 (no one); 99999 has no shape.  Seat plan 1 brings R7
-# back for Nevada, the open seat (plan 2 does not, and is not shown).  Sales (seller, ZIP, $): R1 also sells outside California.
+# back for Nevada, the open seat (plan 2 does not, and is not shown).  Sales (seller, ZIP, $): R1 also sells outside California; R3's
+# only sale is 25 cents (a sale: "sells there" is any sale above $0) and R4's is $0 (none).
 TODAY = [("CRBG", "R1", "90001", "CA", "WH"), ("CRBG", "R1", "90001", "CA", "FI"), ("CRBG", "R1", "90002", "CA", "WH"), ("CRBG", "R3", "90002", "CA", "FI"),
          ("CRBG", "R4", "91001", "OR", "WH"), ("CRBG", "R4", "91002", "OR", "WH"), ("CRBG", "R7", "92001", "NV", "WH"), ("CRBG", "R7", "92001", "NV", "FI"),
          ("CRBG", "R7", "92002", "NV", "WH"), ("CRBG", "R7", "92002", "NV", "FI"), ("CRBG", "R7", "93001", "NY", "FI"),
@@ -76,7 +78,7 @@ TODAY = [("CRBG", "R1", "90001", "CA", "WH"), ("CRBG", "R1", "90001", "CA", "FI"
 PLAN_COLS = ["SCENARIO", "EST_SOURCE", "PLAN", "SEAT", "CHOICE", "HOLDER", "BUNDLE", "LOAD_BAND"]
 SALE = 7654321.25          # a sale no other number of the made-up world looks like
 SALES = [("R1", "90001", SALE), ("R1", "91001", 5000.0), ("R2", "90002", 250.4), ("R7", "92001", 300.0), ("R6", "93001", -20.0), ("R6", "99999", 40.0),
-         ("R4", "91001", 0.0), ("", "90001", 7.0)]
+         ("R4", "91001", 0.0), ("R3", "90002", 0.25), ("", "90001", 7.0)]
 
 
 def fake_geo():
@@ -147,7 +149,7 @@ def built(runs=None, names=None, geo=None, sales=SALES, made_up=()):
     with tempfile.TemporaryDirectory() as d:
         path = dash.build(geo or fake_geo(), runs or fake_runs(), os.path.join(d, "dashboard.html"), names, "excluding FIXED", "2026-11-19-0200", sales, made_up)
         text = open(path, encoding="utf-8").read()
-        yield text, json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', text, re.S).group(1)), path
+        yield text, payload_of(text), path
 
 
 def dev_runs():
@@ -233,7 +235,12 @@ def ties_out(p, runs):
 
 
 def payload_of(text):
-    return json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', text, re.S).group(1))
+    """The page's data, with its shapes (gzip + base64 in their own element) unpacked into `geom`: one per ZIP said to have one, one per state."""
+    p = json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', text, re.S).group(1))
+    assert "geom" not in p and "zipGeom" not in p and not any("g" in s for s in p["states"]), "a shape is in the data as plain JSON"
+    p["geom"] = json.loads(gzip.decompress(base64.b64decode(re.search(r'<script type="text/plain" id="geom">([A-Za-z0-9+/=]+)</script>', text).group(1))))
+    assert sorted(p["geom"]) == ["states", "zips"] and len(p["geom"]["zips"]) == p["nShape"] and len(p["geom"]["states"]) == len(p["states"])
+    return p
 
 
 def write_run(d, runs):
@@ -253,7 +260,7 @@ def today_covers_every_piece(p, runs, geo=None):
         for r in run["today"][1]:
             r = dict(zip(cols, r))
             want[r["SOURCE"], r["TERR_CHANNEL"], str(r["ZIP_CODE"])].add(r["HOLDER"])
-    got, drawn, zix = {}, len(p["zipGeom"]), {z: i for i, z in enumerate(p["zips"])}
+    got, drawn, zix = {}, len(p["geom"]["zips"]), {z: i for i, z in enumerate(p["zips"])}
     for name, h in p["today"]["h"].items():
         assert len(h) == len(p["zips"]), name
         for i, si in enumerate(h):
@@ -275,7 +282,7 @@ def test_the_exported_cells_tie_out_class_by_class_and_region_by_region():
         assert sum(got.values()) == sum(r[3] for r in BASE) and got["", "OPEN", "OPEN SEAT UNHELD"] == 2e6          # the cell with no state is in the estimate
         west = sum(v for (st, _, _), v in got.items() if st in ("CA", "OR", "NV"))
         assert [r for r, _ in p["regions"]] == ["Northeast", "West"] and west == 255.25e6, (p["regions"], west)
-        assert p["zips"][len(p["zipGeom"]):] == ["99999"] and len(p["zipGeom"]) == 10         # the ZIP with no shape is in the totals, not on the map; 93002 has a piece and no cell
+        assert p["zips"][len(p["geom"]["zips"]):] == ["99999"] and len(p["geom"]["zips"]) == 10         # the ZIP with no shape is in the totals, not on the map; 93002 has a piece and no cell
         try:
             ties_out(p, fake_runs(summary_off=5.0))                # a summary that is $5 off is caught
             raise AssertionError("a summary $5 off tied out")
@@ -291,8 +298,10 @@ def test_the_owners_run_ties_out_is_under_the_size_bound_and_builds_the_same_twi
     with built(runs, geo=geo) as (text, p, path), built(runs, geo=geo) as (again, _, _):
         assert ties_out(p, runs) == len(p["scenarios"]) * len(p["ests"]) >= 2
         size = os.path.getsize(path)
-        print(f"      the owner's run: {size / 2 ** 20:.2f} MB, {len(p['zipGeom']):,} ZIPs drawn, {len(p['cells']['m']):,} cell rows for {len(p['scenarios'])} scenarios")
-        assert size <= 25 * 1024 * 1024 == dash.MAX_BYTES, size
+        print(f"      the owner's run: {size / 2 ** 20:.2f} MB, {len(p['geom']['zips']):,} ZIPs drawn, {len(p['cells']['m']):,} cell rows for {len(p['scenarios'])} scenarios")
+        assert size <= 15 * 1024 * 1024 == dash.MAX_BYTES, size
+        of = lambda kind: {str(r[[c.upper() for c in run[kind][0]].index("ZIP_CODE")]) for run in runs.values() for r in run[kind][1]}
+        assert p["zips"][:p["nShape"]] == sorted(set(geo.zips) & (of("cell") | of("today")))          # every ZIP with a shape and a cell or a piece is drawn
         assert text == again
         assert p["names"] == {} and all(re.fullmatch(r"R\d+", k) for k in p["keys"])
         assert all(re.fullmatch(r"[A-Z]{2}: R\d+ \((CRBG|EQH)\) (national|regional|WH)(, R\d+ \((CRBG|EQH)\) (national|regional|WH))*( · [A-Z]{2}: .*)?", v) for v in p["labels"].values()), p["labels"]
@@ -352,7 +361,8 @@ def test_the_sales_are_in_the_page_and_in_no_csv():
         assert not any(re.search("SALE|AMT|AMOUNT", texts[f].splitlines()[0], re.I) for f in texts if f.endswith(".csv"))
         p = payload_of(texts["dashboard.html"])
         got = [(p["keys"][k], p["zips"][z], v) for k, z, v in zip(p["sales"]["k"], p["sales"]["z"], p["sales"]["v"])]
-        assert got == [("R1", "90001", 7654321), ("R1", "91001", 5000), ("R2", "90002", 250), ("R6", "93001", -20), ("R6", "99999", 40), ("R7", "92001", 300)], got
+        assert got == [("R1", "90001", SALE), ("R1", "91001", 5000), ("R2", "90002", 250.4), ("R3", "90002", 0.25), ("R6", "93001", -20), ("R6", "99999", 40),
+                       ("R7", "92001", 300)], got                                                    # to the cent: 25 cents is a sale (review of #153), $0 is not
         assert p["salesNoKey"] == 7                                                                  # a seller with no key is in no person's row, and is said
         assert set(dash.read_dev(d)["S1"]) == set(dash.KINDS)                                        # a run folder read back has no sales: dev makes them up
     with built(sales=None) as (text, p, _):
@@ -380,7 +390,7 @@ def test_the_dev_command_reads_a_run_folder_and_writes_keys_only():
             assert "MADE-UP, not the run's: today's territories, 2025 sales" in out and p["madeUp"] == ["today's territories", "2025 sales"]
             assert all(re.fullmatch(r"R\d+", k) for k in p["keys"]) and not any(n in text or n.split()[1] in text for n in NAMES.values())
             assert ties_out(p, {s: {"summary": r["summary"]} for s, r in fake_runs().items()}) == 4          # a CSV round trip changes no dollar
-            drawn = len(p["zipGeom"])
+            drawn = len(p["geom"]["zips"])
             assert drawn == 10 and all(any(h[i] >= 0 for h in p["today"]["h"].values()) for i in range(drawn))   # made-up territories: every shape is someone's in a firm
             assert dev(d)[1] == text                                 # the made-up parts are the same every time
             assert p["has"] == {"pair": True} and not dev(d, "--without", "pair", "load")[2]["has"]["pair"]      # a pair file of another run can be left out: then no pair tie-out
@@ -459,7 +469,7 @@ def test_the_page_has_no_url_outside_the_vendored_library_and_licence_and_embeds
 def test_the_page_is_under_the_size_bound_and_a_page_over_it_is_refused():
     keep = dash.MAX_BYTES
     with built() as (text, _, path):
-        assert os.path.getsize(path) < dash.MAX_BYTES == 25 * 1024 * 1024
+        assert os.path.getsize(path) < dash.MAX_BYTES == 15 * 1024 * 1024
     try:
         dash.MAX_BYTES = 1000
         with built():
@@ -486,10 +496,15 @@ def test_a_shape_is_stored_as_integer_steps_and_comes_back_to_11_m():
     assert ring(enc[0][0]) == [(-100.0, 40.0), (-99.5, 40.0), (-99.5, 40.25), (-100.0, 40.25)] and ring(enc[0][1]) == hole
     tiny = dash.encode(box(-99.000001, 40.000001, -99.000002, 40.000002))          # a shape under 11 m: a square to point at, not nothing
     assert len(tiny) == 1 and len(ring(tiny[0][0])) == 4 and ring(tiny[0][0])[0] == (-99.0001, 39.9999)
-    with built() as (_, p, _):
-        ca = next(s for s in p["states"] if s["id"] == "CA")
+    geo = fake_geo()
+    with built(geo=geo) as (text, p, _):
+        i, ca = next((i, s) for i, s in enumerate(p["states"]) if s["id"] == "CA")
         w, s, e, n = ca["box"]
-        assert -125 < w < e < -110 and 30 < s < n < 45 and len(ca["g"][0][0]) == 8 and w <= ca["pt"][0] <= e          # EPSG:5070 box -> lon/lat, 4 corners
+        assert -125 < w < e < -110 and 30 < s < n < 45 and len(p["geom"]["states"][i][0][0]) == 8 and w <= ca["pt"][0] <= e          # EPSG:5070 box -> lon/lat, 4 corners
+        # the page's shapes are gzipped (review of #153: they are most of the file) and lose nothing by it: every drawn ZIP and state, the same integers
+        assert p["geom"] == {"zips": [dash.encode(g) for g in dash.lonlat(geo.zips[z] for z in p["zips"][:p["nShape"]])],
+                             "states": [dash.encode(g) for g in dash.lonlat(geo.states[s["id"]] for s in p["states"])]} and p["q"] == dash.Q == 10_000
+        assert json.dumps(p["geom"]["zips"][0], separators=(",", ":")) not in text          # and are nowhere in the page as plain JSON
 
 
 def test_touching_people_of_a_role_wear_different_colours():
@@ -566,18 +581,19 @@ def test_the_page_opens_in_chromium_ties_out_and_asks_for_nothing_online():
 
 def test_the_today_views_the_counts_and_the_zips_with_sales_in_chromium():
     """The today views colour every drawn ZIP and tie to the same estimate; the counts strip adds up (total = by channel = by
-    status) in each view and focus; "ZIPs with sales" keeps a ZIP only where its covering person sold above $0."""
+    status) in each view and focus; "ZIPs with sales" keeps a ZIP only where its covering person sold above $0, 25 cents too."""
     if chromium() is None:
         return
     with built(names=NAMES) as (_, p, path):
-        new, crbg, eqh, sold, one, assigned = in_chromium(path, LOOK, "--hash=of=CRBG", LOOK, "--hash=of=EQH&tch=FI&focus=Pacific", LOOK, "--hash=of=CRBG&sold=1", LOOK,
-                                                          "--hash=of=CRBG&sold=1&sel=R1", LOOK, "--hash=ch=REGIONAL&sold=1", LOOK)
-    for got in (new, crbg, eqh, sold, one, assigned):               # the counts add up, whatever the view and focus
+        new, crbg, eqh, sold, one, assigned, fi, cents = in_chromium(path, LOOK, "--hash=of=CRBG", LOOK, "--hash=of=EQH&tch=FI&focus=Pacific", LOOK, "--hash=of=CRBG&sold=1", LOOK,
+                                                                     "--hash=of=CRBG&sold=1&sel=R1", LOOK, "--hash=ch=REGIONAL&sold=1", LOOK,
+                                                                     "--hash=of=CRBG&tch=FI&sold=1", LOOK, "--hash=of=CRBG&tch=FI&sold=1&sel=R3", LOOK)
+    for got in (new, crbg, eqh, sold, one, assigned, fi, cents):    # the counts add up, whatever the view and focus
         assert got["n"]["total"] == [sum(got["n"]["ch"])] == [sum(got["n"]["st"])] and len(got["n"]["st"]) == 3, got["n"]
         assert got["check"] == "check" and got["map"], got
     assert new["n"] == {"total": [7], "ch": [1, 2, 3, 1], "st": [6, 1, 0]}, new["n"]                 # national, WH, regional, for an open seat; on the roster, proposed, not
     # CRBG today, WH: R1 and R4 are on the roster, plan 1 brings R7 back, four drawn ZIPs have no CRBG WH territory; only Oregon's 91002 is WH opportunity today
-    assert crbg["zips"] == str(len(p["zipGeom"])) == "10" and crbg["screen"] == "$10.0MM" and crbg["est"] == "CRBG" and crbg["hash"] == "#of=CRBG", crbg
+    assert crbg["zips"] == str(len(p["geom"]["zips"])) == "10" and crbg["screen"] == "$10.0MM" and crbg["est"] == "CRBG" and crbg["hash"] == "#of=CRBG", crbg
     assert crbg["legend"] == ["On the roster $10.0MM", "Proposed $0", "No one $0"] and crbg["tie"].startswith("✓Ties to the preliminary assignment: the same $390.3MM"), crbg
     assert crbg["n"] == {"total": [4], "ch": [1, 1, 2], "st": [3, 1, 0]} and crbg["rows"] == 3, crbg      # WH only R4, FI only R3, both R1 and R7; three hold WH
     # EQH today, FI, Pacific: the estimate is the firm's own unless chosen; R2 holds both channels there, R5 WH only
@@ -586,6 +602,24 @@ def test_the_today_views_the_counts_and_the_zips_with_sales_in_chromium():
     # ZIPs with sales: R1 sold in 90001 and R7 in 92001 (R4's $0 in 91001 is no sale); R1 alone: 90001 of their two ZIPs, their Oregon sale is outside
     assert (sold["lit"], one["lit"], new["lit"]) == ("2", "1", "") and "Outside it$5K" in one["card"] and "In the ZIPs they hold in WH$7.7MM" in one["card"], (sold, one)
     assert assigned["lit"] == "2", assigned                         # the assignment: 90001 (R1) and 90002 (R2); R1's Oregon sale is not where R1 is assigned
+    # a 25-cent sale is a sale (review of #153: it was rounded to $0 and lost): R3's lights 90002, the ZIP they hold in FI, next to R1's 90001 and R7's 92001
+    assert (fi["lit"], cents["lit"]) == ("3", "1") and "Sold in 1 ZIPs." in cents["card"] and "No sale here" not in cents["card"], (fi, cents)
+
+
+def test_a_split_states_uncontested_cell_counts_only_for_the_person_who_covers_it():
+    """Review of #153: the person card's "Assigned to them" is 07's TD_GAP_PERSON (`WHERE c.class <> 'COVERED' OR c.holder_pid = a.pid`).
+    California's regional seat is split between R1 and R2: 90001 ($100MM) is COVERED, by R1 alone, and is R1's only; 90002 ($50MM) is
+    an OVERLAP and counts for both; Oregon's gap ($30.25MM) is R2's.  The card gave R2 the $100MM too."""
+    if chromium() is None:
+        return
+    want = {k: sum(usd for _, _, _, usd, _, asg, cls, held in BASE if k in asg.split() and (cls != "COVERED" or held == k)) for k in ("R1", "R2")}
+    assert want == {"R1": 150e6, "R2": 80.25e6} and sum(usd for _, _, _, usd, _, asg, *_ in BASE if "R2" in asg.split()) == 180.25e6, want
+    card = "--dump=document.querySelector('#card').textContent.replace(/\\s+/g, ' ')"
+    with built(names=NAMES) as (_, _, path):
+        r1, r2 = in_chromium(path, "--hash=sel=R1", card, "--hash=sel=R2", card)
+    assert "Assigned to them: $150.0MM, 47.9% of the Regional channel." in r1 and "Uncontested$100.0MM66.7%" in r1 and "Contested$50.0MM33.3%" in r1, r1
+    assert "Assigned to them: $80.3MM, 25.6% of the Regional channel." in r2 and "Uncontested" not in r2, r2          # none of R1's $100MM
+    assert "Contested$50.0MM62.3%" in r2 and "Open$30.3MM37.7%" in r2, r2
 
 
 CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"script-src 'unsafe-inline'; worker-src {}\">"

@@ -5,7 +5,7 @@
 // A person is an index into P.keys; names, when the run gave any, are shown next to keys.
 const $ = (id) => document.getElementById(id);
 const P = JSON.parse($('data').textContent);
-const C = P.cells, NC = C.m.length, NZ = P.zips.length, NSHAPE = P.zipGeom.length;
+const C = P.cells, NC = C.m.length, NZ = P.zips.length, NSHAPE = P.nShape;       // the first NSHAPE ZIPs have a shape (the shapes themselves: startMap)
 const EVERY = (1 << P.scenarios.length) - 1;
 const CLS = P.classes, NK = CLS.length, DET = P.detail, J = Object.fromEntries(DET.map((d, i) => [d, i]));       // the page's four classes over 07's seven
 const KOF = [];
@@ -330,7 +330,8 @@ async function startMap() {
   if (!gl) throw new Error('the map library did not run');
   document.head.appendChild(Object.assign(document.createElement('style'), {textContent: await gunzip('v-css')}));
   gl.setWorkerUrl(URL.createObjectURL(new Blob([await gunzip('v-worker')], {type: 'text/javascript'})) + '#.cjs');
-  const zips = P.zipGeom.map((g, id) => {
+  const G = JSON.parse(await gunzip('geom'));     // the shapes, gzip + base64 like the worker: {zips: one per ZIP with a shape, states: one per state}
+  const zips = G.zips.map((g, id) => {
     const geometry = shape(g), b = [180, 90, -180, -90];
     for (const poly of geometry.coordinates) for (const [x, y] of poly[0]) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); }
     ZBOX.push(b);
@@ -341,7 +342,7 @@ async function startMap() {
   const m = new gl.Map({container: 'map', attributionControl: false, dragRotate: false, pitchWithRotate: false, touchPitch: false, renderWorldCopies: false,
     minZoom: 2, maxZoom: 13, bounds: boxOf(area().states), fitBoundsOptions: {padding: 28},
     style: {version: 8, sources: {
-      states: {type: 'geojson', data: fc(ST.map((s, id) => ({type: 'Feature', id, properties: {}, geometry: shape(s.g)})))},
+      states: {type: 'geojson', data: fc(ST.map((s, id) => ({type: 'Feature', id, properties: {}, geometry: shape(G.states[id])})))},
       zips: {type: 'geojson', data: fc(zips), maxzoom: 11},
       labels: {type: 'geojson', data: fc([])}},
     layers: [
@@ -679,12 +680,14 @@ function renderPerson(k, D) {
   }
   if (!r) return `${head}${sub}${close}<p class="sub">Not assigned in this scenario. The ZIPs they cover today stay bright on the map.</p>${salesBlock(k, (z) => seatsOf(k).some((s) => SIX.get(s) === P.zst[z]), seatsOf(k).length ? 'the seats plan 1 gives them' : 'their territory')}`;
   const mine = new Float64Array(NK), ld = rowOf(P.load, S.sc, k), chTotal = sum([...D.rows].filter((i) => P.channels[C.c[i]] === ch).map((i) => C.u[i]));
-  for (const i of D.rows) if (P.channels[C.c[i]] === ch && P.sets[C.a[i]].includes(k)) mine[C.k[i]] += C.u[i];
+  for (const i of D.rows) {                       // 07's TD_GAP_PERSON: a cell counts for each of its assignees, a COVERED one only for the person who covers it
+    if (P.channels[C.c[i]] === ch && P.sets[C.a[i]].includes(k) && (C.j[i] !== J.COVERED || P.sets[C.h[i]].includes(k))) mine[C.k[i]] += C.u[i];
+  }
   const asg = sum(mine), pairs = new Map();
   for (const i of D.rows) if (C.s[i] >= 0 && C.j[i] === J.OVERLAP && P.sets[C.h[i]].includes(k)) addPairs(pairs, i);
   const with_ = [...pairs.values()].filter((p) => p.a === k || p.b === k).sort((x, y) => y.usd - x.usd);
   return `${head}${sub}<p class="sub">${CH_LABEL[ch] || esc(r[4])}. Assigned ${states.length ? esc(states.join(', ')) : 'no state'}.</p>${close}
-    <h3>What changes in their states <span class="note">${S.est} estimate; a split state’s cells count for each assignee</span></h3>
+    <h3>What changes in their states <span class="note">${S.est} estimate; a split state’s uncontested $ goes to who covers it, the rest to each assignee</span></h3>
     <p>Assigned to them: <b>${usd(asg)}</b>, ${pct(asg, chTotal)} of the ${CH_LABEL[ch]} channel. Of that:</p>
     <div class="kv">${CLS.map((c, i) => mine[i] > 0.5 ? `<span>${sw(c.color)}${c.label}</span><span>${usd(mine[i])}</span><span>${pct(mine[i], asg)}</span>` : '').join('')}</div>
     ${r[6] ? `<p>Covers today outside their states: <b>${usd(r[6])}</b>.</p>` : ''}

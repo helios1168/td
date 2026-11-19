@@ -6,7 +6,8 @@ rows drive the map.  scenario_maps.py writes it next to maps.pdf with names (you
 
 build(geo, runs, out_path, names=None, products_label=..., sales=None) assembles dashboard.html + dashboard.css + dashboard.js (the
 template, next to this file), the vendored MapLibre GL JS 6.19.0 (vendor/, BSD-3-Clause, the npm tarball's files: the library as an
-inline module script (library()), its worker and stylesheet gzip + base64) and the data (payload) into one file.  `runs` is
+inline module script (library()), its worker and stylesheet gzip + base64), the data (payload) and the shapes (gzip + base64: integers
+only, so every name, key and dollar of the page stays readable in its text) into one file.  `runs` is
 {scenario: {cell, pair, person, load, summary, seat, plan, today, cell_today}}, each the (columns, rows) table a run has (seat:
 seat_prepare's masked table, plan: plan_prepare's, today and cell_today: fetch_today's; any of these four may be None); the scenario
 is the key, a table's own SCENARIO column is not read.  `sales` is [(seller key, ZIP, $)] (fetch_sales): it goes into the page only.
@@ -41,7 +42,8 @@ import scenario_maps as sm  # noqa: E402  (the classes and their colours, ROLE_O
 VENDOR = os.path.join(HERE, "vendor", "maplibre-gl-6.19.0")
 VENDORED = {"v-worker": "maplibre-gl-worker.mjs", "v-css": "maplibre-gl.css"}   # element id -> file, embedded gzip + base64
 LIBRARY = "maplibre-gl.mjs"                                                       # embedded as an inline module script (library())
-MAX_BYTES = 25 * 1024 * 1024   # the page's size budget (issue #153)
+MAX_BYTES = 15 * 1024 * 1024   # the page's size budget (issue #153): the owner shares the file.  A three-scenario run with every CONUS ZIP
+                               # is 9.5 MB, and was 15.2 MB, over this, before its shapes were gzipped (review of #153, 2026-11-19)
 Q = 10_000                     # coordinates are integers in 1/Q degree (about 11 m), a ring's first point then deltas
 CHANNELS = sm.GAP_CH           # NATIONAL, REGIONAL, WH, OPEN
 KINDS = {"cell": "gap_cell.csv", "pair": "gap_pair.csv", "person": "gap_person.csv", "load": "gap_load.csv", "summary": "gap_summary.csv",
@@ -192,7 +194,8 @@ def scenario_labels(people, names=None):
 
 def payload(geo, runs, names=None, products_label="products not recorded", run_label="", sales=None, made_up=()):
     """The page's data as one JSON-ready dict; see dashboard.js for how each part is read.  Rows shared by scenarios are there once
-    with a scenario bit mask (merged); dollars are to the cent (sales to the dollar); people are indices into `keys`, ZIPs into `zips`."""
+    with a scenario bit mask (merged); dollars are to the cent, sales too (a $0.25 sale is a sale: the page rounds only what it shows);
+    people are indices into `keys`, ZIPs into `zips`; `geom` is the shapes, which html() embeds apart from the rest."""
     scenarios = list(runs)
     dicts = lambda s, kind: [dict(zip((c.upper() for c in t[0]), r)) for r in t[1]] if (t := runs[s].get(kind)) else []
     cells = {s: dicts(s, "cell") for s in scenarios}
@@ -203,7 +206,7 @@ def payload(geo, runs, names=None, products_label="products not recorded", run_l
     today = {s: dicts(s, "today") for s in scenarios}                                           # today's WH and FI territory pieces
     tcells = {s: table(s, "cell_today") for s in scenarios}                                     # the opportunity by the cell's channel today
     plan = {s: [r for r in table(s, "plan") if str(r["PLAN"]) == "1"] for s in scenarios}       # seat plan 1: the optimum
-    sales = sorted(((str(k), str(z), num(v, 0)) for k, z, v in sales or []), key=lambda r: (keynum(r[0]), r[1]))
+    sales = sorted(((str(k), str(z), num(v)) for k, z, v in sales or []), key=lambda r: (keynum(r[0]), r[1]))
     keys = sorted({k for rs in cells.values() for r in rs for c in ("ASSIGNED", "HOLDERS") for k in keysets(r.get(c))}
                   | {r["HOLDER"] for kind in ("person", "load", "seat") for s in scenarios for r in table(s, kind) if r.get("HOLDER")}
                   | {r["HOLDER"] for rs in (*today.values(), *plan.values()) for r in rs if r.get("HOLDER")} | {k for k, _, v in sales if k and v}
@@ -289,12 +292,13 @@ def payload(geo, runs, names=None, products_label="products not recorded", run_l
         regions=[[reg, [[div, [s for s in codes.split() if s in six]] for div, codes in divs if set(codes.split()) & set(six)]]
                  for reg, divs in REGIONS if any(set(codes.split()) & set(six) for _, codes in divs)],
         states=[{"id": s, "name": STATE_NAME.get(s, s), "box": [round(v, 3) for v in ll[s].bounds], "pt": [round(p.x, 3), round(p.y, 3)],
-                 "g": encode(ll[s]), "inDivision": s in in_div} for s, p in zip(states, pts)],
-        zips=zips, zst=zst, zipGeom=[encode(g) for g in lonlat(geo.zips[z] for z in drawn)],
+                 "inDivision": s in in_div} for s, p in zip(states, pts)],
+        zips=zips, zst=zst, nShape=len(drawn),                # the first nShape ZIPs have a shape: geom.zips, in that order; geom.states as `states`
+        geom={"zips": [encode(g) for g in lonlat(geo.zips[z] for z in drawn)], "states": [encode(ll[s]) for s in states]},
         today={"firms": firms, "chans": tch, "h": {f"{f}|{c}": [intern(sets, tuple(sorted(hold[f, c, i]))) if (f, c, i) in hold else -1 for i in range(len(zips))]
                                                     for f in firms for c in tch}},
         sales={"k": [kix[k] for k, _, v in sales if k and v], "z": [zix[z] for k, z, v in sales if k and v], "v": [v for k, _, v in sales if k and v]},
-        salesNoKey=num(sum(v for k, _, v in sales if not k), 0),
+        salesNoKey=num(sum(v for k, _, v in sales if not k)),
         base={"REGIONAL": sm.BASE_USD["REGIONAL"]}, kOf=dict(sm.K_OF), beta=sm.BETA)
     out["sets"] = [list(t) for t in sets]                     # after `today`, which adds its holder sets
     return out
@@ -321,26 +325,33 @@ def library():
     return head + "globalThis.maplibregl={" + ",".join(f"{p[-1]}:{p[0]}" for p in pairs) + "};\n"
 
 
+def packed(data):
+    """Bytes gzipped (mtime 0, so the build is the same bytes every time) and base64-coded: no '<' in it."""
+    return base64.b64encode(gzip.compress(data, 9, mtime=0)).decode("ascii")
+
+
 @functools.lru_cache(maxsize=None)
 def blob(name):
-    """A vendored file gzipped (mtime 0, so the build is the same bytes every time) and base64-coded: no '<' in it.  The worker is
-    made a classic script, its code up to the closing `export{...}` inside a strict function: a page opened from disk (origin "null")
-    cannot start a module worker from a blob: URL, and MapLibre's own way round that, a data: URL, is refused where only blob:
-    workers are allowed; a classic blob: worker runs in both (measured in headless Chromium, 2026-11-19)."""
+    """A vendored file, packed.  The worker is made a classic script, its code up to the closing `export{...}` inside a strict function:
+    a page opened from disk (origin "null") cannot start a module worker from a blob: URL, and MapLibre's own way round that, a data:
+    URL, is refused where only blob: workers are allowed; a classic blob: worker runs in both (measured in headless Chromium, 2026-11-19)."""
     if name == VENDORED["v-worker"]:
         data = ('(function(){"use strict";' + code_of(name)[0] + "})();\n").encode("utf-8")
     else:
         with open(os.path.join(VENDOR, name), "rb") as f:
             data = f.read()
-    return base64.b64encode(gzip.compress(data, 9, mtime=0)).decode("ascii")
+    return packed(data)
 
 
 def html(data):
-    """The page: the template with the stylesheet, the script, the data, the vendored library and its licence put in, each at its
-    one mark, in one pass (nothing put in is read for marks)."""
+    """The page: the template with the stylesheet, the script, the data, the shapes, the vendored library and its licence put in, each
+    at its one mark, in one pass (nothing put in is read for marks).  The shapes (`geom`) are most of the page and go in packed, every
+    ZIP and every integer of them: the map, which already unpacks its worker, reads them when it starts; the totals and tables do not."""
     read = lambda *name: open(os.path.join(HERE, *name), encoding="utf-8").read()
-    text = json.dumps(data, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+    dumps = lambda v: json.dumps(v, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+    text = dumps({k: v for k, v in data.items() if k != "geom"})
     parts = {"CSS": read("dashboard.css"), "JS": read("dashboard.js"), "LICENCE": read(VENDOR, "LICENSE.txt"), "LIBRARY": library(),
+             "GEOM": packed(dumps(data["geom"]).encode("ascii")),
              "DATA": text.replace("</", "<\\/").replace("<!--", "<\\u0021--"),                  # nothing in the data can close or confuse its <script>
              "VENDOR": "\n".join(f'<script type="text/plain" id="{i}">{blob(f)}</script>' for i, f in VENDORED.items())}
     page, marks = read("dashboard.html"), re.compile("<!--(" + "|".join(parts) + ")-->")
