@@ -4,7 +4,7 @@ use schema lr_strategy;
 
 --Seat fit per roster scenario (issue 151).  One Run All file, run after 07_overlap_gap.sql in the same session for the same scenario.  Set
 --SET scenario to the scenario you ran 03 and 07 with (the scenario run replaces that line as in 03), nothing else.  For every open seat it
---lists who could take it, the people whose assigned states border the seat (NEIGHBOUR) and the people with a territory piece in it (HOLDER),
+--lists who could take it, the regional people (role WIFI) whose assigned states border the seat (NEIGHBOUR) and the people with a territory piece in it (HOLDER),
 --ranked by the bargaining utility.  Everything is by key R<n> of td_holder_key, no name leaves.  It builds TD_SEAT_FIT, which uses sales and stays
 --in Snowflake, and ends on one result of masked ranks and checks.
 --A seat is a state with an OPEN cell of TD_GAP_CELL (07) for an estimate EST_SOURCE, SEAT_MM_OPP the sum of its OPEN cells' MM_OPP.  Sales do not depend
@@ -16,9 +16,12 @@ use schema lr_strategy;
 --              it: 1 when ASSIGNED has one key, a COVERED cell in full to its sole holder (1, the other assignees 0, as gap_load), else 1 / (keys in ASSIGNED).  w(k,z) is the largest
 --              share over k's cells in z, g = sum over z of w(k,z) (c1 S(k,z) + c2 (T(z) - S(k,z))) + lambda sum over cells of share MM_OPP
 --  DNASH       LN(1 + U / g) when g > 0, else NULL (a NEIGHBOUR with no book value ranks after all with a value, HOLDER rows leave it NULL)
---Candidates of a seat.  NEIGHBOUR: a kept person with role NATIONAL, WH or WIFI who has an assigned state next to the seat in td_state_adj (both
+--Candidates of a seat.  NEIGHBOUR: a kept person with role WIFI only who has an assigned state next to the seat in td_state_adj (both
 --directions, the Python side makes it), BORDERS 1, ranked by DNASH descending, NULL last, then key number.  HOLDER: anyone, kept or not, whatever the
 --role, with a TD_MAP_PIECE row whose STATE is the seat, BORDERS 1 when also a neighbour, ranked by U descending then key number.  A person can be both.
+--Only a regional neighbour extends an open seat (owner, DATASET_LOG 2026-11-19): a WH or NATIONAL person does not take the seat's other channels, and under the priority chain
+--national -> WH -> regional a WH person in DC would leave DC's FI and national business with no one.  Their book still counts in g, and a WH or NATIONAL person with a piece
+--in the seat is still a HOLDER (BORDERS 0 unless also a neighbour).
 --A candidate with no td_holder_key row cannot be keyed or have sales, it is left out of the table and counted by a TIE row.
 --Table (replaced on every run), SCENARIO is SET scenario trimmed:
 --  TD_SEAT_FIT  SCENARIO, EST_SOURCE, SEAT, SEAT_MM_OPP, KIND, HOLDER (key), SOURCE, KEPT (Y or N), ROLE, BORDERS, U, G, DNASH, RANK.  RANK counts from 1
@@ -44,7 +47,7 @@ SET c1  = 0.70;
 SET c2  = 0.28;
 SET lam = 0.30;
 
---1 this scenario's cells, and the people: kept, role NATIONAL, WH or WIFI, with their key, assigned states, and the states of them that have a neighbour
+--1 this scenario's cells, and the people: kept, role NATIONAL, WH or WIFI (their book is g), with their key and assigned states, and the states of the WIFI ones (the only neighbours)
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_gap AS
 SELECT * FROM IDENTIFIER($gap_tbl) WHERE scenario = TRIM($scenario);
 
@@ -66,7 +69,8 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_ps AS
 SELECT p.pid, s.state
 FROM ssdb_integration.lr_strategy.tmp_f_person p
 JOIN (SELECT DISTINCT state_a AS state FROM IDENTIFIER($adj_tbl)) s
-  ON (' ' || p.assigned_states || ' ') LIKE '% ' || s.state || ' %';
+  ON (' ' || p.assigned_states || ' ') LIKE '% ' || s.state || ' %'
+WHERE p.role = 'WIFI';
 
 --2 sales per key and ZIP, and all sales per ZIP
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_sale AS
@@ -95,7 +99,7 @@ GROUP BY est_source, state, zip_code;
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_seat AS
 SELECT est_source, seat, SUM(m) AS seat_mm_opp FROM ssdb_integration.lr_strategy.tmp_f_seatzip GROUP BY est_source, seat;
 
---4 the candidates: neighbours (an assigned state next to the seat), holders (a piece in the seat, anyone), BORDERS 1 for a holder who is also a neighbour
+--4 the candidates: neighbours (a WIFI person with an assigned state next to the seat), holders (a piece in the seat, anyone), BORDERS 1 for a holder who is also a neighbour
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_nb AS
 SELECT DISTINCT s.est_source, s.seat, ps.pid
 FROM ssdb_integration.lr_strategy.tmp_f_seat s
