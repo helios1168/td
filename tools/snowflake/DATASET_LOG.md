@@ -2097,3 +2097,12 @@ u_k(z) = 0.70 S_k(z) + 0.28 (T(z) - S_k(z)) + 0.30 M(z) over the 2025 main-map s
 (masked, safe to send), `seat_fit_names.csv` (names and the sales-based values: the owner's screen only) and a seat-fit
 page per estimate in `maps.pdf` (ranks, names, border flag, opportunity load band after taking the seat).
 
+### 2026-11-19: bargaining disagreement point d > 0, claims-centred (#149)
+
+Owner, 2026-11-19: "the main reason was from 2026-09-13. would that still be relevant here?", then on the
+recommendation, "yes do it". d_i = 0.665 S_i(Z) (alpha = c1 x 0.95, no floor), S_i(Z) the person's 2025 main-map sales
+in the state's contested ZIPs; maximise sum log(g_i - d_i); a per-state feasibility check names states where the
+reserves cannot all be met, nothing clipped. Reason: the 2026-09-13 claims-centred reservation (archive tag,
+MATH_REVIEW.tex:44, IMPLEMENTATION_PLAN.md:83), protecting incumbents' producing books from displacement; its alpha (to
+0.95) and floor made every edge infeasible against c1 = 0.70 (MATH_REVIEW.md 6.4), so alpha <= c1 and no floor here.
+
