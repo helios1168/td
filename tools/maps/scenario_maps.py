@@ -713,6 +713,7 @@ def main(argv=None):
     out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M"))
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
+    send = []
     t0, refused, futs, pool, n_pages, started, gaps = time.time(), [], {}, None, None, {}, {}
     with connect() as conn:
         for name in chosen:
@@ -735,9 +736,7 @@ def main(argv=None):
             for lo, hi in chunks(n_pages):
                 futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
             if gap:
-                for p in write_gap_csvs(out, name, gap):
-                    print(os.path.relpath(p, ROOT))
-                print(f"{name}: the _gap_*.csv files hold holder keys R<n> and counts only: safe to send to an agent")
+                send += write_gap_csvs(out, name, gap)
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
                 gaps[name] = (gd, skipped, time.time())
@@ -756,6 +755,11 @@ def main(argv=None):
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
+    print(f"maps folder: {os.path.abspath(out)}")
+    if send:
+        print("safe to send to an agent (holder keys R<n> and counts only, no names):")
+        for p in send:
+            print(f"  {os.path.abspath(p)}")
     return 1 if refused else 0
 
 
