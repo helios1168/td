@@ -2128,3 +2128,14 @@ settings (headcount cap, load cap, a re-added person taking several adjacent sea
 neighbour; a re-added holder may take a connected set of seats; a seat may stay vacant (flagged). Each seat goes whole to
 one option, so territories stay connected; the objective follows the bargaining utility (#149, #151). Plan to follow.
 
+### 2026-11-19: dashboard classes, views, sales; open seats filled by regional people only
+
+Owner, 2026-11-19 (#153): the dashboard's classes are Uncontested (COVERED), Contested (OVERLAP), Transition (HELD BY
+ANOTHER + GAP (HELD TODAY)) and Open (GAP (UNHELD) + OPEN SEAT HELD + OPEN SEAT UNHELD): "relabel them as: uncontested,
+contested, transition, and collapse new ground and no one assigned yet as open". Views: NewCo preliminary assignment
+(scenarios with readable labels), CRBG today, EQH today; the today views use each firm's territory channel (WH, FI).
+Sales in the dashboard: 2025 actual, credited seller, main map, FIXED excluded by default, "sells there" any sale > 0;
+the map filter is "ZIPs with sales". 07's classes are unchanged (the dashboard maps them). An open seat is extended
+only by a regional (WIFI) neighbour, since a WH or national person does not take the seat's other channels (decision 4:
+"yes").
+
