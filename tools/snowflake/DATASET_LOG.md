@@ -2020,3 +2020,13 @@ person (a split state: those they hold alone and an equal share of the rest), fr
 (land and water). `tools/maps/scenario_maps.py` writes `<scenario>_gap_load.csv` (keys only) and lists the heaviest and
 lightest for their area on the gaps PDF's summary page.
 
+### 2026-11-18: one PDF, nothing repeated across scenarios, CONUS only
+
+Owner, 2026-11-18: "How should we adapt the code so that we don't ever duplicate something. Could this all be in a
+single pdf? And let's stop rendering the region level maps for now just for the sake of speed". `scenario_maps.py` now
+writes one `maps.pdf` per run: the map pages, then the view D gap pages; a page that comes out as the same picture in
+several scenarios is in it once, its corner naming them ("all scenarios" when every one). The gap CSVs are one file per
+kind for the run (`gap_summary.csv`, `gap_pair.csv`, `gap_person.csv`, `gap_load.csv`, `gap_cell.csv`), each row once,
+SCENARIO `ALL` or the scenarios that share it (numbers compared to the cent); `gap_report.py` reads them back per
+scenario. Division pages only with `-Divisions`: a run is 12 map pages and 7 gap pages per scenario, before sharing.
+

@@ -194,7 +194,7 @@ def _expected_titles(geo):
     for g in ["CONUS"] + [d for d, _ in geo.divisions]:
         for ch in ("NATIONAL", "REGIONAL", "WH"):
             for view in ("A whole states", "B held in assigned states", "C today's territories CRBG", "C today's territories EQH"):
-                out.append(f"CA1_R105N · {view} · {ch} · {g}")
+                out.append(f"{view} · {ch} · {g}")
     return out
 
 
@@ -207,7 +207,7 @@ def test_one_scenario_is_120_pages_in_order_with_exact_titles_and_the_labels_leg
     for title, fig in sm.pages("CA1_R105N", ctx):
         seen.append(title)
         assert fig.get_suptitle() == title
-        _, view, ch, gname = title.split(" · ")
+        view, ch, gname = title.split(" · ")
         assert view in ("A whole states", "B held in assigned states", "C today's territories CRBG", "C today's territories EQH"), title
         states = geos[gname]
         ax = fig.axes[0]
@@ -263,7 +263,7 @@ def test_pages_drawn_in_chunks_assemble_in_order_into_one_pdf():
     assert pngs[0] == first                                     # page 0 is the CONUS page, whichever chunk ran first
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "x.pdf")
-        assert sm.assemble(path, pngs) == 120
+        assert sm.assemble(path, [(png, "CA1_R105N") for png in pngs]) == 120
         assert len(sm.re.findall(rb"/Type\s*/Page[^s]", open(path, "rb").read())) == 120
 
 
@@ -390,12 +390,12 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
     geo, gd = fake_geo(), _gd()
     sm._init(geo)
     got = list(sm.gap_pages("S", gd, geo))
-    expect = ["S · D overlaps and gaps · summary"] + [f"S · D overlaps and gaps · {ch} · {est} estimate · {g}"
+    expect = ["D overlaps and gaps · summary"] + [f"D overlaps and gaps · {ch} · {est} estimate · {g}"
                                                      for g in ["CONUS"] + [d for d, _ in geo.divisions] for ch in ("NATIONAL", "REGIONAL", "WH") for est in ("HIGH", "LOW")]
     assert [t for t, _ in got] == expect and len(got) == 61
     assert all(f.get_suptitle() == t for t, f in got)
     for title, fig in got[1:]:
-        _, _, ch, est, gname = title.split(" · ")
+        _, ch, est, gname = title.split(" · ")
         states = {g.name: g.states for g in geo.geographies}[gname]
         zs = {z: v for z, v in gd.zips.get((est.split()[0], ch), {}).items() if v[0] in states}
         legend = " ".join(t.get_text() for t in fig.legends[0].get_texts())
@@ -411,6 +411,32 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
     assert "HIGH estimate" in text and "LOW estimate" in text and "R1 Ann N" in text and "R2 Bo R" in text and "top 15" in text
     assert text.count("R1 Ann N") == 2 * 15 and "R9" not in text           # 15 pairs per estimate; the WH pair is outside the top 15
     assert "119.0" in text and "105.0" in text and "104.0" not in text     # the pairs 105..119 only
+
+
+def test_gap_csvs_hold_each_row_once_with_the_scenarios_that_have_it():
+    cols = ["EST_SOURCE", "SCENARIO", "X", "MM_OPP"]
+    gaps = {s: {k: (cols, rows) for k in ("cell", "pair", "person", "summary", "load")} for s, rows in (
+        ("A", [("E", "A", "same", 1.001), ("E", "A", "twice", 2.0), ("E", "A", "twice", 2.0), ("E", "A", "a and b", 3.0)]),
+        ("B", [("E", "B", "same", 1.004), ("E", "B", "twice", 2.0), ("E", "B", "twice", 2.0), ("E", "B", "a and b", 3.0), ("E", "B", "b only", 4.0)]),
+        ("C", [("E", "C", "same", 1.0), ("E", "C", "twice", 2.0), ("E", "C", "twice", 2.0)]))}
+    with tempfile.TemporaryDirectory() as d:
+        paths = sm.write_gap_csvs(d, gaps)
+        assert [os.path.basename(p) for p in paths] == [f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load")]
+        got = open(paths[0], encoding="utf-8").read().splitlines()
+    # the same to the cent is one row (the first scenario's numbers); a row twice in each scenario stays twice; the column stays in place
+    assert got == ["EST_SOURCE,SCENARIO,X,MM_OPP", "E,ALL,same,1.001", "E,ALL,twice,2.0", "E,ALL,twice,2.0", "E,A B,a and b,3.0", "E,B,b only,4.0"], got
+    assert sm.scenario_label(["A"], ["A"]) == "A"                           # one scenario in the run: its name, not ALL
+
+
+def test_identical_pages_are_drawn_once_labelled_with_their_scenarios():
+    got = sm.merge_pages({"A": [b"p0", b"p1", b"p2"], "B": [b"p0", b"q1", b"p2"], "C": [b"p0", b"p1", b"r2"]})
+    assert got == [(b"p0", "all scenarios"), (b"p1", "A · C"), (b"q1", "B"), (b"p2", "A · B"), (b"r2", "C")]
+    assert sm.merge_pages({"A": [b"p0"]}) == [(b"p0", "A")]
+    try:
+        sm.merge_pages({"A": [b"p0"], "B": []})
+        raise AssertionError("no error for scenarios with different page counts")
+    except RuntimeError:
+        pass
 
 
 def test_load_is_dollars_against_the_area_adjusted_expectation():
@@ -493,16 +519,16 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         def __enter__(self): return self.conn
         def __exit__(self, *a): return False
 
-    def run(summary, sql07):
+    def run(summary, sql07, scen="CA1_R105N", roster=None):
         with tempfile.TemporaryDirectory() as d:
             sm.MAPS_DIR, sm.SQL07, sm.EDITS = d, sql07, os.path.join(d, "none.sql")
             sm.connect = lambda: Ctx(GapConn(summary))
             sm.load_geo = lambda conn: fake_geo()
-            sm.fetch_scenario = lambda *a: (ROSTER, fake_pieces())
+            sm.fetch_scenario = lambda conn, name, *a: (roster(name) if roster else ROSTER, fake_pieces())
             buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
             old, sys.stdout = sys.stdout, buf
             try:
-                rc = sm.main(["--scenario", "CA1_R105N", "--jobs", "1"])
+                rc = sm.main(["--scenario", scen, "--jobs", "1"])
             finally:
                 sys.stdout = old
             files = sorted(f for _, _, fs in os.walk(d) for f in fs)
@@ -515,14 +541,22 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         f07 = os.path.join(tempfile.gettempdir(), "07_fake_gap.sql")
         with open(f07, "w") as f:
             f.write("SET scenario    = '';\nselect 1;\n")
-        rc, out, files, pdfs, csvs = run(GOOD, f07)
-        assert rc == 0 and files == sorted([f"CA1_R105N_gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load")] + ["CA1_R105N.pdf", "CA1_R105N_gaps.pdf"]), files
-        assert pdfs == {"CA1_R105N.pdf": 120, "CA1_R105N_gaps.pdf": 61} and "safe to send to an agent" in out, (pdfs, out)
-        assert csvs["CA1_R105N_gap_cell.csv"] == 1 + len(fake_cells()) and csvs["CA1_R105N_gap_summary.csv"] == 1 + len(GOOD)
-        rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, main PDF still drawn, exit 1
-        assert rc == 1 and files == ["CA1_R105N.pdf"] and "dollars lost" in out, (files, out)
+        gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
+        rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
+        assert rc == 0 and files == sorted(gap_files + ["maps.pdf"]), files
+        assert pdfs == {"maps.pdf": 12 + 7} and "safe to send to an agent" in out, (pdfs, out)
+        assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)
+        # two scenarios the same: every page and row once
+        rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N")
+        assert rc == 0 and pdfs == {"maps.pdf": 19} and csvs["gap_cell.csv"] == 1 + len(fake_cells()), (pdfs, csvs)
+        # CA2 moves Ann (CRBG, NATIONAL) to WIFI: NATIONAL and REGIONAL pages A, B and C CRBG differ (6 more); C EQH, WH and gaps shared
+        moved = lambda name: [r if r[1] != "Ann N" or name == "CA1_R105N" else r[:3] + ("WIFI",) + r[4:] for r in ROSTER]
+        rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", moved)
+        assert rc == 0 and pdfs == {"maps.pdf": 19 + 6}, pdfs
+        rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, the maps still drawn, exit 1
+        assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "dollars lost" in out, (files, out)
         rc, out, files, pdfs, csvs = run(GOOD, os.path.join(tempfile.gettempdir(), "07_does_not_exist.sql"))
-        assert rc == 0 and files == ["CA1_R105N.pdf"] and out.count("07_overlap_gap.sql is not in this checkout") == 1, (files, out)
+        assert rc == 0 and files == ["maps.pdf"] and out.count("07_overlap_gap.sql is not in this checkout") == 1, (files, out)
     finally:
         for k, v in keep.items():
             setattr(sm, k, v)

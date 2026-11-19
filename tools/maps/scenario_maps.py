@@ -1,11 +1,15 @@
-"""Scenario maps (issue #147): one PDF per roster scenario, a CONUS page and the 9 census-division pages, each in three
-views per channel.  Runs on the owner's terminal in ONE Snowflake login:
+"""Scenario maps (issue #147): ONE PDF for the run, data/safe/maps/<run time>/maps.pdf, with every chosen scenario, CONUS pages
+(the 9 census-division pages too with --divisions), each in the views per channel.  Runs on the owner's terminal in ONE Snowflake login:
 
-    .\\tools\\maps\\scenario_maps.ps1 -All          (or -Scenario CA1_R105N,CA2_R105N, or -List)
+    .\\tools\\maps\\scenario_maps.ps1 -All          (or -Scenario CA1_R105N,CA2_R105N, or -List; add -Divisions for the division pages)
+
+Nothing is repeated across scenarios (owner, 2026-11-18: "we don't ever duplicate something"): a page that comes out the same
+in several scenarios is in the PDF once, its corner naming them ("all scenarios" when it is every one), and each gap CSV
+holds every scenario with each row once, SCENARIO "ALL" or the scenarios that have the row (the same to the cent).
 
 Per scenario: 03_assignments.sql with `SET scenario` set (and data/safe/03_edits.sql spliced into its owner block, as
 run_03_04.ps1), then 04_assigned_coverage.sql, then it reads td_assignments and td_map_piece and draws
-data/safe/maps/<run time>/<scenario>.pdf.  A scenario whose 03 result has a STATUS other than DEFAULT, EDITED or EDITED
+the pages.  A scenario whose 03 result has a STATUS other than DEFAULT, EDITED or EDITED
 (EITHER) is not drawn (its status counts are printed; the exit code is 1).  The PDFs hold names: they stay in data/safe.
 
 Pages, per scenario, in the order geography (CONUS, then the divisions) x channel (NATIONAL, REGIONAL = role WIFI, WH) x view:
@@ -14,8 +18,9 @@ Pages, per scenario, in the order geography (CONUS, then the divisions) x channe
   C  today's in-role ZIPs of the kept holders with the role, one page per firm (CRBG, EQH); holders not kept hatched as open.
 A ZIP belongs to a geography by its piece's STATE.
 With tools/snowflake/07_overlap_gap.sql (issue #148) each scenario also runs it after 04, refuses its gap output when a MUST_BE_ZERO
-row is not 0, and writes next to the PDF <scenario>_gap_cell.csv, _gap_pair.csv, _gap_person.csv, _gap_summary.csv (masked: holder
-keys R<n> only, safe to send to an agent) and <scenario>_gaps.pdf (view D: a summary page, then geography x channel x estimate pages).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
+row is not 0, and writes next to the PDF gap_cell.csv, gap_pair.csv, gap_person.csv, gap_summary.csv, gap_load.csv (masked: holder
+keys R<n> only, safe to send to an agent; one file each for the run, as above) and the view D pages after the maps in maps.pdf
+(a summary page, then geography x channel x estimate pages).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 """
 from __future__ import annotations
@@ -25,6 +30,7 @@ import collections
 import concurrent.futures
 import csv
 import datetime
+import decimal
 import gzip
 import importlib.util
 import io
@@ -266,15 +272,31 @@ def gap_load(scenario, gap, zip_area):
     return LOAD_COLS, rows
 
 
-def write_gap_csvs(out, scenario, gap):
-    """<scenario>_gap_<cell|pair|person|summary|load>.csv in `out`: the paths."""
-    paths = []
-    for k in ("cell", "pair", "person", "summary") + (("load",) if "load" in gap else ()):
-        path = os.path.join(out, f"{scenario}_gap_{k}.csv")
+def scenario_label(group, every):
+    """The scenarios sharing a page or a row: ALL when it is every one of several, else their names."""
+    return "ALL" if len(group) == len(every) > 1 else " ".join(group)
+
+
+def write_gap_csvs(out, gaps):
+    """gap_<cell|pair|person|summary|load>.csv in `out` for {scenario: gap}, each row once: its SCENARIO is scenario_label of
+    the scenarios that have it (numbers compared to the cent; a row a scenario has twice is kept twice).  The paths."""
+    every, paths = list(gaps), []
+    for k in ("cell", "pair", "person", "summary", "load"):
+        cols, rows = None, {}
+        for s, gap in gaps.items():
+            c, got = gap[k]
+            cols = cols or list(c)
+            i, nth = [x.upper() for x in cols].index("SCENARIO"), collections.Counter()
+            for r in got:
+                rest = tuple(v for j, v in enumerate(r) if j != i)
+                key = tuple(round(float(v), 2) if isinstance(v, (float, decimal.Decimal)) else v for v in rest)
+                nth[key] += 1
+                rows.setdefault((key, nth[key]), (rest, []))[1].append(s)
+        path = os.path.join(out, f"gap_{k}.csv")
         with open(path, "w", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
-            w.writerow(gap[k][0])
-            w.writerows(gap[k][1])
+            w.writerow(cols)
+            w.writerows(rest[:i] + (scenario_label(ss, every),) + rest[i:] for rest, ss in rows.values())
         paths.append(path)
     return paths
 
@@ -543,7 +565,7 @@ def specs(geo):
 def pages(scenario, ctx, lo=0, hi=None):
     """(title, figure) for the pages lo..hi (all by default), in order."""
     for g, ch, view, firm in specs(ctx.geo)[lo:hi]:
-        title = f"{scenario} · {view} · {ch} · {g.name}"
+        title = f"{view} · {ch} · {g.name}"   # the scenario is not drawn: the PDF's corner names who shares the page
         yield title, draw_page(ctx, title, g, ch, view, firm)
 
 
@@ -655,7 +677,7 @@ def draw_gap_summary(scenario, gd):
             head = f"{'channel':10}{'person':<34}{'area km2':>12}{'$MM':>12}{'expect $MM':>12}{'load':>8}"
             lines += [f"{est} estimate: load = $ / expected $ for the area (base x (area/median)^{BETA}); over 1: heavy for its area", head]
             lines += [fmt(r) for r in load[:8]] + ["  ..."] + [fmt(r) for r in load[-8:]] + [""]
-    fig.suptitle(f"{scenario} · D overlaps and gaps · summary", fontsize=17, fontweight="bold", y=0.975)
+    fig.suptitle("D overlaps and gaps · summary", fontsize=17, fontweight="bold", y=0.975)
     fig.text(0.02, 0.93, "\n".join(lines), family="monospace", fontsize=min(9.0, 560 / (1.3 * len(lines))), va="top")
     return fig
 
@@ -665,11 +687,11 @@ def gap_pages(scenario, gd, geo, lo=0, hi=None):
     allp = [None] + gap_specs(geo, gd)
     for spec in allp[lo:hi]:
         if spec is None:
-            title = f"{scenario} · D overlaps and gaps · summary"
+            title = "D overlaps and gaps · summary"
             yield title, draw_gap_summary(scenario, gd)
         else:
             g, ch, est = spec
-            title = f"{scenario} · D overlaps and gaps · {ch} · {est} estimate · {g.name}"
+            title = f"D overlaps and gaps · {ch} · {est} estimate · {g.name}"
             yield title, draw_gap_page(gd, geo, title, g, ch, est)
 
 
@@ -683,7 +705,7 @@ def _init(geo):
     _GEO = geo
 
 
-CHUNK = 10    # pages per task: a scenario's 120 pages spread over every worker
+CHUNK = 10    # pages per task: a scenario's pages spread over every worker
 _CTX = {}
 
 
@@ -711,19 +733,36 @@ def draw_gap_chunk(scenario, gd, lo, hi):
     return lo, out
 
 
-def assemble(path, pngs):
-    """The PDF of the pages (PNG bytes, in order), each a picture."""
+def merge_pages(per):
+    """{scenario: [PNG bytes in page order]} -> [(png, label)]: page by page, scenarios whose page is the same picture share
+    one page, labelled scenario_label of them, in the order of the scenarios."""
+    every = list(per)
+    n = {len(v) for v in per.values()}
+    if len(n) != 1:
+        raise RuntimeError(f"scenarios with different page counts {sorted(n)}")
+    out = []
+    for i in range(n.pop()):
+        groups = {}
+        for s in every:
+            groups.setdefault(per[s][i], []).append(s)
+        out += [(png, "all scenarios" if len(ss) == len(every) > 1 else " · ".join(ss)) for png, ss in groups.items()]
+    return out
+
+
+def assemble(path, pages):
+    """The PDF of the pages [(PNG bytes, label)], in order, each a picture with its label (the scenarios) in the corner."""
     import matplotlib.image
     with PdfPages(path) as pdf:
-        for png in pngs:
+        for png, label in pages:
             pic = Figure(figsize=FIGSIZE, dpi=DPI)
             axis = pic.add_axes([0, 0, 1, 1])
             axis.imshow(matplotlib.image.imread(io.BytesIO(png), format="png"), interpolation="none", aspect="auto")
             axis.set_axis_off()
+            pic.text(0.006, 0.975, label, fontsize=13, fontweight="bold", color="#1f4e9e", va="center")
             pdf.savefig(pic, dpi=DPI)
-    if not pngs:
+    if not pages:
         raise RuntimeError(f"{path}: no page to draw")
-    return len(pngs)
+    return len(pages)
 
 
 def _done(x):
@@ -742,6 +781,7 @@ def main(argv=None):
     ap.add_argument("--list", action="store_true", help="print the scenario names in 03_assignments.sql")
     ap.add_argument("--scenario", action="append", default=[], help="a scenario to draw (repeatable)")
     ap.add_argument("--all", action="store_true", help="draw every scenario")
+    ap.add_argument("--divisions", action="store_true", help="draw the 9 census-division pages too (off: CONUS only, for speed)")
     ap.add_argument("--jobs", type=int, help="drawing processes (default: the CPUs less one, at most 8); 1 draws in this process")
     args = ap.parse_args(argv)
     with open(SQL03, encoding="utf-8") as f:
@@ -790,6 +830,8 @@ def main(argv=None):
                 refused.append(name + " (gap output only)")
             if n_pages is None:
                 geo = load_geo(conn)
+                if not args.divisions:
+                    geo.geographies = geo.geographies[:1]   # CONUS only (owner, 2026-11-18: stop the region maps for now, for speed)
                 n_pages = len(specs(geo))
                 _init(geo)
                 if jobs > 1:
@@ -800,23 +842,27 @@ def main(argv=None):
                 futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
             if gap:
                 gap["load"] = gap_load(name, gap, {z: g.area / 1e6 for z, g in geo.zips.items()})
-                send += write_gap_csvs(out, name, gap)
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
                 gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
-                gaps[name] = (gd, skipped, time.time())
+                gaps[name] = (gd, skipped, gap)
                 for lo, hi in chunks(1 + len(gap_specs(geo, gd))):
                     futs[name + "_gaps", lo] = submit(draw_gap_chunk, name, gd, lo, hi)
-    for name in [s for s in chosen if s in started]:
+    maps, per = [s for s in chosen if s in started], {}
+    for name in maps:
         parts = sorted(futs[k].result() for k in futs if k[0] == name)
-        path = os.path.join(out, f"{name}.pdf")
-        n = assemble(path, [png for _, pngs, _ in parts for png in pngs])
-        print(f"{os.path.relpath(path, ROOT)}: {n} pages, drawn in {time.time() - started[name]:.0f} s; "
-              f"{parts[0][2]} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn", flush=True)
-    for name, (gd, skipped, t) in gaps.items():
-        path = os.path.join(out, f"{name}_gaps.pdf")
-        n = assemble(path, [png for _, pngs in sorted(futs[k].result() for k in futs if k[0] == name + "_gaps") for png in pngs])
-        print(f"{os.path.relpath(path, ROOT)}: {n} pages, drawn in {time.time() - t:.0f} s; {skipped} CONUS ZIPs of the gap cells have no ZCTA shape, not drawn", flush=True)
+        per[name] = [png for _, pngs, _ in parts for png in pngs]
+        print(f"{name}: {len(per[name])} map pages; {parts[0][2]} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn", flush=True)
+    pages = merge_pages(per) if per else []
+    gper = {name: [png for _, pngs in sorted(futs[k].result() for k in futs if k[0] == name + "_gaps") for png in pngs] for name in gaps}
+    for name, (_, skipped, _) in gaps.items():
+        print(f"{name}: {len(gper[name])} gap pages; {skipped} CONUS ZIPs of the gap cells have no ZCTA shape, not drawn", flush=True)
+    pages += merge_pages(gper) if gper else []
+    if pages:
+        path = os.path.join(out, "maps.pdf")
+        print(f"{os.path.abspath(path)}: {assemble(path, pages)} pages (a page the same in several scenarios is there once), names: your screen only", flush=True)
+    if gaps:
+        send = write_gap_csvs(out, {name: gap for name, (_, _, gap) in gaps.items()})
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
@@ -824,7 +870,7 @@ def main(argv=None):
     if send:
         print("safe to send to an agent (holder keys R<n> and counts only, no names):")
         for p in send:
-            print(f"  {os.path.abspath(p)}")
+            print(f"  {os.path.abspath(p)}" + ("   (large, one row per cell: not needed unless asked)" if p.endswith("gap_cell.csv") else ""))
     return 1 if refused else 0
 
 

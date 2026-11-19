@@ -1,6 +1,8 @@
-"""tools/maps/gap_report.py (issue #148): one markdown report on stdout from the CSVs scenario_maps.py writes next to each PDF.
+"""tools/maps/gap_report.py (issue #148): one markdown report on stdout from the CSVs scenario_maps.py writes for a run.
 
-    python tools/maps/gap_report.py FILE [FILE ...]    (any of *_gap_summary.csv, *_gap_pair.csv, *_gap_person.csv, *_gap_load.csv)
+    python tools/maps/gap_report.py FILE [FILE ...]    (any of gap_summary.csv, gap_pair.csv, gap_person.csv, gap_load.csv)
+
+A row's SCENARIO is ALL (every scenario of the run: those named anywhere in the files) or the scenarios that share it.
 
 Per estimate: scenario comparison, overlaps (for bargaining), gaps (for optimization), load, person.  MM_OPP and *_USD are raw
 dollars, printed as $B.  Holder keys R<n> only: the input holds no names and nothing here adds one."""
@@ -33,12 +35,15 @@ def read(paths):
     """{kind: [row dict]} by file name suffix; an unrecognised name is an error."""
     data = collections.defaultdict(list)
     for p in paths:
-        kind = next((k for k in KINDS if p.endswith(f"_gap_{k}.csv")), None)
+        kind = next((k for k in KINDS if p.endswith(f"gap_{k}.csv")), None)
         if kind is None:
-            sys.exit(f"gap_report: {p}: not a _gap_summary/_gap_pair/_gap_person/_gap_load .csv")
+            sys.exit(f"gap_report: {p}: not a gap_summary/gap_pair/gap_person/gap_load .csv")
         with open(p, encoding="utf-8-sig", newline="") as f:
             data[kind] += list(csv.DictReader(f))
-    return data
+    # a shared row is one row per scenario again
+    every = sorted({s for rows in data.values() for r in rows for s in r["SCENARIO"].split() if s != "ALL"}) or ["ALL"]
+    return collections.defaultdict(list, {k: [dict(r, SCENARIO=s) for r in rows for s in (every if r["SCENARIO"] == "ALL" else r["SCENARIO"].split())]
+                                          for k, rows in data.items()})
 
 
 def failing_checks(summary):
