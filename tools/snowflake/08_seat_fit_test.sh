@@ -83,8 +83,9 @@ INSERT INTO want VALUES
  ('E1','ME','HOLDER','R20', 101.2, 167, NULL),
  -- seat RI, E1: z0011 M 30 so lambda M = 9.  Cy U: 0.7*20 + 0.28*0 + 9 = 23.  Cy g: z0023 is 'R5 R30' COVERED by R30 alone: share 1: 0.7*300 + 0.28*60 = 226.8, + 0.3*400 = 346.8
  ('E1','RI','NEIGHBOUR','R30', 23, 346.8, ln(1 + 23/346.8)),
- -- Rex U: 0.28*20 + 9 = 14.6.  Rex g: share 1/2: 0.5*(0.7*60 + 0.28*300) = 63, 0.3*0.5*400 = 60, g = 123 (without the COVERED rule Cy's g would be 173.4 and he would rank first)
- ('E1','RI','NEIGHBOUR','R5', 14.6, 123, ln(1 + 14.6/123)),
+ -- Rex U: 0.28*20 + 9 = 14.6.  Rex g: z0023 is COVERED by Cy alone, so Rex's share is 0 (as gap_load): g 0, DNASH NULL, he ranks after Cy
+ -- (with 1/2 shares Rex's g would be 123 and he would rank first)
+ ('E1','RI','NEIGHBOUR','R5', 14.6, 0, NULL),
  -- Ann holds in RI, no sale there: U = 14.6, her g 202 as above
  ('E1','RI','HOLDER','R10', 14.6, 202, NULL),
  -- E2, seat ME, z0001 M 10 so lambda M = 3.  Ann g 0.7*100 + 0.28*25 + 0.3*8 = 79.4, U 56 + 3 = 59.  Bob and Dee have no book: g 0, DNASH NULL, key order
@@ -102,14 +103,14 @@ SELECT
      (SELECT COUNT(*) FROM ssdb_integration.lr_strategy.td_seat_fit f FULL JOIN want w
         ON w.est = f.est_source AND w.seat = f.seat AND w.kind = f.kind AND w.holder = f.holder
       WHERE f.holder IS NULL OR w.holder IS NULL OR NOT (near(f.u, w.u) AND near(f.g, w.g) AND near(f.dnash, w.dnash))), 0),
- -- ranks: ME neighbours Bob (ln 1.6060 = 0.4737) before Ann (ln 1.5634 = 0.4468) before Dee (NULL), RI Rex (0.1122) before Cy (0.0641).  ME holders by U Nick 139, Bob 101.2.
+ -- ranks: ME neighbours Bob (ln 1.6060 = 0.4737) before Ann (ln 1.5634 = 0.4468) before Dee (NULL), RI Cy (0.0641) before Rex (NULL).  ME holders by U Nick 139, Bob 101.2.
  -- BORDERS: Bob 1 as a holder (he is also a neighbour), Nick 0, Ann 0 in RI.  KEPT N and the role for Nick, the firm of each is its source.  Seat sizes 160, 30, 10
  chk('TD_SEAT_FIT, masked columns',
      (SELECT string_agg(concat_ws('|', est_source, seat, CAST(seat_mm_opp AS INTEGER), kind, rank, holder, source, kept, COALESCE(role, '-'), borders), ' / '
                         ORDER BY est_source, seat, kind, rank) FROM ssdb_integration.lr_strategy.td_seat_fit),
      'E1|ME|160|HOLDER|1|R45|A|N|WIFI|0 / E1|ME|160|HOLDER|2|R20|A|Y|WH|1'
      || ' / E1|ME|160|NEIGHBOUR|1|R20|A|Y|WH|1 / E1|ME|160|NEIGHBOUR|2|R10|A|Y|NATIONAL|1 / E1|ME|160|NEIGHBOUR|3|R40|A|Y|WIFI|1'
-     || ' / E1|RI|30|HOLDER|1|R10|A|Y|NATIONAL|0 / E1|RI|30|NEIGHBOUR|1|R5|B|Y|WIFI|1 / E1|RI|30|NEIGHBOUR|2|R30|B|Y|WIFI|1'
+     || ' / E1|RI|30|HOLDER|1|R10|A|Y|NATIONAL|0 / E1|RI|30|NEIGHBOUR|1|R30|B|Y|WIFI|1 / E1|RI|30|NEIGHBOUR|2|R5|B|Y|WIFI|1'
      || ' / E2|ME|10|HOLDER|1|R45|A|N|WIFI|0 / E2|ME|10|HOLDER|2|R20|A|Y|WH|1'
      || ' / E2|ME|10|NEIGHBOUR|1|R10|A|Y|NATIONAL|1 / E2|ME|10|NEIGHBOUR|2|R20|A|Y|WH|1 / E2|ME|10|NEIGHBOUR|3|R40|A|Y|WIFI|1'),
  chk('result: seats, ties and the SEAT rows are the table',
@@ -165,7 +166,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 sed -e 's/[$]c2/0/g' "$here/08_seat_fit.sql" > "$tmp/c2.sql"
 sed -e 's/[$]lam/0/g' "$here/08_seat_fit.sql" > "$tmp/lam.sql"
-sed -e "s/WHEN g.class = 'COVERED' AND g.holders = p.k THEN 1 //" "$here/08_seat_fit.sql" > "$tmp/share.sql"
+sed -e "s/WHEN g.class = 'COVERED' THEN CASE WHEN g.holders = p.k THEN 1 ELSE 0 END //" "$here/08_seat_fit.sql" > "$tmp/share.sql"
 sed -e "s/ORDER BY CASE WHEN x.kind = 'NEIGHBOUR' THEN x.dnash END DESC/ORDER BY CASE WHEN x.kind = 'NEIGHBOUR' THEN x.dnash END ASC/" "$here/08_seat_fit.sql" > "$tmp/asc.sql"
 for v in c2 lam share asc; do
   cmp -s "$tmp/$v.sql" "$here/08_seat_fit.sql" && { echo "08_seat_fit_test: mutation $v changed nothing"; exit 1; }

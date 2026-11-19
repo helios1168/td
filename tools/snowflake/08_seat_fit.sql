@@ -13,7 +13,7 @@ use schema lr_strategy;
 --c2 = theta * (1 - lambda) = 0.28 (owner's bargaining utility, DATASET_LOG)
 --  U(k, seat)  sum over the seat's OPEN ZIPs z of  c1 S(k,z) + c2 (T(z) - S(k,z)) + lambda M(z)
 --  g(k)        the value of k's current book, kept people of role NATIONAL, WH or WIFI.  Each non-OPEN cell whose ASSIGNED has k's key gives k a share of
---              it: 1 when ASSIGNED has one key, 1 when the cell is COVERED and HOLDERS is exactly k, else 1 / (keys in ASSIGNED).  w(k,z) is the largest
+--              it: 1 when ASSIGNED has one key, a COVERED cell in full to its sole holder (1, the other assignees 0, as gap_load), else 1 / (keys in ASSIGNED).  w(k,z) is the largest
 --              share over k's cells in z, g = sum over z of w(k,z) (c1 S(k,z) + c2 (T(z) - S(k,z))) + lambda sum over cells of share MM_OPP
 --  DNASH       LN(1 + U / g) when g > 0, else NULL (a NEIGHBOUR with no book value ranks after all with a value, HOLDER rows leave it NULL)
 --Candidates of a seat.  NEIGHBOUR: a kept person with role NATIONAL, WH or WIFI who has an assigned state next to the seat in td_state_adj (both
@@ -134,7 +134,7 @@ GROUP BY c.est_source, c.seat, c.n;
 --6 the share of each non-OPEN cell that is a person's, then g per estimate and person
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_share AS
 SELECT g.est_source, g.zip_code, g.mm_opp, p.n,
-       CASE WHEN g.nk = 1 THEN 1 WHEN g.class = 'COVERED' AND g.holders = p.k THEN 1 ELSE 1.0 / g.nk END AS share
+       CASE WHEN g.nk = 1 THEN 1 WHEN g.class = 'COVERED' THEN CASE WHEN g.holders = p.k THEN 1 ELSE 0 END ELSE 1.0 / g.nk END AS share
 FROM (SELECT est_source, zip_code, mm_opp, class, holders, assigned, LENGTH(assigned) - LENGTH(REPLACE(assigned, ' ', '')) + 1 AS nk
       FROM ssdb_integration.lr_strategy.tmp_f_gap WHERE channel <> 'OPEN' AND assigned IS NOT NULL) g
 JOIN ssdb_integration.lr_strategy.tmp_f_person p
