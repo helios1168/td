@@ -466,18 +466,19 @@ def test_the_page_has_no_url_outside_the_vendored_library_and_licence_and_embeds
     assert sorted(os.listdir(dash.VENDOR)) == sorted(VENDORED_SHA256)
 
 
-def test_the_page_is_under_the_size_bound_and_a_page_over_it_is_refused():
+def test_the_page_is_under_the_size_bound_and_a_page_over_it_is_written_with_a_warning():
+    import contextlib, io
     keep = dash.MAX_BYTES
     with built() as (text, _, path):
         assert os.path.getsize(path) < dash.MAX_BYTES == 15 * 1024 * 1024
+    out = io.StringIO()
     try:
         dash.MAX_BYTES = 1000
-        with built():
-            raise AssertionError("a page over the bound was written")
-    except SystemExit as e:
-        assert "over the" in str(e), e
+        with contextlib.redirect_stdout(out), built() as (_, _, path):
+            assert os.path.getsize(path) > 1000
     finally:
         dash.MAX_BYTES = keep
+    assert "WARNING" in out.getvalue() and "over the" in out.getvalue(), out.getvalue()
 
 
 def test_the_build_is_the_same_bytes_every_time():

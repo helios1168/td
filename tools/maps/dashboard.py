@@ -363,10 +363,10 @@ def html(data):
 def build(geo, runs, out_path, names=None, products_label="products not recorded", run_label="", sales=None, made_up=()):
     """Write the dashboard of `runs` to `out_path` and return the path.  The file holds `names` and `sales` when given: your screen only."""
     page = html(payload(geo, runs, names, products_label, run_label, sales, made_up)).encode("utf-8")
-    if len(page) > MAX_BYTES:
-        raise SystemExit(f"{out_path}: the dashboard is {len(page) / 2 ** 20:.1f} MB, over the {MAX_BYTES / 2 ** 20:.0f} MB budget")
     with open(out_path, "wb") as f:
         f.write(page)
+    if len(page) > MAX_BYTES:   # warn, never stop: a stopped build would lose the rest of the run (the folder line, the CSV list)
+        print(f"WARNING {out_path}: the dashboard is {len(page) / 2 ** 20:.1f} MB, over the {MAX_BYTES / 2 ** 20:.0f} MB budget: too big to share easily")
     return out_path
 
 
