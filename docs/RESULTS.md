@@ -1374,3 +1374,6 @@ Per scenario (all three alike outside TX national): NATIONAL 11 of 11 one piece,
 failure is R2 (CO NM NV): NV does not touch CO or NM, a second piece of $0.80B (0.64 τ). In split states, R14 (NC) and
 R33 (WI) hold none of their state today and get none of it in the draft. $0.68B (CRBG estimate) of cells are in ZIPs that
 are not ZCTAs and have no person. A draft, not a plan: the split-state lines are provisional until #149.
+Figure: [the regional draft in the West](figures/2026-11-19_draft_regional_west.png) (CA1_R105N, keys only, drawn on m5
+from `results/draft/2026-11-19/draft_ledger.csv.gz` and the 2025 TIGER ZCTA shapes): R2's NV is cut off from CO and NM
+by R49 (UT AZ); white inside a state is land with no ZCTA, white states have no regional person.
