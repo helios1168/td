@@ -105,7 +105,7 @@ def report(data):
     out = ["# Gap report\n"]
     bad = failing_checks(data["summary"])
     out += [f"**CHECK FAILED: {r['SCENARIO']} {r['EST_SOURCE']} {r['CHANNEL']} {r['ITEM']}: N_ZIPS {r['N_ZIPS']}, MM_OPP {r['MM_OPP']} (must be 0)**\n" for r in bad]
-    ests = sorted({r["EST_SOURCE"] for k in KINDS for r in data[k]})
+    ests = sorted({r["EST_SOURCE"] for k in KINDS for r in data[k]} - {""})   # the no-key TIE row has no estimate
     for est in ests:
         by = {k: [r for r in data[k] if r["EST_SOURCE"] == est] for k in KINDS}
         scens = sorted({r["SCENARIO"] for k in KINDS for r in by[k]})
