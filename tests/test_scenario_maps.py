@@ -481,6 +481,17 @@ def test_the_conus_fill_page_ties_to_every_unfilled_dollar():
     assert abs(on_map + 5.0 - gd.fill_total["LOW"]) < 1e-9, (on_map, gd.fill_total["LOW"])
 
 
+def test_off_map_round_off_is_not_a_negative_zero():
+    geo = fake_geo()
+    sm._init(geo)
+    cells = [("S", "LOW", "AA1", "AA", "D", 0.1 * USD, "NATIONAL", "R1", "GAP (UNHELD)", 0, None),          # reviewer's case: summed in
+             ("S", "LOW", "AB1", "AB", "D", 0.2 * USD, "REGIONAL", "R3", "GAP (UNHELD)", 0, None),          # another grouping, 0.1 + 0.2 + 0.3
+             ("S", "LOW", "AC1", "AC", "D", 0.3 * USD, "REGIONAL", "R3", "GAP (UNHELD)", 0, None)]          # leaves -1e-16
+    gd = sm.gap_prepare((CELL_COLS, cells), (PAIR_COLS, []), NAMES)
+    legend = " ".join(t.get_text() for t in sm.draw_fill_page(gd, geo, "t", geo.geographies[0], "LOW").legends[0].get_texts())
+    assert "\n$0.0 MM unfilled" in legend and "-0.0" not in legend, legend
+
+
 def test_load_is_dollars_against_the_area_adjusted_expectation():
     cc = ["EST_SOURCE", "ZIP_CODE", "CHANNEL", "ASSIGNED", "CLASS", "HOLDERS", "MM_OPP"]
     cells = [("E", "a1", "REGIONAL", "R1", "COVERED", "R1", 1e9), ("E", "a2", "REGIONAL", "R1", "GAP", None, 5e8),

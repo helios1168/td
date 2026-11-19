@@ -679,7 +679,7 @@ def draw_fill_page(gd, geo, title, g, est):
     state_lines_and_labels(ax, geo, vis, [])
     total = sum(mm[c] for c, *_ in FILL_CLASSES)
     if g.name == "CONUS":                                  # the unfilled $ the map cannot show, so the page ties to gap_summary
-        off = gd.fill_total.get(est, 0.0) - total
+        off = round(gd.fill_total.get(est, 0.0) - total, 6) + 0.0   # summation round-off is not a -0.0; a real negative still shows
         handles.append(Patch(facecolor="white", edgecolor="white", label=f"not on the map (no state, or no ZCTA shape)\n${off:,.1f} MM unfilled"))
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.752, 0.95), fontsize=9, frameon=False, handlelength=1.4, borderaxespad=0,
                labelspacing=0.9, title=f"where to fill, every channel · {est} estimate · {g.name}\nunfilled ${total:,.1f} MM", title_fontsize=9, alignment="left")
