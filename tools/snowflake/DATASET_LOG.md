@@ -2120,3 +2120,11 @@ includes fixed (e.g. main map $106.56B CRBG, $104.68B EQH; the gaps, loads, seat
 Owner, 2026-11-19: "ok start with just the assigned people". Holders who are not assigned to the state are a hand-over
 (captured at c2 = 0.28 by the winner); an off-sheet person the owner places on the sheet for a state is assigned there.
 
+### 2026-11-19: open seats chosen by optimisation, settings
+
+Owner, 2026-11-19: "instead of msanually typing names for open seats, how do we choose them optimally?", then to the four
+settings (headcount cap, load cap, a re-added person taking several adjacent seats, vacancy allowed): "49. 2 no load cap,
+3.yes, 4 yes". So: total roster at most 49 (the sheet's people plus re-added holders); no load cap on an extending
+neighbour; a re-added holder may take a connected set of seats; a seat may stay vacant (flagged). Each seat goes whole to
+one option, so territories stay connected; the objective follows the bargaining utility (#149, #151). Plan to follow.
+
