@@ -230,46 +230,45 @@ LOAD_COLS = ["SCENARIO", "EST_SOURCE", "HOLDER", "ROLE", "CHANNEL", "AREA_KM2", 
              "EXPECTED_USD", "LOAD_RATIO"]
 
 
-def gap_load(scenario, gap, zip_area):
-    """(columns, rows) of each assigned person's area-adjusted load per estimate.  A person's area is the land area (EPSG:5070,
-    km2, from the cached ZCTA shapes: land and water) of the ZIPs of the cells attributed to them: all of them in a state they
-    alone are assigned, in a split state the ZIPs they hold alone (COVERED) and an equal share of the others."""
+def gap_load(scenario, gap, state_area):
+    """(columns, rows) of each assigned person's area-adjusted load per estimate.
+    Assigned $: the cells attributed to them, all of a cell in a state they alone are assigned; in a split state (two or more of
+    the channel's people assigned) all of a cell they alone hold (COVERED), an equal share of every other cell, so the people's
+    $ add up to the channel's.  Area (km2, EPSG:5070, the cached state shapes, land and water): their assigned states, a
+    split state shared equally, i.e. the territory they travel, not only its ZIPs with opportunity (the first run's areas were
+    those ZIPs: 112,000 km2 for all of national)."""
     cell = [dict(zip(gap["cell"][0], r)) for r in gap["cell"][1]]
     person = [dict(zip(gap["person"][0], r)) for r in gap["person"][1]]
-    w = collections.defaultdict(float)                         # (est, holder, zip) -> share of the ZIP's area
-    chan_usd = collections.Counter()
+    usd, chan_usd = collections.Counter(), collections.Counter()
     for c in cell:
-        est, ch, z = c["EST_SOURCE"], c["CHANNEL"], str(c["ZIP_CODE"])
-        chan_usd[est, ch] += float(c["MM_OPP"] or 0)
+        est, ch, m = c["EST_SOURCE"], c["CHANNEL"], float(c["MM_OPP"] or 0)
+        chan_usd[est, ch] += m
         keys = str(c["ASSIGNED"] or "").split()
         if not keys or ch == "OPEN":
             continue
         holders = str(c["HOLDERS"] or "").split()
-        if len(keys) == 1:
-            share = {keys[0]: 1.0}
-        elif c["CLASS"] == "COVERED" and len(holders) == 1 and holders[0] in keys:
-            share = {holders[0]: 1.0}
-        else:
-            share = {k: 1.0 / len(keys) for k in keys}
-        for k, s in share.items():
-            w[est, k, z] = max(w[est, k, z], s)
-    area = collections.Counter()
-    for (est, k, z), s in w.items():
-        area[est, k] += s * zip_area.get(z, 0.0)
+        if c["CLASS"] == "COVERED" and len(holders) == 1 and holders[0] in keys:
+            keys = holders
+        for k in keys:
+            usd[est, k] += m / len(keys)
+    states = {(p["EST_SOURCE"], p["HOLDER"]): str(p["ASSIGNED_STATES"] or "").split() for p in person}
+    n_on = collections.Counter((p["EST_SOURCE"], str(p["ROLE"] or "").upper(), s) for p in person for s in states[p["EST_SOURCE"], p["HOLDER"]])
+    area = {(p["EST_SOURCE"], p["HOLDER"]): sum(state_area.get(s, 0.0) / n_on[p["EST_SOURCE"], str(p["ROLE"] or "").upper(), s]
+                                                for s in states[p["EST_SOURCE"], p["HOLDER"]]) for p in person}
     rows, by_ch = [], collections.defaultdict(list)
     for p in person:
         ch = CHANNEL_OF_ROLE.get(str(p["ROLE"] or "").upper())
-        if ch and float(p["OPP_ASSIGNED"] or 0) > 0:
+        if ch and usd[p["EST_SOURCE"], p["HOLDER"]] > 0:
             by_ch[p["EST_SOURCE"], ch].append(p)
     for (est, ch), ps in sorted(by_ch.items()):
         base = BASE_USD.get(ch) or chan_usd[est, ch] / K_OF[ch]
         areas = sorted(area[est, p["HOLDER"]] for p in ps if area[est, p["HOLDER"]] > 0)
         med = areas[len(areas) // 2] if len(areas) % 2 else (sum(areas[len(areas) // 2 - 1:len(areas) // 2 + 1]) / 2 if areas else 0.0)
         for p in sorted(ps, key=lambda p: p["HOLDER"]):
-            a, usd = area[est, p["HOLDER"]], float(p["OPP_ASSIGNED"] or 0)
+            a, u = area[est, p["HOLDER"]], usd[est, p["HOLDER"]]
             exp = base * (a / med) ** BETA if a > 0 and med > 0 else None
-            rows.append((scenario, est, p["HOLDER"], p["ROLE"], ch, round(a, 1), round(usd, 2), round(base, 2), round(med, 1),
-                         None if exp is None else round(exp, 2), None if exp is None else round(usd / exp, 3)))
+            rows.append((scenario, est, p["HOLDER"], p["ROLE"], ch, round(a, 1), round(u, 2), round(base, 2), round(med, 1),
+                         None if exp is None else round(exp, 2), None if exp is None else round(u / exp, 3)))
     return LOAD_COLS, rows
 
 
@@ -843,7 +842,7 @@ def main(argv=None):
             for lo, hi in chunks(n_pages):
                 futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
             if gap:
-                gap["load"] = gap_load(name, gap, {z: g.area / 1e6 for z, g in geo.zips.items()})
+                gap["load"] = gap_load(name, gap, {s: g.area / 1e6 for s, g in geo.states.items()})
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
                 gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})

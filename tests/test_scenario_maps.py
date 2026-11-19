@@ -448,18 +448,23 @@ def test_load_is_dollars_against_the_area_adjusted_expectation():
     cells = [("E", "a1", "REGIONAL", "R1", "COVERED", "R1", 1e9), ("E", "a2", "REGIONAL", "R1", "GAP", None, 5e8),
              ("E", "b1", "REGIONAL", "R2", "COVERED", "R2", 5e8),
              ("E", "c1", "REGIONAL", "R1 R2", "COVERED", "R1", 4e8), ("E", "c2", "REGIONAL", "R1 R2", "GAP", None, 1e8),
+             ("E", "c3", "REGIONAL", "R1 R2", "OVERLAP", "R1 R7", 2e8),
              ("E", "d1", "NATIONAL", "R3", "COVERED", "R3", 11e9), ("E", "o1", "OPEN", None, "OPEN SEAT UNHELD", None, 9e9)]
-    pc = ["EST_SOURCE", "HOLDER", "ROLE", "OPP_ASSIGNED"]
-    people = [("E", "R1", "WIFI", 2e9), ("E", "R2", "WIFI", 1e9), ("E", "R3", "NATIONAL", 11e9), ("E", "R9", "WH", 0)]
-    area = {"a1": 100, "a2": 300, "b1": 400, "c1": 50, "c2": 100, "d1": 200, "o1": 999}
+    pc = ["EST_SOURCE", "HOLDER", "ROLE", "ASSIGNED_STATES"]
+    # state A is R1's, B R2's, C split between R1 and R2 (both WIFI), D R3's (NATIONAL); R9 has no $
+    people = [("E", "R1", "WIFI", "A C"), ("E", "R2", "WIFI", "B C"), ("E", "R3", "NATIONAL", "D"), ("E", "R9", "WH", "E")]
+    area = {"A": 100, "B": 400, "C": 300, "D": 200, "E": 50}
     cols, rows = sm.gap_load("S", {"cell": (cc, cells), "person": (pc, people)}, area)
     got = {r[2]: dict(zip(cols, r)) for r in rows}
-    # R1: a1 + a2 + c1 (covered alone in the split state) + half of c2 = 500 km2; R2: b1 + half of c2 = 450; median 475
-    assert (got["R1"]["AREA_KM2"], got["R2"]["AREA_KM2"], got["R1"]["MEDIAN_AREA_KM2"]) == (500.0, 450.0, 475.0)
-    assert abs(got["R1"]["EXPECTED_USD"] - 1.25e9 * (500 / 475) ** 0.5) < 1 and abs(got["R1"]["LOAD_RATIO"] - 1.559) < 0.001
-    assert abs(got["R2"]["LOAD_RATIO"] - 0.822) < 0.001
+    # $: R1 a1 + a2 + c1 (covered alone) + half of c2 and c3 = 1e9 + 5e8 + 4e8 + 5e7 + 1e8 = 2.05e9; R2 b1 + the halves = 6.5e8;
+    # together 2.7e9, the channel's REGIONAL $, nothing counted twice
+    assert (got["R1"]["ASSIGNED_USD"], got["R2"]["ASSIGNED_USD"]) == (2.05e9, 6.5e8)
+    # area: R1 A + half of C = 250 km2, R2 B + half of C = 550, median 400 (the territories, ZIPs with no cell too)
+    assert (got["R1"]["AREA_KM2"], got["R2"]["AREA_KM2"], got["R1"]["MEDIAN_AREA_KM2"]) == (250.0, 550.0, 400.0)
+    assert abs(got["R1"]["EXPECTED_USD"] - 1.25e9 * (250 / 400) ** 0.5) < 1 and abs(got["R1"]["LOAD_RATIO"] - 2.05 / (1.25 * 0.625 ** 0.5)) < 0.001
+    assert abs(got["R2"]["LOAD_RATIO"] - 0.65 / (1.25 * (550 / 400) ** 0.5)) < 0.001
     # national base: the channel's attributed $ (11e9) / 11 = 1e9, its own median: load 11
-    assert got["R3"]["BASE_USD"] == 1e9 and got["R3"]["LOAD_RATIO"] == 11.0
+    assert got["R3"]["BASE_USD"] == 1e9 and got["R3"]["LOAD_RATIO"] == 11.0 and got["R3"]["AREA_KM2"] == 200.0
     assert "R9" not in got                                            # no assigned $: no load row
 
 

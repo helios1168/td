@@ -2031,3 +2031,13 @@ SCENARIO the scenarios that share it, always named (dollars compared to the cent
 digits); `gap_report.py` reads them back per scenario. A gap page shared by the scenarios whose 07 output passed is
 "all scenarios" only if that is every scenario drawn. Division pages only with `-Divisions`: a run is 12 map pages and 7 gap pages per scenario, before sharing.
 
+### 2026-11-18: load fixed: split states counted once, area is the territory
+
+The rerun's `gap_load.csv` (CRBG estimate, CA1_R105N) showed two faults in the load: the people's assigned $ added to
+more than their channel (national $30.7B against $20.7B, regional $85.7B against $69.1B), because 07's OPP_ASSIGNED
+counts a split state's GAP and OVERLAP cells in full for each of its people; and the areas were only the ZIPs with
+opportunity (all of national 112,000 km2). `gap_load` now takes the person's $ from the cells with the split shares (a
+split state's cell the sole holder's in full when COVERED, else equal shares), so they add to the channel, and the area
+from their assigned states (state shapes), a state split between N people of the role counting 1/N each: "their part of
+it", as recommended and approved. 07's OPP_ASSIGNED is unchanged (it still says what each person is on the hook for).
+
