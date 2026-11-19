@@ -2087,3 +2087,13 @@ in Snowflake with the results on your screen only? 3. Keep θ = 0.40 and λ = 0.
 Candidates for an open seat are ranked with the archived bargaining utility (tools/maps/legacy/td/model.py:18):
 neighbours by the marginal Nash gain log(1 + U/g), current holders by U. Plan: https://github.com/helios1168/td/issues/151
 
+### 2026-11-18: open-seat ranking built (#151)
+
+`08_seat_fit.sql` runs after 07 per scenario: a seat is a state with OPEN cells; NEIGHBOUR candidates (kept people with
+an assigned state bordering the seat, `td_state_adj` built by `scenario_maps.py` from the state shapes, buffered 1 km)
+ranked by log(1 + U/g), HOLDER candidates (anyone with a territory piece in the seat) ranked by U, with
+u_k(z) = 0.70 S_k(z) + 0.28 (T(z) - S_k(z)) + 0.30 M(z) over the 2025 main-map sales of `sales_opp_2026_11_9`. TD_SEAT_FIT
+(U, G, DNASH: from sales) stays in Snowflake; the result is ranks and keys only. `scenario_maps.py` writes `seat_fit.csv`
+(masked, safe to send), `seat_fit_names.csv` (names and the sales-based values: the owner's screen only) and a seat-fit
+page per estimate in `maps.pdf` (ranks, names, border flag, opportunity load band after taking the seat).
+
