@@ -2050,3 +2050,13 @@ estimate, CA1_R105N). Now an OPEN page per estimate draws the open seats; each p
 can be on it (the open-seat classes on OPEN only); DOUBLE ASSIGNED is gone from the legend (07 no longer makes it).
 A run is 12 map pages and 9 gap pages per scenario, before sharing.
 
+### 2026-11-18: GAP split in two; split-state gaps are bargained
+
+Owner, 2026-11-18, on "In the California case, would the relevant wholesalers bargain over those open zips?" and the
+recommendation (split-state gaps join the bargaining with that state's overlaps, #149; single-person gaps are filled,
+#150; split GAP by whether anyone holds the ZIP today): "Yes to both" (recorded on #149 and #150). 07 now classes a gap
+as GAP (HELD TODAY) when someone other than a shortlisted holder of the role has the ZIP in a territory of the channel's
+kind today (a WH piece for WH, a WH or FI piece otherwise: mostly holders not on the sheet, a hand-over) and GAP (UNHELD)
+when no one does. Named HELD TODAY, not "held off sheet": a shortlisted person of another channel can be that holder.
+The maps colour them pale and strong yellow; `gap_report.py` lists each state's gap with the two parts.
+

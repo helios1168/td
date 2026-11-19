@@ -17,7 +17,9 @@ use schema lr_strategy;
 --HOLDERS of a cell are the kept people of the channel's role (OPEN: any of the three roles) with an in-role piece (TD_MAP_PIECE PIECE_IN_ROLE
 --1, either firm) on the ZIP, whatever the piece's channel.  Class, one per cell:
 --  OPEN seat      CHANNEL OPEN: OPEN SEAT HELD with a holder, OPEN SEAT UNHELD without
---  GAP            assigned, no holder
+--  GAP (HELD TODAY)  assigned, no holder, but someone else has the ZIP in a territory today of the channel's kind (a WH piece for WH,
+--                 a WH or FI piece otherwise): mostly holders not on the sheet, a hand-over to the assigned person (owner, 2026-11-18, #149)
+--  GAP (UNHELD)   assigned, no holder and no such piece: no one works it today
 --  OVERLAP        two or more holders
 --  COVERED        one holder and it is an assigned person
 --  HELD BY ANOTHER  one holder and it is not an assigned person
@@ -80,6 +82,12 @@ JOIN ssdb_integration.lr_strategy.tmp_g_person p
   ON p.source = m.source AND p.nm = NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(m.wholesaler), '\\s+', ' '))), '')
 WHERE m.piece_in_role = 1;
 
+--3b each ZIP's territory pieces today, anyone's (kept or not, in role or not): has a WH piece, has a WH or FI piece
+CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_g_today AS
+SELECT zip_code, MAX(CASE WHEN UPPER(TRIM(terr_channel)) = 'WH' THEN 1 ELSE 0 END) AS has_wh,
+       MAX(CASE WHEN UPPER(TRIM(terr_channel)) IN ('WH', 'FI') THEN 1 ELSE 0 END) AS has_any
+FROM IDENTIFIER($piece_tbl) GROUP BY zip_code;
+
 --4 the cells, the channel of the priority chain and the role that channel asks for
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_g_c1 AS
 SELECT c.*, CASE c.ch WHEN 'NATIONAL' THEN 'NATIONAL' WHEN 'WH' THEN 'WH' WHEN 'REGIONAL' THEN 'WIFI' END AS role_ch,
@@ -112,7 +120,8 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_g_cls AS
 SELECT c.cid, TRIM($scenario) AS scenario, c.est_source, c.zip_code, c.state, c.new_dist, c.mm_opp, c.ch AS channel,
        c.asg_keys AS assigned,
        CASE WHEN c.ch = 'OPEN' THEN CASE WHEN COALESCE(h.n_h, 0) > 0 THEN 'OPEN SEAT HELD' ELSE 'OPEN SEAT UNHELD' END
-            WHEN COALESCE(h.n_h, 0) = 0 THEN 'GAP'
+            WHEN COALESCE(h.n_h, 0) = 0 THEN CASE WHEN COALESCE(CASE c.ch WHEN 'WH' THEN t.has_wh ELSE t.has_any END, 0) = 1
+                                                  THEN 'GAP (HELD TODAY)' ELSE 'GAP (UNHELD)' END
             WHEN h.n_h >= 2 THEN 'OVERLAP'
             WHEN ca.pid IS NOT NULL THEN 'COVERED'
             ELSE 'HELD BY ANOTHER' END AS class,
@@ -120,7 +129,8 @@ SELECT c.cid, TRIM($scenario) AS scenario, c.est_source, c.zip_code, c.state, c.
 FROM ssdb_integration.lr_strategy.tmp_g_c1 c
 LEFT JOIN (SELECT cid, COUNT(*) AS n_h, LISTAGG(k, ' ') WITHIN GROUP (ORDER BY n) AS keys, MIN(pid) AS pid1
            FROM ssdb_integration.lr_strategy.tmp_g_ch GROUP BY cid) h ON h.cid = c.cid
-LEFT JOIN ssdb_integration.lr_strategy.tmp_g_ca ca ON ca.cid = c.cid AND ca.pid = h.pid1 AND h.n_h = 1;
+LEFT JOIN ssdb_integration.lr_strategy.tmp_g_ca ca ON ca.cid = c.cid AND ca.pid = h.pid1 AND h.n_h = 1
+LEFT JOIN ssdb_integration.lr_strategy.tmp_g_today t ON t.zip_code = c.zip_code;
 
 --7 the tables
 CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.td_gap_cell AS
@@ -142,7 +152,7 @@ WITH e AS (SELECT DISTINCT est_source FROM ssdb_integration.lr_strategy.tmp_g_cl
      asg AS (SELECT a.pid, c.est_source, SUM(c.mm_opp) AS opp_assigned,
                     SUM(CASE WHEN c.class = 'COVERED' THEN c.mm_opp ELSE 0 END) AS opp_covered,
                     SUM(CASE WHEN c.class = 'OVERLAP' THEN c.mm_opp ELSE 0 END) AS opp_overlap,
-                    SUM(CASE WHEN c.class = 'GAP' THEN c.mm_opp ELSE 0 END) AS opp_gap,
+                    SUM(CASE WHEN c.class LIKE 'GAP%' THEN c.mm_opp ELSE 0 END) AS opp_gap,
                     SUM(CASE WHEN c.class = 'HELD BY ANOTHER' THEN c.mm_opp ELSE 0 END) AS opp_held_by_another,
                     COUNT(DISTINCT c.zip_code) AS n_zips_assigned
              FROM ssdb_integration.lr_strategy.tmp_g_ca a JOIN ssdb_integration.lr_strategy.tmp_g_cls c ON c.cid = a.cid

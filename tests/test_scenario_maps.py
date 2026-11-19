@@ -354,8 +354,8 @@ def fake_cells():
     for est in ("LOW", "HIGH"):
         for i, code in enumerate(CODES):
             for j, z in enumerate((code + "1", code + "2")):
-                rows.append(("S", est, z, code, "D", (1.0 + j) * USD, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 4], 1, "R1"))   # the 4 classes of a channel
-        rows.append(("S", est, "AA1", "AA", "D", 5.0 * USD, "NATIONAL", "R1 R2", "GAP", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
+                rows.append(("S", est, z, code, "D", (1.0 + j) * USD, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 5], 1, "R1"))   # the 5 classes of a channel
+        rows.append(("S", est, "AA1", "AA", "D", 5.0 * USD, "NATIONAL", "R1 R2", "GAP (UNHELD)", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
         rows.append(("S", est, "AA1", "AA", "D", 2.0 * USD, "REGIONAL", "R3", "OVERLAP", 2, "R1 R2"))
         rows.append(("S", est, "BA1", "BA", "D", 7.0 * USD, "OPEN", None, "OPEN SEAT HELD", 1, "R1"))
     return rows
@@ -372,11 +372,11 @@ def _gd():
 def test_a_zip_has_the_class_of_its_cells_with_the_most_dollars_and_names_come_from_keys():
     gd = _gd()
     assert gd.ests == ["HIGH", "LOW"]
-    assert gd.zips["LOW", "NATIONAL"]["AA1"] == ("AA", "GAP", 6.0)          # 5.0 GAP beats the 1.0 cell of its own class; total 6.0
+    assert gd.zips["LOW", "NATIONAL"]["AA1"] == ("AA", "GAP (UNHELD)", 6.0)          # 5.0 GAP beats the 1.0 cell of its own class; total 6.0
     assert gd.zips["LOW", "NATIONAL"]["AA2"][1] == CLASSES[1]               # no second cell: its own
     assert gd.zips["LOW", "REGIONAL"]["AA1"][1] == "OVERLAP" and list(gd.zips["LOW", "REGIONAL"]) == ["AA1"]
     assert gd.assigned["NATIONAL", "AA"] == "Ann N / Bo R" and gd.assigned["REGIONAL", "AA"] == "Cy W" and ("OPEN", "BA") not in gd.assigned
-    assert gd.table["LOW", "OPEN", "OPEN SEAT HELD"] == 7.0 and gd.table["LOW", "NATIONAL", "GAP"] > 5.0
+    assert gd.table["LOW", "OPEN", "OPEN SEAT HELD"] == 7.0 and gd.table["LOW", "NATIONAL", "GAP (UNHELD)"] > 5.0
     top = gd.pairs["LOW"]
     assert len(gd.pairs["HIGH"]) == 15 and top[0] == ("NATIONAL", "R1 Ann N", "R2 Bo R", 3, 119.0) and ("WH", "R1 Ann N", "R9", 1, 1.0) not in top
     try:

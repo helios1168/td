@@ -23,14 +23,17 @@ CREATE TABLE ssdb_integration.lr_strategy.hk_t (source TEXT, holder_id TEXT, hol
 INSERT INTO ssdb_integration.lr_strategy.hk_t SELECT source, UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', nm), n
 FROM (VALUES ('A','NAN ZZQ',10), ('A','NORM ZZQ',15), ('B','NELL ZZQ',8), ('A','WALT ZZQ',20), ('A','OPAL ZZQ',25), ('A','RITA ZZQ',30),
              ('B','REX ZZQ',5), ('A','RAY ZZQ',40), ('A','HANK ZZQ',35), ('A','FRED ZZQ',50), ('A','NICK ZZQ',45)) v(source, nm, n);
-CREATE TABLE ssdb_integration.lr_strategy.piece_t (source TEXT, wholesaler TEXT, zip_code TEXT, piece_in_role INTEGER);
-INSERT INTO ssdb_integration.lr_strategy.piece_t VALUES
+CREATE TABLE ssdb_integration.lr_strategy.piece_t (source TEXT, wholesaler TEXT, zip_code TEXT, piece_in_role INTEGER, terr_channel TEXT DEFAULT 'WH');
+-- every piece WH but Rita's z05 (FI: the WH gap z05 has no WH piece, UNHELD) and Nick's z10 (not kept, WH: the regional gap z10 is HELD TODAY)
+INSERT INTO ssdb_integration.lr_strategy.piece_t (source, wholesaler, zip_code, piece_in_role) VALUES
   ('A','Nan Zzq','z01',1), ('A','NAN  ZZQ ','z03',1), ('A','Nan Zzq','z03',1), ('A','Nan Zzq','z06',1), ('A','Nan Zzq','z18',1),
   ('A','Norm Zzq','z03',1), ('B','Nell Zzq','z03',1), ('B','Nell Zzq','z18',1),
   ('A','Walt Zzq','z04',1), ('A','Walt Zzq','z07',1), ('A','Opal Zzq','z12',1), ('A','Opal Zzq','z14',1),
   ('A','Rita Zzq','z04',1), ('A','Rita Zzq','z05',1), ('A','Rita Zzq','z06',1), ('A','Rita Zzq','z09',1), ('A','Rita Zzq','z14',1), ('A','Rita Zzq','z16',1),
   ('A','Ray Zzq','z11',1), ('A','Hank Zzq','z08',1), ('A','Hank Zzq','z16',1), ('A','Hank Zzq','z17',1),
   ('A','Fred Zzq','z13',1), ('A','Nick Zzq','z13',0), ('A','Walt Zzq','z13',0);
+UPDATE ssdb_integration.lr_strategy.piece_t SET terr_channel = 'fi ' WHERE wholesaler = 'Rita Zzq' AND zip_code = 'z05';
+INSERT INTO ssdb_integration.lr_strategy.piece_t VALUES ('A','Nick Zzq','z10',0,' wh');
 CREATE TABLE ssdb_integration.lr_strategy.cell_t (est_source TEXT, zip_code TEXT, state TEXT, dist_ch TEXT, new_dist TEXT, channel TEXT,
   new_terr_channel TEXT, mm_opp DOUBLE);
 INSERT INTO ssdb_integration.lr_strategy.cell_t VALUES
@@ -81,11 +84,11 @@ SELECT
  chk('TD_GAP_CELL', (SELECT string_agg(concat_ws('|', est_source, zip_code, COALESCE(state, '-'), new_dist, i(mm_opp), channel, COALESCE(assigned, '-'), class, n_holders, COALESCE(holders, '-')),
                                         ' / ' ORDER BY est_source, zip_code, new_dist, mm_opp) FROM ssdb_integration.lr_strategy.td_gap_cell),
      'E1|z01|MA|NATIONAL (CHASE)|5|NATIONAL|R10|COVERED|1|R10 / E1|z01|MA|NATIONAL (CHASE)|100|NATIONAL|R10|COVERED|1|R10'
-     || ' / E1|z02|MA|WELLS FI|200|NATIONAL|R10|GAP|0|- / E1|z03|MA|WELLS WH|300|NATIONAL|R10|OVERLAP|3|R8 R10 R15'
-     || ' / E1|z04|MA|FI|40|REGIONAL|R30|COVERED|1|R30 / E1|z04|MA|WH|400|WH|R20|COVERED|1|R20 / E1|z05|MA|WH|50|WH|R20|GAP|0|-'
+     || ' / E1|z02|MA|WELLS FI|200|NATIONAL|R10|GAP (UNHELD)|0|- / E1|z03|MA|WELLS WH|300|NATIONAL|R10|OVERLAP|3|R8 R10 R15'
+     || ' / E1|z04|MA|FI|40|REGIONAL|R30|COVERED|1|R30 / E1|z04|MA|WH|400|WH|R20|COVERED|1|R20 / E1|z05|MA|WH|50|WH|R20|GAP (UNHELD)|0|-'
      || ' / E1|z06|NH|WELLS FI|60|REGIONAL|R30|COVERED|1|R30 / E1|z07|NH|WELLS WH|70|WH|R20|COVERED|1|R20'
      || ' / E1|z08|NH|NATIONAL (CHASE)|80|REGIONAL|R30|HELD BY ANOTHER|1|R35 / E1|z09|VT|FI|90|REGIONAL|R5 R30|COVERED|1|R30'
-     || ' / E1|z10|CT|FI|100|REGIONAL|R40|GAP|0|- / E1|z11|CT|WELLS WH|110|REGIONAL|R40|COVERED|1|R40'
+     || ' / E1|z10|CT|FI|100|REGIONAL|R40|GAP (HELD TODAY)|0|- / E1|z11|CT|WELLS WH|110|REGIONAL|R40|COVERED|1|R40'
      || ' / E1|z12|ME|WH|120|OPEN|-|OPEN SEAT HELD|1|R25 / E1|z13|ME|FI|130|OPEN|-|OPEN SEAT UNHELD|0|- / E1|z14|ME|NATIONAL (CHASE)|140|OPEN|-|OPEN SEAT HELD|2|R25 R30'
      || ' / E1|z15|-|FI|150|OPEN|-|OPEN SEAT UNHELD|0|- / E1|z16|MA|FI|160|REGIONAL|R30|OVERLAP|2|R30 R35 / E1|z17|MA|FI|170|REGIONAL|R30|HELD BY ANOTHER|1|R35'
      || ' / E1|z18|MA|WELLS FI|180|NATIONAL|R10|OVERLAP|2|R8 R10 / E2|z01|MA|NATIONAL (CHASE)|11|NATIONAL|R10|COVERED|1|R10 / E2|z12|ME|WH|7|OPEN|-|OPEN SEAT HELD|1|R25'
@@ -109,17 +112,17 @@ SELECT
      || ' / E2|R35|A|WIFI|-|0|0|0|0|0|0|0 / E2|R40|A|WIFI|CT|0|0|0|0|0|0|0'),
  -- E1 main map 2655 (class rows add to it), E2 25 (z18 has two cells, one pair counts its ZIP once)
  chk('CLASS', sec('CLASS'),
-     'E1|NATIONAL|COVERED|1|105|4.0|0 / E1|NATIONAL|GAP|1|200|7.5|0 / E1|NATIONAL|OVERLAP|2|480|18.1|0'
+     'E1|NATIONAL|COVERED|1|105|4.0|0 / E1|NATIONAL|GAP (UNHELD)|1|200|7.5|0 / E1|NATIONAL|OVERLAP|2|480|18.1|0'
      || ' / E1|OPEN|OPEN SEAT HELD|2|260|9.8|0 / E1|OPEN|OPEN SEAT UNHELD|2|280|10.5|0'
-     || ' / E1|REGIONAL|COVERED|4|300|11.3|0 / E1|REGIONAL|GAP|1|100|3.8|0 / E1|REGIONAL|HELD BY ANOTHER|2|250|9.4|0 / E1|REGIONAL|OVERLAP|1|160|6.0|0'
-     || ' / E1|WH|COVERED|2|470|17.7|0 / E1|WH|GAP|1|50|1.9|0'
+     || ' / E1|REGIONAL|COVERED|4|300|11.3|0 / E1|REGIONAL|GAP (HELD TODAY)|1|100|3.8|0 / E1|REGIONAL|HELD BY ANOTHER|2|250|9.4|0 / E1|REGIONAL|OVERLAP|1|160|6.0|0'
+     || ' / E1|WH|COVERED|2|470|17.7|0 / E1|WH|GAP (UNHELD)|1|50|1.9|0'
      || ' / E2|NATIONAL|COVERED|1|11|44.0|0 / E2|NATIONAL|OVERLAP|1|7|28.0|0 / E2|OPEN|OPEN SEAT HELD|1|7|28.0|0'),
  chk('STATE', (SELECT string_agg(concat_ws('|', est_source, channel, item, i(n_zips), i(mm_opp)), ' / ' ORDER BY est_source, channel, item) FROM full_result WHERE section = 'STATE' AND est_source = 'E1'),
-     'E1|NATIONAL|MA | COVERED|1|105 / E1|NATIONAL|MA | GAP|1|200 / E1|NATIONAL|MA | OVERLAP|2|480'
+     'E1|NATIONAL|MA | COVERED|1|105 / E1|NATIONAL|MA | GAP (UNHELD)|1|200 / E1|NATIONAL|MA | OVERLAP|2|480'
      || ' / E1|OPEN|(NO STATE) | OPEN SEAT UNHELD|1|150 / E1|OPEN|ME | OPEN SEAT HELD|2|260 / E1|OPEN|ME | OPEN SEAT UNHELD|1|130'
-     || ' / E1|REGIONAL|CT | COVERED|1|110 / E1|REGIONAL|CT | GAP|1|100 / E1|REGIONAL|MA | COVERED|1|40 / E1|REGIONAL|MA | HELD BY ANOTHER|1|170 / E1|REGIONAL|MA | OVERLAP|1|160'
+     || ' / E1|REGIONAL|CT | COVERED|1|110 / E1|REGIONAL|CT | GAP (HELD TODAY)|1|100 / E1|REGIONAL|MA | COVERED|1|40 / E1|REGIONAL|MA | HELD BY ANOTHER|1|170 / E1|REGIONAL|MA | OVERLAP|1|160'
      || ' / E1|REGIONAL|NH | COVERED|1|60 / E1|REGIONAL|NH | HELD BY ANOTHER|1|80 / E1|REGIONAL|VT | COVERED|1|90'
-     || ' / E1|WH|MA | COVERED|1|400 / E1|WH|MA | GAP|1|50 / E1|WH|NH | COVERED|1|70'),
+     || ' / E1|WH|MA | COVERED|1|400 / E1|WH|MA | GAP (UNHELD)|1|50 / E1|WH|NH | COVERED|1|70'),
  chk('TIE (all clean)', sec('TIE'),
      'E1|-|CELLS WITH NO CLASS|0|0|-|1 / E1|-|CLASSES MINUS TD_MAP_CELL, MAIN MAP (N_ZIPS 1 = THEY DIFFER)|0|0|-|1'
      || ' / E2|-|CELLS WITH NO CLASS|0|0|-|1 / E2|-|CLASSES MINUS TD_MAP_CELL, MAIN MAP (N_ZIPS 1 = THEY DIFFER)|0|0|-|1 / -|-|KEPT HOLDERS WITH NO td_holder_key ROW|0|-|-|1'),

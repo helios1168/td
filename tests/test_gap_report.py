@@ -51,6 +51,15 @@ def test_a_shared_row_counts_for_every_scenario():
     assert over == "| NATIONAL | OVERLAP | $0.25B (0.2%) | $0.50B (0.5%) | $0.25B (0.2%) | $0.25B |", over   # A, B, C, max-min
 
 
+def test_gaps_by_state_split_held_today_and_unheld():
+    rows = ("STATE,A,CRBG,REGIONAL,CA | GAP (HELD TODAY),5,2000000000,1.9,0\nSTATE,A,CRBG,REGIONAL,CA | GAP (UNHELD),3,1000000000,0.9,0\n"
+            "STATE,A,CRBG,REGIONAL,NY | GAP (UNHELD),4,2500000000,2.3,0\nSTATE,A,CRBG,REGIONAL,NY | COVERED,9,9000000000,8.0,0\n")
+    out = run({"gap_summary.csv": SUM + rows})
+    i = out.index("Top 15 states by GAP, REGIONAL")
+    got = [l for l in out[i:].splitlines() if l.startswith("| CA ") or l.startswith("| NY ")][:2]
+    assert got == ["| CA | 8 | $3.00B | $2.00B | $1.00B |", "| NY | 4 | $2.50B | $0.00B | $2.50B |"], got   # by total gap; COVERED not a gap
+
+
 def test_top_pair_order():
     rows = "".join(f"A,CRBG,NATIONAL,R{a},R{b_},1,{v}\n" for a, b_, v in ((1, 2, 1e9), (3, 4, 5e9), (5, 6, 2e9)))
     out = run({"A_gap_pair.csv": PAIR + rows})

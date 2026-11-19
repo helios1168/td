@@ -592,7 +592,7 @@ def write_pdf(path, figs, inspect=None):
 
 # class, colour, hatch edge colour (None: solid), hatch; the order breaks ties for the class of a ZIP
 GAP_CLASSES = [("COVERED", "#b9e6b0", None, None), ("OVERLAP", "#e8541f", None, None), ("HELD BY ANOTHER", "#8e5bb5", None, None),
-               ("GAP", "#f2c200", None, None), ("OPEN SEAT HELD", "#c4c4c4", "#6a6a6a", "////"),
+               ("GAP (HELD TODAY)", "#f9e7a1", None, None), ("GAP (UNHELD)", "#f2b700", None, None), ("OPEN SEAT HELD", "#c4c4c4", "#6a6a6a", "////"),
                ("OPEN SEAT UNHELD", "#efefef", "#a8a8a8", "////")]
 OPEN_CLASSES = ("OPEN SEAT HELD", "OPEN SEAT UNHELD")   # only on the OPEN page: an open seat has no channel (no one is assigned)
 GAP_CH = ("NATIONAL", "REGIONAL", "WH", "OPEN")   # the channels with a page; OPEN is the open seats
