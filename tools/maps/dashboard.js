@@ -73,9 +73,19 @@ const memo = (fn) => { const m = new Map(); return (...a) => { const k = a.join(
 // ---- the cells of a scenario and estimate, and what is read off them
 const rowsOf = memo((sc, est) => { const bit = 1 << P.scenarios.indexOf(sc), e = P.ests.indexOf(est); return Int32Array.from({length: NC}, (_, i) => i).filter((i) => C.m[i] & bit && C.e[i] === e); });
 const zipRows = memo((sc, est) => { const m = new Map(); for (const i of rowsOf(sc, est)) (m.get(C.z[i]) || m.set(C.z[i], []).get(C.z[i])).push(i); return m; });
-const assignedOf = memo((sc, est) => {            // "channel|state" -> the people assigned there, and each channel's states with someone
-  const m = new Map();
-  for (const i of rowsOf(sc, est)) if (C.s[i] >= 0 && P.sets[C.a[i]].length) m.set(C.c[i] + '|' + C.s[i], P.sets[C.a[i]]);
+const assignedOf = memo((sc, est) => {            // "channel|state" -> the people assigned there, from each person's role and assigned
+  const m = new Map(), bit = 1 << P.scenarios.indexOf(sc), e = P.ests.indexOf(est);   // states (not from the cells: a state can be
+  const six = new Map(P.states.map((st, i) => [st.id, i]));                             // assigned in a channel that has no cell there)
+  const chOf = new Map(Object.entries(P.roleOf).map(([c, r]) => [r, P.channels.indexOf(c)]));
+  for (const r of P.people) {                       // [scenario mask, est, key, source, role, assigned states, ...]
+    if (!(r[0] & bit) || r[1] !== e || !chOf.has(r[4])) continue;
+    for (const st of String(r[5] || '').split(' ')) {
+      if (!six.has(st)) continue;
+      const k = chOf.get(r[4]) + '|' + six.get(st);
+      (m.get(k) || m.set(k, []).get(k)).push(r[2]);
+    }
+  }
+  for (const v of m.values()) v.sort((a, b) => a - b);
   return m;
 });
 const pairKey = (c, a, b) => c + '|' + Math.min(a, b) + '|' + Math.max(a, b);

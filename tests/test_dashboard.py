@@ -374,3 +374,26 @@ def test_the_page_opens_in_chromium_ties_out_and_asks_for_nothing_online():
     with built(fake_runs(summary_off=5.0)) as (_, _, path):
         (bad,) = run(path, look)
         assert bad[0] == "check bad" and bad[1].startswith("Does not tie to the run’s summary."), bad
+
+
+def test_a_state_assigned_in_a_channel_with_no_cell_there_still_shows_its_person():
+    """Review of #153: assignments come from the people's roles and states, not the cells.  R3 (NATIONAL) is assigned CA and NV;
+    NV has no NATIONAL cell, yet NV's state card (focus=NV) names R3 for National."""
+    node = shutil.which("node")
+    shot = str(ROOT / "tools" / "maps" / "dashboard_shot.mjs")
+    if not node or subprocess.run([node, shot, "--which"], capture_output=True).returncode != 0:
+        print("SKIP  the page in headless Chromium: no node, or no browser (set TD_CHROME)")
+        return
+    global ROSTER
+    keep = ROSTER
+    ROSTER = [(k, s, r, "CA NV" if k == "R3" else st) for k, s, r, st in keep]
+    try:
+        with built(names=NAMES) as (_, _, path):
+            r = subprocess.run([node, shot, path, "-", "--size=1400x900", "--hash=focus=NV",
+                                "--dump=document.querySelector('#detail').textContent"], capture_output=True, text=True, timeout=180)
+    finally:
+        ROSTER = keep
+    assert r.returncode == 0, r.stdout + r.stderr
+    card = json.loads(next(l[6:] for l in r.stdout.splitlines() if l.startswith("dump: ")))
+    flat = " ".join(card.split())
+    assert "National R3 Cy Qcedarz" in flat.replace("NationalR3", "National R3") or "NationalR3 Cy Qcedarz" in flat, flat
