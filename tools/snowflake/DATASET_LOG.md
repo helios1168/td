@@ -1988,3 +1988,13 @@ wholesaler specific maps or graphics. BUT the assigned wholesaler should be labe
 (whole states), B (held ZIPs inside the assigned states, the rest tinted), C (today's in-role territories, a page per
 firm), 120 pages, drawn on the owner's terminal by `tools/maps/scenario_maps.ps1`; the notebook retires.
 
+### 2026-11-18: the targets for the shortlist phase
+
+Owner, 2026-11-18: "Essentially it's a prioritization- national first, then WH, then WIFI. Target numbers are 11
+national, 12 WH, the rest WIFI with overall numbers targeting around 49. Or $1.25B in opportunity per WIFI territory",
+then "Disregard the old targets. Your initial plan looked rock solid." The #130 targets (national $1.25B, WH $1.0B, FI
+$900M per district, WIFI ±15% of its mean, the 15/11/20/3 lead map) do not apply to this phase: K is 11 NATIONAL, 12 WH,
+the rest WIFI (about 26), about 49 in all; a WIFI territory's target is about $1.25B of opportunity. 07 attributes by
+that priority (#148). Open: the $1.25B is read on the Snowflake estimates (MM_OPP per EST_SOURCE, never added), the only
+opportunity this phase has; the owner to confirm.
+
