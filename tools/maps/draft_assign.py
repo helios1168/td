@@ -43,8 +43,14 @@ ROLE_OF, CHANNEL_OF_ROLE, ROLES = sm.ROLE_OF, sm.CHANNEL_OF_ROLE, tuple(dict.fro
 EST, EST2 = sm.FIRMS                      # CRBG (the audit's $) and EQH
 LEDGER_COLS = ["SCENARIO", "ROLE", "ZIP_CODE", "STATE", "PERSON", "REASON"]
 CELL_COLS = ["SCENARIO", "EST_SOURCE", "ZIP_CODE", "NEW_DIST", "CHANNEL", "PERSON", "MM_OPP"]
-M1_COLS = ["SCENARIO", "ROLE", "PERSON", "N_PIECES", "PIECE", "N_ZCTAS", "USD", "TAU_SHARE", "VERDICT", "NOTE", "USD_EQH", "TAU_SHARE_EQH"]
+M1_COLS = ["SCENARIO", "ROLE", "PERSON", "N_PIECES", "PIECE", "N_ZCTAS", "CRBG_USD", "TAU_SHARE", "VERDICT", "NOTE", "EQH_USD", "TAU_SHARE_EQH"]   # *_USD: shared rows compare them to the cent
 
+
+
+def m1_adjacency(graph):
+    """The adjacency M1 is judged on: the polygon rook graph plus, unless switched off, the approved land gaps of one state
+    (R5, #140), as tools/looks/score.py builds it."""
+    return audit.adjacency(graph, gaps=audit.gap_width_on())
 
 def keynum(k):
     """Sort key of a person key 'R<n>': its number, then the text."""
@@ -233,7 +239,7 @@ def split_rows(rows):
 
 def run(graph, cells, people):
     """{scenario: (ledger, cell rows, m1 rows, report)} for cell and person rows (dicts) of any scenarios."""
-    adj = audit.adjacency(graph)
+    adj = m1_adjacency(graph)
     cs, ps = split_rows(cells), split_rows(people)
     got = {}
     for s in sorted(set(cs) | set(ps)):

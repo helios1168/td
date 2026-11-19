@@ -171,3 +171,10 @@ def test_real_graph_one_person_per_state_is_one_piece():
     bad = [r for r in m1 if r[8] != "PASS"]
     assert not bad, bad[:10]
     assert len(m1) == len(states) and len(got["S"][0]) == len(g["vertices"])
+
+
+def test_m1_adjacency_joins_an_approved_land_gap_of_one_state_as_m1_does():
+    g = {"vertices": ["a", "b", "c"], "edges": [], "state": {"a": "AA", "b": "AA", "c": "BB"},
+         "gaps": {("a", "b"): 5.0, ("a", "c"): 5.0}}
+    adj = da.m1_adjacency(g)
+    assert "b" in adj["a"] and "c" not in adj["a"], adj               # same-state gap joins, a gap across states does not
