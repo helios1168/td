@@ -1377,3 +1377,8 @@ are not ZCTAs and have no person. A draft, not a plan: the split-state lines are
 Figure: [the regional draft in the West](figures/2026-11-19_draft_regional_west.png) (CA1_R105N, keys only, drawn on m5
 from `results/draft/2026-11-19/draft_ledger.csv.gz` and the 2025 TIGER ZCTA shapes): R2's NV is cut off from CO and NM
 by R49 (UT AZ); white inside a state is land with no ZCTA, white states have no regional person.
+Figure: [the five ways to fix R2's NV](figures/2026-11-19_nv_options.png), each panel the regional draft in the West with
+every affected person's opportunity $ (CRBG estimate) and area-adjusted load ($1.25B base, sqrt of area over the median;
+from the owner's 2026-11-18 `gap_load.csv` with NV moved), and the table: today R2 0.73 in two pieces; NV to R49 R49
+1.12 to 1.14; NV to R38 R38 1.78 to 1.46; split NV at 38N, north to R174 or R38, south to R49 R49 1.17. NV is $0.80B, of
+which $0.15B north of 38N.
