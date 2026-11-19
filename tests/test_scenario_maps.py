@@ -612,14 +612,80 @@ class GapConn(Conn):
                     cols, self.rows = PERSON_COLS, conn.person or [("S", est, "R1", "CRBG", "NATIONAL", "AA", 1.0, 2) for est in ("LOW", "HIGH")]
                 elif "td_seat_fit" in sql:
                     cols, self.rows = FIT_COLS, conn.fit or fake_fit()
+                elif "actual_sales_amount" in sql:                  # the dashboard's sales (fetch_sales)
+                    self.rows = fake_sales()
+                elif "td_map_piece p" in sql:                       # today's territories by key (fetch_today)
+                    self.rows = fake_today()
+                elif "td_map_cell" in sql:                          # GROUP BY estimate, ZIP, state, channel today
+                    by = collections.Counter()
+                    for _, est, z, st, _, usd, *_ in fake_cells():
+                        by[est, z, st, "FI"] += usd
+                    self.rows = [(*k, v) for k, v in by.items()]
                 elif "td_holder_key" in sql:
                     self.rows = list(NAMES.items())
                 self.description = [(c,) for c in cols] or None
         return C()
 
 
+KEY_OF = {n: f"R{i}" for i, n in enumerate(["Ann N", "Bo R", "Cy W", "Hal R", "Ian X", "Ed N", "Flo R", "Gus W", "Jo X"], 1)}
+SALE = 7654321.25          # a sale no other number of the made-up world looks like: it may be in dashboard.html and in no CSV
+
+
+def fake_today():
+    """td_map_piece's WH and FI pieces as fetch_today's query returns them: source, key, kept, role, ZIP, state, channel."""
+    return [(src, KEY_OF[name], k, r, z, st, tc) for src, name, k, r, z, st, tc, _ in fake_pieces()]
+
+
+def fake_sales():
+    return [("R1", "AA1", SALE), ("R1", "AB1", 100.0), ("R2", "AA1", -5.0), ("", "AA2", 40.0)]
+
+
 GOOD = [("CHECK", "S", None, None, "all ZIPs classed", 0, 0.2, None, 1), ("CHECK", "S", None, None, "a count", 5, 9.0, None, 0)]
 BAD = GOOD + [("CHECK", "S", "LOW", "WH", "ZIP in two classes", 3, 0.0, None, 1), ("CHECK", "S", None, None, "dollars lost", 0, 4.0, None, 1)]
+
+
+def test_the_sales_query_is_04s_rows_keyed_as_08_and_the_today_fetch_is_keys_and_safe_projections():
+    with open(sm.SQL04, encoding="utf-8") as f:
+        sql04 = f.read()
+    step = sql04[sql04.index("--3b the main map's sales rows"):sql04.index("--4 the pieces")]
+    sql = sm.sales_sql(sql04, ("fixed", "INDEX"))
+    for line in ("WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0",       # 04 step 3b's row filter and product predicate, word for word
+                 "AND ((' ' || UPPER(TRIM($exclude_products)) || ' ') NOT LIKE ('% ' || COALESCE(UPPER(TRIM(product_v2)), '') || ' %') OR COALESCE(TRIM(product_v2), '') = '')",
+                 r"NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(sales_wholesaler), '\\s+', ' '))), ''), 'OPEN') AS nm",
+                 "LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, actual_sales_amount AS amt"):
+        assert line in step and line.replace("$exclude_products", "'FIXED INDEX'") in sql, line
+    join = "ON k.source = s.source AND k.holder_id = UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', s.nm)"          # the seller's key as 08 joins it
+    with open(sm.SQL08, encoding="utf-8") as f:
+        assert join in f.read()
+    assert f"LEFT JOIN ssdb_integration.lr_strategy.td_holder_key k {join}" in sql and sql.endswith("GROUP BY 1, 2")
+    assert "FROM ssdb_integration.lr_strategy.sales_opp_2026_11_9\n" in sql and "IDENTIFIER" not in sql and "$" not in sql          # the table 04 names in SET union_tbl
+    assert "UPPER(TRIM('')) " in sm.sales_sql(sql04, ())                      # no product left out
+    for bad in (lambda: sm.sales_sql("select 1;", ()), lambda: sm.sales_sql(sql04, ("x'; drop",))):
+        try:
+            bad()
+            raise AssertionError("a 04 with no union table, or a product with a quote, was accepted")
+        except SystemExit:
+            pass
+
+    class C(Conn):
+        def cursor(self):
+            conn = self
+
+            class Cu(Cur):
+                def execute(self, sql):
+                    conn.queries.append(sql)
+                    self.rows = ([("R1", "00501", 12.5), (None, "00501", 3), ("R2", "00502", None)] if "actual_sales_amount" in sql else
+                                 [("CRBG", "R1", "y ", "wifi", "00501", "NY", "WH"), ("EQH", "NO KEY", "Y", "Ann Typed-Here", "00502", "New York", "FI"),
+                                  ("EQH", "R2", None, None, "00503", None, "FI")] if "td_map_piece" in sql else [("CRBG", "00501", "NY", "WH", 5), ("EQH", "00502", None, "", None)])
+            return Cu()
+    conn = C([])
+    assert sm.fetch_sales(conn, sql04, ("FIXED",)) == [("R1", "00501", 12.5), ("", "00501", 3.0), ("R2", "00502", 0.0)] and conn.queries == [sm.sales_sql(sql04, ("FIXED",))]
+    got = sm.fetch_today(conn, "S1")
+    assert got["today"] == (sm.TODAY_COLS, [("S1", "CRBG", "R1", "Y", "WIFI", "00501", "NY", "WH"), ("S1", "EQH", "NO KEY", "Y", "INVALID", "00502", "", "FI"),
+                                            ("S1", "EQH", "R2", "", "", "00503", "", "FI")]) and got["nokey"] == 1, got["today"]          # typed text never leaves verbatim
+    assert got["cell_today"] == (sm.CELL_TODAY_COLS, [("S1", "CRBG", "00501", "NY", "WH", 5.0), ("S1", "EQH", "00502", "", "", 0.0)])
+    assert "p.terr_channel IN ('WH', 'FI')" in conn.queries[1] and "COALESCE('R' || k.holder_n, 'NO KEY')" in conn.queries[1] and "wholesaler" not in conn.queries[1].split("FROM")[0]
+    assert "GROUP BY 1, 2, 3, 4" in conn.queries[2] and "td_map_cell" in conn.queries[2]
 
 
 def test_07_failing_must_be_zero_rows_refuse_the_gap_output_and_name_the_items():
@@ -767,7 +833,8 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
             run_dir = next(os.path.join(d, x) for x in os.listdir(d) if os.path.isdir(os.path.join(d, x)))
             run.folder = os.path.basename(run_dir)
             pdfs = {f: len(sm.re.findall(rb"/Type\s*/Page[^s]", open(os.path.join(run_dir, f), "rb").read())) for f in files if f.endswith(".pdf")}
-            csv_rows = {f: len(open(os.path.join(run_dir, f), encoding="utf-8").read().splitlines()) for f in files if f.endswith(".csv")}
+            run.texts = {f: open(os.path.join(run_dir, f), encoding="utf-8").read() for f in files if f.endswith((".csv", ".html"))}
+            csv_rows = {f: len(run.texts[f].splitlines()) for f in files if f.endswith(".csv")}
             return rc, buf.getvalue(), files, pdfs, csv_rows
 
     try:
@@ -777,9 +844,18 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         f08 = os.path.join(tempfile.gettempdir(), "08_fake_seat.sql")
         with open(f08, "w") as f:
             f.write("SET scenario    = '';\nSET exclude_products = 'FIXED';\nselect 'fake 08';\n")
-        gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
+        gap_files = sorted([f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load")] + ["territory_today.csv", "cell_today.csv"])
         rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
         assert rc == 0 and files == sorted(gap_files + ["dashboard.html", "maps.pdf"]), files          # the dashboard (#153) next to the PDF
+        # the dashboard's inputs (#153): today's territories and cells by key are safe to send; the sales are in dashboard.html and in no CSV
+        today = run.texts["territory_today.csv"].splitlines()
+        assert today[0] == "SCENARIO,SOURCE,HOLDER,KEPT,ROLE,ZIP_CODE,STATE,TERR_CHANNEL" and len(today) == 1 + len(fake_pieces()) and "CA1_R105N,CRBG,R1,Y,NATIONAL,AA1,AA,WH" in today, today[:3]
+        assert not any(n in text for f, text in run.texts.items() if f.endswith(".csv") for n in KEY_OF) and "Ann N" in run.texts["dashboard.html"]
+        assert run.texts["cell_today.csv"].splitlines()[0] == "SCENARIO,EST_SOURCE,ZIP_CODE,STATE,DIST_CH,MM_OPP" and csvs["cell_today.csv"] == 1 + 2 * 36   # one row per estimate and ZIP: AA1's three cells added
+        send, screen = out.split("names and sales: your screen only:")
+        assert all(f in send.split("safe to send to an agent")[1] for f in ("territory_today.csv", "cell_today.csv")) and "dashboard.html" in screen, out
+        sale = str(int(SALE))
+        assert sale in run.texts["dashboard.html"] and not any(sale in text for f, text in run.texts.items() if f.endswith(".csv")), [f for f, x in run.texts.items() if sale in x]
         assert pdfs == {"maps.pdf": 12 + 11} and "safe to send to an agent" in out, (pdfs, out)
         assert out.count("08_seat_fit.sql is not in this checkout") == 1 and "seat_fit" not in out.replace("08_seat_fit.sql", "")   # no 08: no seat file, a page saying so
         assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)

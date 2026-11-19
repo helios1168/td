@@ -35,7 +35,10 @@ to a neighbour, a re-added holder or vacant, total roster at most 49; also seat_
 more than 14 open seats in an estimate, or a sheet over 49 people, prints "SEAT PLAN NOT MADE: ...", the page says so, the rest is written and the exit is 1).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 With gap output the run also writes dashboard.html next to maps.pdf (issue #153, tools/maps/dashboard.py): one self-contained page for
-Chrome, opened from disk, with the same cells as the CSVs and the names next to the keys (your screen only).
+Chrome, opened from disk, with the same cells as the CSVs and the names next to the keys (your screen only).  For its "today" views and its
+sales it reads, per scenario after 04, today's WH and FI territories and the opportunity by the cell's channel today (territory_today.csv and
+cell_today.csv: keys only, safe to send) and, once, the 2025 sales per seller key and ZIP (04 step 3b's rows): the sales go into dashboard.html
+only, never into a CSV.
 
 Draft mode (issue #152, phase 2): `.\\tools\\maps\\scenario_maps.ps1 -Draft results\\draft\\2026-11-19` (python: `--draft <folder>`, optionally
 `--scenario`, `--divisions`) draws draft_assign.py's keys-only ledger as data/safe/maps/<run>/draft.pdf, one page per scenario x
@@ -274,6 +277,61 @@ def fetch_names(conn):
                             r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))), ''))"))
 
 
+UNION_RE = re.compile(r"(?im)^\s*SET\s+union_tbl\s*=\s*'([\w.]+)'\s*;")
+KEY_ID = "UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', {})"          # td_holder_key's id of a normalized name (02, 03, 06, 07, 08)
+TODAY_COLS = ["SCENARIO", "SOURCE", "HOLDER", "KEPT", "ROLE", "ZIP_CODE", "STATE", "TERR_CHANNEL"]
+CELL_TODAY_COLS = ["SCENARIO", "EST_SOURCE", "ZIP_CODE", "STATE", "DIST_CH", "MM_OPP"]
+TODAY_CH = ("WH", "FI")                      # the main map's territory channels; both sources carry firm 1's codes (DATASET_LOG 2026-11-15)
+NO_KEY = "NO KEY"                            # a holder with no td_holder_key row (must be none: counted and printed)
+SAFE = {"KEPT": ("Y", "N", "?", ""), "ROLE": ("NATIONAL", "WH", "FI", "WIFI", "")}      # 06's safe projections of the owner-typed columns
+
+
+def sales_sql(sql04, exclude):
+    """The dashboard's sales query: the 2025 actual sales per (seller key R<n>, ZIP), the rows of 04 step 3b (the union table 04 names in
+    `SET union_tbl`, CHANNEL NATIONAL, WH or FI, amount not 0, `exclude` (PRODUCT_V2 values) left out, a blank product kept), the seller
+    keyed through td_holder_key as 08 does; the sales of sellers with no key come back under the key ''."""
+    m = UNION_RE.search(sql04)
+    if not m:
+        raise SystemExit("04_assigned_coverage.sql has no line `SET union_tbl = '...';`: the dashboard's sales read that table")
+    return ("SELECT COALESCE('R' || k.holder_n, '') AS holder, s.zip_code, SUM(s.amt) AS amt\n"
+            "FROM (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, actual_sales_amount AS amt,\n"
+            r"             NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(sales_wholesaler), '\\s+', ' '))), ''), 'OPEN') AS nm" "\n"
+            f"      FROM {m.group(1)}\n"
+            "      WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0\n"
+            f"        AND ((' ' || UPPER(TRIM('{' '.join(product_list(exclude))}')) || ' ') NOT LIKE ('% ' || COALESCE(UPPER(TRIM(product_v2)), '') || ' %') OR COALESCE(TRIM(product_v2), '') = '')) s\n"
+            f"LEFT JOIN {DB}.td_holder_key k ON k.source = s.source AND k.holder_id = {KEY_ID.format('s.nm')}\n"
+            "GROUP BY 1, 2")
+
+
+def fetch_sales(conn, sql04, exclude):
+    """[(seller key or '', ZIP, $)] of sales_sql, for dashboard.html only (your screen only): never written to a CSV."""
+    return [(str(k or ""), str(z), float(v or 0)) for k, z, v in query(conn, sales_sql(sql04, exclude))]
+
+
+def today_sql():
+    """Today's WH and FI territory pieces of td_map_piece with the holder as its key (NO_KEY when td_holder_key has no row for it)."""
+    nm = r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(p.wholesaler), '\\s+', ' '))), '')"
+    return (f"SELECT p.source, COALESCE('R' || k.holder_n, '{NO_KEY}') AS holder, p.kept, p.role, p.zip_code, p.state, p.terr_channel\n"
+            f"FROM {DB}.td_map_piece p\n"
+            f"LEFT JOIN {DB}.td_holder_key k ON k.source = p.source AND k.holder_id = {KEY_ID.format(nm)}\n"
+            f"WHERE p.terr_channel IN ({', '.join(repr(c) for c in TODAY_CH)})")
+
+
+def fetch_today(conn, scenario):
+    """Read right after 04 for `scenario` (td_map_piece and td_map_cell are that scenario's), for the dashboard's "today" views:
+    today (TODAY_COLS): every WH or FI territory piece, the holder as a key, KEPT and ROLE (the scenario's roster) as 06's safe projections
+    (anything else INVALID), STATE two capital letters or ''; cell_today (CELL_TODAY_COLS): td_map_cell's opportunity by estimate, ZIP, state
+    and the cell's channel today (DIST_CH), since a cell's holder today is the holder of SOURCE x ZIP x DIST_CH (04).  Both (columns, rows),
+    keys and the dataset's own categories only: safe to send.  nokey: the pieces whose holder has no td_holder_key row."""
+    safe = lambda col, v: v if (v := str(v or "").strip().upper()) in SAFE[col] else "INVALID"
+    state = lambda v: v if re.fullmatch("[A-Z]{2}", v := str(v or "")) else ""
+    today = [(scenario, str(src), str(k), safe("KEPT", kept), safe("ROLE", role), str(z), state(st), str(ch))
+             for src, k, kept, role, z, st, ch in query(conn, today_sql())]
+    cells = [(scenario, str(est), str(z), str(st or ""), str(ch or ""), float(v or 0)) for est, z, st, ch, v in
+             query(conn, f"SELECT est_source, zip_code, state, dist_ch, SUM(mm_opp) AS mm_opp FROM {DB}.td_map_cell GROUP BY 1, 2, 3, 4")]
+    return {"today": (TODAY_COLS, today), "cell_today": (CELL_TODAY_COLS, cells), "nokey": sum(r[2] == NO_KEY for r in today)}
+
+
 def state_adjacency(states, buf=1000):
     """[(a, b)] in both directions: two states are adjacent when their shapes (EPSG:5070, metres) buffered by `buf` m intersect."""
     big = {s: g.buffer(buf) for s, g in states.items()}
@@ -478,6 +536,9 @@ def write_plan_csvs(out, seats):
     result}, each row once as write_gap_csvs.  (the masked path, the names path)"""
     return (write_dedup_csv(os.path.join(out, "seat_plan.csv"), {s: v.masked for s, v in seats.items()}),
             write_dedup_csv(os.path.join(out, "seat_plan_names.csv"), {s: v.sales for s, v in seats.items()}))
+
+
+TODAY_FILES = {"today": "territory_today.csv", "cell_today": "cell_today.csv"}      # fetch_today's tables: keys only, safe to send
 
 
 def write_gap_csvs(out, gaps):
@@ -1303,7 +1364,7 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
     send = []
-    t0, refused, futs, pool, n_pages, started, gaps, adj = time.time(), [], {}, None, None, {}, {}, None
+    t0, refused, futs, pool, n_pages, started, gaps, adj, sales = time.time(), [], {}, None, None, {}, {}, None, None
     with connect() as conn:
         for name in chosen:
             got = fetch_scenario(conn, name, sql03, sql04, edits, split_statements)
@@ -1314,6 +1375,13 @@ def main(argv=None):
             gap = fetch_gap(conn, name, sql07, split_statements) if sql07 else None   # right after 04: 07 reads its temp tables
             if sql07 and gap is None:
                 refused.append(name + " (gap output only)")
+            if gap:                             # the dashboard's today views and sales: 04's tables are this scenario's until the next 04
+                gap.update(fetch_today(conn, name))
+                if gap["nokey"]:
+                    print(f"{name}: {gap['nokey']} WH or FI territory pieces have a holder with no td_holder_key row (run 02_model_extract.sql): shown as {NO_KEY}", flush=True)
+                    refused.append(name + " (territory holders with no key)")
+                if sales is None:
+                    sales = fetch_sales(conn, sql04, exclude)
             if n_pages is None:
                 geo = load_geo(conn)
                 if not args.divisions:
@@ -1368,6 +1436,7 @@ def main(argv=None):
         print(f"{os.path.abspath(path)}: {assemble(path, pages)} pages (a page the same in several scenarios is there once), names: your screen only", flush=True)
     if gaps:
         send = write_gap_csvs(out, {name: gap for name, (_, _, gap) in gaps.items()})
+        send += [write_dedup_csv(os.path.join(out, f), {name: gap[k] for name, (_, _, gap) in gaps.items()}) for k, f in TODAY_FILES.items()]
     seats = {name: gd.seat for name, (gd, _, _) in gaps.items() if gd.seat}
     screen = []
     if seats:
@@ -1379,10 +1448,10 @@ def main(argv=None):
         screen.append(names_csv)
     if gaps:                                    # the dashboard (issue #153): the scenarios with gap output, the names next to the keys
         import dashboard
-        runs = {name: {**{k: gap[k] for k in ("cell", "pair", "person", "load", "summary")}, "seat": gd.seat.masked if gd.seat else None}
-                for name, (gd, _, gap) in gaps.items()}
+        runs = {name: {**{k: gap[k] for k in ("cell", "pair", "person", "load", "summary", "today", "cell_today")}, "seat": gd.seat.masked if gd.seat else None,
+                       "plan": gd.seat.plan.masked if gd.seat else None} for name, (gd, _, gap) in gaps.items()}
         key_names = {k: v for _, _, gap in gaps.values() for k, v in gap["names"].items()}
-        screen.append(dashboard.build(geo, runs, os.path.join(out, "dashboard.html"), key_names, products, os.path.basename(out)))
+        screen.append(dashboard.build(geo, runs, os.path.join(out, "dashboard.html"), key_names, products, os.path.basename(out), sales=sales))
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s ({products})" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
@@ -1390,7 +1459,8 @@ def main(argv=None):
     if send:
         print("safe to send to an agent (holder keys R<n> and counts only, no names):")
         for p in send:
-            print(f"  {os.path.abspath(p)}" + ("   (large, one row per cell: not needed unless asked)" if p.endswith("gap_cell.csv") else ""))
+            print(f"  {os.path.abspath(p)}" + ("   (large, one row per cell: not needed unless asked)" if p.endswith("gap_cell.csv") else
+                                                 "   (today's territories by key: for a dashboard built without Snowflake)" if p.endswith("territory_today.csv") else ""))
     if screen:
         print("names and sales: your screen only:")
         for p in screen:
