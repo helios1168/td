@@ -3,6 +3,7 @@ whose 03 status is not fine, the shape cache, and the pages drawn from a made-up
 divisions, 2 ZIPs each, no Snowflake): 120 pages in order with exact titles, every person labelled where they have area, the legend on
 every page, open seats hatched on A and B, no page outside the three views."""
 import importlib.util
+import collections
 import io
 import itertools
 import os
@@ -517,14 +518,48 @@ def test_load_is_dollars_against_the_area_adjusted_expectation():
     assert "R9" not in got                                            # no assigned $: no load row
 
 
+SEAT_COLS = ["SECTION", "SCENARIO", "EST_SOURCE", "SEAT", "KIND", "HOLDER", "RANK", "BORDERS", "SEAT_MM_OPP", "N", "MUST_BE_ZERO"]
+FIT_COLS = ["SCENARIO", "EST_SOURCE", "SEAT", "SEAT_MM_OPP", "KIND", "HOLDER", "SOURCE", "KEPT", "ROLE", "BORDERS", "U", "G", "DNASH", "RANK"]
+SEATS = {"CC": 3e8, "BA": 7e8}                                          # seat -> its $ (MM_OPP is dollars)
+CANDS = {"NEIGHBOUR": [("R3", 1, 1), ("R1", 2, 1), ("R2", 3, 0), ("R9", 4, 0)],    # (holder, rank, borders); rank 4 is not on the page
+         "HOLDER": [("R2", 1, 0), ("R3", 2, 0), ("R1", 3, 0), ("R9", 4, 0)]}
+LOADS = {"LOW": [("R1", 100.0, 1e9), ("R2", 200.0, 1e8)], "HIGH": [("R1", 100.0, 2e9)]}   # holder, area km2, assigned $; R3 and R9: no load row
+SEAT_KM2 = {"BA": 300.0, "CC": 100.0}
+
+
+def fake_seat_result(tie=0):
+    rows = []
+    for est in ("LOW", "HIGH"):
+        for seat, usd in SEATS.items():
+            for kind, cands in CANDS.items():
+                rows += [("SEAT", "S", est, seat, kind, h, rank, b, usd, None, None) for h, rank, b in reversed(cands)]    # worst rank first
+        rows += [("SEATS", "S", est, None, None, None, None, None, None, len(SEATS), 0), ("TIE", "S", est, "BA", None, None, None, None, None, tie, 1)]
+    return rows
+
+
+def fake_fit():
+    return [("S", est, seat, usd, kind, h, "CRBG", "Y", "WIFI", b, 0.5 + rank, 0.25, -1.5 * rank, rank)
+            for est in ("LOW", "HIGH") for seat, usd in SEATS.items() for kind, cands in CANDS.items() for h, rank, b in cands]
+
+
+def fake_load():
+    return [dict(zip(sm.LOAD_COLS, ("S", est, h, "WIFI", "REGIONAL", area, usd, 1e9, 200.0, None, None))) for est, rs in LOADS.items() for h, area, usd in rs]
+
+
+def _seat(names=NAMES):
+    return sm.seat_prepare({"result": (SEAT_COLS, fake_seat_result()), "fit": (FIT_COLS, fake_fit())}, names, fake_load(), SEAT_KM2)
+
+
 class GapConn(Conn):
     """07's result on execute_stream, the TD_GAP tables and the names on cursor().execute."""
-    def __init__(self, summary):
+    def __init__(self, summary, seat=None):
         super().__init__([])
-        self.summary = summary
+        self.summary, self.seat = summary, seat
 
     def execute_stream(self, stream):
         self.streams.append(stream.read())
+        if "fake 08" in self.streams[-1]:                   # 08's one result
+            return [Cur(SEAT_COLS, self.seat(self.streams[-1]) if callable(self.seat) else self.seat if self.seat is not None else fake_seat_result())]
         return [Cur(SUMMARY_COLS, self.summary(self.streams[-1]) if callable(self.summary) else self.summary)]
 
     def cursor(self):
@@ -540,6 +575,8 @@ class GapConn(Conn):
                     cols, self.rows = PAIR_COLS, fake_pairs()
                 elif "td_gap_person" in sql:
                     cols, self.rows = PERSON_COLS, [("S", "LOW", "R1", "CRBG", "NATIONAL", "AA", 1.0, 2)]
+                elif "td_seat_fit" in sql:
+                    cols, self.rows = FIT_COLS, fake_fit()
                 elif "td_holder_key" in sql:
                     self.rows = list(NAMES.items())
                 self.description = [(c,) for c in cols] or None
@@ -563,6 +600,106 @@ def test_07_failing_must_be_zero_rows_refuse_the_gap_output_and_name_the_items()
     assert good["names"] == NAMES and good["cell"][0] == CELL_COLS and len(good["pair"][1]) == len(fake_pairs()) and good["summary"] == (SUMMARY_COLS, GOOD)
 
 
+def test_states_are_adjacent_when_their_shapes_buffered_by_1000_m_meet_and_the_table_is_one_insert():
+    geo = fake_geo()
+    pairs = sm.state_adjacency(geo.states)
+    adj = {}
+    for a, b in pairs:
+        adj.setdefault(a, set()).add(b)
+    assert adj["AA"] == {"AB", "BA", "BB"} and adj["BB"] == {"AA", "AB", "AC", "BA", "BC", "CA", "CB", "CC"}      # rook and corner
+    assert all(a in adj[b] for a, b in pairs) and len(pairs) == sum(len(v) for v in adj.values()) and "AC" not in adj["AA"]
+    near = {"X": box(0, 0, 1000, 1000), "Y": box(2999, 0, 4000, 1000), "Z": box(6002, 0, 7000, 1000)}   # X-Y 1,999 m apart, Y-Z 2,002 m
+    assert sm.state_adjacency(near) == [("X", "Y"), ("Y", "X")], sm.state_adjacency(near)
+    conn = GapConn(GOOD)
+    out, old = io.StringIO(), sys.stdout
+    sys.stdout = out
+    try:
+        sm.make_state_adj(conn, geo.states)
+    finally:
+        sys.stdout = old
+    create, insert = conn.queries
+    assert create.startswith("CREATE OR REPLACE TABLE ssdb_integration.lr_strategy.td_state_adj (state_a") and "(state_a, state_b) VALUES ('AA', 'AB')" in insert
+    assert len(sm.re.findall(r"\('\w\w', '\w\w'\)", insert)) == len(pairs) and "('AB', 'AA')" in insert
+
+
+def test_load_after_is_the_opportunity_only_load_with_the_seat_added_and_a_band():
+    load = {("E", "R1"): dict(zip(sm.LOAD_COLS, ("S", "E", "R1", "WIFI", "REGIONAL", 100.0, 1e9, 1e9, 200.0, None, None))),
+            ("E", "R2"): dict(zip(sm.LOAD_COLS, ("S", "E", "R2", "WIFI", "REGIONAL", 50.0, 2e9, 1e9, 200.0, None, None)))}
+    # (1e9 + 5e8) / (1e9 x ((100 + 300) / 200) ^ 0.5) = 1.5 / 1.41421 = 1.06066
+    ratio, band = sm.load_after(load, "E", "R1", 5e8, 300.0)
+    assert abs(ratio - 1.5 / 2 ** 0.5) < 1e-12 and band == "0.8 to 1.25"
+    assert sm.load_after(load, "E", "R1", 0.0, 300.0) == (1e9 / (1e9 * 2 ** 0.5), "under 0.8")          # 0.707
+    assert sm.load_after(load, "E", "R2", 1e9, 50.0) == (3e9 / (1e9 * 0.5 ** 0.5), "over 1.25")          # (2e9 + 1e9) / (1e9 x (100 / 200) ^ 0.5) = 4.24
+    assert sm.load_after(load, "E", "R3", 5e8, 300.0) == (None, "") and sm.load_after(load, "X", "R1", 5e8, 300.0) == (None, "")   # no load row: blank
+    assert sm.load_after(load, "E", "R1", 5e8, None) == (None, "")
+
+
+def test_the_masked_seat_csv_has_no_names_or_sales_and_each_row_once_the_names_csv_has_them():
+    one = _seat()
+    cols, rows = one.masked
+    assert cols == SEAT_COLS + ["LOAD_BAND"] and len(rows) == 32 and {r[0] for r in rows} == {"SEAT"}
+    band = {(r[2], r[3], r[4], r[5]): r[-1] for r in rows}
+    # R1 (LOW: 100 km2, $1e9, median 200, base $1e9) + BA ($7e8, 300 km2): 1.7e9 / (1e9 x 2 ^ .5) = 1.202; CC ($3e8, 100 km2): 1.3e9 / 1e9 = 1.3
+    assert band["LOW", "BA", "NEIGHBOUR", "R1"] == "0.8 to 1.25" and band["LOW", "CC", "NEIGHBOUR", "R1"] == "over 1.25"
+    assert band["LOW", "BA", "NEIGHBOUR", "R2"] == "under 0.8"                  # (1e8 + 7e8) / (1e9 x 2.5 ^ .5) = 0.506
+    assert band["HIGH", "BA", "NEIGHBOUR", "R1"] == "over 1.25"                 # 2.7e9 / 1.41421e9: the estimate's own load row
+    assert band["LOW", "BA", "NEIGHBOUR", "R3"] == "" and band["LOW", "BA", "HOLDER", "R1"] == ""     # no load row; HOLDERs have no band
+    with tempfile.TemporaryDirectory() as d:
+        masked, names = sm.write_seat_csvs(d, {"A": one, "B": _seat(), "C": sm.seat_prepare({"result": (SEAT_COLS, fake_seat_result()), "fit": (FIT_COLS, fake_fit())},
+                                                                                              NAMES, fake_load()[:1], SEAT_KM2)})
+        m = list(sm.csv.DictReader(open(masked, encoding="utf-8")))
+        n = list(sm.csv.DictReader(open(names, encoding="utf-8")))
+    assert not {"NAME", "U", "G", "DNASH", "LOAD_AFTER"} & set(m[0]) and "LOAD_BAND" in m[0]
+    # A and B are the same, C has only R1's LOW load row: every row of A and B once ("A B"), the rows C differs in ("C")
+    assert collections.Counter(r["SCENARIO"] for r in m) == {"A B C": 28, "A B": 4, "C": 4}      # the 4 rows whose band C lacks differ
+    assert {"NAME", "U", "G", "DNASH", "LOAD_AFTER"} <= set(n[0])
+    r1 = next(r for r in n if r["SCENARIO"].startswith("A B") and (r["EST_SOURCE"], r["SEAT"], r["KIND"], r["HOLDER"]) == ("LOW", "BA", "NEIGHBOUR", "R1"))
+    assert r1["NAME"] == "Ann N" and r1["LOAD_AFTER"] == "1.202" and r1["U"] == "2.5" and r1["DNASH"] == "-3.0"
+    h1 = next(r for r in n if (r["EST_SOURCE"], r["SEAT"], r["KIND"], r["HOLDER"]) == ("LOW", "BA", "HOLDER", "R1"))
+    assert h1["LOAD_AFTER"] == "" and next(r for r in n if r["HOLDER"] == "R9")["NAME"] == ""      # a key with no name: blank
+
+
+def test_a_tie_not_zero_refuses_the_seat_output_and_names_the_item():
+    sql = "SET scenario    = '';\nselect 'fake 08';\n"
+    buf = io.StringIO()
+    old, sys.stdout = sys.stdout, buf
+    try:
+        bad = sm.fetch_seat(GapConn(GOOD, fake_seat_result(tie=2)), "S", sql, _split)
+        good = sm.fetch_seat(GapConn(GOOD), "S", sql, _split)
+    finally:
+        sys.stdout = old
+    assert bad is None and "SEAT OUTPUT NOT WRITTEN" in buf.getvalue() and "TIE LOW BA (N 2)" in buf.getvalue() and "SEATS" not in buf.getvalue()
+    assert good["result"][0] == SEAT_COLS and good["fit"][0] == FIT_COLS and len(good["fit"][1]) == len(fake_fit())
+
+
+def test_the_seat_page_lists_the_top_3_of_each_kind_in_rank_order_with_no_sales():
+    gd = _gd()
+    gd.seat = _seat()
+    fig = sm.draw_seat_page(gd, "t", "LOW")
+    text = "\n".join(t.get_text() for t in fig.texts)
+    ba, cc = (next(t.get_text() for t in fig.texts if t.get_text().startswith(seat)).split("\n") for seat in ("BA", "CC"))
+    assert text.index("BA   ") < text.index("CC   ")                         # the bigger seat first
+    assert ba[0] == "BA   \\$700.0 MM" and cc[0] == "CC   \\$300.0 MM"       # $ escaped for mathtext
+    want = ["N1 R3 Cy W", "N2 R1 Ann N", "N3 R2 Bo R", "H1 R2 Bo R", "H2 R3 Cy W", "H3 R1 Ann N"]
+    assert len(ba) == 8 and all(l.strip().startswith(w) for l, w in zip(ba[1:7], want)), ba          # 3 + 3, rank 4 (R9) left out
+    assert "borders" in ba[1] and "borders" in ba[2] and "borders" not in ba[3] and ba[2].rstrip().endswith("0.8 to 1.25") and ba[3].rstrip().endswith("under 0.8")
+    assert ba[1].rstrip().endswith("borders")                                  # R3 has no load row: no band
+    assert "R9" not in text and not {"U", "G", "DNASH"} & set(text.split()) and "-1.5" not in text and "0.25" not in text
+    other = sm.draw_seat_page(gd, "t", "HIGH")
+    assert next(t.get_text() for t in other.texts if t.get_text().startswith("BA")).split("\n")[2].rstrip().endswith("over 1.25")   # R1 HIGH
+    gd.seat = None
+    none = sm.draw_seat_page(gd, "t", "LOW")
+    assert "No open-seat ranking" in none.texts[-1].get_text() and none.get_suptitle() == "t"
+    geo = fake_geo()
+    sm._init(geo)
+    gd.seat_pages = True
+    refused = [t for t, _ in sm.gap_pages("S", gd, geo)]                      # 08 ran for the run, refused for this scenario: the pages say so
+    gd.seat = _seat()
+    drawn = [t for t, _ in sm.gap_pages("S", gd, geo)]
+    assert refused == drawn and len(drawn) == 103 and drawn[1:3] == [f"D overlaps and gaps · seat fit · {e} estimate" for e in ("HIGH", "LOW")]
+    assert len(list(sm.gap_pages("S", _gd(), geo))) == 101                      # no 08 in the run: no seat pages
+
+
 def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing():
     import types
     fake = {"snowflake": types.ModuleType("snowflake"), "snowflake.connector": types.ModuleType("snowflake.connector"),
@@ -570,7 +707,7 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
     fake["snowflake.connector.util_text"].split_statements = _split
     saved = {k: sys.modules.get(k) for k in fake}
     sys.modules.update(fake)
-    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "fetch_scenario", "MAPS_DIR", "SQL07", "EDITS", "CHUNK", "assemble")}
+    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "fetch_scenario", "MAPS_DIR", "SQL07", "SQL08", "EDITS", "CHUNK", "assemble")}
     labels = []
     sm.assemble = lambda path, pages: (labels.extend(l for _, l in pages), keep["assemble"](path, pages))[1]
 
@@ -579,10 +716,10 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         def __enter__(self): return self.conn
         def __exit__(self, *a): return False
 
-    def run(summary, sql07, scen="CA1_R105N", roster=None):
+    def run(summary, sql07, scen="CA1_R105N", roster=None, sql08=os.path.join(tempfile.gettempdir(), "08_does_not_exist.sql"), seat=None):
         with tempfile.TemporaryDirectory() as d:
-            sm.MAPS_DIR, sm.SQL07, sm.EDITS = d, sql07, os.path.join(d, "none.sql")
-            sm.connect = lambda: Ctx(GapConn(summary))
+            sm.MAPS_DIR, sm.SQL07, sm.SQL08, sm.EDITS = d, sql07, sql08, os.path.join(d, "none.sql")
+            sm.connect = lambda: Ctx(GapConn(summary, seat))
             sm.load_geo = lambda conn: fake_geo()
             sm.fetch_scenario = lambda conn, name, *a: (roster(name) if roster else ROSTER, fake_pieces())
             buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
@@ -601,10 +738,14 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         f07 = os.path.join(tempfile.gettempdir(), "07_fake_gap.sql")
         with open(f07, "w") as f:
             f.write("SET scenario    = '';\nselect 1;\n")
+        f08 = os.path.join(tempfile.gettempdir(), "08_fake_seat.sql")
+        with open(f08, "w") as f:
+            f.write("SET scenario    = '';\nselect 'fake 08';\n")
         gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
         rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
         assert rc == 0 and files == sorted(gap_files + ["maps.pdf"]), files
         assert pdfs == {"maps.pdf": 12 + 11} and "safe to send to an agent" in out, (pdfs, out)
+        assert out.count("08_seat_fit.sql is not in this checkout") == 1 and "seat_fit" not in out.replace("08_seat_fit.sql", "")   # no 08: no seat file, a page saying so
         assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)
         # two scenarios the same: every page and row once
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N")
@@ -617,6 +758,20 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         labels.clear()
         rc, out, files, pdfs, csvs = run(lambda sql: BAD if "CA1_R105R" in sql else GOOD, f07, "CA1_R105N,CA2_R105N,CA1_R105R")
         assert rc == 1 and pdfs == {"maps.pdf": 23} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 11, (rc, pdfs, labels)
+        # with 08: a summary, 2 seat pages and the 10 FILL and channel pages (13 gap pages); seat_fit.csv is safe to send, the names file is not
+        rc, out, files, pdfs, csvs = run(GOOD, f07, sql08=f08)
+        assert rc == 0 and files == sorted(gap_files + ["maps.pdf", "seat_fit.csv", "seat_fit_names.csv"]) and pdfs == {"maps.pdf": 12 + 13}, (files, pdfs, out)
+        assert csvs["seat_fit.csv"] == 1 + 32 and csvs["seat_fit_names.csv"] == 1 + 32 and "td_state_adj: " in out, csvs
+        send, screen = out.split("names and sales: your screen only:")
+        assert "seat_fit.csv" in send.split("safe to send to an agent")[1] and "seat_fit_names.csv" not in send and "seat_fit_names.csv" in screen, out
+        rc, out2, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", sql08=f08)      # two scenarios the same: every page and row once
+        assert rc == 0 and pdfs == {"maps.pdf": 12 + 13} and csvs["seat_fit.csv"] == 1 + 32 and out2.count("td_state_adj: ") == 1, (pdfs, csvs, out2)
+        # CA1_R105R's 08 refused (TIE not 0): its two seat pages say so, the other two share the real ones: 12 + 11 shared + 2 + 2
+        bad08 = lambda sql: fake_seat_result(tie=2) if "CA1_R105R" in sql else fake_seat_result()
+        rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N,CA1_R105R", sql08=f08, seat=bad08)
+        assert rc == 1 and pdfs == {"maps.pdf": 12 + 11 + 4} and "TIE LOW BA (N 2)" in out and csvs["seat_fit.csv"] == 1 + 32, (rc, pdfs, out)
+        rc, out, files, pdfs, csvs = run(BAD, f07, sql08=f08)               # 07 refused: 08 does not run, the table is not made
+        assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "td_state_adj" not in out, (files, out)
         rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, the maps still drawn, exit 1
         assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "dollars lost" in out, (files, out)
         rc, out, files, pdfs, csvs = run(GOOD, os.path.join(tempfile.gettempdir(), "07_does_not_exist.sql"))

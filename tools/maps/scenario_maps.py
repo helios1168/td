@@ -21,7 +21,11 @@ A ZIP belongs to a geography by its piece's STATE.
 With tools/snowflake/07_overlap_gap.sql (issue #148) each scenario also runs it after 04, refuses its gap output when a MUST_BE_ZERO
 row is not 0, and writes next to the PDF gap_cell.csv, gap_pair.csv, gap_person.csv, gap_summary.csv, gap_load.csv (masked: holder
 keys R<n> only, safe to send to an agent; one file each for the run, as above) and the view D pages after the maps in maps.pdf
-(a summary page, then geography x channel x estimate pages).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
+(a summary page, one seat-fit page per estimate, then geography x channel x estimate pages).
+With tools/snowflake/08_seat_fit.sql (issue #151) each scenario also runs it after 07 (after creating td_state_adj from the state
+shapes, two states adjacent when their shapes buffered by 1,000 m meet), refuses its seat output when a TIE row is not 0, and writes
+seat_fit.csv (masked: the open-seat ranking of 08 plus an opportunity-only LOAD_BAND, safe to send) and seat_fit_names.csv (names and
+sales U, G, DNASH: your screen only); the seat-fit page shows ranks only.  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 """
 from __future__ import annotations
@@ -63,6 +67,7 @@ import look  # noqa: E402  (the shared look: palettes, colouring_far, place_labe
 SQL03 = os.path.join(ROOT, "tools", "snowflake", "03_assignments.sql")
 SQL04 = os.path.join(ROOT, "tools", "snowflake", "04_assigned_coverage.sql")
 SQL07 = os.path.join(ROOT, "tools", "snowflake", "07_overlap_gap.sql")
+SQL08 = os.path.join(ROOT, "tools", "snowflake", "08_seat_fit.sql")
 EDITS = os.path.join(ROOT, "data", "safe", "03_edits.sql")
 GEO_DIR = os.path.join(ROOT, "data", "safe", "geo")
 MAPS_DIR = os.path.join(ROOT, "data", "safe", "maps")
@@ -191,13 +196,14 @@ def query_cols(conn, sql):
         cur.close()
 
 
-def gap_failures(result):
-    """The ITEMs of the 07 result's MUST_BE_ZERO = 1 rows whose N_ZIPS or MM_OPP is not 0 (within 0.5; NULL is 0)."""
+def gap_failures(result, count=("N_ZIPS", "MM_OPP"), item=lambda r: r["ITEM"]):
+    """The items of a 07 (or, with count and item given, 08) result's MUST_BE_ZERO = 1 rows whose `count` columns are not 0
+    (within 0.5; NULL is 0)."""
     cols, rows = result
     out = []
     for r in (dict(zip(cols, x)) for x in rows):
-        if r["MUST_BE_ZERO"] == 1 and any(abs(float(r[c] or 0)) > 0.5 for c in ("N_ZIPS", "MM_OPP")):
-            out.append(f"{r['ITEM']} (N_ZIPS {r['N_ZIPS']}, MM_OPP {r['MM_OPP']})")
+        if r["MUST_BE_ZERO"] == 1 and any(abs(float(r[c] or 0)) > 0.5 for c in count):
+            out.append(f"{item(r)} ({', '.join(f'{c} {r[c]}' for c in count)})")
     return out
 
 
@@ -217,6 +223,32 @@ def fetch_gap(conn, scenario, sql07, split):
                                     "ON k.source = a.source AND k.holder_id = UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', "
                                     r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))), ''))"))
     return got
+
+
+def state_adjacency(states, buf=1000):
+    """[(a, b)] in both directions: two states are adjacent when their shapes (EPSG:5070, metres) buffered by `buf` m intersect."""
+    big = {s: g.buffer(buf) for s, g in states.items()}
+    return [(a, b) for a in sorted(big) for b in sorted(big) if a != b and big[a].intersects(big[b])]
+
+
+def make_state_adj(conn, states):
+    """Create or replace the permanent table td_state_adj (state_a, state_b), which 08 reads, from the state shapes."""
+    pairs = state_adjacency(states)
+    query(conn, f"CREATE OR REPLACE TABLE {DB}.td_state_adj (state_a VARCHAR, state_b VARCHAR)")
+    query(conn, f"INSERT INTO {DB}.td_state_adj (state_a, state_b) VALUES " + ", ".join(f"('{a}', '{b}')" for a, b in pairs))
+    print(f"td_state_adj: {len(pairs)} state pairs", flush=True)
+
+
+def fetch_seat(conn, scenario, sql08, split):
+    """Run 08 for `scenario` (after 07, in the same session): {result, fit} as (columns, rows), the result being 08's one result
+    and fit td_seat_fit's rows for the scenario; None when a MUST_BE_ZERO (TIE) row is not 0 (the failing items are printed)."""
+    res = run_sql(conn, scenario_sql(sql08, scenario), split)
+    bad = ["08 gave no result"] if res is None else gap_failures(
+        res, ("N",), lambda r: " ".join(str(r[c]) for c in ("SECTION", "EST_SOURCE", "SEAT", "KIND") if r.get(c)))
+    if bad:
+        print(f"{scenario}: SEAT OUTPUT NOT WRITTEN, 08's must-be-zero checks not 0: " + "; ".join(bad))
+        return None
+    return {"result": res, "fit": query_cols(conn, f"SELECT * FROM {DB}.td_seat_fit WHERE scenario = '{scenario}'")}
 
 
 # Area-adjusted load (owner, 2026-11-18: "the larger your territory is by area the more opportunity you're allowed to have
@@ -272,33 +304,81 @@ def gap_load(scenario, gap, state_area):
     return LOAD_COLS, rows
 
 
+def load_after(load, est, holder, seat_usd, seat_km2):
+    """(ratio, band) of a person's load if they also took a seat: (assigned $ + seat $) / (base x ((area + seat's state km2) /
+    median area) ^ BETA), opportunity only; band 'under 0.8', '0.8 to 1.25' or 'over 1.25'.  `load` is {(est, holder): the
+    gap_load row as a dict}; (None, '') for a person with no load row (or no seat area)."""
+    r = load.get((est, holder))
+    if not r or seat_km2 is None or not r["MEDIAN_AREA_KM2"] or not r["BASE_USD"]:
+        return None, ""
+    ratio = (float(r["ASSIGNED_USD"]) + float(seat_usd)) / (float(r["BASE_USD"]) * ((float(r["AREA_KM2"]) + seat_km2) / float(r["MEDIAN_AREA_KM2"])) ** BETA)
+    return ratio, "under 0.8" if ratio < 0.8 else "over 1.25" if ratio > 1.25 else "0.8 to 1.25"
+
+
+def seat_prepare(seat, names, load, state_area):
+    """What the seat page and CSVs need, from fetch_seat's {result, fit}, names {key: name}, gd.load (dicts) and state_area
+    {state: km2}: cand (the SEAT rows as dicts, each with LOAD_BAND, for NEIGHBOUR rows), masked (the SEAT rows + LOAD_BAND, no
+    names or sales) and sales (td_seat_fit's rows + NAME and LOAD_AFTER: your screen only), each (columns, rows)."""
+    load = {(r["EST_SOURCE"], r["HOLDER"]): r for r in load}
+
+    def after(r):
+        if r["KIND"] != "NEIGHBOUR":
+            return None, ""
+        return load_after(load, r["EST_SOURCE"], r["HOLDER"], float(r["SEAT_MM_OPP"] or 0), state_area.get(r["SEAT"]))
+    cols, rows = seat["result"]
+    cand, masked = [], []
+    for x in rows:
+        r = dict(zip((c.upper() for c in cols), x))
+        if r["SECTION"] == "SEAT":
+            band = after(r)[1]
+            cand.append(r | {"LOAD_BAND": band})
+            masked.append(tuple(x) + (band,))
+    fcols, frows = seat["fit"]
+    sales = []
+    for x in frows:
+        r = dict(zip((c.upper() for c in fcols), x))
+        ratio = after(r)[0]
+        sales.append(tuple(x) + (names.get(r["HOLDER"], ""), None if ratio is None else round(ratio, 3)))
+    return SimpleNamespace(cand=cand, masked=(list(cols) + ["LOAD_BAND"], masked), sales=(list(fcols) + ["NAME", "LOAD_AFTER"], sales))
+
+
+def write_dedup_csv(path, per):
+    """One CSV of {scenario: (columns, rows)}, each row once: its SCENARIO is the scenarios that have it, space-separated (always
+    named, so a file read alone says who it covers).  Rows are compared with dollars (MM_OPP, OPP_*, *_USD) to the cent and other
+    numbers to 9 significant digits, so float noise between runs merges and a ratio of 1.250 against 1.251 does not; a row a
+    scenario has twice is kept twice."""
+    cols, rows = None, {}
+    for s, (c, got) in per.items():
+        cols = cols or list(c)
+        up = [x.upper() for x in cols]
+        i, nth = up.index("SCENARIO"), collections.Counter()
+        money = [u.endswith("MM_OPP") or u.startswith("OPP_") or u.endswith("_USD") for j, u in enumerate(up) if j != i]
+        for r in got:
+            rest = tuple(v for j, v in enumerate(r) if j != i)
+            key = tuple((round(float(v), 2) if m else float(f"{float(v):.9g}")) if isinstance(v, (float, decimal.Decimal)) else v
+                        for v, m in zip(rest, money))
+            nth[key] += 1
+            rows.setdefault((key, nth[key]), (rest, []))[1].append(s)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        w.writerows(rest[:i] + (" ".join(ss),) + rest[i:] for rest, ss in rows.values())
+    return path
+
+
+def write_seat_csvs(out, seats):
+    """seat_fit.csv (masked: keys and counts, safe to send) and seat_fit_names.csv (names and sales: your screen only) in `out`
+    for {scenario: seat_prepare's result}, each row once as write_gap_csvs.  (the masked path, the names path)"""
+    return (write_dedup_csv(os.path.join(out, "seat_fit.csv"), {s: v.masked for s, v in seats.items()}),
+            write_dedup_csv(os.path.join(out, "seat_fit_names.csv"), {s: v.sales for s, v in seats.items()}))
+
+
 def write_gap_csvs(out, gaps):
     """gap_<cell|pair|person|summary|load>.csv in `out` for {scenario: gap}, each row once: its SCENARIO is the scenarios that
     have it, space-separated (always named, so a file read alone says who it covers).  Rows are compared with dollars (MM_OPP,
     OPP_*, *_USD) to the cent and other numbers to 9 significant digits, so float noise between runs merges and a ratio of
-    1.250 against 1.251 does not; a row a scenario has twice is kept twice.  The paths."""
-    paths = []
-    for k in ("cell", "pair", "person", "summary", "load"):
-        cols, rows = None, {}
-        for s, gap in gaps.items():
-            c, got = gap[k]
-            cols = cols or list(c)
-            up = [x.upper() for x in cols]
-            i, nth = up.index("SCENARIO"), collections.Counter()
-            money = [u == "MM_OPP" or u.startswith("OPP_") or u.endswith("_USD") for j, u in enumerate(up) if j != i]
-            for r in got:
-                rest = tuple(v for j, v in enumerate(r) if j != i)
-                key = tuple((round(float(v), 2) if m else float(f"{float(v):.9g}")) if isinstance(v, (float, decimal.Decimal)) else v
-                            for v, m in zip(rest, money))
-                nth[key] += 1
-                rows.setdefault((key, nth[key]), (rest, []))[1].append(s)
-        path = os.path.join(out, f"gap_{k}.csv")
-        with open(path, "w", encoding="utf-8", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(cols)
-            w.writerows(rest[:i] + (" ".join(ss),) + rest[i:] for rest, ss in rows.values())
-        paths.append(path)
-    return paths
+    1.250 against 1.251 does not; a row a scenario has twice is kept twice (write_dedup_csv).  The paths."""
+    return [write_dedup_csv(os.path.join(out, f"gap_{k}.csv"), {s: gap[k] for s, gap in gaps.items()}) for k in ("cell", "pair", "person", "summary", "load")]
 
 
 # ---------------------------------------------------------------- shapes
@@ -647,15 +727,20 @@ def gap_prepare(cell, pair, names):
     pairs = {}
     for r in (dict(zip(pair[0], x)) for x in pair[1]):
         pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0) / USD_PER_MM))
-    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, fill=fill, fill_total=fill_total, table=table, names=dict(names), load=[],
+    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), seat=None, seat_pages=False, zips=zips, fill=fill, fill_total=fill_total, table=table, names=dict(names), load=[],
                            assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
                            pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})
 
 
 def gap_specs(geo, gd):
-    """The gap pages after the summary as (geography, channel, estimate): geography, then the FILL pages (every channel), then
+    """The gap pages after the seat pages as (geography, channel, estimate): geography, then the FILL pages (every channel), then
     channel x estimate."""
     return [(g, ch, est) for g in geo.geographies for ch in ("FILL",) + GAP_CH for est in gd.ests]
+
+
+def gap_all(geo, gd):
+    """Every gap page in order: None (the summary), ("SEAT", estimate) per estimate when 08 is in the run (gd.seat_pages), then gap_specs."""
+    return [None] + ([("SEAT", est) for est in gd.ests] if gd.seat_pages else []) + gap_specs(geo, gd)
 
 
 def draw_fill_page(gd, geo, title, g, est):
@@ -738,13 +823,52 @@ def draw_gap_summary(scenario, gd):
     return fig
 
 
+SEAT_CAPTION = ("Open seats by \\$MM of opportunity; per seat the 3 best-ranked NEIGHBOUR candidates (rank, key and name, borders = the person's states touch "
+                "the seat, load band = their opportunity load if they also took it: under 0.8, 0.8 to 1.25, over 1.25) and the 3 best-ranked HOLDER "
+                "candidates.  Ranks only: no sales figures.")
+
+
+def draw_seat_page(gd, title, est):
+    """The seat-fit page of one estimate: the seats by $MM, each with its top 3 NEIGHBOUR and top 3 HOLDER candidates (ranks, no
+    sales); a page saying so when the scenario has no seat output (08 missing or refused)."""
+    fig = Figure(figsize=FIGSIZE, dpi=DPI, facecolor="white")
+    FigureCanvasAgg(fig)
+    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.975)
+    seats = collections.defaultdict(list)
+    for r in (gd.seat.cand if gd.seat else []):
+        if r["EST_SOURCE"] == est:
+            seats[r["SEAT"]].append(r)
+    if not gd.seat:
+        fig.text(0.02, 0.9, "No open-seat ranking for this scenario: 08_seat_fit.sql is not in this checkout, or its checks were refused (see the run's output).",
+                 fontsize=12, va="top")
+        return fig
+    who = lambda k: f"{k} {gd.names.get(k, '')}".strip()[:26]
+    usd = {s: float(rs[0]["SEAT_MM_OPP"] or 0) for s, rs in seats.items()}
+    blocks = []
+    for seat in sorted(seats, key=lambda s: (-usd[s], s)):
+        rs = sorted(seats[seat], key=lambda r: r["RANK"])
+        lines = [f"{seat}   \\${usd[seat] / USD_PER_MM:,.1f} MM"]
+        lines += [f"  N{r['RANK']} {who(r['HOLDER']):<27}{'borders' if r['BORDERS'] else '':<9}{r['LOAD_BAND']}" for r in [r for r in rs if r["KIND"] == "NEIGHBOUR"][:3]]
+        lines += [f"  H{r['RANK']} {who(r['HOLDER'])}" for r in [r for r in rs if r["KIND"] == "HOLDER"][:3]]
+        blocks.append(lines + [""])
+    per = max(1, -(-len(blocks) // 3))
+    size = min(9.0, 560 / (1.3 * max(1, max((sum(len(b) for b in blocks[i:i + per]) for i in range(0, len(blocks), per)), default=1))))
+    for c, i in enumerate(range(0, len(blocks), per)):
+        fig.text(0.02 + 0.33 * c, 0.93, "\n".join(line for b in blocks[i:i + per] for line in b), family="monospace", fontsize=size, va="top")
+    fig.text(0.01, 0.015, SEAT_CAPTION, fontsize=8.5, color="#404040")
+    return fig
+
+
 def gap_pages(scenario, gd, geo, lo=0, hi=None):
-    """(title, figure) for the gap pages lo..hi: page 0 is the summary, then geography x channel x estimate."""
-    allp = [None] + gap_specs(geo, gd)
-    for spec in allp[lo:hi]:
+    """(title, figure) for the gap pages lo..hi: page 0 is the summary, then a seat-fit page per estimate, then geography x
+    channel x estimate."""
+    for spec in gap_all(geo, gd)[lo:hi]:
         if spec is None:
             title = "D overlaps and gaps · summary"
             yield title, draw_gap_summary(scenario, gd)
+        elif spec[0] == "SEAT":
+            title = f"D overlaps and gaps · seat fit · {spec[1]} estimate"
+            yield title, draw_seat_page(gd, title, spec[1])
         else:
             g, ch, est = spec
             title = f"D overlaps and gaps · {ch} · {est} estimate · {g.name}"
@@ -856,6 +980,12 @@ def main(argv=None):
         ap.error(f"unknown scenario {sorted(set(chosen) - set(names))}; 03 has {names}")
     with open(SQL04, encoding="utf-8") as f:
         sql04 = f.read()
+    sql08 = None
+    if os.path.exists(SQL08):
+        with open(SQL08, encoding="utf-8") as f:
+            sql08 = f.read()
+    else:
+        print("08_seat_fit.sql is not in this checkout: no open-seat ranking")
     sql07 = None
     if os.path.exists(SQL07):
         with open(SQL07, encoding="utf-8") as f:
@@ -874,7 +1004,7 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
     send = []
-    t0, refused, futs, pool, n_pages, started, gaps = time.time(), [], {}, None, None, {}, {}
+    t0, refused, futs, pool, n_pages, started, gaps, adj = time.time(), [], {}, None, None, {}, {}, False
     with connect() as conn:
         for name in chosen:
             got = fetch_scenario(conn, name, sql03, sql04, edits, split_statements)
@@ -894,6 +1024,14 @@ def main(argv=None):
                 if jobs > 1:
                     pool = concurrent.futures.ProcessPoolExecutor(jobs, initializer=_init, initargs=(geo,))
             submit = (lambda fn, *a: pool.submit(fn, *a)) if pool else (lambda fn, *a: _done(fn(*a)))
+            seat = None
+            if gap and sql08:
+                if not adj:
+                    make_state_adj(conn, geo.states)
+                    adj = True
+                seat = fetch_seat(conn, name, sql08, split_statements)
+                if seat is None:
+                    refused.append(name + " (seat output only)")
             started[name] = time.time()
             for lo, hi in chunks(n_pages):
                 futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
@@ -901,9 +1039,12 @@ def main(argv=None):
                 gap["load"] = gap_load(name, gap, {s: g.area / 1e6 for s, g in geo.states.items()})
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
                 gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
+                gd.seat_pages = bool(sql08)         # 08 in the run: every scenario has the seat pages (a page saying so when its output was refused)
+                if seat:
+                    gd.seat = seat_prepare(seat, gd.names, gd.load, {s: g.area / 1e6 for s, g in geo.states.items()})
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
                 gaps[name] = (gd, skipped, gap)
-                for lo, hi in chunks(1 + len(gap_specs(geo, gd))):
+                for lo, hi in chunks(len(gap_all(geo, gd))):
                     futs[name + "_gaps", lo] = submit(draw_gap_chunk, name, gd, lo, hi)
     maps, per = [s for s in chosen if s in started], {}
     for name in maps:
@@ -920,6 +1061,12 @@ def main(argv=None):
         print(f"{os.path.abspath(path)}: {assemble(path, pages)} pages (a page the same in several scenarios is there once), names: your screen only", flush=True)
     if gaps:
         send = write_gap_csvs(out, {name: gap for name, (_, _, gap) in gaps.items()})
+    seats = {name: gd.seat for name, (gd, _, _) in gaps.items() if gd.seat}
+    screen = []
+    if seats:
+        masked, names_csv = write_seat_csvs(out, seats)
+        send.append(masked)
+        screen.append(names_csv)
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
@@ -928,6 +1075,10 @@ def main(argv=None):
         print("safe to send to an agent (holder keys R<n> and counts only, no names):")
         for p in send:
             print(f"  {os.path.abspath(p)}" + ("   (large, one row per cell: not needed unless asked)" if p.endswith("gap_cell.csv") else ""))
+    if screen:
+        print("names and sales: your screen only:")
+        for p in screen:
+            print(f"  {os.path.abspath(p)}")
     return 1 if refused else 0
 
 
