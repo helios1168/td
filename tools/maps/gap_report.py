@@ -2,7 +2,7 @@
 
     python tools/maps/gap_report.py FILE [FILE ...]    (any of gap_summary.csv, gap_pair.csv, gap_person.csv, gap_load.csv)
 
-A row's SCENARIO is ALL (every scenario of the run: those named anywhere in the files) or the scenarios that share it.
+A row's SCENARIO is the scenarios that share it, space-separated (ALL, from older runs, is not accepted: it does not say who).
 
 Per estimate: scenario comparison, overlaps (for bargaining), gaps (for optimization), load, person.  MM_OPP and *_USD are raw
 dollars, printed as $B.  Holder keys R<n> only: the input holds no names and nothing here adds one."""
@@ -40,10 +40,10 @@ def read(paths):
             sys.exit(f"gap_report: {p}: not a gap_summary/gap_pair/gap_person/gap_load .csv")
         with open(p, encoding="utf-8-sig", newline="") as f:
             data[kind] += list(csv.DictReader(f))
+    if any(r["SCENARIO"] == "ALL" for rows in data.values() for r in rows):
+        sys.exit("gap_report: a SCENARIO of ALL does not say which scenarios: rerun scenario_maps.py")
     # a shared row is one row per scenario again
-    every = sorted({s for rows in data.values() for r in rows for s in r["SCENARIO"].split() if s != "ALL"}) or ["ALL"]
-    return collections.defaultdict(list, {k: [dict(r, SCENARIO=s) for r in rows for s in (every if r["SCENARIO"] == "ALL" else r["SCENARIO"].split())]
-                                          for k, rows in data.items()})
+    return collections.defaultdict(list, {k: [dict(r, SCENARIO=s) for r in rows for s in r["SCENARIO"].split()] for k, rows in data.items()})
 
 
 def failing_checks(summary):

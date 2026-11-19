@@ -43,11 +43,11 @@ def test_scenario_max_min_and_dollars_as_billions():
 
 
 def test_a_shared_row_counts_for_every_scenario():
-    out = run({"gap_summary.csv": SUM + "CLASS,ALL,CRBG,NATIONAL,GAP,10,3000000000,3.0,0\nCLASS,B,CRBG,NATIONAL,OVERLAP,2,500000000,0.5,0\n"
+    out = run({"gap_summary.csv": SUM + "CLASS,A B C,CRBG,NATIONAL,GAP,10,3000000000,3.0,0\nCLASS,B,CRBG,NATIONAL,OVERLAP,2,500000000,0.5,0\n"
                                     "CLASS,A C,CRBG,NATIONAL,OVERLAP,1,250000000,0.2,0\n"})
     gap = next(l for l in out.splitlines() if l.startswith("| NATIONAL | GAP |"))
     over = next(l for l in out.splitlines() if l.startswith("| NATIONAL | OVERLAP |"))
-    assert gap.count("$3.00B") == 3 and gap.endswith("$0.00B |"), gap        # ALL: A, B and C
+    assert gap.count("$3.00B") == 3 and gap.endswith("$0.00B |"), gap        # shared by A, B and C
     assert over == "| NATIONAL | OVERLAP | $0.25B (0.2%) | $0.50B (0.5%) | $0.25B (0.2%) | $0.25B |", over   # A, B, C, max-min
 
 

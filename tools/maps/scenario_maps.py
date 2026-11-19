@@ -4,8 +4,9 @@
     .\\tools\\maps\\scenario_maps.ps1 -All          (or -Scenario CA1_R105N,CA2_R105N, or -List; add -Divisions for the division pages)
 
 Nothing is repeated across scenarios (owner, 2026-11-18: "we don't ever duplicate something"): a page that comes out the same
-in several scenarios is in the PDF once, its corner naming them ("all scenarios" when it is every one), and each gap CSV
-holds every scenario with each row once, SCENARIO "ALL" or the scenarios that have the row (the same to the cent).
+in several scenarios is in the PDF once, its corner naming them ("all scenarios" when it is every one drawn), and each gap CSV
+holds every scenario with each row once, SCENARIO the scenarios that have the row (dollars the same to the cent, other numbers
+to 9 significant digits).
 
 Per scenario: 03_assignments.sql with `SET scenario` set (and data/safe/03_edits.sql spliced into its owner block, as
 run_03_04.ps1), then 04_assigned_coverage.sql, then it reads td_assignments and td_map_piece and draws
@@ -272,31 +273,31 @@ def gap_load(scenario, gap, zip_area):
     return LOAD_COLS, rows
 
 
-def scenario_label(group, every):
-    """The scenarios sharing a page or a row: ALL when it is every one of several, else their names."""
-    return "ALL" if len(group) == len(every) > 1 else " ".join(group)
-
-
 def write_gap_csvs(out, gaps):
-    """gap_<cell|pair|person|summary|load>.csv in `out` for {scenario: gap}, each row once: its SCENARIO is scenario_label of
-    the scenarios that have it (numbers compared to the cent; a row a scenario has twice is kept twice).  The paths."""
-    every, paths = list(gaps), []
+    """gap_<cell|pair|person|summary|load>.csv in `out` for {scenario: gap}, each row once: its SCENARIO is the scenarios that
+    have it, space-separated (always named, so a file read alone says who it covers).  Rows are compared with dollars (MM_OPP,
+    OPP_*, *_USD) to the cent and other numbers to 9 significant digits, so float noise between runs merges and a ratio of
+    1.250 against 1.251 does not; a row a scenario has twice is kept twice.  The paths."""
+    paths = []
     for k in ("cell", "pair", "person", "summary", "load"):
         cols, rows = None, {}
         for s, gap in gaps.items():
             c, got = gap[k]
             cols = cols or list(c)
-            i, nth = [x.upper() for x in cols].index("SCENARIO"), collections.Counter()
+            up = [x.upper() for x in cols]
+            i, nth = up.index("SCENARIO"), collections.Counter()
+            money = [u == "MM_OPP" or u.startswith("OPP_") or u.endswith("_USD") for j, u in enumerate(up) if j != i]
             for r in got:
                 rest = tuple(v for j, v in enumerate(r) if j != i)
-                key = tuple(round(float(v), 2) if isinstance(v, (float, decimal.Decimal)) else v for v in rest)
+                key = tuple((round(float(v), 2) if m else float(f"{float(v):.9g}")) if isinstance(v, (float, decimal.Decimal)) else v
+                            for v, m in zip(rest, money))
                 nth[key] += 1
                 rows.setdefault((key, nth[key]), (rest, []))[1].append(s)
         path = os.path.join(out, f"gap_{k}.csv")
         with open(path, "w", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
             w.writerow(cols)
-            w.writerows(rest[:i] + (scenario_label(ss, every),) + rest[i:] for rest, ss in rows.values())
+            w.writerows(rest[:i] + (" ".join(ss),) + rest[i:] for rest, ss in rows.values())
         paths.append(path)
     return paths
 
@@ -733,19 +734,20 @@ def draw_gap_chunk(scenario, gd, lo, hi):
     return lo, out
 
 
-def merge_pages(per):
+def merge_pages(per, every=None):
     """{scenario: [PNG bytes in page order]} -> [(png, label)]: page by page, scenarios whose page is the same picture share
-    one page, labelled scenario_label of them, in the order of the scenarios."""
-    every = list(per)
+    one page, labelled with their names, or "all scenarios" when they are all of `every` (default: the keys of `per`; the
+    gap pages pass every scenario drawn, so a scenario whose gap output was refused is not hidden under "all")."""
+    every = list(per) if every is None else list(every)
     n = {len(v) for v in per.values()}
     if len(n) != 1:
         raise RuntimeError(f"scenarios with different page counts {sorted(n)}")
     out = []
     for i in range(n.pop()):
         groups = {}
-        for s in every:
+        for s in per:
             groups.setdefault(per[s][i], []).append(s)
-        out += [(png, "all scenarios" if len(ss) == len(every) > 1 else " · ".join(ss)) for png, ss in groups.items()]
+        out += [(png, "all scenarios" if set(ss) == set(every) and len(ss) > 1 else " · ".join(ss)) for png, ss in groups.items()]
     return out
 
 
@@ -857,7 +859,7 @@ def main(argv=None):
     gper = {name: [png for _, pngs in sorted(futs[k].result() for k in futs if k[0] == name + "_gaps") for png in pngs] for name in gaps}
     for name, (_, skipped, _) in gaps.items():
         print(f"{name}: {len(gper[name])} gap pages; {skipped} CONUS ZIPs of the gap cells have no ZCTA shape, not drawn", flush=True)
-    pages += merge_pages(gper) if gper else []
+    pages += merge_pages(gper, maps) if gper else []
     if pages:
         path = os.path.join(out, "maps.pdf")
         print(f"{os.path.abspath(path)}: {assemble(path, pages)} pages (a page the same in several scenarios is there once), names: your screen only", flush=True)

@@ -414,24 +414,28 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
 
 
 def test_gap_csvs_hold_each_row_once_with_the_scenarios_that_have_it():
-    cols = ["EST_SOURCE", "SCENARIO", "X", "MM_OPP"]
+    cols = ["EST_SOURCE", "SCENARIO", "X", "MM_OPP", "LOAD_RATIO"]
     gaps = {s: {k: (cols, rows) for k in ("cell", "pair", "person", "summary", "load")} for s, rows in (
-        ("A", [("E", "A", "same", 1.001), ("E", "A", "twice", 2.0), ("E", "A", "twice", 2.0), ("E", "A", "a and b", 3.0)]),
-        ("B", [("E", "B", "same", 1.004), ("E", "B", "twice", 2.0), ("E", "B", "twice", 2.0), ("E", "B", "a and b", 3.0), ("E", "B", "b only", 4.0)]),
-        ("C", [("E", "C", "same", 1.0), ("E", "C", "twice", 2.0), ("E", "C", "twice", 2.0)]))}
+        ("A", [("E", "A", "same", 1.001, 2.2677411315649), ("E", "A", "twice", 2.0, 1.0), ("E", "A", "twice", 2.0, 1.0), ("E", "A", "a and b", 3.0, 1.25)]),
+        ("B", [("E", "B", "same", 1.004, 2.2677411315650), ("E", "B", "twice", 2.0, 1.0), ("E", "B", "twice", 2.0, 1.0), ("E", "B", "a and b", 3.0, 1.25),
+               ("E", "B", "b only", 4.0, 1.0)]),
+        ("C", [("E", "C", "same", 1.0, 2.2677411315649), ("E", "C", "twice", 2.0, 1.0), ("E", "C", "twice", 2.0, 1.0), ("E", "C", "a and b", 3.0, 1.251)]))}
     with tempfile.TemporaryDirectory() as d:
         paths = sm.write_gap_csvs(d, gaps)
         assert [os.path.basename(p) for p in paths] == [f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load")]
         got = open(paths[0], encoding="utf-8").read().splitlines()
-    # the same to the cent is one row (the first scenario's numbers); a row twice in each scenario stays twice; the column stays in place
-    assert got == ["EST_SOURCE,SCENARIO,X,MM_OPP", "E,ALL,same,1.001", "E,ALL,twice,2.0", "E,ALL,twice,2.0", "E,A B,a and b,3.0", "E,B,b only,4.0"], got
-    assert sm.scenario_label(["A"], ["A"]) == "A"                           # one scenario in the run: its name, not ALL
+    # dollars the same to the cent and a ratio the same to 9 digits are one row (the first scenario's numbers); 1.25 against 1.251
+    # is not; a row twice in each scenario stays twice; the scenarios are always named; the column stays in place
+    assert got == ["EST_SOURCE,SCENARIO,X,MM_OPP,LOAD_RATIO", "E,A B C,same,1.001,2.2677411315649", "E,A B C,twice,2.0,1.0", "E,A B C,twice,2.0,1.0",
+                   "E,A B,a and b,3.0,1.25", "E,B,b only,4.0,1.0", "E,C,a and b,3.0,1.251"], got   # in the order first seen
 
 
 def test_identical_pages_are_drawn_once_labelled_with_their_scenarios():
     got = sm.merge_pages({"A": [b"p0", b"p1", b"p2"], "B": [b"p0", b"q1", b"p2"], "C": [b"p0", b"p1", b"r2"]})
     assert got == [(b"p0", "all scenarios"), (b"p1", "A · C"), (b"q1", "B"), (b"p2", "A · B"), (b"r2", "C")]
     assert sm.merge_pages({"A": [b"p0"]}) == [(b"p0", "A")]
+    # C's gap output refused: A and B share the gap page, which is not "all scenarios" of the run
+    assert sm.merge_pages({"A": [b"g"], "B": [b"g"]}, ["A", "B", "C"]) == [(b"g", "A · B")]
     try:
         sm.merge_pages({"A": [b"p0"], "B": []})
         raise AssertionError("no error for scenarios with different page counts")
@@ -467,7 +471,7 @@ class GapConn(Conn):
 
     def execute_stream(self, stream):
         self.streams.append(stream.read())
-        return [Cur(SUMMARY_COLS, self.summary)]
+        return [Cur(SUMMARY_COLS, self.summary(self.streams[-1]) if callable(self.summary) else self.summary)]
 
     def cursor(self):
         conn = self
@@ -512,7 +516,9 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
     fake["snowflake.connector.util_text"].split_statements = _split
     saved = {k: sys.modules.get(k) for k in fake}
     sys.modules.update(fake)
-    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "fetch_scenario", "MAPS_DIR", "SQL07", "EDITS", "CHUNK")}
+    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "fetch_scenario", "MAPS_DIR", "SQL07", "EDITS", "CHUNK", "assemble")}
+    labels = []
+    sm.assemble = lambda path, pages: (labels.extend(l for _, l in pages), keep["assemble"](path, pages))[1]
 
     class Ctx:
         def __init__(self, conn): self.conn = conn
@@ -553,6 +559,10 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         moved = lambda name: [r if r[1] != "Ann N" or name == "CA1_R105N" else r[:3] + ("WIFI",) + r[4:] for r in ROSTER]
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", moved)
         assert rc == 0 and pdfs == {"maps.pdf": 19 + 6}, pdfs
+        # CA1_R105R's 07 refused: the 12 map pages are all three scenarios', the 7 gap pages the other two's, not "all scenarios"
+        labels.clear()
+        rc, out, files, pdfs, csvs = run(lambda sql: BAD if "CA1_R105R" in sql else GOOD, f07, "CA1_R105N,CA2_R105N,CA1_R105R")
+        assert rc == 1 and pdfs == {"maps.pdf": 19} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 7, (rc, pdfs, labels)
         rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, the maps still drawn, exit 1
         assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "dollars lost" in out, (files, out)
         rc, out, files, pdfs, csvs = run(GOOD, os.path.join(tempfile.gettempdir(), "07_does_not_exist.sql"))

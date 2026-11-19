@@ -2027,6 +2027,7 @@ single pdf? And let's stop rendering the region level maps for now just for the 
 writes one `maps.pdf` per run: the map pages, then the view D gap pages; a page that comes out as the same picture in
 several scenarios is in it once, its corner naming them ("all scenarios" when every one). The gap CSVs are one file per
 kind for the run (`gap_summary.csv`, `gap_pair.csv`, `gap_person.csv`, `gap_load.csv`, `gap_cell.csv`), each row once,
-SCENARIO `ALL` or the scenarios that share it (numbers compared to the cent); `gap_report.py` reads them back per
-scenario. Division pages only with `-Divisions`: a run is 12 map pages and 7 gap pages per scenario, before sharing.
+SCENARIO the scenarios that share it, always named (dollars compared to the cent, other numbers to 9 significant
+digits); `gap_report.py` reads them back per scenario. A gap page shared by the scenarios whose 07 output passed is
+"all scenarios" only if that is every scenario drawn. Division pages only with `-Divisions`: a run is 12 map pages and 7 gap pages per scenario, before sharing.
 
