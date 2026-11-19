@@ -603,12 +603,16 @@ GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most \
 
 # The FILL page (owner, 2026-11-18: "how do I see exactly where we need to fill to cover the all opportunity for CONUS in a single
 # view"): every channel at once, a ZIP in the colour of its unfilled class with most $; covered, overlap and held by another are
-# not fill (they are covered, or bargained) and show as NO FILL NEEDED.
-FILL_CLASSES = [("GAP (UNHELD)", "#f2b700", None, None), ("GAP (HELD TODAY)", "#f9e7a1", None, None),
-                ("OPEN SEAT UNHELD", "#9a9a9a", "#4a4a4a", "////"), ("OPEN SEAT HELD", "#d4d4d4", "#7a7a7a", "////")]
-NO_FILL = ("NO FILL NEEDED (covered, or bargained)", "#eef3ec", None, None)
-FILL_CAPTION = ("Every channel at once: a ZIP has the colour of its unfilled class (GAP or OPEN SEAT, any channel) with the most \\$MM; a ZIP whose cells are all "
-                "COVERED, OVERLAP or HELD BY ANOTHER needs no fill.  Legend: ZIPs in that colour, and the \\$MM of that class over every ZIP on this page.")
+# not fill: a ZIP with no unfilled $ is TO BARGAIN when it has OVERLAP or HELD BY ANOTHER $, else COVERED.  Colours: the Corebridge
+# brand palette (pm/docs/brand.md, Brand Guidelines v2.1: secondary colours are for data visualisation; "use color to clarify, not
+# decorate"): the fill classes strong (violets: gaps, oranges: open seats), the rest quiet (Blue 25%, 5% Black) (owner, 2026-11-18).
+FILL_CLASSES = [("GAP (UNHELD)", "#4F00CA", None, None), ("GAP (HELD TODAY)", "#C053EF", None, None),
+                ("OPEN SEAT UNHELD", "#EC602F", None, None), ("OPEN SEAT HELD", "#FA9454", None, None)]
+BARGAIN = ("TO BARGAIN (overlap or held by another, no fill)", "#D0EAFD", None, None)
+NO_FILL = ("COVERED (every cell, no fill)", "#F2F2F2", None, None)
+FILL_CAPTION = ("Every channel at once: a ZIP has the colour of its unfilled class (GAP or OPEN SEAT, any channel) with the most \\$MM; a ZIP with no unfilled \\$ is "
+                "TO BARGAIN if any cell is OVERLAP or HELD BY ANOTHER, else COVERED.\nLegend: ZIPs in that colour, the \\$MM of that class on this page; "
+                "the CONUS page adds the unfilled \\$MM not on the map (no state, or no ZCTA shape).")
 
 
 USD_PER_MM = 1e6   # MM_OPP is in dollars despite its name (04's result, e.g. 41,337,760,848.76 for $41.3B): the pages show $MM
@@ -633,13 +637,17 @@ def gap_prepare(cell, pair, names):
             z[1][cls] = z[1].get(cls, 0.0) + mm
     zips = {k: {z: (st, max(order, key=lambda c: d.get(c, -1.0)), sum(d.values())) for z, (st, d) in v.items()} for k, v in by_zip.items() if k[1] != "FILL"}
     fill_order = [c for c, *_ in FILL_CLASSES]
-    fill = {est: {z: (st, max(fill_order, key=lambda c: d.get(c, -1.0)) if any(d.get(c, 0) > 0 for c in fill_order) else NO_FILL[0], d)
-                  for z, (st, d) in v.items()} for (est, k), v in by_zip.items() if k == "FILL"}
+    def fill_class(d):
+        if any(d.get(c, 0) > 0 for c in fill_order):
+            return max(fill_order, key=lambda c: d.get(c, -1.0))
+        return BARGAIN[0] if d.get("OVERLAP", 0) > 0 or d.get("HELD BY ANOTHER", 0) > 0 else NO_FILL[0]
+    fill = {est: {z: (st, fill_class(d), d) for z, (st, d) in v.items()} for (est, k), v in by_zip.items() if k == "FILL"}
+    fill_total = {est: sum(v for (e, _, c), v in table.items() if e == est and c in fill_order) for est in {e for e, _, _ in table}}
     who = lambda k: f"{k} {names[k]}" if k in names else k
     pairs = {}
     for r in (dict(zip(pair[0], x)) for x in pair[1]):
         pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0) / USD_PER_MM))
-    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, fill=fill, table=table, names=dict(names), load=[],
+    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, fill=fill, fill_total=fill_total, table=table, names=dict(names), load=[],
                            assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
                            pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})
 
@@ -660,16 +668,19 @@ def draw_fill_page(gd, geo, title, g, est):
             for c, v in d.items():
                 mm[c] += v
     handles = []
-    for cls, col, edge, hatch in FILL_CLASSES + [NO_FILL]:
+    for cls, col, edge, hatch in FILL_CLASSES + [BARGAIN, NO_FILL]:
         paths = [path_of(geo, geo.zips[z]) for z in by[cls]]
         if paths:
             c = PathCollection(paths, facecolor=col, edgecolor=edge or col, linewidth=0 if hatch else 0.1, hatch=hatch, zorder=1)
             c.set_gid(cls)
             ax.add_collection(c)
-        dollars = f" · ${mm[cls]:,.1f} MM" if cls != NO_FILL[0] else ""
+        dollars = "" if cls in (NO_FILL[0], BARGAIN[0]) else f" · ${mm[cls]:,.1f} MM"
         handles.append(Patch(facecolor=col, edgecolor=edge or "#202020", hatch=hatch, label=f"{cls}\n{len(by[cls]):,} ZIPs{dollars}"))
     state_lines_and_labels(ax, geo, vis, [])
     total = sum(mm[c] for c, *_ in FILL_CLASSES)
+    if g.name == "CONUS":                                  # the unfilled $ the map cannot show, so the page ties to gap_summary
+        off = gd.fill_total.get(est, 0.0) - total
+        handles.append(Patch(facecolor="white", edgecolor="white", label=f"not on the map (no state, or no ZCTA shape)\n${off:,.1f} MM unfilled"))
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.752, 0.95), fontsize=9, frameon=False, handlelength=1.4, borderaxespad=0,
                labelspacing=0.9, title=f"where to fill, every channel · {est} estimate · {g.name}\nunfilled ${total:,.1f} MM", title_fontsize=9, alignment="left")
     fig.suptitle(title, fontsize=17, fontweight="bold", y=0.975)

@@ -402,10 +402,17 @@ def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titl
         mine = [r for r in fake_cells() if r[1] == est.split()[0] and r[3] in states]
         for cls in [c for c, *_ in sm.FILL_CLASSES]:
             assert f"{cls}\n" in legend and f"${sum(r[5] for r in mine if r[8] == cls) / USD:,.1f} MM" in legend.split(cls + "\n")[1].split("\n")[0], (title, cls, legend)
-        n = sum(int(t.get_text().split("\n")[1].split()[0].replace(",", "")) for t in fig.legends[0].get_texts())
+        n = sum(int(t.get_text().split("\n")[1].split()[0].replace(",", "")) for t in fig.legends[0].get_texts() if " ZIPs" in t.get_text())
         assert n == len({r[2] for r in mine}), (title, n)                  # every ZIP once, in one colour
+        assert ("not on the map" in legend) == (gname == "CONUS") and (gname != "CONUS" or "$0.0 MM unfilled" in legend), (title, legend)
     assert len(fills) == 20
     assert gd.fill["LOW"]["BA1"][1] == "OPEN SEAT HELD" and gd.fill["LOW"]["AA1"][1] == "GAP (UNHELD)"   # AA1: GAP 5.0 beats OVERLAP 2.0
+    # no unfilled $: TO BARGAIN with OVERLAP or HELD BY ANOTHER $, else COVERED
+    kinds = {cls: {r[2] for r in fake_cells() if r[1] == "LOW" and r[8] == cls} for cls in CLASSES}
+    for z, (_, cls, d) in gd.fill["LOW"].items():
+        if not any(d.get(c, 0) > 0 for c, *_ in sm.FILL_CLASSES):
+            assert cls == (sm.BARGAIN[0] if d.get("OVERLAP", 0) > 0 or d.get("HELD BY ANOTHER", 0) > 0 else sm.NO_FILL[0]), (z, cls, d)
+    assert {sm.BARGAIN[0], sm.NO_FILL[0]} <= {c for _, c, _ in gd.fill["LOW"].values()}
     for title, fig in got[1:]:
         if " · FILL · " in title:
             continue
@@ -458,6 +465,20 @@ def test_identical_pages_are_drawn_once_labelled_with_their_scenarios():
         raise AssertionError("no error for scenarios with different page counts")
     except RuntimeError:
         pass
+
+
+def test_the_conus_fill_page_ties_to_every_unfilled_dollar():
+    geo = fake_geo()
+    sm._init(geo)
+    off = [("S", "LOW", "ZZ9", None, "D", 3.0 * USD, "OPEN", None, "OPEN SEAT UNHELD", 0, None),          # no state
+           ("S", "LOW", "AA9", "AA", "D", 2.0 * USD, "REGIONAL", "R3", "GAP (HELD TODAY)", 0, None)]     # no ZCTA shape
+    gd = sm.gap_prepare((CELL_COLS, fake_cells() + off), (PAIR_COLS, []), NAMES)
+    fig = sm.draw_fill_page(gd, geo, "t", geo.geographies[0], "LOW")
+    legend = " ".join(t.get_text() for t in fig.legends[0].get_texts())
+    assert "not on the map (no state, or no ZCTA shape)\n$5.0 MM unfilled" in legend, legend
+    on_map = sum(float(t.get_text().split("$")[1].split()[0].replace(",", "")) for t in fig.legends[0].get_texts()
+                 if t.get_text().split("\n")[0] in [c for c, *_ in sm.FILL_CLASSES])
+    assert abs(on_map + 5.0 - gd.fill_total["LOW"]) < 1e-9, (on_map, gd.fill_total["LOW"])
 
 
 def test_load_is_dollars_against_the_area_adjusted_expectation():

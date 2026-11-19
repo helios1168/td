@@ -2069,3 +2069,14 @@ HELD), a ZIP whose cells are all COVERED, OVERLAP or HELD BY ANOTHER as NO FILL 
 exact $ over the page's ZIPs and the unfilled total. Also fixed: the gap pages' captions had two "$" and matplotlib set
 the text between them as maths (garbled); escaped.
 
+### 2026-11-18: FILL page in brand colours; covered and to-bargain apart; off-map dollars
+
+Owner, 2026-11-18: "We need to user better colors for the combined view map. Let's leverage the brand colors found in the
+pm project" and "are we absolutely sure that the no fill needed zips have all of their opportunity covered across all
+channels?" Colours from `pm/docs/brand.md` (Brand Guidelines v2.1 wins there; secondary colours are for data
+visualisation): GAP (UNHELD) Violet #4F00CA, GAP (HELD TODAY) Orchid #C053EF, OPEN SEAT UNHELD Dark Orange #EC602F,
+OPEN SEAT HELD Orange #FA9454, TO BARGAIN Blue 25% #D0EAFD, COVERED 5% Black #F2F2F2; no hatching. "No fill needed"
+was true (a ZIP with any unfilled $ takes a fill colour) but not "covered": it held OVERLAP and HELD BY ANOTHER too, so it
+is now TO BARGAIN (no unfilled $, some overlap or held by another) and COVERED (every cell covered). The CONUS page adds
+the unfilled $ not on the map (cells with no state, ZIPs with no ZCTA shape), so the page ties to gap_summary.
+
