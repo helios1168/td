@@ -2106,3 +2106,12 @@ reserves cannot all be met, nothing clipped. Reason: the 2026-09-13 claims-centr
 MATH_REVIEW.tex:44, IMPLEMENTATION_PLAN.md:83), protecting incumbents' producing books from displacement; its alpha (to
 0.95) and floor made every edge infeasible against c1 = 0.70 (MATH_REVIEW.md 6.4), so alpha <= c1 and no floor here.
 
+### 2026-11-19: fixed annuity out by default (reverses 2026-10-26)
+
+Owner, 2026-11-19: "are we able to filter out opportunity associated with "fixed" business?", "can we easily integrate
+in the code a way to exclude or include fixed", then "default is exclude". This replaces "Fixed annuity is in scope,
+both sources (owner, 2026-10-26)" for the shortlist work: 04 (opportunity and main-map sales) and 08 (sales in the seat
+ranking) carry `SET exclude_products = 'FIXED';` (PRODUCT_V2, the one product map of 2026-10-26: FIXED, INDEX, RILA,
+IOVA, VARIABLE); `scenario_maps.ps1 -IncludeFixed` runs with every product. Every number reported before this entry
+includes fixed (e.g. main map $106.56B CRBG, $104.68B EQH; the gaps, loads, seat ranks and draft of 2026-11-18/19).
+
