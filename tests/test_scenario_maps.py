@@ -73,6 +73,34 @@ def test_scenario_sql_sets_the_scenario_and_splices_the_edits():
             pass
 
 
+def test_products_sql_replaces_the_one_line_in_04_and_08_and_refuses_a_bad_value():
+    sql = "SET scenario = '';\nSET exclude_products = 'FIXED';\nx\n"
+    assert "SET exclude_products = '';" in sm.products_sql(sql, ())
+    assert "SET exclude_products = 'INDEX RILA';" in sm.products_sql(sql, ("rila  index", "RILA"))      # upper case, sorted, once each
+    assert sm.products_sql(sql, ("FIXED",)) == sql and sm.product_list(["fixed", "index  rila"]) == ("FIXED", "INDEX", "RILA")
+    for bad in ("FIXED'; drop", "FIXED,INDEX", "FIXED_X", "é"):
+        try:
+            sm.products_sql(sql, (bad,))
+            raise AssertionError(f"no error for {bad!r}")
+        except SystemExit as e:
+            assert "letters, digits and spaces only" in str(e), e
+    for none in ("SET scenario = '';\n", sql + sql):
+        try:
+            sm.products_sql(none, ())
+            raise AssertionError("no error without exactly one line")
+        except SystemExit as e:
+            assert "needs exactly 1" in str(e), e
+    for name in ("04_assigned_coverage.sql", "08_seat_fit.sql"):                  # the real files: exactly one line, FIXED by default
+        real = (ROOT / "tools" / "snowflake" / name).read_text(encoding="utf-8")
+        assert "SET exclude_products = 'FIXED';" in real and sm.products_sql(real, ("FIXED",)) == real, name
+        assert "SET exclude_products = '';" in sm.products_sql(real, ())
+
+
+def test_the_run_folder_suffix_and_the_text_say_which_products():
+    assert [sm.run_suffix(x) for x in ((), ("FIXED",), ("INDEX",), ("FIXED", "INDEX"))] == ["-allproducts", "", "-exINDEX", "-exFIXED-INDEX"]
+    assert [sm.products_text(x) for x in ((), ("FIXED",), ("FIXED", "INDEX"))] == ["all products", "excluding FIXED", "excluding FIXED, INDEX"]
+
+
 class Cur:
     def __init__(self, cols=None, rows=()):
         self.description, self.rows = ([(c,) for c in cols] if cols else None), list(rows)
@@ -385,6 +413,13 @@ def test_a_zip_has_the_class_of_its_cells_with_the_most_dollars_and_names_come_f
         raise AssertionError("no error for an unknown class")
     except SystemExit:
         pass
+
+
+def test_the_gap_summary_page_says_which_products():
+    for text in ("excluding FIXED", "all products"):
+        gd = _gd()
+        gd.products = text
+        assert sm.draw_gap_summary("S", gd).texts[-1].get_text().splitlines()[0] == f"Products: {text}"
 
 
 def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titles_and_legend_sums():
@@ -716,7 +751,7 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         def __enter__(self): return self.conn
         def __exit__(self, *a): return False
 
-    def run(summary, sql07, scen="CA1_R105N", roster=None, sql08=os.path.join(tempfile.gettempdir(), "08_does_not_exist.sql"), seat=None):
+    def run(summary, sql07, scen="CA1_R105N", roster=None, sql08=os.path.join(tempfile.gettempdir(), "08_does_not_exist.sql"), seat=None, extra=()):
         with tempfile.TemporaryDirectory() as d:
             sm.MAPS_DIR, sm.SQL07, sm.SQL08, sm.EDITS = d, sql07, sql08, os.path.join(d, "none.sql")
             sm.connect = lambda: Ctx(GapConn(summary, seat))
@@ -725,11 +760,12 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
             buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
             old, sys.stdout = sys.stdout, buf
             try:
-                rc = sm.main(["--scenario", scen, "--jobs", "1"])
+                rc = sm.main(["--scenario", scen, "--jobs", "1", *extra])
             finally:
                 sys.stdout = old
             files = sorted(f for _, _, fs in os.walk(d) for f in fs)
             run_dir = next(os.path.join(d, x) for x in os.listdir(d) if os.path.isdir(os.path.join(d, x)))
+            run.folder = os.path.basename(run_dir)
             pdfs = {f: len(sm.re.findall(rb"/Type\s*/Page[^s]", open(os.path.join(run_dir, f), "rb").read())) for f in files if f.endswith(".pdf")}
             csv_rows = {f: len(open(os.path.join(run_dir, f), encoding="utf-8").read().splitlines()) for f in files if f.endswith(".csv")}
             return rc, buf.getvalue(), files, pdfs, csv_rows
@@ -740,13 +776,23 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
             f.write("SET scenario    = '';\nselect 1;\n")
         f08 = os.path.join(tempfile.gettempdir(), "08_fake_seat.sql")
         with open(f08, "w") as f:
-            f.write("SET scenario    = '';\nselect 'fake 08';\n")
+            f.write("SET scenario    = '';\nSET exclude_products = 'FIXED';\nselect 'fake 08';\n")
         gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
         rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
         assert rc == 0 and files == sorted(gap_files + ["maps.pdf"]), files
         assert pdfs == {"maps.pdf": 12 + 11} and "safe to send to an agent" in out, (pdfs, out)
         assert out.count("08_seat_fit.sql is not in this checkout") == 1 and "seat_fit" not in out.replace("08_seat_fit.sql", "")   # no 08: no seat file, a page saying so
         assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)
+        assert out.startswith("products: excluding FIXED") and "(excluding FIXED)" in out and not run.folder.endswith(("-allproducts", "FIXED")), (out, run.folder)
+        rc, out, files, pdfs, csvs = run(GOOD, f07, extra=["--include-all-products"])      # no product left out: the folder says so
+        assert rc == 0 and out.startswith("products: all products") and run.folder.endswith("-allproducts"), (out, run.folder)
+        rc, out, files, pdfs, csvs = run(GOOD, f07, extra=["--exclude-products", "index", "--exclude-products", "rila VARIABLE"])
+        assert rc == 0 and "products: excluding INDEX, RILA, VARIABLE" in out and run.folder.endswith("-exINDEX-RILA-VARIABLE"), (out, run.folder)
+        try:
+            run(GOOD, f07, extra=["--include-all-products", "--exclude-products", "INDEX"])
+            raise AssertionError("both switches were accepted")
+        except SystemExit:
+            pass
         # two scenarios the same: every page and row once
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N")
         assert rc == 0 and pdfs == {"maps.pdf": 23} and csvs["gap_cell.csv"] == 1 + len(fake_cells()), (pdfs, csvs)

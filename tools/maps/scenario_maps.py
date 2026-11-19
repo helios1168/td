@@ -3,6 +3,11 @@
 
     .\\tools\\maps\\scenario_maps.ps1 -All          (or -Scenario CA1_R105N,CA2_R105N, or -List; add -Divisions for the division pages)
 
+FIXED annuity is left out of the opportunity and the sales by default (owner, 2026-11-19: "default is exclude"): 04 and 08 get their
+`SET exclude_products` line replaced with the run's list.  -IncludeFixed (--include-all-products) leaves it empty and adds `-allproducts`
+to the run folder's name; --exclude-products INDEX RILA (repeatable) leaves out those PRODUCT_V2 values instead and adds `-exINDEX-RILA`.
+The summary line and the gap summary page say "excluding FIXED" or "all products".
+
 Nothing is repeated across scenarios (owner, 2026-11-18: "we don't ever duplicate something"): a page that comes out the same
 in several scenarios is in the PDF once, its corner naming them ("all scenarios" when it is every one drawn), and each gap CSV
 holds every scenario with each row once, SCENARIO the scenarios that have the row (dollars the same to the cent, other numbers
@@ -123,6 +128,36 @@ def list_scenarios(sql):
 
 SET_RE = re.compile(r"(?im)^(\s*SET\s+scenario\s*=\s*)'[^']*'\s*;")
 EDITS_RE = re.compile(r"(?s)(--owner edits: begin\r?\n).*?(--owner edits: end)")
+
+
+PRODUCTS_RE = re.compile(r"(?im)^(\s*SET\s+exclude_products\s*=\s*)'[^']*'\s*;")
+DEFAULT_EXCLUDE = ("FIXED",)
+
+
+def product_list(values):
+    """The PRODUCT_V2 values of `values` (strings, each possibly several words), upper case, sorted, once each."""
+    text = " ".join(values)
+    if not re.fullmatch(r"[A-Za-z0-9 ]*", text):
+        raise SystemExit(f"exclude products {text!r}: letters, digits and spaces only")
+    return tuple(sorted(set(text.upper().split())))
+
+
+def products_sql(sql, exclude):
+    """04 or 08 with `SET exclude_products = '<list>';`, the list being `exclude` (a tuple of PRODUCT_V2 values, empty for all)."""
+    exclude = product_list(exclude)
+    out, n = PRODUCTS_RE.subn(lambda m: f"{m.group(1)}'{' '.join(exclude)}';", sql)
+    if n != 1:
+        raise SystemExit(f"the SQL has {n} lines `SET exclude_products = '...';` (needs exactly 1)")
+    return out
+
+
+def products_text(exclude):
+    return "excluding " + ", ".join(exclude) if exclude else "all products"
+
+
+def run_suffix(exclude):
+    """The run folder's suffix: none for the default (FIXED left out), -allproducts for none left out, else -ex<values>."""
+    return "" if tuple(exclude) == DEFAULT_EXCLUDE else "-ex" + "-".join(exclude) if exclude else "-allproducts"
 
 
 def scenario_sql(sql03, scenario, edits=None):
@@ -827,6 +862,7 @@ def draw_gap_summary(scenario, gd):
             head = f"{'channel':10}{'person':<34}{'area km2':>12}{'$MM':>12}{'expect $MM':>12}{'load':>8}"
             lines += [f"{est} estimate: load = $ / expected $ for the area (base x (area/median)^{BETA}); over 1: heavy for its area", head]
             lines += [fmt(r) for r in load[:8]] + ["  ..."] + [fmt(r) for r in load[-8:]] + [""]
+    lines = [f"Products: {getattr(gd, 'products', 'not recorded')}", ""] + lines
     fig.suptitle("D overlaps and gaps · summary", fontsize=17, fontweight="bold", y=0.975)
     fig.text(0.02, 0.93, "\n".join(lines), family="monospace", fontsize=min(9.0, 560 / (1.3 * len(lines))), va="top")
     return fig
@@ -1140,6 +1176,9 @@ def main(argv=None):
     ap.add_argument("--all", action="store_true", help="draw every scenario")
     ap.add_argument("--divisions", action="store_true", help="draw the 9 census-division pages too (off: CONUS only, for speed)")
     ap.add_argument("--draft", metavar="FOLDER", help="draw the draft assignment of draft_assign.py's folder (no 03, 04 or 07; --scenario optional)")
+    ap.add_argument("--exclude-products", action="append", default=[], metavar="PRODUCT",
+                    help="PRODUCT_V2 values left out of the opportunity and sales (repeatable or space-separated; default FIXED)")
+    ap.add_argument("--include-all-products", action="store_true", help="leave no product out (the default leaves FIXED out)")
     ap.add_argument("--jobs", type=int, help="drawing processes (default: the CPUs less one, at most 8); 1 draws in this process")
     args = ap.parse_args(argv)
     if args.draft:
@@ -1157,12 +1196,17 @@ def main(argv=None):
         ap.error("03_assignments.sql lists no scenario (no scenario column in its key edits)")
     if set(chosen) - set(names):
         ap.error(f"unknown scenario {sorted(set(chosen) - set(names))}; 03 has {names}")
+    if args.include_all_products and args.exclude_products:
+        ap.error("--include-all-products and --exclude-products are opposites")
+    exclude = () if args.include_all_products else product_list(args.exclude_products) or DEFAULT_EXCLUDE
+    products = products_text(exclude)
+    print(f"products: {products}")
     with open(SQL04, encoding="utf-8") as f:
-        sql04 = f.read()
+        sql04 = products_sql(f.read(), exclude)
     sql08 = None
     if os.path.exists(SQL08):
         with open(SQL08, encoding="utf-8") as f:
-            sql08 = f.read()
+            sql08 = products_sql(f.read(), exclude)
     else:
         print("08_seat_fit.sql is not in this checkout: no open-seat ranking")
     sql07 = None
@@ -1179,7 +1223,7 @@ def main(argv=None):
     else:
         print("03: no data/safe/03_edits.sql, so the scenario's key edits only")
     from snowflake.connector.util_text import split_statements
-    out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M"))
+    out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M") + run_suffix(exclude))
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
     send = []
@@ -1217,6 +1261,7 @@ def main(argv=None):
             if gap:
                 gap["load"] = gap_load(name, gap, {s: g.area / 1e6 for s, g in geo.states.items()})
                 gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
+                gd.products = products
                 gd.load = [dict(zip(gap["load"][0], r)) for r in gap["load"][1]]
                 gd.seat_pages = bool(sql08)         # 08 in the run: every scenario has the seat pages (a page saying so when its output was refused)
                 if seat:
@@ -1248,7 +1293,7 @@ def main(argv=None):
         screen.append(names_csv)
     if pool:
         pool.shutdown()
-    print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
+    print(f"done in {time.time() - t0:.0f} s ({products})" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
     print(f"maps folder: {os.path.abspath(out)}")
     if send:
         print("safe to send to an agent (holder keys R<n> and counts only, no names):")

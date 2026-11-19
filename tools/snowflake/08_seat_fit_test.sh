@@ -7,10 +7,13 @@
 # z0011 20 / Rex (B) z0023 60 / 'OPEN' seller z0001 20 / blank seller z0002 5 / a seller with no key z0020 25.  Not counted: an IFA row and a 0 row.
 # So T z0001 140, z0002 35, z0011 20, z0020 125, z0021 50, z0022 200, z0023 360.  A second run moves Bob's z0001 sale to Ann (the DNASH order flips), a third adds
 # a kept person and a holder with no key and a seat nobody can take.  Mutations (c2, lambda, the share rule removed, the DNASH order reversed) must each fail the first checks.
+# exclude_products (04's switch, FIXED by default): the product of every sale is INDEX but Mia's is NULL and the blank seller's is '' (kept by every list), and one
+# FIXED sale of Ann's (10 in z0001) is left out by the default.  A run with '' counts it: S(Ann, z0001) 50, T(z0001) 150, so the ME seat's U moves by c1 * 10 = 7 for Ann
+# and c2 * 10 = 2.8 for everyone else; 'RILA  VARIABLE' (a double space, no such product) is the same as ''.  Mutations (the filter off, the blank guard off) must fail.
 # Prints "08_seat_fit_test: ok" or stops at the first failed check.  Run from anywhere: sh 08_seat_fit_test.sh
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-# the script as DuckDB runs it ($1 = extra SQL before it, run in the same database)
+# the script as DuckDB runs it ($1 = extra SQL before it, run in the same database; $2 = the exclude_products list, FIXED when not given)
 emit() {
 cat <<'SQL'
 ATTACH ':memory:' AS ssdb_integration; CREATE SCHEMA ssdb_integration.lr_strategy;
@@ -28,11 +31,14 @@ INSERT INTO ssdb_integration.lr_strategy.adj_t VALUES ('ME','NH'), ('NH','ME'), 
 CREATE TABLE ssdb_integration.lr_strategy.piece_t (source TEXT, wholesaler TEXT, kept TEXT, role TEXT, zip_code TEXT, state TEXT, terr_channel TEXT, piece_in_role INTEGER);
 INSERT INTO ssdb_integration.lr_strategy.piece_t VALUES
   ('A','Bob Zzq','Y','WH','z0001','ME','WH',1), ('A','BOB  zzq ','Y','WH','z0002','ME','WH',1), ('A','Nick Zzq','','WIFI','z0002','ME','FI',0), ('A','Ann Zzq','Y','NATIONAL','z0011','RI','WH',1);
-CREATE TABLE ssdb_integration.lr_strategy.union_t (source TEXT, zip_code TEXT, channel TEXT, sales_wholesaler TEXT, actual_sales_amount DOUBLE);
-INSERT INTO ssdb_integration.lr_strategy.union_t VALUES
+CREATE TABLE ssdb_integration.lr_strategy.union_t (source TEXT, zip_code TEXT, channel TEXT, sales_wholesaler TEXT, actual_sales_amount DOUBLE, product_v2 TEXT DEFAULT 'INDEX');
+INSERT INTO ssdb_integration.lr_strategy.union_t (source, zip_code, channel, sales_wholesaler, actual_sales_amount) VALUES
   ('A','z0020','National','Ann Zzq',100), ('A','z0021','WH','ann  zzq ',50), ('A','z0001','FI','Ann Zzq',40), ('A','z0022','WH','Bob Zzq',200), ('A','z0001','FI','Bob Zzq',10),
   ('A','z0001','FI','Nick Zzq',70), ('A','z0002','FI','Nick Zzq',30), ('B','z0023','National','Cy Zzq',300), ('B','z0011','FI','Cy Zzq',20), ('B','z0023','National','Rex Zzq',60),
   ('A','z0001','FI',' open',20), ('A','z0002','FI','  ',5), ('A','z0020','WH','Mia Zzq',25), ('A','z0001','IFA','Ann Zzq',1000), ('A','z0002','FI','Ann Zzq',0);
+UPDATE ssdb_integration.lr_strategy.union_t SET product_v2 = NULL WHERE sales_wholesaler = 'Mia Zzq';
+UPDATE ssdb_integration.lr_strategy.union_t SET product_v2 = '' WHERE sales_wholesaler = '  ';
+INSERT INTO ssdb_integration.lr_strategy.union_t VALUES ('A','z0001','FI','Ann Zzq',10,'FIXED');
 -- the gap table: S1 is the scenario, S2 a noise scenario that must not show (an extra seat ZZ and a book for Ann)
 CREATE TABLE ssdb_integration.lr_strategy.gap_t (scenario TEXT, est_source TEXT, zip_code TEXT, state TEXT, new_dist TEXT, mm_opp DOUBLE, channel TEXT,
   assigned TEXT, class TEXT, n_holders INTEGER, holders TEXT);
@@ -47,7 +53,7 @@ INSERT INTO ssdb_integration.lr_strategy.gap_t VALUES
   ('S2','E1','z0050','ZZ','FI',999,'OPEN',NULL,'OPEN SEAT UNHELD',0,NULL), ('S2','E1','z0020','NH','WELLS FI',7777,'NATIONAL','R10','COVERED',1,'R10');
 SQL
 echo "$1"
-sed -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
+sed -e "s/[\$]exclude_products/'${2-FIXED}'/g" -e "s/\\\\\\\\s+', ' ')/\\\\s+', ' ', 'g')/g" -e '/^use /d' -e '/^SET /d' -e 's/TEMPORARY TABLE/TABLE/' \
     -e "s/^WITH\$/CREATE TABLE full_result AS WITH/" -e "s/[\$]scenario/'  S1 '/g" \
     -e 's/[$]c1/0.70/g' -e 's/[$]c2/0.28/g' -e 's/[$]lam/0.30/g' \
     -e 's/IDENTIFIER(\$gap_tbl)/ssdb_integration.lr_strategy.gap_t/g' \
@@ -161,6 +167,27 @@ SELECT
 SELECT '08_seat_fit_test: tie run ok';
 SQL
 } | duckdb -bail -noheader -list
+# the FIXED sale counted: the ME seat's U (ranks as before: Bob ln(1 + 104/167) = 0.4841 still ahead of Ann ln(1 + 120.8/202) = 0.4686, in E2 Ann ahead), g unchanged
+checks_all() {
+cat <<'SQL'
+SELECT
+ chk('FIXED counted: U of the ME seat',
+     (SELECT string_agg(est_source || ' ' || kind || ' ' || holder || ' ' || CAST(round(u, 1) AS VARCHAR), ' / ' ORDER BY est_source, kind, holder)
+      FROM ssdb_integration.lr_strategy.td_seat_fit WHERE seat = 'ME'),
+     'E1 HOLDER R20 104.0 / E1 HOLDER R45 141.8 / E1 NEIGHBOUR R10 120.8 / E1 NEIGHBOUR R20 104.0 / E1 NEIGHBOUR R40 99.8'
+     || ' / E2 HOLDER R20 49.2 / E2 HOLDER R45 74.4 / E2 NEIGHBOUR R10 66.0 / E2 NEIGHBOUR R20 49.2 / E2 NEIGHBOUR R40 45.0'),
+ chk('FIXED counted: the RI seat does not move',
+     (SELECT string_agg(kind || ' ' || holder || ' ' || CAST(round(u, 1) AS VARCHAR), ' / ' ORDER BY kind, holder) FROM ssdb_integration.lr_strategy.td_seat_fit WHERE seat = 'RI'),
+     'HOLDER R10 14.6 / NEIGHBOUR R30 23.0 / NEIGHBOUR R5 14.6'),
+ chk('FIXED counted: g does not move (Ann 202, Bob 167)',
+     (SELECT string_agg(holder || ' ' || CAST(round(g, 1) AS VARCHAR), ' / ' ORDER BY holder) FROM ssdb_integration.lr_strategy.td_seat_fit WHERE est_source = 'E1' AND seat = 'ME' AND kind = 'NEIGHBOUR'),
+     'R10 202.0 / R20 167.0 / R40 0.0'),
+ chk('FIXED counted: ranks', (SELECT string_agg(est_source || ':' || holder || ':' || rank, ' ' ORDER BY est_source, rank) FROM ssdb_integration.lr_strategy.td_seat_fit WHERE seat = 'ME' AND kind = 'NEIGHBOUR'),
+     'E1:R20:1 E1:R10:2 E1:R40:3 E2:R10:1 E2:R20:2 E2:R40:3');
+SQL
+}
+{ emit '' ''; checks_all; echo "SELECT '08_seat_fit_test: include-all run ok';"; } | duckdb -bail -noheader -list
+{ emit '' 'RILA  VARIABLE'; checks_all; echo "SELECT '08_seat_fit_test: double-space run ok';"; } | duckdb -bail -noheader -list
 # mutations: each broken script must fail the first run's checks (a "got ... want" error)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -168,6 +195,22 @@ sed -e 's/[$]c2/0/g' "$here/08_seat_fit.sql" > "$tmp/c2.sql"
 sed -e 's/[$]lam/0/g' "$here/08_seat_fit.sql" > "$tmp/lam.sql"
 sed -e "s/WHEN g.class = 'COVERED' THEN CASE WHEN g.holders = p.k THEN 1 ELSE 0 END //" "$here/08_seat_fit.sql" > "$tmp/share.sql"
 sed -e "s/ORDER BY CASE WHEN x.kind = 'NEIGHBOUR' THEN x.dnash END DESC/ORDER BY CASE WHEN x.kind = 'NEIGHBOUR' THEN x.dnash END ASC/" "$here/08_seat_fit.sql" > "$tmp/asc.sql"
+# the filter off (the default run must fail), the blank-product guard off (the double-space run must fail)
+cut() { awk '/^ +AND .*[$]exclude_products/ { sub(/AND \(\(.*= ..\)/, "AND 1 = 1") } { print }' "$here/08_seat_fit.sql"; }
+cut > "$tmp/nofilter.sql"
+sed -e "s/ OR COALESCE(TRIM(product_v2), '') = ''//" "$here/08_seat_fit.sql" > "$tmp/noguard.sql"
+for v in nofilter noguard; do
+  cmp -s "$tmp/$v.sql" "$here/08_seat_fit.sql" && { echo "08_seat_fit_test: mutation $v changed nothing"; exit 1; }
+  bad=0
+  for ex in FIXED 'RILA  VARIABLE'; do
+    if { SQL08="$tmp/$v.sql" emit '' "$ex"; if [ "$ex" = FIXED ]; then checks_base; else checks_all; fi; } | duckdb -bail -noheader -list > "$tmp/out" 2>&1; then :; else
+      grep -q ': got ' "$tmp/out" || { echo "08_seat_fit_test: mutation $v failed for another reason:"; cat "$tmp/out"; exit 1; }
+      bad=1
+    fi
+  done
+  [ $bad = 1 ] || { echo "08_seat_fit_test: mutation $v was not flagged"; exit 1; }
+  echo "08_seat_fit_test: mutation $v flagged"
+done
 for v in c2 lam share asc; do
   cmp -s "$tmp/$v.sql" "$here/08_seat_fit.sql" && { echo "08_seat_fit_test: mutation $v changed nothing"; exit 1; }
   if { SQL08="$tmp/$v.sql" emit ''; checks_base; } | duckdb -bail -noheader -list > "$tmp/out" 2>&1; then

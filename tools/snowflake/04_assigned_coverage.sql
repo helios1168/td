@@ -3,7 +3,10 @@ use database ssdb_Integration;
 use schema lr_strategy;
 
 --The current state, labelled with the assignments (the roster 03_assignments.sql builds).  One Run All file.  It builds
---four tables for the maps and ends on one result of checks.  Set the three table names below, nothing else.
+--four tables for the maps and ends on one result of checks.  Set the three table names below and, to change the product scope, EXCLUDE_PRODUCTS.
+--EXCLUDE_PRODUCTS is a space-separated list of PRODUCT_V2 values (FIXED, INDEX, RILA, IOVA, VARIABLE) left out of the main map's opportunity rows
+--and its sales rows, FIXED by default (owner, 2026-11-19: "default is exclude"), empty for every product.  A row with a blank or NULL product is
+--always kept.  The maps script replaces that SET line (-IncludeFixed leaves it empty); 08_seat_fit.sql takes the same value for its sales.
 --NOTHING HERE CHANGES A TERRITORY (owner, 2026-11-16: "we are simply looking at the current state, with the additional
 --assignments data").  A wholesaler's territory is their rows of the territories table as they are, one piece per ZIP x
 --territory channel.  A cell's holder is the holder of its SOURCE x ZIP x DIST_CH there (the union's OLD_TERR_WHOLESALER
@@ -33,6 +36,7 @@ use schema lr_strategy;
 --  in role for a WIFI or FI wholesaler.)
 --  TD_MAP_ZIP         ZIP x role: N_ROLE_HOLDERS, N_ROLE_FIRMS, the overlap layer for the maps.  No names.
 --Result: SECTION, SOURCE, K1, K2, N, MM_OPP, PCT, MUST_BE_ZERO.  No wholesaler name and no sales dollar: it can be sent back.
+--  SETTINGS     K1 EXCLUDE_PRODUCTS, K2 the list ((none) when empty): which way the run went.
 --  ROSTER       K1 the count's name.  MUST_BE_ZERO = 1 rows must have N 0 before the tables are used.
 --  ROLES        K1 role.  N kept wholesalers.
 --  OPPORTUNITY  SOURCE the estimate, K1 NEW_DIST, K2 holder status.  N cells, MM_OPP.  Per estimate the rows are the main map.
@@ -47,6 +51,7 @@ use schema lr_strategy;
 SET union_tbl  = 'ssdb_integration.lr_strategy.sales_opp_2026_11_9';
 SET terr_tbl   = 'ssdb_integration.lr_strategy.territories_tableau';
 SET assign_tbl = 'ssdb_integration.lr_strategy.td_assignments';
+SET exclude_products = 'FIXED';
 
 --1 the roster, one row per SOURCE x normalized name
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_m_roster AS
@@ -81,6 +86,7 @@ FROM (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, MIN(NULL
              COALESCE(UPPER(TRIM(new_terr_channel)), '') AS ntc, MAX(CASE WHEN mm_opp > 0 THEN mm_opp END) AS opp
       FROM IDENTIFIER($union_tbl)
       WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI')
+        AND ((' ' || UPPER(TRIM($exclude_products)) || ' ') NOT LIKE ('% ' || COALESCE(UPPER(TRIM(product_v2)), '') || ' %') OR COALESCE(TRIM(product_v2), '') = '')
       GROUP BY source, fiscal_yr, LPAD(LEFT(TRIM(zip_code), 5), 5, '0'), cbd_id, firm, parent, firm_key, firm_crd, product_v2,
                dist_ch, new_dist, file_new_dist, channel, new_terr_channel
       HAVING MAX(CASE WHEN mm_opp > 0 THEN mm_opp END) IS NOT NULL)
@@ -93,7 +99,8 @@ SELECT s.source, s.nm, s.zip_code, s.amt, CASE WHEN hs.nm IS NULL THEN 0 ELSE 1 
 FROM (SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, actual_sales_amount AS amt,
              NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(sales_wholesaler), '\\s+', ' '))), ''), 'OPEN') AS nm
       FROM IDENTIFIER($union_tbl)
-      WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0) s
+      WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0
+        AND ((' ' || UPPER(TRIM($exclude_products)) || ' ') NOT LIKE ('% ' || COALESCE(UPPER(TRIM(product_v2)), '') || ' %') OR COALESCE(TRIM(product_v2), '') = '')) s
 LEFT JOIN (SELECT DISTINCT source, nm FROM ssdb_integration.lr_strategy.tmp_m_hold) hs ON hs.source = s.source AND hs.nm = s.nm
 LEFT JOIN (SELECT DISTINCT source, nm, zip_code FROM ssdb_integration.lr_strategy.tmp_m_hold) hz
        ON hz.source = s.source AND hz.nm = s.nm AND hz.zip_code = s.zip_code;
@@ -221,6 +228,8 @@ UNION ALL
 SELECT 'ROSTER', h.source, '11 HOLDERS NOT ON THE ROSTER (NOT KEPT)', NULL, COUNT(DISTINCT CASE WHEN r.nm IS NULL THEN h.nm END), NULL, NULL, 0
 FROM ssdb_integration.lr_strategy.tmp_m_hold h
 LEFT JOIN ssdb_integration.lr_strategy.tmp_m_roster r ON r.source = h.source AND r.nm = h.nm GROUP BY h.source
+UNION ALL
+SELECT 'SETTINGS', NULL, 'EXCLUDE_PRODUCTS', COALESCE(NULLIF(UPPER(TRIM($exclude_products)), ''), '(none)'), NULL, NULL, NULL, 0
 UNION ALL
 SELECT 'ROLES', source, role, NULL, COUNT(*), NULL, NULL, 0 FROM ro WHERE kept = 'Y' AND role <> '' GROUP BY source, role
 UNION ALL

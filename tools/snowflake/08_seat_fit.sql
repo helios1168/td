@@ -28,6 +28,8 @@ use schema lr_strategy;
 --  SEATS  per estimate, N the number of seats
 --  TIE    MUST_BE_ZERO 1, N must be 0, KIND says which: seats with no candidate of either kind per estimate (SEAT NULL), and candidates with no
 --         td_holder_key row (EST_SOURCE NULL, the people counted once)
+--SET exclude_products is 04's (the scenario run replaces both): the PRODUCT_V2 values left out of the sales rows S and T, FIXED by default, empty for all, a blank or NULL
+--product always kept.  M comes from TD_GAP_CELL, which 04 built with the same list.
 --A wholesaler is matched by name in upper case with single spaces, as 04.  The key is by SOURCE and the UUID of that name, as 06 and 07.
 
 SET scenario    = '';
@@ -37,6 +39,7 @@ SET assign_tbl = 'ssdb_integration.lr_strategy.td_assignments';
 SET holder_tbl = 'ssdb_integration.lr_strategy.td_holder_key';
 SET union_tbl  = 'ssdb_integration.lr_strategy.sales_opp_2026_11_9';
 SET adj_tbl    = 'ssdb_integration.lr_strategy.td_state_adj';
+SET exclude_products = 'FIXED';
 SET c1  = 0.70;
 SET c2  = 0.28;
 SET lam = 0.30;
@@ -70,7 +73,8 @@ CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_sale AS
 SELECT source, LPAD(LEFT(TRIM(zip_code), 5), 5, '0') AS zip_code, actual_sales_amount AS amt,
        NULLIF(NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(sales_wholesaler), '\\s+', ' '))), ''), 'OPEN') AS nm
 FROM IDENTIFIER($union_tbl)
-WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0;
+WHERE UPPER(TRIM(channel)) IN ('NATIONAL', 'WH', 'FI') AND actual_sales_amount <> 0
+  AND ((' ' || UPPER(TRIM($exclude_products)) || ' ') NOT LIKE ('% ' || COALESCE(UPPER(TRIM(product_v2)), '') || ' %') OR COALESCE(TRIM(product_v2), '') = '');
 
 CREATE OR REPLACE TEMPORARY TABLE ssdb_integration.lr_strategy.tmp_f_s AS
 SELECT k.holder_n AS n, s.zip_code, SUM(s.amt) AS s
