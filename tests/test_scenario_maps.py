@@ -587,9 +587,9 @@ def _seat(names=NAMES):
 
 class GapConn(Conn):
     """07's result on execute_stream, the TD_GAP tables and the names on cursor().execute."""
-    def __init__(self, summary, seat=None):
+    def __init__(self, summary, seat=None, fit=None, person=None):
         super().__init__([])
-        self.summary, self.seat = summary, seat
+        self.summary, self.seat, self.fit, self.person = summary, seat, fit, person
 
     def execute_stream(self, stream):
         self.streams.append(stream.read())
@@ -609,9 +609,9 @@ class GapConn(Conn):
                 elif "td_gap_pair" in sql:
                     cols, self.rows = PAIR_COLS, fake_pairs()
                 elif "td_gap_person" in sql:
-                    cols, self.rows = PERSON_COLS, [("S", est, "R1", "CRBG", "NATIONAL", "AA", 1.0, 2) for est in ("LOW", "HIGH")]
+                    cols, self.rows = PERSON_COLS, conn.person or [("S", est, "R1", "CRBG", "NATIONAL", "AA", 1.0, 2) for est in ("LOW", "HIGH")]
                 elif "td_seat_fit" in sql:
-                    cols, self.rows = FIT_COLS, fake_fit()
+                    cols, self.rows = FIT_COLS, conn.fit or fake_fit()
                 elif "td_holder_key" in sql:
                     self.rows = list(NAMES.items())
                 self.description = [(c,) for c in cols] or None
@@ -751,10 +751,10 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         def __enter__(self): return self.conn
         def __exit__(self, *a): return False
 
-    def run(summary, sql07, scen="CA1_R105N", roster=None, sql08=os.path.join(tempfile.gettempdir(), "08_does_not_exist.sql"), seat=None, extra=()):
+    def run(summary, sql07, scen="CA1_R105N", roster=None, sql08=os.path.join(tempfile.gettempdir(), "08_does_not_exist.sql"), seat=None, extra=(), fit=None, person=None):
         with tempfile.TemporaryDirectory() as d:
             sm.MAPS_DIR, sm.SQL07, sm.SQL08, sm.EDITS = d, sql07, sql08, os.path.join(d, "none.sql")
-            sm.connect = lambda: Ctx(GapConn(summary, seat))
+            sm.connect = lambda: Ctx(GapConn(summary, seat, fit, person))
             sm.load_geo = lambda conn: fake_geo()
             sm.fetch_scenario = lambda conn, name, *a: (roster(name) if roster else ROSTER, fake_pieces())
             buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
@@ -820,6 +820,19 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         bad08 = lambda sql: fake_seat_result(tie=2) if "CA1_R105R" in sql else fake_seat_result()
         rc, out, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N,CA1_R105R", sql08=f08, seat=bad08)
         assert rc == 1 and pdfs == {"maps.pdf": 12 + 11 + 4} and "TIE LOW BA (N 2)" in out and csvs["seat_fit.csv"] == 1 + 32, (rc, pdfs, out)
+        # an estimate with more open seats than seat_optimize.MAX_SEATS, or a sheet over the roster cap: no plan for it, the line printed,
+        # every other output written as in the normal run above, exit 1 (LOW has 15 open seats here, HIGH its 2)
+        full = lambda est, n: [("S", est, f"Z{i:02d}", 1e8, "NEIGHBOUR", "R1", "CRBG", "Y", "WIFI", 1, 1.0, 10.0, None, 1) for i in range(n)]
+        big = full("LOW", 15) + [r for r in fake_fit() if r[1] == "HIGH" and r[4] == "NEIGHBOUR"]
+        rc, out, files, pdfs, csvs = run(GOOD, f07, sql08=f08, fit=big)
+        want = sorted(gap_files + ["dashboard.html", "maps.pdf", "seat_fit.csv", "seat_fit_names.csv", "seat_plan.csv", "seat_plan_names.csv"])
+        assert rc == 1 and files == want and pdfs == {"maps.pdf": 12 + 13}, (rc, files, pdfs, out)
+        assert "SEAT PLAN NOT MADE: CA1_R105N LOW: 15 open seats > 14" in out and "NOT DRAWN: CA1_R105N (seat plan only)" in out and "HIGH: re-adds" in out, out
+        assert csvs["seat_plan.csv"] == 1 + 2 and "seat_plan.csv" in out.split("names and sales: your screen only:")[0], csvs      # HIGH's two seats only
+        sheet = [("S", est, f"R{i}", "CRBG", "NATIONAL" if i == 1 else "WH", "AA" if i == 1 else "", 1.0, 2) for est in ("LOW", "HIGH") for i in range(1, 51)]
+        rc, out, files, pdfs, csvs = run(GOOD, f07, sql08=f08, person=sheet)
+        assert rc == 1 and files == want and pdfs == {"maps.pdf": 12 + 13} and out.count("SEAT PLAN NOT MADE: CA1_R105N: 50 people on the sheet > 49") == 1, (rc, files, pdfs, out)
+        assert csvs["seat_plan.csv"] == 1 and "re-adds" not in out, csvs
         rc, out, files, pdfs, csvs = run(BAD, f07, sql08=f08)               # 07 refused: 08 does not run, the table is not made
         assert rc == 1 and files == ["maps.pdf"] and pdfs == {"maps.pdf": 12} and "td_state_adj" not in out, (files, out)
         rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, the maps still drawn, exit 1

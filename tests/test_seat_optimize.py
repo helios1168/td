@@ -109,13 +109,38 @@ def test_ties_are_deterministic_higher_nash_then_fewer_readds_then_lower_keys():
     assert [choice(p)["MD"] for p in best(rows)] == want and best(rows) == best(rows[::-1])
 
 
+def test_the_inner_choice_compares_exact_scores_not_nine_decimals():
+    # reviewer's P = 0 case: R3's term beats R2's by 3e-10, below the old 9-decimal key, which then fell to the higher U (R2)
+    rows = [nb("DC", "R1", 221402758.40, 1e9), nb("MD", "R2", 210341836.37, 2e9), nb("MD", "R3", 105170918.52, 1e9)]
+    want = brute(rows, ADJ, 0)[0]
+    plan = best(rows, p=0)[0]
+    assert choice(plan) == {"DC": ("NEIGHBOUR", "R1"), "MD": ("NEIGHBOUR", "R3")}, plan
+    assert plan["nash"] == want[1] and plan["F"] == want[0]
+    # an exact tie still goes to the higher sum U, then the lower key: R2 and R3 with the same term, R3 with more U
+    rows = [nb("MD", "R2", 10, 100), nb("MD", "R3", 10, 100)]
+    assert choice(best(rows)[0]) == {"MD": ("NEIGHBOUR", "R2")}
+
+
+def test_trimming_and_ranking_use_the_same_exact_order_whatever_top_is():
+    rows = [ho("MD", f"R{i}", 100 + 0.0002 * (i - 1)) for i in range(1, 6)]
+    for top in (4, 5):
+        plans = best(rows, p=1, top=top)
+        assert choice(plans[0]) == {"MD": ("READD", "R5")}, (top, choice(plans[0]))        # the most U, not the lowest key at the same cent
+        assert [choice(p)["MD"][1] for p in plans[:4]] == ["R5", "R4", "R3", "R2"], top
+
+
 def test_the_cap_comes_from_the_sheet_count():
     person = [{"EST_SOURCE": "E", "HOLDER": f"R{i}", "ROLE": r} for i, r in enumerate(["NATIONAL", "WH", "WIFI", "WIFI"], 1)]
     person += [{"EST_SOURCE": "E", "HOLDER": "R1", "ROLE": "NATIONAL"}, {"EST_SOURCE": "E", "HOLDER": "R20", "ROLE": "OTHER"},
                {"EST_SOURCE": "F", "HOLDER": "R1", "ROLE": "NATIONAL"}]
     assert so.ROSTER_CAP == 49 and so.sheet_count(person, "E") == 4 and so.roster_room(person, "E") == 45 and so.roster_room(person, "F") == 48
     full = [{"EST_SOURCE": "E", "HOLDER": f"R{i}", "ROLE": "WH"} for i in range(60)]
-    assert so.roster_room(full, "E") == 0
+    assert so.roster_room(full, "E") == -11                 # not clamped to 0: the caller refuses a roster over the cap
+    try:
+        best([nb("MD", "R1", 1, 100)], p=-11)
+        raise AssertionError("a negative P was optimised")
+    except ValueError:
+        pass
     try:
         so.roster_room(person, "NOPE")
         raise AssertionError("an estimate with no person was accepted")
@@ -148,19 +173,22 @@ def test_no_u_g_or_name_in_seat_plan_csv_and_the_names_file_has_them():
         text, ntext = open(masked, encoding="utf-8").read(), open(names_csv, encoding="utf-8").read()
         m = list(sm.csv.DictReader(open(masked, encoding="utf-8")))
         n = list(sm.csv.DictReader(open(names_csv, encoding="utf-8")))
-    assert list(m[0]) == sm.PLAN_COLS and not {"U", "G", "F", "NAME", "DNASH"} & set(m[0]) and len(m) == 4 * 3
+    assert list(m[0]) == sm.PLAN_COLS == ["SCENARIO", "EST_SOURCE", "PLAN", "SEAT", "CHOICE", "HOLDER", "BUNDLE", "LOAD_BAND"]   # keys, choices, rank, band only
+    assert not {"U", "G", "F", "NAME", "DNASH", "F_RANK_GAP"} & set(m[0]) and not [c for c in m[0] if "GAP" in c or c.startswith(("U", "F", "G"))] and len(m) == 4 * 3
     for secret in ("Ann", "Zed", "Bob", "Cy Xu", "123456", "987654", "7777", "55555", "4242"):
         assert secret not in text, secret
     assert collections.Counter(r["PLAN"] for r in m) == {"1": 3, "2": 3, "3": 3, "4": 3} and {r["SCENARIO"] for r in m} == {"S"}
     top = {r["SEAT"]: r for r in m if r["PLAN"] == "1"}
-    assert top["MD"]["CHOICE"] == "READD" and top["MD"]["HOLDER"] == "R5" and top["MD"]["BUNDLE"] == "MD" and top["MD"]["F_RANK_GAP"] == "0.0"
+    assert top["MD"]["CHOICE"] == "READD" and top["MD"]["HOLDER"] == "R5" and top["MD"]["BUNDLE"] == "MD"
     assert top["DC"]["CHOICE"] == "NEIGHBOUR" and top["DC"]["BUNDLE"] == "" and top["DC"]["LOAD_BAND"] in ("under 0.8", "0.8 to 1.25", "over 1.25")
     assert top["MD"]["LOAD_BAND"] == ""                                                          # a re-added holder has no load row
-    assert {"NAME", "U", "F"} <= set(n[0]) and next(r for r in n if r["PLAN"] == "1" and r["SEAT"] == "MD")["NAME"] == "Bob Yoo" and "Ann Zed" in ntext
+    assert {"NAME", "U", "F", "F_RANK_GAP"} <= set(n[0]) and next(r for r in n if r["PLAN"] == "1" and r["SEAT"] == "MD")["NAME"] == "Bob Yoo" and "Ann Zed" in ntext
+    assert next(r for r in n if r["PLAN"] == "1" and r["SEAT"] == "MD")["F_RANK_GAP"] == "0.0"                  # the gaps stay on the screen-only file
 
 
 def brute(rows, adj, p, top=4):
-    """The same optimum by trying every assignment of every seat (holder or none, then neighbour or none): [(F, nash, readds)] best first."""
+    """The same optimum by trying every assignment of every seat (holder or none, then neighbour or none), exact (unrounded) scores:
+    [(F, nash, readds)] best first."""
     import itertools
     seats = sorted({r["SEAT"] for r in rows})
     neigh = collections.defaultdict(dict)
@@ -197,10 +225,10 @@ def brute(rows, adj, p, top=4):
                     per[k] += neigh[k][s]
             nash = sum(math.log1p(u / g[k]) for k, u in per.items() if g[k] and g[k] > 0)
             f_n = sum(per.values())
-            if best is None or (round(nash, 9), round(f_n, 2)) > (round(best[0], 9), round(best[1], 2)):
+            if best is None or (nash, f_n) > best:           # exact scores, no rounding
                 best = (nash, f_n)
         f = sum(hold[h][s] for h, v in by.items() for s in v) + best[1]
-        out[pick] = (round(f, 2), round(best[0], 9), len(by))
+        out[pick] = (f, best[0], len(by))
     return sorted(out.values(), key=lambda t: (-t[0], -t[1], t[2]))[:top]
 
 
@@ -208,7 +236,7 @@ def test_the_search_agrees_with_trying_every_assignment():
     import random
     rng = random.Random(7)
     states = ["MD", "DC", "VA", "NE", "IA"]
-    for trial in range(40):
+    for trial in range(60):
         seats = rng.sample(states, rng.randint(2, 4))
         rows = []
         for k in range(rng.randint(1, 3)):
@@ -216,17 +244,17 @@ def test_the_search_agrees_with_trying_every_assignment():
             for s in seats:
                 if rng.random() < 0.6:
                     rows.append(nb(s, f"R{k + 1}", float(rng.randint(1, 90)), g))
-        for h in range(rng.randint(0, 3)):
+        for h in range(rng.randint(0, len(seats) + 5)):      # more holders than a seat's bundle can use: the trimming is exercised
             for s in seats:
-                if rng.random() < 0.7:
+                if rng.random() < 0.9:
                     rows.append(ho(s, f"R{h + 10}", float(rng.randint(1, 90))))
         if not rows:
             continue
         p = rng.randint(0, 3)
-        got = [(round(x["F"], 2), round(x["nash"], 9), x["readds"]) for x in best(rows, p)]
+        got = [(x["F"], x["nash"], x["readds"]) for x in best(rows, p)]
         want = brute(rows, ADJ, p)
-        # the brute force lists plans by F, Nash, re-adds: the same list, ties in F and Nash aside
-        assert [t[:2] for t in got] == [t[:2] for t in want][:len(got)] and len(got) == min(4, len(want)), (trial, got, want)
+        # the brute force lists plans by F, Nash, re-adds: the same list, ties in F and Nash aside (U are whole dollars: F is exact)
+        assert len(got) == min(4, len(want)) and all(g[0] == w[0] and abs(g[1] - w[1]) < 1e-12 for g, w in zip(got, want)), (trial, got, want)
 
 
 def test_the_seat_page_has_an_optimal_plan_block_with_keys_names_and_the_gaps_but_no_dollars():
@@ -245,3 +273,22 @@ def test_the_seat_page_has_an_optimal_plan_block_with_keys_names_and_the_gaps_bu
     assert "100.0" not in both and "150.0" not in both and "e+" not in both          # no U, no F
     gd.seat.plan = None
     assert not [t for t in sm.draw_seat_page(gd, "t", "E").texts if t.get_text().startswith("Optimal plan")]
+
+
+def test_a_plan_over_the_limits_is_refused_with_a_line_and_the_page_says_so():
+    from types import SimpleNamespace
+    def row(est, seat, kind, key, kept, u, g):
+        return ("S", est, seat, 1e8, kind, key, "CRBG", kept, "WIFI", 1, u, g, None, 1)
+    states = [f"X{i:02d}" for i in range(15)]
+    fit = [row("BIG", s, "NEIGHBOUR", "R1", "Y", 1.0, 10.0) for s in states] + [row("OK", "MD", "NEIGHBOUR", "R1", "Y", 1.0, 10.0)]
+    person = (["EST_SOURCE", "HOLDER", "ROLE"], [("BIG", "R1", "WIFI"), ("OK", "R1", "WIFI")])
+    got = sm.plan_prepare("S", (FIT_COLS, fit), person, [], {}, [], {})
+    assert got.notmade == {"BIG": "SEAT PLAN NOT MADE: S BIG: 15 open seats > 14"} and "BIG" not in got.plans and len(got.plans["OK"]) == 1
+    assert len(got.masked[1]) == 1 and [l for l in got.lines if l.startswith("BIG")] == []
+    over = (["EST_SOURCE", "HOLDER", "ROLE"], [(est, f"R{i}", "WH") for est in ("BIG", "OK") for i in range(50)])
+    got = sm.plan_prepare("S", (FIT_COLS, fit), over, [], {}, [], {})
+    assert got.notmade == {e: "SEAT PLAN NOT MADE: S: 50 people on the sheet > 49" for e in ("BIG", "OK")} and not got.plans and not got.masked[1] and not got.lines
+    cand = [{"EST_SOURCE": "OK", "SEAT": "MD", "SEAT_MM_OPP": 1e8, "KIND": "NEIGHBOUR", "HOLDER": "R1", "RANK": 1, "BORDERS": 1, "LOAD_BAND": ""}]
+    gd = SimpleNamespace(seat=SimpleNamespace(cand=cand, plan=got), names={})
+    texts = [t.get_text() for t in sm.draw_seat_page(gd, "t", "OK").texts]
+    assert any(t.startswith("Optimal plan") and "SEAT PLAN NOT MADE: S: 50 people on the sheet > 49" in t for t in texts), texts

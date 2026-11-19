@@ -3,10 +3,12 @@
 
 Every open seat goes whole to one option: a NEIGHBOUR (a kept person whose assigned states border it), a re-added HOLDER (not kept, with a
 piece in it; one holder may take a set of seats connected in the state adjacency), or stays VACANT (only when no neighbour borders it).
-  roster   at most ROSTER_CAP (49) people: the sheet's people plus the re-added holders, so P = 49 - sheet people re-adds at most
+  roster   at most ROSTER_CAP (49) people: the sheet's people plus the re-added holders, so P = 49 - sheet people re-adds at most;
+           a sheet already over the cap (P < 0) has no plan: the caller refuses it
+  scores   exact (unrounded) everywhere: the inner Nash, F, the trimming of holders and the ranking; rounding is for display only
   inner    with the re-added set fixed, the neighbours' seats maximise  sum_k ln(1 + U_k(X_k) / g_k)  (term 0 when g_k is NULL or <= 0)
   outer    maximise F = sum of the re-adds' U + the neighbours' U of that inner optimum; vacancy counts 0
-  ties     higher inner Nash, then fewer re-adds, then lower key numbers; the inner problem's own ties: higher sum U, then lower key numbers
+  ranking  higher F, then higher inner Nash, then fewer re-adds, then lower key numbers; the inner problem's own ties: higher sum U, then lower key numbers
 Exact: every set of seats given to re-adds is tried, the inner problem is solved by memoised recursion over people and seats, and the
 re-add packings are enumerated depth-first with a bound (sum of the best U of every seat not yet fixed) against the 4th best F so far.
 ponytail: ceiling MAX_SEATS open seats (2^seats per person); a longer list fails loudly.  A dense made-up 14-seat instance (45 people, 30 holders of
@@ -20,7 +22,7 @@ ROSTER_CAP = 49
 ROLES = ("NATIONAL", "WH", "WIFI")
 TOP = 4                 # the optimum and the next 3 distinct plans
 MAX_SEATS = 14
-EPS = 0.01              # dollars: F and U are compared to the cent
+EPS = 0.01              # dollars: slack on the pruning bound only (float noise in its sum); never in a comparison between plans
 
 
 def keynum(k):
@@ -33,11 +35,12 @@ def sheet_count(person, est):
 
 
 def roster_room(person, est):
-    """P: how many holders may be re-added.  An estimate with no person row is an error, never 49."""
+    """P: how many holders may be re-added; negative when the sheet is over ROSTER_CAP (not clamped: the caller refuses the plan).
+    An estimate with no person row is an error, never 49."""
     n = sheet_count(person, est)
     if not n:
         raise ValueError(f"no person on the sheet for estimate {est}: gap_person is missing it")
-    return max(0, ROSTER_CAP - n)
+    return ROSTER_CAP - n
 
 
 def connected(mask, nb):
@@ -67,6 +70,8 @@ def optimize(rows, adj, p, top=TOP):
     rows: td_seat_fit's rows of the estimate (dicts: SEAT, KIND, HOLDER, KEPT, U, G); adj: {(a, b)} state pairs; p: re-adds allowed."""
     seats = sorted({r["SEAT"] for r in rows})
     n = len(seats)
+    if p < 0:
+        raise ValueError(f"P = {p}: the sheet is over the roster cap of {ROSTER_CAP}, there is no plan")
     if n > MAX_SEATS:
         raise ValueError(f"{n} open seats: seat_optimize is exact up to {MAX_SEATS}")
     if not n:
@@ -96,8 +101,7 @@ def optimize(rows, adj, p, top=TOP):
         return sum(table[i] for i in range(n) if x >> i & 1)
 
     def better(a, b):       # higher Nash, then higher sum U, then lower key numbers (takers sorted by seat)
-        ka, kb = (round(a[0], 9), round(a[1], 2)), (round(b[0], 9), round(b[1], 2))
-        return ka > kb or (ka == kb and a[2] < b[2])
+        return (a[0], a[1]) > (b[0], b[1]) or ((a[0], a[1]) == (b[0], b[1]) and a[2] < b[2])
 
     memo = {}
 
@@ -138,7 +142,7 @@ def optimize(rows, adj, p, top=TOP):
     best_n = [max([neigh[k][i] for k in people if i in neigh[k]], default=0.0) for i in range(n)]
     best_h = [max([hold[h][i] for h in hold if i in hold[h]], default=0.0) for i in range(n)]
 
-    pool = []      # sorted: (-F cents, -nash, readds, key numbers, plan data)
+    pool = []      # sorted: (-F, -nash, readds, key numbers, plan data), exact
 
     def leaf(covered, packs, uh):
         rest = has_nb & ~covered
@@ -146,7 +150,7 @@ def optimize(rows, adj, p, top=TOP):
         f = uh + sol[1]
         take = dict(sol[2])
         keys = tuple(next((keynum(h) for h, b in packs if b >> s & 1), take.get(s, 10 ** 9)) for s in range(n))
-        entry = (-round(f, 2), -round(sol[0], 9), len(packs), keys, (f, sol[0], tuple(packs), take))
+        entry = (-f, -sol[0], len(packs), keys, (f, sol[0], tuple(packs), take))
         pool.append(entry)
         pool.sort(key=lambda e: e[:4])
         del pool[top:]
@@ -154,7 +158,7 @@ def optimize(rows, adj, p, top=TOP):
     def rec(i, covered, packs, uh):
         if len(pool) == top:
             bound = uh + sum(max(best_n[j], best_h[j]) if j >= i else best_n[j] for j in range(n) if not covered >> j & 1)
-            if round(bound, 2) < -pool[-1][0] - EPS:
+            if bound < -pool[-1][0] - EPS:
                 return
         if i == n:
             return leaf(covered, packs, uh)

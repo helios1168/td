@@ -31,7 +31,8 @@ With tools/snowflake/08_seat_fit.sql (issue #151) each scenario also runs it aft
 shapes, two states adjacent when their shapes buffered by 1,000 m meet), refuses its seat output when a TIE row is not 0, and writes
 seat_fit.csv (masked: the open-seat ranking of 08 plus an opportunity-only LOAD_BAND, safe to send) and seat_fit_names.csv (names and
 sales U, G, DNASH: your screen only); the seat-fit page shows ranks only, then the "Optimal plan" (tools/maps/seat_optimize.py: each open seat
-to a neighbour, a re-added holder or vacant, total roster at most 49; also seat_plan.csv masked, safe to send, and seat_plan_names.csv, your screen only).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
+to a neighbour, a re-added holder or vacant, total roster at most 49; also seat_plan.csv masked, safe to send: keys, choices, ranks and bands only, and seat_plan_names.csv with the gaps, your screen only;
+more than 14 open seats in an estimate, or a sheet over 49 people, prints "SEAT PLAN NOT MADE: ...", the page says so, the rest is written and the exit is 1).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 With gap output the run also writes dashboard.html next to maps.pdf (issue #153, tools/maps/dashboard.py): one self-contained page for
 Chrome, opened from disk, with the same cells as the CSVs and the names next to the keys (your screen only).
@@ -391,25 +392,38 @@ def seat_prepare(seat, names, load, state_area):
     return SimpleNamespace(cand=cand, masked=(list(cols) + ["LOAD_BAND"], masked), sales=(list(fcols) + ["NAME", "LOAD_AFTER"], sales))
 
 
-PLAN_COLS = ["SCENARIO", "EST_SOURCE", "PLAN", "SEAT", "CHOICE", "HOLDER", "BUNDLE", "F_RANK_GAP", "LOAD_BAND"]
+PLAN_COLS = ["SCENARIO", "EST_SOURCE", "PLAN", "SEAT", "CHOICE", "HOLDER", "BUNDLE", "LOAD_BAND"]      # safe to send: keys, choices, the plan's rank, the band
+PLAN_SALES_COLS = ["F_RANK_GAP", "NAME", "U", "F"]                                                       # your screen only: the gaps, names and sales
 
 
 def plan_prepare(scenario, fit, person, adj, names, load, state_area):
     """The optimal open-seat plan and the next 3 per estimate (seat_optimize.py), from fetch_seat's `fit` (columns, rows), gap["person"]
     (columns, rows), adj [(a, b)], names {key: name}, gd.load (dicts) and state_area {state: km2}: plans {estimate: [plan]}, lines (one per
-    estimate: re-adds out of P, vacancies, plan), masked (PLAN_COLS: keys and shares, no U, G, name or sales, safe to send) and sales
-    (masked + NAME, U, F: your screen only), each (columns, rows).  Load band: opportunity only, with all the seats the person takes."""
+    estimate: re-adds out of P, vacancies, plan), masked (PLAN_COLS: keys, choices, the plan's rank and the load band; no gap, U, G, name or
+    sales: safe to send) and sales (masked + PLAN_SALES_COLS: your screen only), each (columns, rows).  Load band: opportunity only, with
+    all the seats the person takes.  An estimate with more than seat_optimize.MAX_SEATS open seats, or a scenario whose sheet is over the
+    roster cap, gets no plan: notmade {estimate: the "SEAT PLAN NOT MADE: ..." line} (the caller prints it and exits 1; the seat page says it)."""
     fcols, frows = fit
     fit = [dict(zip((c.upper() for c in fcols), x)) for x in frows]
     pcols, prows = person
     person = [dict(zip((c.upper() for c in pcols), x)) for x in prows]
     load = {(r["EST_SOURCE"], r["HOLDER"]): r for r in load}
     pairs = set(adj)
-    plans, lines, masked, sales = {}, [], [], []
-    for est in sorted({r["EST_SOURCE"] for r in fit}):
+    plans, lines, masked, sales, notmade = {}, [], [], [], {}
+    ests = sorted({r["EST_SOURCE"] for r in fit})
+    room = {est: seat_optimize.roster_room(person, est) for est in ests}
+    if min(room.values(), default=0) < 0:        # the sheet itself is over the cap: no plan for the scenario
+        msg = f"SEAT PLAN NOT MADE: {scenario}: {seat_optimize.ROSTER_CAP - min(room.values())} people on the sheet > {seat_optimize.ROSTER_CAP}"
+        notmade = {est: msg for est in ests}
+        ests = []
+    for est in ests:
         rows = [r for r in fit if r["EST_SOURCE"] == est]
         usd = {r["SEAT"]: float(r["SEAT_MM_OPP"] or 0) for r in rows}
-        p = seat_optimize.roster_room(person, est)
+        p = room[est]
+        n_seats = len({r["SEAT"] for r in rows})
+        if n_seats > seat_optimize.MAX_SEATS:
+            notmade[est] = f"SEAT PLAN NOT MADE: {scenario} {est}: {n_seats} open seats > {seat_optimize.MAX_SEATS}"
+            continue
         plans[est] = got = seat_optimize.optimize(rows, pairs, p)
         lines.append(seat_optimize.summary(est, got, p))
         for no, plan in enumerate(got, 1):
@@ -422,10 +436,10 @@ def plan_prepare(scenario, fit, person, adj, names, load, state_area):
                 if c["choice"] == "NEIGHBOUR":
                     km2 = [state_area.get(t) for t in took[c["holder"]]]
                     band = load_after(load, est, c["holder"], sum(usd[t] for t in took[c["holder"]]), None if None in km2 else sum(km2))[1]
-                row = (scenario, est, no, c["seat"], c["choice"], c["holder"], " ".join(c["bundle"]), round(plan["gap"], 6), band)
+                row = (scenario, est, no, c["seat"], c["choice"], c["holder"], " ".join(c["bundle"]), band)
                 masked.append(row)
-                sales.append(row + (names.get(c["holder"], ""), round(c["u"], 2), round(plan["F"], 2)))
-    return SimpleNamespace(plans=plans, lines=lines, masked=(PLAN_COLS, masked), sales=(PLAN_COLS + ["NAME", "U", "F"], sales))
+                sales.append(row + (round(plan["gap"], 6), names.get(c["holder"], ""), round(c["u"], 2), round(plan["F"], 2)))
+    return SimpleNamespace(plans=plans, lines=lines, notmade=notmade, masked=(PLAN_COLS, masked), sales=(PLAN_COLS + PLAN_SALES_COLS, sales))
 
 
 def write_dedup_csv(path, per):
@@ -950,7 +964,9 @@ def draw_seat_page(gd, title, est):
     for c, i in enumerate(range(0, len(blocks), per)):
         fig.text(0.02 + 0.33 * c, 0.93, "\n".join(line for b in blocks[i:i + per] for line in b), family="monospace", fontsize=size, va="top")
     plan = getattr(gd.seat, "plan", None)
-    if plan and plan.plans.get(est):
+    if plan and plan.notmade.get(est):
+        fig.text(0.02, 0.30, "Optimal plan   " + plan.notmade[est], family="monospace", fontsize=9.5, fontweight="bold", va="top")
+    elif plan and plan.plans.get(est):
         got = plan.plans[est]
         lines = [f"Optimal plan   (F gap of plans 2 to {len(got)}: " + (", ".join(f"{p['gap']:.1%}" for p in got[1:]) or "none") + ")"]
         lines += [f"  {c['seat']:<3}{c['choice']:<11}{who(c['holder']) if c['holder'] else '':<28}" for c in got[0]["choices"]]
@@ -1329,6 +1345,10 @@ def main(argv=None):
                     gd.seat.plan = plan_prepare(name, seat["fit"], gap["person"], adj, gd.names, gd.load, areas)
                     for line in gd.seat.plan.lines:
                         print(f"{name} {line}", flush=True)
+                    for line in sorted(set(gd.seat.plan.notmade.values())):
+                        print(line, flush=True)
+                    if gd.seat.plan.notmade:
+                        refused.append(name + " (seat plan only)")
                 skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
                 gaps[name] = (gd, skipped, gap)
                 for lo, hi in chunks(len(gap_all(geo, gd))):
