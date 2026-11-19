@@ -12,7 +12,10 @@ Pages, per scenario, in the order geography (CONUS, then the divisions) x channe
   A  whole states, each in its assigned person's colour (open seat hatched), the name on each state;
   B  the assigned states as a frame: the person's held in-role ZIPs solid, the rest of the assigned states in a light tint;
   C  today's in-role ZIPs of the kept holders with the role, one page per firm (CRBG, EQH); holders not kept hatched as open.
-A ZIP belongs to a geography by its piece's STATE.  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
+A ZIP belongs to a geography by its piece's STATE.
+With tools/snowflake/07_overlap_gap.sql (issue #148) each scenario also runs it after 04, refuses its gap output when a MUST_BE_ZERO
+row is not 0, and writes next to the PDF <scenario>_gap_cell.csv, _gap_pair.csv, _gap_person.csv, _gap_summary.csv (masked: holder
+keys R<n> only, safe to send to an agent) and <scenario>_gaps.pdf (view D: a summary page, then geography x channel x estimate pages).  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
 """
 from __future__ import annotations
@@ -20,6 +23,7 @@ from __future__ import annotations
 import argparse
 import collections
 import concurrent.futures
+import csv
 import datetime
 import gzip
 import importlib.util
@@ -38,7 +42,7 @@ import shapely
 import shapely.ops
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.collections import LineCollection, PatchCollection
+from matplotlib.collections import LineCollection, PatchCollection, PathCollection
 from matplotlib.colors import to_rgba
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, PathPatch
@@ -51,6 +55,7 @@ import look  # noqa: E402  (the shared look: palettes, colouring_far, place_labe
 
 SQL03 = os.path.join(ROOT, "tools", "snowflake", "03_assignments.sql")
 SQL04 = os.path.join(ROOT, "tools", "snowflake", "04_assigned_coverage.sql")
+SQL07 = os.path.join(ROOT, "tools", "snowflake", "07_overlap_gap.sql")
 EDITS = os.path.join(ROOT, "data", "safe", "03_edits.sql")
 GEO_DIR = os.path.join(ROOT, "data", "safe", "geo")
 MAPS_DIR = os.path.join(ROOT, "data", "safe", "maps")
@@ -167,6 +172,57 @@ def fetch_scenario(conn, scenario, sql03, sql04, edits, split):
     roster = query(conn, f"SELECT source, wholesaler, kept, role, assigned_states FROM {DB}.td_assignments")
     pieces = query(conn, f"SELECT source, wholesaler, kept, role, zip_code, state, terr_channel, piece_in_role FROM {DB}.td_map_piece")
     return roster, pieces
+
+
+def query_cols(conn, sql):
+    """(columns, rows) of a query."""
+    cur = conn.cursor()
+    try:
+        cur.execute(sql)
+        return [d[0].upper() for d in cur.description], cur.fetchall()
+    finally:
+        cur.close()
+
+
+def gap_failures(result):
+    """The ITEMs of the 07 result's MUST_BE_ZERO = 1 rows whose N_ZIPS or MM_OPP is not 0 (within 0.5; NULL is 0)."""
+    cols, rows = result
+    out = []
+    for r in (dict(zip(cols, x)) for x in rows):
+        if r["MUST_BE_ZERO"] == 1 and any(abs(float(r[c] or 0)) > 0.5 for c in ("N_ZIPS", "MM_OPP")):
+            out.append(f"{r['ITEM']} (N_ZIPS {r['N_ZIPS']}, MM_OPP {r['MM_OPP']})")
+    return out
+
+
+def fetch_gap(conn, scenario, sql07, split):
+    """Run 07 for `scenario` (right after 04, in the same session) and read its tables: {summary, cell, pair, person}
+    as (columns, rows) and names {key: name}; None when 07's MUST_BE_ZERO rows are not 0 (the failing ITEMs are printed)."""
+    res = run_sql(conn, scenario_sql(sql07, scenario), split)
+    bad = ["07 gave no result"] if res is None else gap_failures(res)
+    if bad:
+        print(f"{scenario}: GAP OUTPUT NOT WRITTEN, 07's must-be-zero checks not 0: " + "; ".join(bad))
+        return None
+    got = {"summary": res}
+    for k in ("cell", "pair", "person"):
+        got[k] = query_cols(conn, f"SELECT * FROM {DB}.td_gap_{k} WHERE scenario = '{scenario}'")
+    # key -> name, on this machine only: td_holder_key's id is the UUID of the normalized name (02, 03)
+    got["names"] = dict(query(conn, f"SELECT 'R' || k.holder_n, a.wholesaler FROM {DB}.td_assignments a JOIN {DB}.td_holder_key k "
+                                    "ON k.source = a.source AND k.holder_id = UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', "
+                                    r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))), ''))"))
+    return got
+
+
+def write_gap_csvs(out, scenario, gap):
+    """<scenario>_gap_<cell|pair|person|summary>.csv in `out`: the paths."""
+    paths = []
+    for k in ("cell", "pair", "person", "summary"):
+        path = os.path.join(out, f"{scenario}_gap_{k}.csv")
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(gap[k][0])
+            w.writerows(gap[k][1])
+        paths.append(path)
+    return paths
 
 
 # ---------------------------------------------------------------- shapes
@@ -341,9 +397,8 @@ CAPTION = {"A": "Each state in its assigned person's colour (one colour per pers
            "C": "Today's in-role territories of the kept holders with the role, one colour per person; hatched: ZIPs of holders not kept (open)."}
 
 
-def draw_page(ctx, title, g, ch, view, firm):
-    """One figure.  view[0] is A, B or C; `firm` is C's firm."""
-    geo = ctx.geo
+def base_page(geo, g):
+    """(figure, axes, the states in view) with the land drawn."""
     fig = Figure(figsize=FIGSIZE, dpi=DPI, facecolor="white")
     FigureCanvasAgg(fig)
     ax = fig.add_axes(AX)
@@ -354,6 +409,25 @@ def draw_page(ctx, title, g, ch, view, firm):
     ax.axis("off")
     vis = [s for s, b in geo.bounds.items() if b[2] >= x0 and b[0] <= x1 and b[3] >= y0 and b[1] <= y1]
     layer(ax, geo, [geo.states[s] for s in vis], facecolor=LAND, edgecolor="none", zorder=0)
+    return fig, ax, vis
+
+
+def state_lines_and_labels(ax, geo, vis, items):
+    """The dashed state lines, then the names at their points (x, y, name): placed, and a crowded-out one set anyway."""
+    segs = [r for s in vis for r in geo.segs[s]]
+    ax.add_collection(LineCollection(segs, colors="#606060", linewidths=0.5, linestyle=(0, (4, 2)), zorder=3))
+    placed = look.place_labels(ax, items, fs=7, marker=False, near=[(0, 0, "center", "center")], color="#111111", fontweight="bold")
+    left = collections.Counter(s for _, _, s in items) - collections.Counter(x.get_text() for x in placed)
+    for x, y, s in items:                                       # crowded out: set at its point anyway, a name is never dropped
+        if left[s] > 0:
+            left[s] -= 1
+            ax.text(x, y, s, fontsize=7, color="#111111", fontweight="bold", ha="center", va="center", zorder=6)
+
+
+def draw_page(ctx, title, g, ch, view, firm):
+    """One figure.  view[0] is A, B or C; `firm` is C's firm."""
+    geo = ctx.geo
+    fig, ax, vis = base_page(geo, g)
     people = [p for p in ctx.people if p.role == ROLE_OF[ch]]
     owners = collections.defaultdict(list)
     for p in people:
@@ -393,14 +467,7 @@ def draw_page(ctx, title, g, ch, view, firm):
                       linewidth=0.3, zorder=2)
                 pt = biggest(geo, parts)
                 items.append((pt.x, pt.y, p.name))
-    segs = [r for s in vis for r in geo.segs[s]]
-    ax.add_collection(LineCollection(segs, colors="#606060", linewidths=0.5, linestyle=(0, (4, 2)), zorder=3))
-    placed = look.place_labels(ax, items, fs=7, marker=False, near=[(0, 0, "center", "center")], color="#111111", fontweight="bold")
-    left = collections.Counter(s for _, _, s in items) - collections.Counter(x.get_text() for x in placed)
-    for x, y, s in items:                                       # crowded out: set at its point anyway, a name is never dropped
-        if left[s] > 0:
-            left[s] -= 1
-            ax.text(x, y, s, fontsize=7, color="#111111", fontweight="bold", ha="center", va="center", zorder=6)
+    state_lines_and_labels(ax, geo, vis, items)
     n = len(shown)
     handles = [Patch(facecolor=ctx.colour[p.key], alpha=0.75, edgecolor="#202020",
                      label=(f"{p.name}\n" if n <= 20 else f"{p.name}  ") + f"{p.role} · {p.all_states or 'no states assigned'}") for p in shown]
@@ -445,6 +512,101 @@ def write_pdf(path, figs, inspect=None):
     return n
 
 
+# ---------------------------------------------------------------- view D: overlaps and gaps (issue #148)
+
+# class, colour, hatch edge colour (None: solid), hatch; the order breaks ties for the class of a ZIP
+GAP_CLASSES = [("COVERED", "#b9e6b0", None, None), ("OVERLAP", "#e8541f", None, None), ("HELD BY ANOTHER", "#8e5bb5", None, None),
+               ("GAP", "#f2c200", None, None), ("OPEN SEAT HELD", "#c4c4c4", "#6a6a6a", "////"),
+               ("OPEN SEAT UNHELD", "#efefef", "#a8a8a8", "////"), ("DOUBLE ASSIGNED", "#000000", None, None)]
+GAP_CH = ("NATIONAL", "REGIONAL", "WH")           # the channels with a page; OPEN (no one assigned) is in the summary table only
+GAP_ALL_CH = GAP_CH + ("OPEN",)
+GAP_CAPTION = ("A ZIP has the class of its cells in this channel with the most $MM of opportunity (MM_OPP); a ZIP with no cell in the channel is blank.  "
+               "Names: the person(s) assigned to the state in this channel.  Legend: ZIPs and the $MM of their cells in this channel, on this page.")
+
+
+def gap_prepare(cell, pair, names):
+    """What the pages need, from the TD_GAP_CELL and TD_GAP_PAIR results ((columns, rows)) and names {key: name}: ests,
+    zips {(est, channel): {zip: (state, class, $MM)}} (class = the ZIP's cells' class with most MM_OPP), assigned {(channel, state):
+    names}, table {(est, channel, class): $MM} over every cell, pairs {est: the top 15 by $MM as (channel, A, B, n, $MM)}."""
+    order = [c for c, *_ in GAP_CLASSES]
+    by_zip, assigned, table = {}, {}, {}
+    for r in (dict(zip(cell[0], x)) for x in cell[1]):
+        est, ch, cls, mm = r["EST_SOURCE"], r["CHANNEL"], r["CLASS"], float(r["MM_OPP"] or 0)
+        if cls not in order or ch not in GAP_ALL_CH:
+            raise SystemExit(f"TD_GAP_CELL has CLASS {cls!r}, CHANNEL {ch!r}; the pages know {order} and {GAP_ALL_CH}")
+        table[est, ch, cls] = table.get((est, ch, cls), 0.0) + mm
+        keys = str(r["ASSIGNED"] or "").replace(",", " ").split()
+        if keys and ch in GAP_CH:
+            assigned.setdefault((ch, str(r["STATE"]).upper()), set()).update(keys)
+        z = by_zip.setdefault((est, ch), {}).setdefault(str(r["ZIP_CODE"]), [str(r["STATE"]).upper(), {}])
+        z[1][cls] = z[1].get(cls, 0.0) + mm
+    zips = {k: {z: (st, max(order, key=lambda c: d.get(c, -1.0)), sum(d.values())) for z, (st, d) in v.items()} for k, v in by_zip.items()}
+    who = lambda k: f"{k} {names[k]}" if k in names else k
+    pairs = {}
+    for r in (dict(zip(pair[0], x)) for x in pair[1]):
+        pairs.setdefault(r["EST_SOURCE"], []).append((r["CHANNEL"], who(r["HOLDER_A"]), who(r["HOLDER_B"]), r["N_ZIPS"] or 0, float(r["MM_OPP"] or 0)))
+    return SimpleNamespace(ests=sorted({e for e, _, _ in table}), zips=zips, table=table,
+                           assigned={k: " / ".join(sorted(names.get(x, x) for x in v)) for k, v in assigned.items()},
+                           pairs={e: sorted(v, key=lambda t: -t[4])[:15] for e, v in pairs.items()})
+
+
+def gap_specs(geo, gd):
+    """The gap pages after the summary as (geography, channel, estimate): geography, channel, estimate."""
+    return [(g, ch, est) for g in geo.geographies for ch in GAP_CH for est in gd.ests]
+
+
+def draw_gap_page(gd, geo, title, g, ch, est):
+    fig, ax, vis = base_page(geo, g)
+    by, mm = collections.defaultdict(list), collections.Counter()
+    for z, (st, cls, m) in gd.zips.get((est, ch), {}).items():
+        if st in g.states and z in geo.zips:
+            by[cls].append(z)
+            mm[cls] += m
+    handles = []
+    for cls, col, edge, hatch in GAP_CLASSES:
+        paths = [path_of(geo, geo.zips[z]) for z in by[cls]]
+        if paths:
+            c = PathCollection(paths, facecolor=col, edgecolor=edge or col, linewidth=0 if hatch else 0.1, hatch=hatch, zorder=1)
+            c.set_gid(cls)
+            ax.add_collection(c)
+        handles.append(Patch(facecolor=col, edgecolor=edge or "#202020", hatch=hatch, label=f"{cls}\n{len(by[cls]):,} ZIPs · ${mm[cls]:,.1f} MM"))
+    items = [(*geo.state_pt[s].coords[0], gd.assigned[ch, s]) for s in sorted(g.states) if (ch, s) in gd.assigned]
+    state_lines_and_labels(ax, geo, vis, items)
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.752, 0.95), fontsize=9, frameon=False, handlelength=1.4,
+               borderaxespad=0, labelspacing=0.9, title=f"{ch} · {est} estimate · {g.name}", title_fontsize=9, alignment="left")
+    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.975)
+    fig.text(0.01, 0.015, GAP_CAPTION, fontsize=8.5, color="#404040")
+    return fig
+
+
+def draw_gap_summary(scenario, gd):
+    """The first page: $MM by channel x class per estimate, then each estimate's top 15 overlap pairs."""
+    fig = Figure(figsize=FIGSIZE, dpi=DPI, facecolor="white")
+    FigureCanvasAgg(fig)
+    lines = []
+    for est in gd.ests:
+        lines += [f"{est} estimate: $MM of opportunity by channel and class (every cell)", f"{'':10}" + "".join(f"{c:>18}" for c, *_ in GAP_CLASSES)]
+        lines += [f"{ch:10}" + "".join(f"{gd.table.get((est, ch, c), 0.0):>18,.1f}" for c, *_ in GAP_CLASSES) for ch in GAP_ALL_CH]
+        lines += ["", f"{est} estimate: top 15 overlap pairs by $MM", f"{'channel':10}{'holder A':<34}{'holder B':<34}{'ZIPs':>8}{'$MM':>12}"]
+        lines += [f"{ch:10}{a[:32]:<34}{b[:32]:<34}{n:>8,}{mm:>12,.1f}" for ch, a, b, n, mm in gd.pairs.get(est, [])] + [""]
+    fig.suptitle(f"{scenario} · D overlaps and gaps · summary", fontsize=17, fontweight="bold", y=0.975)
+    fig.text(0.02, 0.93, "\n".join(lines), family="monospace", fontsize=min(9.0, 560 / (1.3 * len(lines))), va="top")
+    return fig
+
+
+def gap_pages(scenario, gd, geo, lo=0, hi=None):
+    """(title, figure) for the gap pages lo..hi: page 0 is the summary, then geography x channel x estimate."""
+    allp = [None] + gap_specs(geo, gd)
+    for spec in allp[lo:hi]:
+        if spec is None:
+            title = f"{scenario} · D overlaps and gaps · summary"
+            yield title, draw_gap_summary(scenario, gd)
+        else:
+            g, ch, est = spec
+            title = f"{scenario} · D overlaps and gaps · {ch} · {est} estimate · {g.name}"
+            yield title, draw_gap_page(gd, geo, title, g, ch, est)
+
+
 # ---------------------------------------------------------------- the run
 
 _GEO = None
@@ -473,6 +635,16 @@ def draw_chunk(scenario, roster, pieces, lo, hi):
     return lo, out, ctx.no_shape
 
 
+def draw_gap_chunk(scenario, gd, lo, hi):
+    """Gap pages lo..hi of `scenario` as PNG bytes: (lo, pngs)."""
+    out = []
+    for _, fig in gap_pages(scenario, gd, _GEO, lo, hi):
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=DPI, facecolor="white")
+        out.append(buf.getvalue())
+    return lo, out
+
+
 def assemble(path, pngs):
     """The PDF of the pages (PNG bytes, in order), each a picture."""
     import matplotlib.image
@@ -486,6 +658,12 @@ def assemble(path, pngs):
     if not pngs:
         raise RuntimeError(f"{path}: no page to draw")
     return len(pngs)
+
+
+def _done(x):
+    f = concurrent.futures.Future()
+    f.set_result(x)
+    return f
 
 
 def chunks(n, size=CHUNK):
@@ -515,6 +693,12 @@ def main(argv=None):
         ap.error(f"unknown scenario {sorted(set(chosen) - set(names))}; 03 has {names}")
     with open(SQL04, encoding="utf-8") as f:
         sql04 = f.read()
+    sql07 = None
+    if os.path.exists(SQL07):
+        with open(SQL07, encoding="utf-8") as f:
+            sql07 = f.read()
+    else:
+        print("07_overlap_gap.sql is not in this checkout: no overlap and gap output")
     edits = None
     if os.path.exists(EDITS):
         with open(EDITS, encoding="utf-8") as f:
@@ -526,7 +710,7 @@ def main(argv=None):
     out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M"))
     os.makedirs(out, exist_ok=True)
     jobs = args.jobs or max(1, min((os.cpu_count() or 2) - 1, 8))   # ponytail: 8 at most, each worker holds the shapes
-    t0, refused, futs, pool, n_pages, started = time.time(), [], {}, None, None, {}
+    t0, refused, futs, pool, n_pages, started, gaps = time.time(), [], {}, None, None, {}, {}
     with connect() as conn:
         for name in chosen:
             got = fetch_scenario(conn, name, sql03, sql04, edits, split_statements)
@@ -534,25 +718,38 @@ def main(argv=None):
             if got is None:
                 refused.append(name)
                 continue
+            gap = fetch_gap(conn, name, sql07, split_statements) if sql07 else None   # right after 04: 07 reads its temp tables
+            if sql07 and gap is None:
+                refused.append(name + " (gap output only)")
             if n_pages is None:
                 geo = load_geo(conn)
                 n_pages = len(specs(geo))
                 _init(geo)
                 if jobs > 1:
                     pool = concurrent.futures.ProcessPoolExecutor(jobs, initializer=_init, initargs=(geo,))
+            submit = (lambda fn, *a: pool.submit(fn, *a)) if pool else (lambda fn, *a: _done(fn(*a)))
             started[name] = time.time()
             for lo, hi in chunks(n_pages):
-                if pool:
-                    futs[name, lo] = pool.submit(draw_chunk, name, got[0], got[1], lo, hi)
-                else:
-                    futs[name, lo] = concurrent.futures.Future()
-                    futs[name, lo].set_result(draw_chunk(name, got[0], got[1], lo, hi))
+                futs[name, lo] = submit(draw_chunk, name, got[0], got[1], lo, hi)
+            if gap:
+                for p in write_gap_csvs(out, name, gap):
+                    print(os.path.relpath(p, ROOT))
+                print(f"{name}: the _gap_*.csv files hold holder keys R<n> and counts only: safe to send to an agent")
+                gd = gap_prepare(gap["cell"], gap["pair"], gap["names"])
+                skipped = len({z for z_ in gd.zips.values() for z, (st, _, _) in z_.items() if st in geo.states and z not in geo.zips})
+                gaps[name] = (gd, skipped, time.time())
+                for lo, hi in chunks(1 + len(gap_specs(geo, gd))):
+                    futs[name + "_gaps", lo] = submit(draw_gap_chunk, name, gd, lo, hi)
     for name in [s for s in chosen if s in started]:
         parts = sorted(futs[k].result() for k in futs if k[0] == name)
         path = os.path.join(out, f"{name}.pdf")
         n = assemble(path, [png for _, pngs, _ in parts for png in pngs])
         print(f"{os.path.relpath(path, ROOT)}: {n} pages, drawn in {time.time() - started[name]:.0f} s; "
               f"{parts[0][2]} CONUS ZIPs in td_map_piece have no ZCTA shape, not drawn", flush=True)
+    for name, (gd, skipped, t) in gaps.items():
+        path = os.path.join(out, f"{name}_gaps.pdf")
+        n = assemble(path, [png for _, pngs in sorted(futs[k].result() for k in futs if k[0] == name + "_gaps") for png in pngs])
+        print(f"{os.path.relpath(path, ROOT)}: {n} pages, drawn in {time.time() - t:.0f} s; {skipped} CONUS ZIPs of the gap cells have no ZCTA shape, not drawn", flush=True)
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))

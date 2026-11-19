@@ -335,6 +335,181 @@ def test_shapes_are_cached_by_table_and_tolerance_and_read_from_snowflake_once()
         assert 0 < x1 - x0 < 150_000 and 0 < y1 - y0 < 150_000                  # about 1 degree, in metres
 
 
+# ---- view D (issue #148): overlaps and gaps, on fake TD_GAP_* data over the same 18 box states
+CLASSES = [c for c, *_ in sm.GAP_CLASSES]
+NAMES = {"R1": "Ann N", "R2": "Bo R", "R3": "Cy W"}
+CELL_COLS = ["SCENARIO", "EST_SOURCE", "ZIP_CODE", "STATE", "NEW_DIST", "MM_OPP", "CHANNEL", "ASSIGNED", "CLASS", "N_HOLDERS", "HOLDERS"]
+PAIR_COLS = ["SCENARIO", "EST_SOURCE", "CHANNEL", "HOLDER_A", "HOLDER_B", "N_ZIPS", "MM_OPP"]
+PERSON_COLS = ["SCENARIO", "EST_SOURCE", "HOLDER", "SOURCE", "ROLE", "ASSIGNED_STATES", "OPP_ASSIGNED", "N_ZIPS_ASSIGNED"]
+SUMMARY_COLS = ["SECTION", "SCENARIO", "EST_SOURCE", "CHANNEL", "ITEM", "N_ZIPS", "MM_OPP", "PCT", "MUST_BE_ZERO"]
+
+
+def fake_cells():
+    """Every ZIP has a NATIONAL cell for each estimate (class by ZIP index); AA1 also has a second, bigger NATIONAL cell of
+    another class (the class with most $ wins) and a REGIONAL one; state AA is assigned R1 and R2 (names joined); one OPEN cell."""
+    rows = []
+    for est in ("LOW", "HIGH"):
+        for i, code in enumerate(CODES):
+            for j, z in enumerate((code + "1", code + "2")):
+                rows.append(("S", est, z, code, "D", 1.0 + j, "NATIONAL", "R1 R2" if code == "AA" else None, CLASSES[(i + j) % 7], 1, "R1"))
+        rows.append(("S", est, "AA1", "AA", "D", 5.0, "NATIONAL", "R1 R2", "GAP", 0, None))          # AA1: GAP 5.0 beats the 1.0 cell
+        rows.append(("S", est, "AA1", "AA", "D", 2.0, "REGIONAL", "R3", "OVERLAP", 2, "R1 R2"))
+        rows.append(("S", est, "BA1", "BA", "D", 7.0, "OPEN", None, "OPEN SEAT HELD", 1, "R1"))
+    return rows
+
+
+def fake_pairs():
+    return [("S", est, "NATIONAL", "R1", "R2", 3, 100.0 + k) for est in ("LOW", "HIGH") for k in range(20)] + [("S", "LOW", "WH", "R1", "R9", 1, 1.0)]
+
+
+def _gd():
+    return sm.gap_prepare((CELL_COLS, fake_cells()), (PAIR_COLS, fake_pairs()), NAMES)
+
+
+def test_a_zip_has_the_class_of_its_cells_with_the_most_dollars_and_names_come_from_keys():
+    gd = _gd()
+    assert gd.ests == ["HIGH", "LOW"]
+    assert gd.zips["LOW", "NATIONAL"]["AA1"] == ("AA", "GAP", 6.0)          # 5.0 GAP beats the 1.0 cell of its own class; total 6.0
+    assert gd.zips["LOW", "NATIONAL"]["AA2"][1] == CLASSES[1]               # no second cell: its own
+    assert gd.zips["LOW", "REGIONAL"]["AA1"][1] == "OVERLAP" and list(gd.zips["LOW", "REGIONAL"]) == ["AA1"]
+    assert gd.assigned["NATIONAL", "AA"] == "Ann N / Bo R" and gd.assigned["REGIONAL", "AA"] == "Cy W" and ("OPEN", "BA") not in gd.assigned
+    assert gd.table["LOW", "OPEN", "OPEN SEAT HELD"] == 7.0 and gd.table["LOW", "NATIONAL", "GAP"] > 5.0
+    top = gd.pairs["LOW"]
+    assert len(gd.pairs["HIGH"]) == 15 and top[0] == ("NATIONAL", "R1 Ann N", "R2 Bo R", 3, 119.0) and ("WH", "R1 Ann N", "R9", 1, 1.0) not in top
+    try:
+        sm.gap_prepare((CELL_COLS, [("S", "LOW", "AA1", "AA", "D", 1, "NATIONAL", None, "NO SUCH CLASS", 1, None)]), (PAIR_COLS, []), NAMES)
+        raise AssertionError("no error for an unknown class")
+    except SystemExit:
+        pass
+
+
+def test_gap_pages_are_a_summary_then_geography_channel_estimate_with_exact_titles_and_legend_sums():
+    geo, gd = fake_geo(), _gd()
+    sm._init(geo)
+    got = list(sm.gap_pages("S", gd, geo))
+    expect = ["S · D overlaps and gaps · summary"] + [f"S · D overlaps and gaps · {ch} · {est} estimate · {g}"
+                                                     for g in ["CONUS"] + [d for d, _ in geo.divisions] for ch in ("NATIONAL", "REGIONAL", "WH") for est in ("HIGH", "LOW")]
+    assert [t for t, _ in got] == expect and len(got) == 61
+    assert all(f.get_suptitle() == t for t, f in got)
+    for title, fig in got[1:]:
+        _, _, ch, est, gname = title.split(" · ")
+        states = {g.name: g.states for g in geo.geographies}[gname]
+        zs = {z: v for z, v in gd.zips.get((est.split()[0], ch), {}).items() if v[0] in states}
+        legend = " ".join(t.get_text() for t in fig.legends[0].get_texts())
+        for cls in CLASSES:
+            mine = [v for v in zs.values() if v[1] == cls]
+            assert f"{cls}\n{len(mine):,} ZIPs · ${sum(v[2] for v in mine):,.1f} MM" in legend, (title, cls, legend)
+        assert sum(len(c.get_paths()) for c in fig.axes[0].collections if c.get_gid() in CLASSES) == len(zs)
+        names = {t.get_text() for t in fig.axes[0].texts}
+        assert ("Ann N / Bo R" in names) == (ch == "NATIONAL" and "AA" in states) and ("Cy W" in names) == (ch == "REGIONAL" and "AA" in states), title
+    hatched = {c.get_gid() for c in got[1][1].axes[0].collections if c.get_hatch()}
+    assert hatched <= {"OPEN SEAT HELD", "OPEN SEAT UNHELD"}
+    text = " ".join(t.get_text() for t in got[0][1].texts)
+    assert "HIGH estimate" in text and "LOW estimate" in text and "R1 Ann N" in text and "R2 Bo R" in text and "top 15" in text
+    assert text.count("R1 Ann N") == 2 * 15 and "R9" not in text           # 15 pairs per estimate; the WH pair is outside the top 15
+    assert "119.0" in text and "105.0" in text and "104.0" not in text     # the pairs 105..119 only
+
+
+class GapConn(Conn):
+    """07's result on execute_stream, the TD_GAP tables and the names on cursor().execute."""
+    def __init__(self, summary):
+        super().__init__([])
+        self.summary = summary
+
+    def execute_stream(self, stream):
+        self.streams.append(stream.read())
+        return [Cur(SUMMARY_COLS, self.summary)]
+
+    def cursor(self):
+        conn = self
+
+        class C(Cur):
+            def execute(self, sql):
+                conn.queries.append(sql)
+                self.rows, cols = [], []
+                if "td_gap_cell" in sql:
+                    cols, self.rows = CELL_COLS, fake_cells()
+                elif "td_gap_pair" in sql:
+                    cols, self.rows = PAIR_COLS, fake_pairs()
+                elif "td_gap_person" in sql:
+                    cols, self.rows = PERSON_COLS, [("S", "LOW", "R1", "CRBG", "NATIONAL", "AA", 1.0, 2)]
+                elif "td_holder_key" in sql:
+                    self.rows = list(NAMES.items())
+                self.description = [(c,) for c in cols] or None
+        return C()
+
+
+GOOD = [("CHECK", "S", None, None, "all ZIPs classed", 0, 0.2, None, 1), ("CHECK", "S", None, None, "a count", 5, 9.0, None, 0)]
+BAD = GOOD + [("CHECK", "S", "LOW", "WH", "ZIP in two classes", 3, 0.0, None, 1), ("CHECK", "S", None, None, "dollars lost", 0, 4.0, None, 1)]
+
+
+def test_07_failing_must_be_zero_rows_refuse_the_gap_output_and_name_the_items():
+    assert sm.gap_failures((SUMMARY_COLS, GOOD)) == [] and len(sm.gap_failures((SUMMARY_COLS, BAD))) == 2
+    buf = io.StringIO()
+    old, sys.stdout = sys.stdout, buf
+    try:
+        bad = sm.fetch_gap(GapConn(BAD), "S", "SET scenario    = '';\nselect 1;\n", _split)
+        good = sm.fetch_gap(GapConn(GOOD), "S", "SET scenario    = '';\nselect 1;\n", _split)
+    finally:
+        sys.stdout = old
+    assert bad is None and "ZIP in two classes" in buf.getvalue() and "dollars lost" in buf.getvalue() and "all ZIPs classed" not in buf.getvalue()
+    assert good["names"] == NAMES and good["cell"][0] == CELL_COLS and len(good["pair"][1]) == len(fake_pairs()) and good["summary"] == (SUMMARY_COLS, GOOD)
+
+
+def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing():
+    import types
+    fake = {"snowflake": types.ModuleType("snowflake"), "snowflake.connector": types.ModuleType("snowflake.connector"),
+            "snowflake.connector.util_text": types.ModuleType("snowflake.connector.util_text")}
+    fake["snowflake.connector.util_text"].split_statements = _split
+    saved = {k: sys.modules.get(k) for k in fake}
+    sys.modules.update(fake)
+    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "fetch_scenario", "MAPS_DIR", "SQL07", "EDITS", "CHUNK")}
+
+    class Ctx:
+        def __init__(self, conn): self.conn = conn
+        def __enter__(self): return self.conn
+        def __exit__(self, *a): return False
+
+    def run(summary, sql07):
+        with tempfile.TemporaryDirectory() as d:
+            sm.MAPS_DIR, sm.SQL07, sm.EDITS = d, sql07, os.path.join(d, "none.sql")
+            sm.connect = lambda: Ctx(GapConn(summary))
+            sm.load_geo = lambda conn: fake_geo()
+            sm.fetch_scenario = lambda *a: (ROSTER, fake_pieces())
+            buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
+            old, sys.stdout = sys.stdout, buf
+            try:
+                rc = sm.main(["--scenario", "CA1_R105N", "--jobs", "1"])
+            finally:
+                sys.stdout = old
+            files = sorted(f for _, _, fs in os.walk(d) for f in fs)
+            run_dir = next(os.path.join(d, x) for x in os.listdir(d) if os.path.isdir(os.path.join(d, x)))
+            pdfs = {f: len(sm.re.findall(rb"/Type\s*/Page[^s]", open(os.path.join(run_dir, f), "rb").read())) for f in files if f.endswith(".pdf")}
+            csv_rows = {f: len(open(os.path.join(run_dir, f), encoding="utf-8").read().splitlines()) for f in files if f.endswith(".csv")}
+            return rc, buf.getvalue(), files, pdfs, csv_rows
+
+    try:
+        f07 = os.path.join(tempfile.gettempdir(), "07_fake_gap.sql")
+        with open(f07, "w") as f:
+            f.write("SET scenario    = '';\nselect 1;\n")
+        rc, out, files, pdfs, csvs = run(GOOD, f07)
+        assert rc == 0 and files == sorted([f"CA1_R105N_gap_{k}.csv" for k in ("cell", "pair", "person", "summary")] + ["CA1_R105N.pdf", "CA1_R105N_gaps.pdf"]), files
+        assert pdfs == {"CA1_R105N.pdf": 120, "CA1_R105N_gaps.pdf": 61} and "safe to send to an agent" in out, (pdfs, out)
+        assert csvs["CA1_R105N_gap_cell.csv"] == 1 + len(fake_cells()) and csvs["CA1_R105N_gap_summary.csv"] == 1 + len(GOOD)
+        rc, out, files, pdfs, csvs = run(BAD, f07)                           # refused gap output, main PDF still drawn, exit 1
+        assert rc == 1 and files == ["CA1_R105N.pdf"] and "dollars lost" in out, (files, out)
+        rc, out, files, pdfs, csvs = run(GOOD, os.path.join(tempfile.gettempdir(), "07_does_not_exist.sql"))
+        assert rc == 0 and files == ["CA1_R105N.pdf"] and out.count("07_overlap_gap.sql is not in this checkout") == 1, (files, out)
+    finally:
+        for k, v in keep.items():
+            setattr(sm, k, v)
+        for k, v in saved.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
+
+
 if __name__ == "__main__":
     for k, v in list(globals().items()):
         if k.startswith("test_"):
