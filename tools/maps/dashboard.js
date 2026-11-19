@@ -217,8 +217,9 @@ async function startMap() {
       {id: 'zips', type: 'fill', source: 'zips', paint: {'fill-color': state('c', 'rgba(0,0,0,0)'), 'fill-opacity': ['case', ['boolean', ['feature-state', 'dim'], false], 0.1, 1]}},
       {id: 'veil', type: 'fill', source: 'states', filter: ['==', ['id'], -1], paint: {'fill-color': '#FFFFFF', 'fill-opacity': 0.75}},
       {id: 'lines', type: 'line', source: 'states', paint: {'line-color': '#20113E', 'line-opacity': 0.5, 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 8, 1.6]}},
-      {id: 'mark', type: 'line', source: 'zips', paint: {'line-color': '#20113E',
-        'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, ['boolean', ['feature-state', 'hover'], false], 1.5, ['boolean', ['feature-state', 'lit'], false], 0.6, 0]}},
+      {id: 'mark', type: 'line', source: 'zips', paint: {'line-color': '#20113E', 'line-width': ['interpolate', ['linear'], ['zoom'],      // the selected ZIP, the one under the pointer and,
+        5, ['case', ['boolean', ['feature-state', 'sel'], false], 3, ['boolean', ['feature-state', 'hover'], false], 1.5, 0],                             // zoomed in, the ones kept bright
+        7, ['case', ['boolean', ['feature-state', 'sel'], false], 3, ['boolean', ['feature-state', 'hover'], false], 1.5, ['boolean', ['feature-state', 'lit'], false], 0.6, 0]]}},
       {id: 'labels', type: 'symbol', source: 'labels', layout: {'text-field': ['get', 't'], 'text-font': ['Arial'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 7, 14],
         'text-max-width': 9, 'text-line-height': 1.15, 'text-padding': 3},
         paint: {'text-color': '#20113E', 'text-halo-color': 'rgba(255,255,255,0.9)', 'text-halo-width': 1.5}}]}});
@@ -390,11 +391,12 @@ function th(id, key, text, left, rows, title) { const [k, dir] = SORT[id]; retur
 function renderPairs(D) {
   const sel = SEL().people || [], a = area();
   const rows = sorted('pairs', [...D.pairs.values()].map((p) => ({...p, ch: CH_LABEL[P.channels[p.c]], an: label(p.a), bn: label(p.b), n: p.zips.size, share: p.usd})));
+  const one = S.ch !== 'ALL';
   const body = rows.map((p) => `<tr tabindex="0" data-go="sel=${P.keys[p.a]}-${P.keys[p.b]}" aria-selected="${sel.length === 2 && sel[0] === p.a && sel[1] === p.b}">
-    <td class="l">${p.ch}</td><td class="l">${esc(p.an)}</td><td class="l">${esc(p.bn)}</td><td>${int(p.n)}</td><td>${mm(p.usd)}</td><td>${pct(p.usd, D.focus)}</td></tr>`).join('');
-  $('t-pairs').innerHTML = `<header><h2>Overlaps to bargain</h2><p class="note">${esc(a.label)}, ${chName()}, ${S.est} estimate</p><p class="note more">Two shortlisted people work the same ZIPs. Pairs do not add up: a cell with three holders is in three pairs.</p></header>
-    <div class="scroll">${rows.length ? `<table><thead><tr>${th('pairs', 'ch', 'Channel', 1)}${th('pairs', 'an', 'Person', 1)}${th('pairs', 'bn', 'and person', 1)}${th('pairs', 'n', 'ZIPs')}${th('pairs', 'usd', '$MM')}${th('pairs', 'share', `of ${esc(a.label)}, all channels`)}</tr></thead>
-    <tbody>${body}</tbody><tfoot><tr><td class="l" colspan="4">Overlap class on screen (each cell once)</td><td>${mm(D.cls[K.OVERLAP])}</td><td>${pct(D.cls[K.OVERLAP], D.focus)}</td></tr></tfoot></table>`
+    ${one ? '' : `<td class="l">${p.ch}</td>`}<td class="l nm" title="${esc(p.an)}">${esc(p.an)}</td><td class="l nm" title="${esc(p.bn)}">${esc(p.bn)}</td><td>${int(p.n)}</td><td>${mm(p.usd)}</td><td>${pct(p.usd, D.focus)}</td></tr>`).join('');
+  $('t-pairs').innerHTML = `<header><h2>Overlaps to bargain</h2><p class="note">${esc(a.label)}, ${chName()}, ${S.est} estimate</p><p class="note more">Two shortlisted people work the same ZIPs. Pairs do not add up: a cell with three holders is in three pairs. Shares are of ${esc(a.label)}, all channels.</p></header>
+    <div class="scroll">${rows.length ? `<table><thead><tr>${one ? '' : th('pairs', 'ch', 'Channel', 1)}${th('pairs', 'an', 'Person', 1)}${th('pairs', 'bn', 'and person', 1)}${th('pairs', 'n', 'ZIPs')}${th('pairs', 'usd', '$MM')}${th('pairs', 'share', `of ${esc(a.label)}`, 0, 0, `The pair’s $ as a share of ${a.label}, all channels`)}</tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td class="l" colspan="${one ? 3 : 4}">Overlap class on screen (each cell once)</td><td>${mm(D.cls[K.OVERLAP])}</td><td>${pct(D.cls[K.OVERLAP], D.focus)}</td></tr></tfoot></table>`
     : `<p class="empty">No two shortlisted people work the same ZIP in ${esc(a.label)}, ${chName()}, under ${S.sc}.</p>`}</div>`;
 }
 function renderFill(D) {
@@ -420,17 +422,17 @@ function peopleRows() {
   const bit = 1 << P.scenarios.indexOf(S.sc), e = P.ests.indexOf(S.est), F = area().states;
   return P.people.filter((r) => r[0] & bit && r[1] === e).map((r) => {
     const ch = CH_OF_ROLE[r[4]] || '', states = r[5] ? r[5].split(' ') : [], ld = rowOf(P.load, S.sc, r[2]);
-    return {k: r[2], who: label(r[2]), ch, chn: CH_LABEL[ch] || r[4], firm: r[3], states, sts: states.join(' '), usd: ld ? ld[5] : null, load: ld ? ld[9] : null, r, ld};
-  }).filter((p) => (S.ch === 'ALL' || p.ch === S.ch) && (S.focus === 'CONUS' || p.states.some((s) => F.has(SIX.get(s)))));
+    return {k: r[2], who: label(r[2]), ch, chn: CH_LABEL[ch] || r[4], firm: r[3], states, usd: ld ? ld[5] : null, load: ld ? ld[9] : null};
+  }).filter((p) => (S.ch === 'ALL' || S.ch === 'OPEN' || p.ch === S.ch) && (S.focus === 'CONUS' || p.states.some((s) => F.has(SIX.get(s)))));       // no one is assigned to an open seat: everyone
 }
 function renderPeople(heading = true) {
   const rows = sorted('people', peopleRows()), a = area();
   const sel = SEL().people || [];
-  const body = rows.map((p) => `<tr aria-selected="${sel.includes(p.k)}"><td class="l">${who(p.k, S.view === 'terr')}</td><td class="l">${p.chn}</td><td class="l sts" title="${esc(p.states.join(' '))}">${esc(p.states.slice(0, 3).join(' '))}${p.states.length > 3 ? ' +' + (p.states.length - 3) : ''}</td>
+  const body = rows.map((p) => `<tr aria-selected="${sel.includes(p.k)}"><td class="l">${who(p.k, S.view === 'terr')}<br><span class="sub">${p.chn}${p.firm ? ', ' + esc(p.firm) : ''}: ${esc(p.states.join(' ')) || 'no state'}</span></td>
     <td>${p.usd === null ? '–' : mm(p.usd)}</td><td>${p.load === null ? '–' : p.load.toFixed(2) + gauge(p.load)}</td></tr>`).join('');
-  return `${heading ? `<header><div><h2>People</h2><p class="sub">${rows.length} on the shortlist with states in ${esc(a.label)}${S.ch === 'ALL' ? '' : ', ' + chName()}. Pick one to see their territory.</p></div></header>` : ''}
-    ${rows.length ? `<table><thead><tr>${th('people', 'who', 'Person', 1)}${th('people', 'chn', 'Channel', 1)}${th('people', 'sts', 'States', 1)}${th('people', 'usd', '$MM')}${th('people', 'load', 'Load')}</tr></thead><tbody>${body}</tbody></table>
-    <p class="small">$MM: the person’s share of their channel’s ${S.est} opportunity, a split state shared. Load: that $ over the $ expected for the area they cover; 1 is right-sized, the band is 0.8 to 1.25. Reported, never a gate.</p>` : `<p class="empty">No shortlisted person has a state here${S.ch === 'ALL' ? '' : ' in ' + chName()}.</p>`}`;
+  return `${heading ? `<header><div><h2>People</h2><p class="sub">${rows.length} on the shortlist with states in ${esc(a.label)}${S.ch === 'ALL' || S.ch === 'OPEN' ? '' : ', ' + chName()}.${S.ch === 'OPEN' ? ' No one is assigned to an open seat.' : ''}${rows.length ? ' Pick one to see their territory.' : ''}</p></div></header>` : ''}
+    ${rows.length ? `<table><thead><tr>${th('people', 'who', 'Person, channel, firm: states', 1)}${th('people', 'usd', '$MM')}${th('people', 'load', 'Load')}</tr></thead><tbody>${body}</tbody></table>
+    <p class="small">$MM: the person’s share of their channel’s ${S.est} opportunity, a split state shared. Load: that $ over the $ expected for the area they cover; 1 is right-sized, the band is 0.8 to 1.25. Reported, never a gate.</p>` : ''}`;
 }
 function renderPerson(k, D) {
   const r = rowOf(P.people, S.sc, k), ld = rowOf(P.load, S.sc, k), head = `<header><div><h2>${esc(label(k))}</h2>`, close = `</div><button class="close" data-go="sel=">Close</button></header>`;
@@ -443,10 +445,9 @@ function renderPerson(k, D) {
   for (const i of D.rows) if (C.s[i] >= 0 && P.channels[C.c[i]] === ch && CLS[C.k[i]].id.startsWith('GAP') && P.sets[C.a[i]].includes(k)) gaps.set(C.s[i], (gaps.get(C.s[i]) || 0) + C.u[i]);
   return `${head}<p class="sub">${CH_LABEL[ch] || esc(r[4])}${r[3] ? ', ' + esc(r[3]) : ''}. Assigned ${r[5] ? esc(r[5].split(' ').join(', ')) : 'no state'} in ${S.sc}.</p>${close}
     ${asg === null ? '' : `<h3>In their assigned states <span class="note">${S.est} estimate; a split state’s cells count for each assignee</span></h3>
-    <div class="kv"><span>Assigned to them</span><span>${usd(asg)}</span><span>${pct(asg, chTotal)} of ${CH_LABEL[ch]}</span>
-      <span class="in sub">of which, as shares of theirs:</span><span></span><span></span>
-      ${[['Covered: they work it', cov], ['Overlap: so does another', ovl], ['Gap: no shortlisted person does', gap], ['Held by another only', hba]].map(([t, v]) => v === null ? '' : `<span class="in">${t}</span><span>${usd(v)}</span><span>${pct(v, asg)}</span>`).join('')}
-      ${away ? `<span>Works today outside their states</span><span>${usd(away)}</span><span></span>` : ''}</div>`}
+    <p>Assigned to them: <b>${usd(asg)}</b>, ${pct(asg, chTotal)} of the ${CH_LABEL[ch]} channel. As shares of that:</p>
+    <div class="kv">${[['Covered: they work it', cov], ['Overlap: so does another', ovl], ['Gap: no shortlisted person does', gap], ['Held by another only', hba]].map(([t, v]) => v === null ? '' : `<span class="in">${t}</span><span>${usd(v)}</span><span>${pct(v, asg)}</span>`).join('')}</div>
+    ${away ? `<p>Works today outside their states: <b>${usd(away)}</b>.</p>` : ''}`}
     ${ld && ld[9] !== null ? `<h3>Load for the area: ${ld[9].toFixed(2)}, ${loadWord(ld[9])}</h3>
     <div class="scale">${gauge(ld[9])}<div aria-hidden="true">${[0.25, 0.5, 1, 2, 4].map((v) => `<span style="left:${50 + 50 * Math.log2(v) / 3}%">${v}</span>`).join('')}</div></div>
     <p class="small">${usd(ld[5])} assigned (a split state shared) over ${usd(ld[8])} expected for ${int(ld[4])} km²: ${usd(ld[6])} × (area ÷ the channel’s median ${int(ld[7])} km²)^${P.beta}. 1 is right-sized; the band is 0.8 to 1.25.</p>` : ''}
@@ -538,7 +539,7 @@ document.addEventListener('change', (e) => {
 });
 window.addEventListener('hashchange', () => { const before = {...S}; readHash(); render(before); });
 $('find-list').innerHTML = P.keys.map((k) => `<option value="${esc(k)}">${esc(P.names[k] || '')}</option>`).join('');
-$('c-find').placeholder = Object.keys(P.names).length ? 'ZIP, key, name or state' : 'ZIP, key or state';
+$('c-find').placeholder = Object.keys(P.names).length ? 'ZIP, key, name, state' : 'ZIP, key or state';
 readHash();
 render(null);
 startMap().catch((err) => { $('map').innerHTML = `<p class="nomap">The map could not start (${esc(err.message || err)}). The totals and tables beside it are complete; the map needs Chrome with WebGL.</p>`; });
