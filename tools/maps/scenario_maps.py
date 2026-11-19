@@ -27,6 +27,11 @@ shapes, two states adjacent when their shapes buffered by 1,000 m meet), refuses
 seat_fit.csv (masked: the open-seat ranking of 08 plus an opportunity-only LOAD_BAND, safe to send) and seat_fit_names.csv (names and
 sales U, G, DNASH: your screen only); the seat-fit page shows ranks only.  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
+
+Draft mode (issue #152, phase 2): `.\\tools\\maps\\scenario_maps.ps1 -Draft results\\draft\\2026-11-19` (python: `--draft <folder>`, optionally
+`--scenario`, `--divisions`) draws draft_assign.py's keys-only ledger as data/safe/maps/<run>/draft.pdf, one page per scenario x
+channel with each person in their own colour, names on the page (one Snowflake connection, only to read key -> name and the shapes;
+no 03, 04 or 07).
 """
 from __future__ import annotations
 
@@ -218,11 +223,15 @@ def fetch_gap(conn, scenario, sql07, split):
     got = {"summary": res}
     for k in ("cell", "pair", "person"):
         got[k] = query_cols(conn, f"SELECT * FROM {DB}.td_gap_{k} WHERE scenario = '{scenario}'")
-    # key -> name, on this machine only: td_holder_key's id is the UUID of the normalized name (02, 03)
-    got["names"] = dict(query(conn, f"SELECT 'R' || k.holder_n, a.wholesaler FROM {DB}.td_assignments a JOIN {DB}.td_holder_key k "
-                                    "ON k.source = a.source AND k.holder_id = UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', "
-                                    r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))), ''))"))
+    got["names"] = fetch_names(conn)
     return got
+
+
+def fetch_names(conn):
+    """{key: name}, on this machine only: td_holder_key's id is the UUID of the normalized name (02, 03)."""
+    return dict(query(conn, f"SELECT 'R' || k.holder_n, a.wholesaler FROM {DB}.td_assignments a JOIN {DB}.td_holder_key k "
+                            "ON k.source = a.source AND k.holder_id = UUID_STRING('6ba7b810-9dad-11d1-80b4-00c04fd430c8', "
+                            r"NULLIF(UPPER(TRIM(REGEXP_REPLACE(TRIM(a.wholesaler), '\\s+', ' '))), ''))"))
 
 
 def state_adjacency(states, buf=1000):
@@ -875,6 +884,173 @@ def gap_pages(scenario, gd, geo, lo=0, hi=None):
             yield title, (draw_fill_page(gd, geo, title, g, est) if ch == "FILL" else draw_gap_page(gd, geo, title, g, ch, est))
 
 
+# ---------------------------------------------------------------- the draft assignment (issue #152, phase 2)
+
+# The Corebridge brand palette (pm/docs/brand.md, secondary colours for data visualisation), one colour per person; cycled when a
+# person's neighbours wear them all (look.colouring: the colour fewest neighbours already wear).
+BRAND = ["#4F00CA", "#C053EF", "#902BF8", "#3562FF", "#42ACF6", "#008368", "#4CD6BB", "#EC602F", "#FA9454", "#20113E"]
+TOUCH_M = 250    # two ZCTAs touch when their shapes buffered by this many m meet (the 250 m simplification leaves slivers between them)
+DRAFT_CAPTION = ("Draft assignment (#152): whole states to their one assignee; split states grown from each person's own ZIPs today, provisional "
+                 "until bargaining (#149). Pieces per M1 on the drawn 2025 ZCTA graph.")
+DRAFT_FILES = {"draft_ledger.csv.gz": ("SCENARIO", "ROLE", "ZIP_CODE", "STATE", "PERSON", "REASON"),
+               "draft_m1.csv": ("SCENARIO", "ROLE", "PERSON", "N_PIECES", "PIECE", "N_ZCTAS", "CRBG_USD", "TAU_SHARE", "VERDICT", "NOTE")}
+
+
+def read_draft(folder):
+    """(ledger rows, m1 rows) as dicts from draft_assign.py's draft_ledger.csv.gz and draft_m1.csv in `folder`."""
+    out = []
+    for name, need in DRAFT_FILES.items():
+        path = os.path.join(folder, name)
+        if not os.path.exists(path):
+            raise SystemExit(f"{path}: not there; tools/maps/draft_assign.py writes it")
+        with (gzip.open if name.endswith(".gz") else open)(path, "rt", encoding="utf-8", newline="") as f:
+            rd = csv.DictReader(f)
+            rows = list(rd)
+        if set(need) - set(rd.fieldnames or ()):
+            raise SystemExit(f"{path}: columns {rd.fieldnames}, needs {list(need)}")
+        out.append(rows)
+    return out
+
+
+def zip_touch(geo):
+    """geo.touch (built once): ids, each ZCTA's shape buffered by TOUCH_M, index {zip: i}, nbrs {zip: [zips that touch it]}."""
+    if not hasattr(geo, "touch"):
+        ids = sorted(geo.zips)
+        buf = shapely.buffer(np.array([geo.zips[z] for z in ids], dtype=object), TOUCH_M, quad_segs=1)
+        a, b = shapely.STRtree(buf).query(buf, predicate="intersects")
+        nbrs = collections.defaultdict(list)
+        for i, j in zip(a, b):
+            if i != j:
+                nbrs[ids[i]].append(ids[j])
+        geo.touch = SimpleNamespace(ids=ids, buf=buf, index={z: i for i, z in enumerate(ids)}, nbrs=nbrs)
+    return geo.touch
+
+
+def draft_role(geo, ledger, m1, scenario, role):
+    """What a draft page needs for one scenario and role (WIFI is the REGIONAL page): zips {zip: (state, person or '')} on drawn ZCTAs,
+    m1 {person: {verdict, n, usd, note}} (FAIL when any piece fails; usd the CRBG $ over the pieces), people (every one with area or an
+    M1 row), placed (people with a drawn ZCTA), colour {person: hex} (touching people differ), sig (equal for equal pages)."""
+    zips = {r["ZIP_CODE"]: (r["STATE"], r["PERSON"]) for r in ledger
+            if r["ROLE"] == role and scenario in r["SCENARIO"].split() and r["ZIP_CODE"] in geo.zips and r["STATE"] in geo.states}
+    m = {}
+    for r in m1:
+        if r["ROLE"] == role and scenario in r["SCENARIO"].split():
+            d = m.setdefault(r["PERSON"], {"verdict": "PASS", "n": 0, "usd": 0.0, "note": ""})
+            d["n"] = int(r["N_PIECES"] or 0)
+            d["usd"] += float(r["CRBG_USD"] or 0)
+            d["note"] = d["note"] or r["NOTE"]
+            if r["VERDICT"] != "PASS":
+                d["verdict"] = r["VERDICT"]
+    placed = {p for _, p in zips.values() if p}
+    people = sorted(placed | set(m), key=lambda p: (int(p[1:]) if p[1:].isdigit() else 0, p))
+    near = {p: set() for p in people}
+    for a, nb in zip_touch(geo).nbrs.items():
+        if a in zips and zips[a][1]:
+            near[zips[a][1]].update(p for p in (zips[b][1] for b in nb if b in zips) if p and p != zips[a][1])
+    colour = look.colouring({p: None for p in people}, near, BRAND) if people else {}
+    sig = (tuple(sorted((z, *v) for z, v in zips.items())), tuple(sorted((p, tuple(d.items())) for p, d in m.items())))
+    return SimpleNamespace(zips=zips, m1=m, people=people, placed=placed, colour=colour, sig=sig)
+
+
+def largest_piece_point(geo, zs):
+    """The label point of the largest (by area) group of touching ZCTAs of `zs`."""
+    t, left, best = zip_touch(geo), set(zs), None
+    while left:
+        comp, todo = set(), [left.pop()]
+        while todo:
+            z = todo.pop()
+            comp.add(z)
+            new = [n for n in t.nbrs[z] if n in left]
+            left.difference_update(new)
+            todo += new
+        area = sum(geo.zips[z].area for z in comp)
+        if best is None or area > best[0]:
+            best = (area, comp)
+    part = max(shapely.get_parts(shapely.union_all([t.buf[t.index[z]] for z in best[1]])), key=lambda p: p.area)
+    return shapely.ops.polylabel(part, tolerance=3000)
+
+
+def draw_draft_page(geo, dd, names, title, g):
+    """One page: each person's ZCTAs in their colour, states with no one in this role white, unreachable ZCTAs black."""
+    fig, ax, vis = base_page(geo, g)
+    by, lost = collections.defaultdict(list), []
+    for z, (st, p) in sorted(dd.zips.items()):
+        if st in g.states:
+            (by[p] if p else lost).append(z)
+    have = {st for st, p in dd.zips.values() if p}
+    layer(ax, geo, [geo.states[s] for s in sorted(g.states - have)], facecolor="white", edgecolor=OPEN_EDGE, linewidth=0.8, zorder=1, gid="open")
+    items = []
+    for p in dd.people:
+        if by.get(p):
+            layer(ax, geo, [geo.zips[z] for z in by[p]], facecolor=dd.colour[p], edgecolor=dd.colour[p], linewidth=0.15, zorder=2, gid=p)
+            pt = largest_piece_point(geo, by[p])
+            items.append((pt.x, pt.y, f"{p} {names.get(p, '')}".strip()))
+    layer(ax, geo, [geo.zips[z] for z in lost], facecolor="black", edgecolor="black", linewidth=0.15, zorder=2, gid="unreachable")
+    state_lines_and_labels(ax, geo, vis, items)
+    shown = [p for p in dd.people if by.get(p) or (g.name == "CONUS" and p not in dd.placed)]   # a person with no ZCTA is on CONUS only
+    n = len(shown)
+    handles = []
+    for p in shown:
+        d = dd.m1.get(p, {"verdict": "no M1 row", "n": 0, "usd": 0.0, "note": ""})
+        info = f"{d['verdict']} · {d['n']} piece{'' if d['n'] == 1 else 's'} · \\${d['usd'] / USD_PER_MM:,.0f} MM CRBG" + (f" · {d['note']}" if d["note"] else "")
+        handles.append(Patch(facecolor=dd.colour[p], edgecolor="#202020", label=f"{p} {names.get(p, '')}".strip() + ("\n" if n <= 20 else "  ") + info))
+    handles.append(Patch(facecolor="white", edgecolor=OPEN_EDGE, label="open in this role"))
+    if lost:
+        handles.append(Patch(facecolor="black", edgecolor="black", label=f"unreachable ZCTAs ({len(lost):,})"))
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.752, 0.95), fontsize=6.6 if n <= 20 else 5.8, frameon=False,
+               handlelength=1.2, borderaxespad=0, labelspacing=0.55 if n <= 20 else 0.3)
+    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.975)
+    fig.text(0.01, 0.015, DRAFT_CAPTION, fontsize=9, color="#404040")
+    return fig
+
+
+def draft_figs(geo, ledger, m1, names, chosen):
+    """{scenario: [(title, figure)]} in order geography x channel (NATIONAL, REGIONAL, WH).  Scenarios whose page is the same share
+    one figure, drawn once, its title naming them (merge_pages then puts it in the PDF once)."""
+    dds = {(s, role): draft_role(geo, ledger, m1, s, role) for s in chosen for role in ROLE_OF.values()}
+    per, made = {s: [] for s in chosen}, {}
+    for g in geo.geographies:
+        for ch, role in ROLE_OF.items():
+            for s in chosen:
+                key = (g.name, role, dds[s, role].sig)
+                if key not in made:
+                    who = ", ".join(x for x in chosen if dds[x, role].sig == key[2])
+                    title = f"Draft · {ch} · {who} · {g.name}"
+                    made[key] = (title, draw_draft_page(geo, dds[s, role], names, title, g))
+                per[s].append(made[key])
+    return per
+
+
+def main_draft(args):
+    ledger, m1 = read_draft(args.draft)
+    have = list(dict.fromkeys(s for r in ledger for s in r["SCENARIO"].split()))
+    chosen = [s for a in args.scenario for s in a.split(",") if s] or have
+    if set(chosen) - set(have):
+        raise SystemExit(f"unknown scenario {sorted(set(chosen) - set(have))}; {args.draft} has {have}")
+    keys = {r["PERSON"] for r in ledger + m1 if r["PERSON"] and set(r["SCENARIO"].split()) & set(chosen)}
+    with connect() as conn:
+        names = fetch_names(conn)
+        geo = load_geo(conn)
+    if not args.divisions:
+        geo.geographies = geo.geographies[:1]
+    per, png = {}, {}
+    for s, figs in draft_figs(geo, ledger, m1, names, chosen).items():
+        for _, fig in figs:
+            if id(fig) not in png:
+                buf = io.BytesIO()
+                fig.savefig(buf, format="png", dpi=DPI, facecolor="white")
+                png[id(fig)] = buf.getvalue()
+        per[s] = [png[id(fig)] for _, fig in figs]
+    out = os.path.join(MAPS_DIR, datetime.datetime.now().strftime("%Y-%m-%d-%H%M"))
+    os.makedirs(out, exist_ok=True)
+    path = os.path.join(out, "draft.pdf")
+    print(f"{os.path.abspath(path)}: {assemble(path, merge_pages(per))} pages (a page the same in several scenarios is there once), names: your screen only", flush=True)
+    missing = sorted(keys - set(names), key=lambda k: (len(k), k))
+    if missing:
+        print(f"NO NAME for {', '.join(missing)}: td_assignments has no holder with that key, drawn by key only")
+    return 1 if missing else 0
+
+
 # ---------------------------------------------------------------- the run
 
 _GEO = None
@@ -963,8 +1139,11 @@ def main(argv=None):
     ap.add_argument("--scenario", action="append", default=[], help="a scenario to draw (repeatable)")
     ap.add_argument("--all", action="store_true", help="draw every scenario")
     ap.add_argument("--divisions", action="store_true", help="draw the 9 census-division pages too (off: CONUS only, for speed)")
+    ap.add_argument("--draft", metavar="FOLDER", help="draw the draft assignment of draft_assign.py's folder (no 03, 04 or 07; --scenario optional)")
     ap.add_argument("--jobs", type=int, help="drawing processes (default: the CPUs less one, at most 8); 1 draws in this process")
     args = ap.parse_args(argv)
+    if args.draft:
+        return main_draft(args)
     with open(SQL03, encoding="utf-8") as f:
         sql03 = f.read()
     names = list_scenarios(sql03)

@@ -786,6 +786,166 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
                 sys.modules[k] = v
 
 
+# ---- the draft assignment (issue #152, phase 2): a made-up keys-only ledger and M1 file on the same 18 box states
+
+DRAFT_NAMES = {"R1": "Ann N", "R2": "Bo R", "R3": "Cy W", "R4": "Di X", "R5": "Ed Y"}
+DRAFT_LEDGER_COLS = ["SCENARIO", "ROLE", "ZIP_CODE", "STATE", "PERSON", "REASON"]
+DRAFT_M1_COLS = ["SCENARIO", "ROLE", "PERSON", "N_PIECES", "PIECE", "N_ZCTAS", "CRBG_USD", "TAU_SHARE", "VERDICT", "NOTE", "EQH_USD", "TAU_SHARE_EQH"]
+
+
+def fake_draft():
+    """(ledger rows, m1 rows) as dicts.  NATIONAL and REGIONAL are the same in S1 and S2, WH differs.  NATIONAL: R1 has AA and AB, R2 AC,
+    R3 BA, R4 CA and CC1 (two pieces, FAIL), R5 CB1; CF1 is unreachable; the other states have no one."""
+    def led(sc, role, owner):
+        return [dict(zip(DRAFT_LEDGER_COLS, (sc, role, z, z[:2], p, "whole state"))) for z, p in owner.items()]
+    nat = {"AA1": "R1", "AA2": "R1", "AB1": "R1", "AB2": "R1", "AC1": "R2", "AC2": "R2", "BA1": "R3", "BA2": "R3",
+           "CA1": "R4", "CA2": "R4", "CC1": "R4", "CB1": "R5", "CF1": ""}
+    ledger = led("S1 S2", "NATIONAL", nat) + led("S1 S2", "WIFI", {"AA1": "R1", "AA2": "R1", "AB1": "R2", "AB2": "R2"})
+    ledger += led("S1", "WH", {"AA1": "R1", "AB1": "R2"}) + led("S2", "WH", {"AA1": "R2", "AB1": "R2"})
+    row = lambda sc, role, p, n, i, usd, v, note="": dict(zip(DRAFT_M1_COLS, (sc, role, p, n, i, 5, usd, 1.0, v, note, usd, 1.0)))
+    m1 = [row("S1 S2", "NATIONAL", "R1", 1, 1, 2444611470.25, "PASS"), row("S1 S2", "NATIONAL", "R2", 1, 1, 100e6, "PASS"),
+          row("S1 S2", "NATIONAL", "R3", 1, 1, 100e6, "PASS"), row("S1 S2", "NATIONAL", "R4", 2, 1, 900e6, "FAIL"),
+          row("S1 S2", "NATIONAL", "R4", 2, 2, 100e6, "FAIL"), row("S1 S2", "NATIONAL", "R5", 1, 1, 50e6, "PASS"),
+          row("S1 S2", "WIFI", "R1", 1, 1, 10e6, "PASS"), row("S1 S2", "WIFI", "R2", 1, 1, 10e6, "PASS"),
+          row("S1", "WH", "R1", 1, 1, 10e6, "PASS"), row("S1", "WH", "R2", 1, 1, 10e6, "PASS"), row("S2", "WH", "R2", 1, 1, 20e6, "PASS")]
+    return ledger, m1
+
+
+def _draft_pages(scenarios=("S1", "S2"), divisions=False):
+    ledger, m1 = fake_draft()
+    geo = fake_geo()
+    if not divisions:
+        geo.geographies = geo.geographies[:1]                                 # CONUS only, as the command without --divisions
+    return sm.draft_figs(geo, ledger, m1, DRAFT_NAMES, list(scenarios))
+
+
+def _colour(fig, gid):
+    cols = [c for c in fig.axes[0].collections if c.get_gid() == gid]
+    assert len(cols) == 1, (gid, len(cols))
+    rgba = {tuple(r) for r in cols[0].get_facecolor()}
+    assert len(rgba) == 1, f"{gid} is drawn in {len(rgba)} colours"
+    return rgba.pop(), len(cols[0].get_paths())
+
+
+def test_draft_pages_are_one_per_channel_with_the_scenarios_that_share_them_in_the_title():
+    per = _draft_pages()
+    assert [t for t, _ in per["S1"]] == ["Draft · NATIONAL · S1, S2 · CONUS", "Draft · REGIONAL · S1, S2 · CONUS", "Draft · WH · S1 · CONUS"]
+    assert [t for t, _ in per["S2"]][2] == "Draft · WH · S2 · CONUS"
+    assert per["S1"][0][1] is per["S2"][0][1] and per["S1"][2][1] is not per["S2"][2][1]          # shared: drawn once
+    div = _draft_pages(divisions=True)["S1"]                                                          # with --divisions: 3 channels x (CONUS + 9)
+    assert len(div) == 30 and div[3][0] == "Draft · NATIONAL · S1, S2 · D1" and div[-1][0] == "Draft · WH · S1 · D9"
+    for _, fig in (x for v in per.values() for x in v):
+        assert fig.get_suptitle() == [t for t, f in per["S1"] + per["S2"] if f is fig][0]
+        assert any("Pieces per M1 on the drawn 2025 ZCTA graph." in t.get_text() for t in fig.texts)
+        assert any("provisional until bargaining (#149)" in t.get_text() for t in fig.texts)
+
+
+def test_each_persons_zctas_are_one_colour_and_touching_people_differ():
+    fig = _draft_pages()["S1"][0][1]
+    brand = {tuple(sm.to_rgba(c)) for c in sm.BRAND}
+    colour = {}
+    for p, n in (("R1", 4), ("R2", 2), ("R3", 2), ("R4", 3), ("R5", 1)):
+        colour[p], got = _colour(fig, p)
+        assert got == n and colour[p] in brand, (p, got)
+    for a, b in (("R1", "R2"), ("R1", "R3"), ("R3", "R4"), ("R4", "R5")):    # AB-AC, AA-BA, BA-CA, CA2-CB1 touch
+        assert colour[a] != colour[b], (a, b)
+    again = _draft_pages()["S1"][0][1]
+    assert _colour(again, "R1")[0] == colour["R1"]                            # deterministic: the same page is the same picture
+
+
+def test_states_with_no_one_in_the_role_are_white_and_unreachable_zctas_black():
+    fig = _draft_pages()["S1"][0][1]
+    (open_,) = [c for c in fig.axes[0].collections if c.get_gid() == "open"]
+    assert [tuple(r) for r in open_.get_facecolor()] == [(1.0, 1.0, 1.0, 1.0)] and len(open_.get_paths()) == 18 - 7   # AA AB AC BA CA CB CC have people
+    assert tuple(open_.get_edgecolor()[0]) == tuple(sm.to_rgba(sm.OPEN_EDGE))
+    assert _colour(fig, "unreachable") == ((0.0, 0.0, 0.0, 1.0), 1)
+    assert "open in this role" in [t.get_text() for t in fig.legends[0].get_texts()]
+    assert "unreachable ZCTAs (1)" in [t.get_text() for t in fig.legends[0].get_texts()]
+
+
+def test_the_legend_has_key_name_verdict_pieces_and_dollars_and_each_person_is_labelled_once_on_the_largest_piece():
+    fig = _draft_pages()["S1"][0][1]
+    legend = [t.get_text() for t in fig.legends[0].get_texts()]
+    assert "R1 Ann N\nPASS · 1 piece · \\$2,445 MM CRBG" in legend, legend                   # $ escaped for mathtext, $MM of CRBG_USD
+    assert "R4 Di X\nFAIL · 2 pieces · \\$1,000 MM CRBG" in legend, legend
+    labels = [t for t in fig.axes[0].texts if t.get_text().startswith("R")]
+    assert sorted(t.get_text() for t in labels) == ["R1 Ann N", "R2 Bo R", "R3 Cy W", "R4 Di X", "R5 Ed Y"]
+    r4 = next(t for t in labels if t.get_text().startswith("R4"))
+    assert abs(r4.xy[0] - S / 2) < S / 4 + 1 and abs(r4.xy[1] - 2.5 * S) < S / 4 + 1, r4.xy      # CA's pair of ZCTAs, not CC1 (x 2S)
+
+
+def test_main_reads_the_names_from_the_query_and_writes_one_pdf_with_each_shared_page_once():
+    import gzip
+    import types
+    keep = {k: getattr(sm, k) for k in ("connect", "load_geo", "MAPS_DIR")}
+    seen = []
+
+    class Ctx:
+        def __init__(self, rows): self.rows = rows
+        def __enter__(self):
+            conn, rows = self, self.rows
+
+            class C(Cur):
+                def execute(self, sql):
+                    seen.append(sql)
+                    self.rows = rows
+            self.cursor = lambda: C()
+            return self
+        def __exit__(self, *a): return False
+
+    def run(argv, rows):
+        with tempfile.TemporaryDirectory() as d:
+            ledger, m1 = fake_draft()
+            src = os.path.join(d, "draft")
+            os.makedirs(src)
+            with gzip.open(os.path.join(src, "draft_ledger.csv.gz"), "wt", encoding="utf-8", newline="") as f:
+                w = sm.csv.DictWriter(f, DRAFT_LEDGER_COLS)
+                w.writeheader()
+                w.writerows(ledger)
+            with open(os.path.join(src, "draft_m1.csv"), "w", encoding="utf-8", newline="") as f:
+                w = sm.csv.DictWriter(f, DRAFT_M1_COLS)
+                w.writeheader()
+                w.writerows(m1)
+            sm.MAPS_DIR = os.path.join(d, "maps")
+            sm.connect = lambda: Ctx(rows)
+            sm.load_geo = lambda conn: fake_geo()
+            buf = type("Out", (io.StringIO,), {"reconfigure": lambda self, **kw: None})()
+            old, sys.stdout = sys.stdout, buf
+            try:
+                rc = sm.main(["--draft", src] + argv)
+            finally:
+                sys.stdout = old
+            files = sorted(os.path.relpath(os.path.join(r, f), sm.MAPS_DIR) for r, _, fs in os.walk(sm.MAPS_DIR) for f in fs)
+            pdf = next(os.path.join(sm.MAPS_DIR, f) for f in files)
+            return rc, buf.getvalue(), files, len(sm.re.findall(rb"/Type\s*/Page[^s]", open(pdf, "rb").read()))
+
+    try:
+        names = list(DRAFT_NAMES.items())
+        rc, out, files, pages = run([], names)
+        assert rc == 0 and len(files) == 1 and files[0].endswith("draft.pdf") and pages == 4, (rc, files, pages)      # 3 shared + WH of S2
+        assert os.path.join(sm.MAPS_DIR, files[0]) in out.replace("\\", os.sep) or files[0].replace("\\", "/") in out.replace("\\", "/"), out
+        assert len(seen) == 1 and "td_holder_key" in seen[0] and "td_assignments" in seen[0]                           # one names query, no 03, 04 or 07
+        rc, out, files, pages = run(["--scenario", "S1"], names)
+        assert rc == 0 and pages == 3, (rc, pages)
+        rc, out, files, pages = run([], names[:4])                                                                       # R5 has no name: said, and drawn by key
+        assert rc == 1 and "NO NAME for R5" in out and pages == 4, out
+        try:
+            run(["--scenario", "NOPE"], names)
+            raise AssertionError("no error for an unknown scenario")
+        except SystemExit:
+            pass
+    finally:
+        for k, v in keep.items():
+            setattr(sm, k, v)
+
+
+def test_the_ps1_passes_draft_and_the_scenarios_to_python():
+    ps1 = (ROOT / "tools" / "maps" / "scenario_maps.ps1").read_text(encoding="utf-8")
+    assert "[string]$Draft" in ps1 and '"--draft", $Draft' in ps1 and "if ($Draft)" in ps1
+    assert ps1.index("if ($Draft)") < ps1.index("elseif ($List)")                                                       # draft before the 03 modes
+    assert ps1.count('"--scenario"; $_') == 2                                                                         # -Scenario works with -Draft
+
+
 if __name__ == "__main__":
     for k, v in list(globals().items()):
         if k.startswith("test_"):
