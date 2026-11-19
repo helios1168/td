@@ -779,7 +779,7 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
             f.write("SET scenario    = '';\nSET exclude_products = 'FIXED';\nselect 'fake 08';\n")
         gap_files = sorted(f"gap_{k}.csv" for k in ("cell", "pair", "person", "summary", "load"))
         rc, out, files, pdfs, csvs = run(GOOD, f07)                          # CONUS only: 12 map pages, a summary and 6 gap pages
-        assert rc == 0 and files == sorted(gap_files + ["maps.pdf"]), files
+        assert rc == 0 and files == sorted(gap_files + ["dashboard.html", "maps.pdf"]), files          # the dashboard (#153) next to the PDF
         assert pdfs == {"maps.pdf": 12 + 11} and "safe to send to an agent" in out, (pdfs, out)
         assert out.count("08_seat_fit.sql is not in this checkout") == 1 and "seat_fit" not in out.replace("08_seat_fit.sql", "")   # no 08: no seat file, a page saying so
         assert csvs["gap_cell.csv"] == 1 + len(fake_cells()) and csvs["gap_summary.csv"] == 1 + len(GOOD)
@@ -806,10 +806,11 @@ def test_main_writes_the_four_csvs_and_the_gaps_pdf_and_skips_when_07_is_missing
         assert rc == 1 and pdfs == {"maps.pdf": 23} and labels == ["all scenarios"] * 12 + ["CA1_R105N · CA2_R105N"] * 11, (rc, pdfs, labels)
         # with 08: a summary, 2 seat pages and the 10 FILL and channel pages (13 gap pages); seat_fit.csv is safe to send, the names file is not
         rc, out, files, pdfs, csvs = run(GOOD, f07, sql08=f08)
-        assert rc == 0 and files == sorted(gap_files + ["maps.pdf", "seat_fit.csv", "seat_fit_names.csv"]) and pdfs == {"maps.pdf": 12 + 13}, (files, pdfs, out)
+        assert rc == 0 and files == sorted(gap_files + ["dashboard.html", "maps.pdf", "seat_fit.csv", "seat_fit_names.csv"]) and pdfs == {"maps.pdf": 12 + 13}, (files, pdfs, out)
         assert csvs["seat_fit.csv"] == 1 + 32 and csvs["seat_fit_names.csv"] == 1 + 32 and "td_state_adj: " in out, csvs
         send, screen = out.split("names and sales: your screen only:")
         assert "seat_fit.csv" in send.split("safe to send to an agent")[1] and "seat_fit_names.csv" not in send and "seat_fit_names.csv" in screen, out
+        assert "dashboard.html" not in send and "dashboard.html" in screen, out          # the dashboard holds names: your screen only
         rc, out2, files, pdfs, csvs = run(GOOD, f07, "CA1_R105N,CA2_R105N", sql08=f08)      # two scenarios the same: every page and row once
         assert rc == 0 and pdfs == {"maps.pdf": 12 + 13} and csvs["seat_fit.csv"] == 1 + 32 and out2.count("td_state_adj: ") == 1, (pdfs, csvs, out2)
         # CA1_R105R's 08 refused (TIE not 0): its two seat pages say so, the other two share the real ones: 12 + 11 shared + 2 + 2

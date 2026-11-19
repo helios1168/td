@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Territory coverage</title>
+<style>
+<!--CSS-->
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <h1>Territory coverage</h1>
+    <p id="runline"></p>
+  </div>
+  <div class="ctl"><span class="lab" id="l-sc">Scenario</span><div class="seg" id="c-sc" role="group" aria-labelledby="l-sc"></div></div>
+  <div class="ctl"><span class="lab" id="l-est">Estimate of the market</span><div class="seg" id="c-est" role="group" aria-labelledby="l-est"></div></div>
+  <div class="ctl"><span class="lab">Products</span><span class="fixed" id="c-products"></span></div>
+  <span class="rule" aria-hidden="true"></span>
+  <div class="ctl"><span class="lab" id="l-view">View</span><div class="seg" id="c-view" role="group" aria-labelledby="l-view"></div></div>
+  <div class="ctl"><span class="lab" id="l-ch">Channel</span><div class="seg" id="c-ch" role="group" aria-labelledby="l-ch"></div></div>
+  <label class="ctl"><span class="lab">Focus</span><select id="c-focus"></select></label>
+  <label class="ctl find"><span class="lab">Find</span><input id="c-find" type="search" list="find-list" autocomplete="off" spellcheck="false">
+    <datalist id="find-list"></datalist></label>
+  <p class="found" id="found" role="status"></p>
+</header>
+<main>
+  <section class="map-wrap" aria-label="Map">
+    <div id="map"></div>
+    <div class="over top" id="chips"></div>
+    <p class="over caption" id="caption"></p>
+    <aside class="over card" id="card" aria-label="Selection" hidden></aside>
+    <div id="tip" hidden></div>
+  </section>
+  <section class="tables">
+    <div class="tbl" id="t-pairs"></div>
+    <div class="tbl" id="t-fill"></div>
+  </section>
+  <aside class="side">
+    <section class="totals" id="totals" aria-label="Totals"></section>
+    <section class="detail" id="detail" aria-label="People"></section>
+  </aside>
+</main>
+<dialog id="licence-box">
+  <form method="dialog"><button class="plain">Close</button></form>
+  <pre id="licence-text"></pre>
+</dialog>
+<script type="text/plain" id="licence"><!--LICENCE--></script>
+<script type="application/json" id="data"><!--DATA--></script>
+<!--VENDOR-->
+<script type="module">
+<!--JS-->
+</script>
+</body>
+</html>

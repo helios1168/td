@@ -32,6 +32,8 @@ shapes, two states adjacent when their shapes buffered by 1,000 m meet), refuses
 seat_fit.csv (masked: the open-seat ranking of 08 plus an opportunity-only LOAD_BAND, safe to send) and seat_fit_names.csv (names and
 sales U, G, DNASH: your screen only); the seat-fit page shows ranks only.  The shapes are read once (ST_SIMPLIFY in SQL), cached in data/safe/geo/
 and drawn in EPSG:5070.  Pages are images (a vector page of 30,000 ZIPs runs to megabytes); scenarios draw in parallel.
+With gap output the run also writes dashboard.html next to maps.pdf (issue #153, tools/maps/dashboard.py): one self-contained page for
+Chrome, opened from disk, with the same cells as the CSVs and the names next to the keys (your screen only).
 
 Draft mode (issue #152, phase 2): `.\\tools\\maps\\scenario_maps.ps1 -Draft results\\draft\\2026-11-19` (python: `--draft <folder>`, optionally
 `--scenario`, `--divisions`) draws draft_assign.py's keys-only ledger as data/safe/maps/<run>/draft.pdf, one page per scenario x
@@ -1293,6 +1295,12 @@ def main(argv=None):
         masked, names_csv = write_seat_csvs(out, seats)
         send.append(masked)
         screen.append(names_csv)
+    if gaps:                                    # the dashboard (issue #153): the scenarios with gap output, the names next to the keys
+        import dashboard
+        runs = {name: {**{k: gap[k] for k in ("cell", "pair", "person", "load", "summary")}, "seat": gd.seat.masked if gd.seat else None}
+                for name, (gd, _, gap) in gaps.items()}
+        key_names = {k: v for _, _, gap in gaps.values() for k, v in gap["names"].items()}
+        screen.append(dashboard.build(geo, runs, os.path.join(out, "dashboard.html"), key_names, products, os.path.basename(out)))
     if pool:
         pool.shutdown()
     print(f"done in {time.time() - t0:.0f} s ({products})" + (f"; NOT DRAWN: {', '.join(refused)}" if refused else ""))
@@ -1304,7 +1312,7 @@ def main(argv=None):
     if screen:
         print("names and sales: your screen only:")
         for p in screen:
-            print(f"  {os.path.abspath(p)}")
+            print(f"  {os.path.abspath(p)}" + ("   (the dashboard: open it in Chrome)" if p.endswith("dashboard.html") else ""))
     return 1 if refused else 0
 
 
