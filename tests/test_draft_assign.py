@@ -188,3 +188,14 @@ def test_an_assignee_with_no_covered_zip_is_seeded_with_the_zips_they_share_toda
     assert {z: T[z][0] for z in "abcd"} == {"a": "R1", "b": "R1", "c": "R2", "d": "R2"} and T["c"][1] == "held seed" and no_seed == [], (T, no_seed)
     T, no_seed, _ = da.territory({"AA": list("abcd")}, adj, {"AA": ["R1", "R2"]}, {"a": {"R1": 5.0}}, {}, {"a": {"R1"}})
     assert no_seed == [("AA", "R2")]                                     # holds nothing: still reported, not invented
+
+
+def test_what_draft_assign_writes_is_what_scenario_maps_draft_reads():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("scenario_maps", os.path.join(os.path.dirname(da.__file__), "scenario_maps.py"))
+    sm = importlib.util.module_from_spec(spec); spec.loader.exec_module(sm)
+    with tempfile.TemporaryDirectory() as d:
+        out = os.path.join(d, "2026-11-19")                            # any folder name: the files are always draft_*
+        da.write(out, "draft", da.run(GRAPH, cells(), people()))
+        ledger, m1 = sm.read_draft(out)
+        assert ledger and m1 and {r["PERSON"] for r in ledger} >= {"R3"}

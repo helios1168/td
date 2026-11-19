@@ -298,7 +298,7 @@ def main(argv=None):
     ap.add_argument("--ref", default=os.path.join(os.environ.get("TD_REPO", ROOT), "reference", "2025"))
     a = ap.parse_args(argv)
     got = run(geo.polygon_graph(a.ref), read_csv(a.cells), read_csv(a.people))
-    paths = write(a.out, os.path.basename(os.path.normpath(a.out)), got)
+    paths = write(a.out, "draft", got)   # draft_ledger.csv.gz, draft_cells.csv.gz, draft_m1.csv: the names scenario_maps --draft reads
     print(summary(got))
     print("wrote " + " ".join(paths))
 

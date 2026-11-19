@@ -966,7 +966,7 @@ def largest_piece_point(geo, zs):
         area = sum(geo.zips[z].area for z in comp)
         if best is None or area > best[0]:
             best = (area, comp)
-    part = max(shapely.get_parts(shapely.union_all([t.buf[t.index[z]] for z in best[1]])), key=lambda p: p.area)
+    part = max(shapely.get_parts(shapely.union_all([geo.zips[z] for z in best[1]])), key=lambda p: p.area)   # drawn shapes, not the buffers
     return shapely.ops.polylabel(part, tolerance=3000)
 
 
