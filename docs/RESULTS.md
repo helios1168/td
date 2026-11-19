@@ -1382,3 +1382,13 @@ every affected person's opportunity $ (CRBG estimate) and area-adjusted load ($1
 from the owner's 2026-11-18 `gap_load.csv` with NV moved), and the table: today R2 0.73 in two pieces; NV to R49 R49
 1.12 to 1.14; NV to R38 R38 1.78 to 1.46; split NV at 38N, north to R174 or R38, south to R49 R49 1.17. NV is $0.80B, of
 which $0.15B north of 38N.
+
+## 2026-11-19: without fixed annuity; open-seat plan; draft rebuilt (#148, #151, #152)
+
+The owner's run with FIXED excluded (the new default): main map $48.23B CRBG, $104.68B → $48.08B EQH (with fixed: $106.56B
+and $104.68B), so fixed was about 55% of the main map's opportunity. All 07 checks hold. CRBG, CA1_R105N: covered $28.56B,
+overlap $5.74B, held by another $2.44B, gap held today $6.26B, gap unheld $0.00B, open seat $5.22B ($4.78B held).
+Open-seat plan 1 (`seat_plan.csv`, both estimates alike): CA1_R105N re-adds R36 NJ, R59 MD, R143 AL, R126 TX and extends
+R18 DC, R138 WV, R51 IA, R163 KS, R174 NE; CA1_R105R (TX not open) re-adds R36, R59, R143 and R24 for IA KS NE and
+extends R18 DC, R138 WV. Draft rebuilt on this run in `results/draft/2026-11-19-exfixed/`: NATIONAL and WH all one piece,
+WIFI 26 of 27 (R2's NV), R14 NC and R33 WI hold nothing in their state; $0.35B in ZIPs that are not ZCTAs.
