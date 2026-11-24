@@ -102,17 +102,16 @@ def test_m1_pieces_and_verdicts():
     assert nat["R2", 1][2] == 1 and nat["R2", 1][7] == "PASS" and nat["R2", 1][4] == 3
     assert nat["R6", 1][4] == 3 and nat["R6", 1][7] == "PASS"             # c4 c5 c6
     assert nat["R4", 1][4] == 1
-    # R3: {c1 c2} $100 beats {b3 b5 b6 c8} $16; the verdict is FAIL; tau = NATIONAL CRBG $ / 11
-    chan = 10 + 10 + 2 + 4 + 100 + 10 + 50 + 50 + 5 + 4
+    # R3: {c1 c2} $100 beats {b3 b5 b6 c8} $16; the verdict is FAIL; tau = the settled national target, $1.25B
     assert nat["R3", 1][2] == 2 and nat["R3", 1][4] == 2 and nat["R3", 1][5] == 100.0 and nat["R3", 1][7] == "FAIL"
     assert nat["R3", 2][4] == 4 and nat["R3", 2][5] == 16.0
-    assert abs(nat["R3", 1][6] - 100 / (chan / 11)) < 1e-5
+    assert nat["R3", 1][6] == round(100 / 1.25e9, 6)
 
 
 def test_two_states_that_do_not_touch_fail_with_two_pieces_and_tau_share():
     *_, rows = built()
     wh = [r for r in rows if r[:2] == ("WH", "R9")]
-    assert [(r[2], r[3], r[4], r[5], r[6], r[7]) for r in wh] == [(2, 1, 6, 9 * B, 9.0, "FAIL"), (2, 2, 4, 3 * B, 3.0, "FAIL")]   # tau = 12 B / 12
+    assert [(r[2], r[3], r[4], r[5], r[6], r[7]) for r in wh] == [(2, 1, 6, 9 * B, 9.0, "FAIL"), (2, 2, 4, 3 * B, 3.0, "FAIL")]   # tau = the settled WH target, $1.0B = B
     ifa = [r for r in rows if r[0] == "WIFI"]
     assert ifa[0][5] == 0.125 * B and ifa[0][6] == 0.1 and ifa[0][7] == "PASS"                                                   # tau = $1.25B
 

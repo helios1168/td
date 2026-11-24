@@ -363,8 +363,10 @@ def fetch_seat(conn, scenario, sql08, split):
 # above target ... the smaller the territory is the smaller your opportunity can be"; "go with how you recommend"):
 # expected $ = base x (area / the channel's median area) ^ BETA, load = assigned $ / expected $, reported, never a gate.
 BETA = 0.5                                   # expected $ grows with the square root of area (travel across the territory)
-BASE_USD = {"REGIONAL": 1.25e9}              # WIFI: the stakeholders' $1.25B per territory
-K_OF = {"NATIONAL": 11, "WH": 12}            # national and WH: the channel's attributed $ / K (owner's 11 and 12)
+# The base is each channel's settled target per territory (#130: national $1.25B, WH $1.0B; WIFI the stakeholders' $1.25B), owner
+# 2026-11-24: "yes implement the fix".  It was the channel's attributed $ / K (11, 12), too low while seats are open: WH's 7
+# people hold $3.61B, so its base was $0.30B against a $1.0B target.
+BASE_USD = {"NATIONAL": 1.25e9, "WH": 1.0e9, "REGIONAL": 1.25e9}
 CHANNEL_OF_ROLE = {v: k for k, v in ROLE_OF.items()}
 LOAD_COLS = ["SCENARIO", "EST_SOURCE", "HOLDER", "ROLE", "CHANNEL", "AREA_KM2", "ASSIGNED_USD", "BASE_USD", "MEDIAN_AREA_KM2",
              "EXPECTED_USD", "LOAD_RATIO"]
@@ -379,10 +381,9 @@ def gap_load(scenario, gap, state_area):
     those ZIPs: 112,000 km2 for all of national)."""
     cell = [dict(zip(gap["cell"][0], r)) for r in gap["cell"][1]]
     person = [dict(zip(gap["person"][0], r)) for r in gap["person"][1]]
-    usd, chan_usd = collections.Counter(), collections.Counter()
+    usd = collections.Counter()
     for c in cell:
         est, ch, m = c["EST_SOURCE"], c["CHANNEL"], float(c["MM_OPP"] or 0)
-        chan_usd[est, ch] += m
         keys = str(c["ASSIGNED"] or "").split()
         if not keys or ch == "OPEN":
             continue
@@ -401,7 +402,7 @@ def gap_load(scenario, gap, state_area):
         if ch and usd[p["EST_SOURCE"], p["HOLDER"]] > 0:
             by_ch[p["EST_SOURCE"], ch].append(p)
     for (est, ch), ps in sorted(by_ch.items()):
-        base = BASE_USD.get(ch) or chan_usd[est, ch] / K_OF[ch]
+        base = BASE_USD[ch]
         areas = sorted(area[est, p["HOLDER"]] for p in ps if area[est, p["HOLDER"]] > 0)
         med = areas[len(areas) // 2] if len(areas) % 2 else (sum(areas[len(areas) // 2 - 1:len(areas) // 2 + 1]) / 2 if areas else 0.0)
         for p in sorted(ps, key=lambda p: p["HOLDER"]):

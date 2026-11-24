@@ -548,8 +548,8 @@ def test_load_is_dollars_against_the_area_adjusted_expectation():
     assert (got["R1"]["AREA_KM2"], got["R2"]["AREA_KM2"], got["R1"]["MEDIAN_AREA_KM2"]) == (250.0, 550.0, 400.0)
     assert abs(got["R1"]["EXPECTED_USD"] - 1.25e9 * (250 / 400) ** 0.5) < 1 and abs(got["R1"]["LOAD_RATIO"] - 2.05 / (1.25 * 0.625 ** 0.5)) < 0.001
     assert abs(got["R2"]["LOAD_RATIO"] - 0.65 / (1.25 * (550 / 400) ** 0.5)) < 0.001
-    # national base: the channel's attributed $ (11e9) / 11 = 1e9, its own median: load 11
-    assert got["R3"]["BASE_USD"] == 1e9 and got["R3"]["LOAD_RATIO"] == 11.0 and got["R3"]["AREA_KM2"] == 200.0
+    # national base: the settled $1.25B target, not the attributed $ (11e9) / 11, its own median: load 11e9 / 1.25e9 = 8.8
+    assert got["R3"]["BASE_USD"] == 1.25e9 and got["R3"]["LOAD_RATIO"] == 8.8 and got["R3"]["AREA_KM2"] == 200.0
     assert "R9" not in got                                            # no assigned $: no load row
 
 

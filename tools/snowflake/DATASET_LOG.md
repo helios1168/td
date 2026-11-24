@@ -2139,3 +2139,11 @@ the map filter is "ZIPs with sales". 07's classes are unchanged (the dashboard m
 only by a regional (WIFI) neighbour, since a WH or national person does not take the seat's other channels (decision 4:
 "yes").
 
+### 2026-11-24: load base from the settled targets
+
+The area-adjusted load's base is each channel's settled target per territory (#130): national $1.25B, WH $1.0B, regional
+(WIFI) $1.25B (owner, 2026-11-24: "yes implement the fix"). It replaces the 2026-11-18 base for national and WH, the channel's
+attributed $ / 11 and / 12, which was too low while seats are open: the 7 WH people's assigned states hold $3.61B (CRBG
+estimate, without FIXED), so WH's base was $0.30B and R68 (NJ) showed a load of 5.57; on the $1.0B base it is 0.74 before the
+area adjustment. Loads in runs before this change are not comparable for national and WH.
+

@@ -37,7 +37,7 @@ for p in (ROOT, HERE):
     if p not in sys.path:
         sys.path.insert(0, p)
 from td import audit, geo  # noqa: E402
-import scenario_maps as sm  # noqa: E402  (ROLE_OF, K_OF, BASE_USD, FIRMS, write_dedup_csv)
+import scenario_maps as sm  # noqa: E402  (ROLE_OF, BASE_USD, FIRMS, write_dedup_csv)
 
 ROLE_OF, CHANNEL_OF_ROLE, ROLES = sm.ROLE_OF, sm.CHANNEL_OF_ROLE, tuple(dict.fromkeys(sm.ROLE_OF.values()))
 EST, EST2 = sm.FIRMS                      # CRBG (the audit's $) and EQH
@@ -163,10 +163,8 @@ def one_scenario(graph, adj, cells, people):
     mass = {r: {e: collections.Counter() for e in (EST, EST2)} for r in ROLES}
     covered = {r: collections.defaultdict(collections.Counter) for r in ROLES}
     held = {r: collections.defaultdict(set) for r in ROLES}
-    chan_usd = collections.Counter()
     for c in cells:
         ch, usd, est = c["CHANNEL"], float(c["MM_OPP"] or 0), c["EST_SOURCE"]
-        chan_usd[est, ch] += usd
         if ch == "OPEN":
             continue
         r, z = role_of_channel(ch), c["ZIP_CODE"]
@@ -190,7 +188,7 @@ def one_scenario(graph, adj, cells, people):
         owner = {z: p for z, (p, _) in T[r].items() if p}
         pcs = pieces_of(owner, adj, mass[r][EST])
         ch = CHANNEL_OF_ROLE[r]
-        tau = {e: sm.BASE_USD[ch] if ch in sm.BASE_USD else chan_usd[e, ch] / sm.K_OF[ch] for e in (EST, EST2)}
+        tau = {e: sm.BASE_USD[ch] for e in (EST, EST2)}
 
         def share(u, e):
             return round(u / tau[e], 6) if tau[e] else ""

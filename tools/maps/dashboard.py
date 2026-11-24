@@ -299,7 +299,7 @@ def payload(geo, runs, names=None, products_label="products not recorded", run_l
                                                     for f in firms for c in tch}},
         sales={"k": [kix[k] for k, _, v in sales if k and v], "z": [zix[z] for k, z, v in sales if k and v], "v": [v for k, _, v in sales if k and v]},
         salesNoKey=num(sum(v for k, _, v in sales if not k)),
-        base={"REGIONAL": sm.BASE_USD["REGIONAL"]}, kOf=dict(sm.K_OF), beta=sm.BETA)
+        base=dict(sm.BASE_USD), beta=sm.BETA)
     out["sets"] = [list(t) for t in sets]                     # after `today`, which adds its holder sets
     return out
 
