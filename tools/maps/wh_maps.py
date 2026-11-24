@@ -48,17 +48,18 @@ GROUPS = [("R18", "MD DC DE VA"), ("R16", "NC SC GA TN"), ("R37", "OH IN KY MI W
 NEW = {"new A": "#BDBDBD", "new B": "#EBEBEB", "new C": "#A6A6A6", "new D": "#D2D2D2"}
 DPI = 110                                        # 16 in wide: 1760 px
 BOX = (-2.41e6, 0.20e6, 2.50e6, 3.22e6)          # CONUS, with room in the Atlantic for the small states' labels
-NE_BOX = (1.10e6, 1.88e6, 2.36e6, 3.04e6)        # NJ NY PA and New England
+NE_BOX = (1.17e6, 1.88e6, 2.36e6, 3.04e6)        # NJ NY PA and New England
 NYC_BOX = (1.795e6, 2.150e6, 1.880e6, 2.218e6)
 # hand-set label places, EPSG:5070 metres: (the label's centre, the point its leader ends at or None)
 AT1 = {"R68": ((1.60e6, 2.15e6), None), "R13": ((-0.25e6, 1.28e6), None), "R131": ((2.15e6, 2.08e6), (1.93e6, 2.21e6)),
        "R37": ((1.08e6, 2.00e6), None), "R16": ((1.47e6, 1.52e6), None), "R18": ((2.03e6, 1.79e6), (1.68e6, 1.94e6)),
        "R72": ((2.07e6, 2.80e6), None)}
-AT3 = {"R18": ((2.06e6, 1.76e6), (1.56e6, 1.77e6)), "R16": ((1.25e6, 1.39e6), None), "R37": ((0.98e6, 1.96e6), None),
-       "R13": ((-0.25e6, 1.05e6), None), "R68 · R131 · R72": ((1.62e6, 2.37e6), None), "new A": ((0.78e6, 1.03e6), None),
+AT3 = {"R18": ((2.06e6, 1.76e6), (1.60e6, 1.80e6)), "R16": ((1.25e6, 1.39e6), None), "R37": ((0.95e6, 2.16e6), None),
+       "R13": ((-0.25e6, 1.05e6), None), "R68 · R131 · R72": ((1.52e6, 2.84e6), (1.60e6, 2.42e6)), "new A": ((0.78e6, 1.03e6), None),
        "new B": ((0.02e6, 2.15e6), None), "new C": ((-2.03e6, 1.80e6), None), "new D": ((-1.30e6, 2.22e6), None)}
 AT4 = {"R68": ((1.62e6, 2.13e6), None), "R131": ((2.08e6, 2.11e6), (1.93e6, 2.215e6)), "R72": ((2.09e6, 2.78e6), None),
-       "R18": ((1.50e6, 1.93e6), None), "R37": ((1.19e6, 2.08e6), None)}
+       "R18": ((1.50e6, 1.93e6), None), "R37": ((1.235e6, 2.05e6), None)}
+AT_NYC = {"R68": ("Manhattan", (1.810e6, 2.207e6), (1.8275e6, 2.192e6)), "R131": ("Long Island", (1.862e6, 2.193e6), None)}   # the inset
 OFF2 = {"VT": (1.76e6, 2.79e6, "center"), "NH": (2.215e6, 2.56e6, "left"), "MA": (2.215e6, 2.48e6, "left"),
         "RI": (2.10e6, 2.235e6, "left"), "CT": (2.03e6, 2.15e6, "left"), "NJ": (1.90e6, 2.045e6, "left"),
         "DE": (1.88e6, 1.955e6, "left"), "MD": (1.88e6, 1.875e6, "left"), "DC": (1.88e6, 1.80e6, "left")}   # map 2: set off the state
@@ -67,6 +68,11 @@ CODE_NEAR = [(dx, dy, "center", "center") for dx, dy in ((0, 0), (0, -13), (0, 1
 
 def b(usd):
     return f"{usd / 1e9:.2f}"
+
+
+def dots(items, width):
+    """The items joined by ' · ' and wrapped to `width`, never inside an item."""
+    return textwrap.fill(" · ".join(i.replace(" ", "\u00a0") for i in items), width)
 
 
 def read(data):
@@ -157,8 +163,9 @@ def bold(ax, g, colour):
 
 
 def codes(ax, geo, avoid=()):
-    """Every state's code at its label point, moved off `avoid` and off each other; a crowded-out one is set anyway."""
-    items = [(p.x, p.y, s) for s, p in sorted(geo.state_pt.items())]
+    """Every state's code at its label point, moved off `avoid` and off each other (the largest states first, so the small ones
+    move); a crowded-out one is set anyway."""
+    items = [(geo.state_pt[s].x, geo.state_pt[s].y, s) for s in sorted(geo.states, key=lambda s: -geo.states[s].area)]
     style = dict(color=DARK, alpha=0.75, fontweight="bold")
     done = {t.get_text() for t in look.place_labels(ax, items, fs=9, avoid=avoid, marker=False, near=CODE_NEAR, leader=[], **style)}
     for x, y, s in items:
@@ -222,9 +229,9 @@ def today_label(d, p):
 
 
 def by_state(d, p, zips=False):
-    """'PA 0.55 · NY 0.38 · NJ 0.33': the person's $ today by state held, largest first."""
+    """['PA 0.54', 'NY 0.38', 'NJ 0.33']: the person's $ today by state held, largest first."""
     rows = sorted(d.today[p].items(), key=lambda kv: -d.sum(kv[1]))
-    return " · ".join(f"{s} {len(zs):,} ZIPs ${b(d.sum(zs))}B" if zips else f"{s} {b(d.sum(zs))}" for s, zs in rows)
+    return [f"{s} {len(zs):,} ZIPs ${b(d.sum(zs))}B" if zips else f"{s} {b(d.sum(zs))}" for s, zs in rows]
 
 
 def overlap_note(d):
@@ -263,7 +270,7 @@ def map_today(geo, d, out):
     codes(ax, geo, labels)
     y = note(fig, 0.875, "Key · WH $ today · preliminary-assignment state\nunder it: the $B today by state held")
     for p in COLOUR:
-        y = key(fig, y - 0.008, [COLOUR[p]], today_label(d, p), textwrap.fill(by_state(d, p), 40))
+        y = key(fig, y - 0.008, [COLOUR[p]], today_label(d, p), dots(by_state(d, p), 40))
     y = note(fig, y, "Bold outline: the person's preliminary-assignment state, in their colour.  White: every other ZIP.")
     note(fig, y, overlap_note(d))
     foot(fig, WH_NOTE.format(b(d.total)) + no_shape_note(geo, d, COLOUR))
@@ -287,13 +294,14 @@ def map_room(geo, d, out):
                         arrowprops=dict(arrowstyle="-", color=DARK, linewidth=0.7, shrinkA=1, shrinkB=0), **style)
         else:
             dark = float(np.dot(shade[s][:3], (0.2126, 0.7152, 0.0722))) < 0.45
-            ax.text(pt.x, pt.y, f"{s} {v}" if g.bounds[2] - g.bounds[0] > 3.3e5 else f"{s}\n{v}", ha="center",
+            ax.text(pt.x, pt.y, f"{s} {v}" if g.bounds[2] - g.bounds[0] > 4e5 else f"{s}\n{v}", ha="center",
                     color="white" if dark else DARK, **style)
     y = note(fig, 0.875, "Person · assigned state, WH $B\nunder it: the states sharing a border with it, WH $B")
-    for p, s in d.assigned.items():
+    for p in COLOUR:
+        s = d.assigned[p]
         near = sorted(neighbours(geo, s), key=lambda o: -d.state[o])
         y = key(fig, y - 0.008, [COLOUR[p]], f"{p} · {s} {b(d.state[s])}",
-                textwrap.fill(" · ".join(f"{o} {b(d.state[o])}" for o in near), 40))
+                dots([f"{o} {b(d.state[o])}" for o in near], 40))
     note(fig, y, "Bold outline: the 7 assigned states, in the person's colour of map 1.")
     cax = fig.add_axes((0.78, 0.105, 0.19, 0.018))
     bar = fig.colorbar(ScalarMappable(norm, RAMP), cax=cax, orientation="horizontal", ticks=[0, 0.1, 0.25, 0.5, 0.75, 1.0])
@@ -318,7 +326,7 @@ def map_sketch(geo, d, out):
         draw(ax, [g], facecolor="none", edgecolor=DARK, linewidth=1.9, zorder=4, joinstyle="round")
         text = (f"{name}: ${b(usd[name])}B,\nabout ${b(usd[name] / len(people))}B each" if len(people) > 1 else f"{name} · ${b(usd[name])}B")
         labels.append(callout(ax, text, *AT3[name]))
-        rows.append((cols, f"{name} · ${b(usd[name])}B", textwrap.fill(" · ".join(f"{s} {b(d.state[s])}" for s in states), 40)))
+        rows.append((cols, f"{name} · ${b(usd[name])}B", dots([f"{s} {b(d.state[s])}" for s in states], 40)))
     state_lines(ax, geo)
     codes(ax, geo, labels)
     y = note(fig, 0.875, "Group · WH $B, under it its states' WH $B\nstriped: shared by the three; grey: a new territory")
@@ -334,25 +342,32 @@ def map_sketch(geo, d, out):
 
 def map_northeast(geo, d, out):
     trio = ("R68", "R131", "R72")
-    fig, ax = page("WH today in the Northeast: where R68, R131 and R72 hold WH territory", NE_BOX, (16, 11), (0.004, 0.05, 0.655, 0.835))
+    fig, ax = page("WH today in the Northeast: where R68, R131 and R72 hold WH territory", NE_BOX, (16, 11), (0.004, 0.06, 0.61, 0.825))
     territories(ax, geo, d, edge="white")
     labels = [callout(ax, f"{p}\n${b(d.sum(d.zips[p]))}B", *AT4[p], colour=COLOUR[p], fs=12.5) for p in AT4]
     codes(ax, geo, labels)
     x0, y0, x1, y1 = NYC_BOX
     ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, edgecolor=DARK, linewidth=1.3, zorder=8))
-    x = 0.672
-    y = note(fig, 0.875, "Key · WH $ today · preliminary-assignment state\nunder it: the ZIPs and $ today by state held", x, 70)
+    x = 0.625
+    y = note(fig, 0.875, "Key · WH $ today · preliminary-assignment state\nunder it: the ZIPs and $ today by state held", x, 80)
     for p in trio:
-        y = key(fig, y - 0.006, [COLOUR[p]], today_label(d, p), textwrap.fill(by_state(d, p, zips=True), 62), x, 12)
+        y = key(fig, y - 0.006, [COLOUR[p]], today_label(d, p), dots(by_state(d, p, zips=True), 66), x, 12)
     for p in AT4:
         if p not in trio:
             y = key(fig, y - 0.002, [COLOUR[p]], today_label(d, p) + " (in part on this map)", "", x, 10.5)
-    y = note(fig, y - 0.004, "Each ZIP is drawn with its outline.  Bold outline: the person's preliminary-assignment state, in their colour.  "
-             "White: every other ZIP.\n" + overlap_note(d), x, 70)
-    ins = axes(fig, (x, 0.055, 0.315, 0.38), NYC_BOX)
+    note(fig, y - 0.004, "Each ZIP is drawn with its outline.  Bold outline: the person's preliminary-assignment state, in their colour.  "
+         "White: every other ZIP.\n" + overlap_note(d), x, 80)
+    ins = axes(fig, (x, 0.05, 0.36, 0.345), NYC_BOX)
     territories(ins, geo, d, edge="white")
     ins.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, edgecolor=DARK, linewidth=2.2, zorder=8, clip_on=False))
-    fig.text(x, 0.445, "New York City (the box on the map): R68 holds Manhattan, ZIPs 100xx to 102xx", fontsize=11.5, fontweight="bold", color=DARK, va="bottom")
+    zip3 = {p: sorted({z[:3] for z in d.today[p]["NY"]}) for p in AT_NYC}
+    assert zip3 == {"R68": ["100", "101", "102"], "R131": ["110", "115", "117", "118", "119"]}, zip3   # what AT_NYC's place names rest on
+    for p, (place, at, to) in AT_NYC.items():
+        zs = d.today[p]["NY"]
+        callout(ins, f"{p} · {place}\n{len(zs):,} ZIPs, ${b(d.sum(zs))}B", at, to, COLOUR[p], 10.5)
+    fig.text(x, 0.428, "New York City (the box on the map)", fontsize=11.5, fontweight="bold", color=DARK, va="bottom")
+    fig.text(x, 0.405, "NY ZIPs held, by their first three digits: " + "; ".join(f"{p} {' '.join(v)}" for p, v in zip3.items()) + ".",
+             fontsize=9.5, color=DARK, va="bottom")
     foot(fig, WH_NOTE.format(b(d.total)) + no_shape_note(geo, d, trio))
     save(fig, out, "wh_4_northeast")
 
@@ -360,7 +375,7 @@ def map_northeast(geo, d, out):
 def report(d, groups):
     """The numbers the figures show, as text."""
     out = [f"WH ${b(d.total)}B total; no state ${b(d.state[''])}B", "person  assigned  $B today  ZIPs  by state"]
-    out += [f"{p:<7} {d.assigned[p]:<9} {b(d.sum(d.zips[p])):<9} {len(d.zips[p]):<5} {by_state(d, p)}" for p in COLOUR]
+    out += [f"{p:<7} {d.assigned[p]:<9} {b(d.sum(d.zips[p])):<9} {len(d.zips[p]):<5} {' · '.join(by_state(d, p))}" for p in COLOUR]
     out += ["group: $B = states"] + [f"{name}: {b(groups[name])} = {states}" for name, states in GROUPS]
     out += ["state $B: " + " ".join(f"{s} {b(v)}" for s, v in sorted(d.state.items(), key=lambda kv: -kv[1]) if s)]
     return "\n".join(out)

@@ -1392,3 +1392,36 @@ Open-seat plan 1 (`seat_plan.csv`, both estimates alike): CA1_R105N re-adds R36 
 R18 DC, R138 WV, R51 IA, R163 KS, R174 NE; CA1_R105R (TX not open) re-adds R36, R59, R143 and R24 for IA KS NE and
 extends R18 DC, R138 WV. Draft rebuilt on this run in `results/draft/2026-11-19-exfixed/`: NATIONAL and WH all one piece,
 WIFI 26 of 27 (R2's NV), R14 NC and R33 WI hold nothing in their state; $0.35B in ZIPs that are not ZCTAs.
+
+## 2026-11-24: WH: today and room to grow
+
+`tools/maps/wh_maps.py` on the owner's 2026-11-24 run without FIXED (`data/safe/wh_2026-11-24/`, keys only): scenario
+CA1_R105R, CRBG estimate, WH $ = `MM_OPP` of the `gap_cell.csv` rows with `NEW_DIST` WH (NewCo's WH channel; Wells WH is
+not counted). Total $11.33B, of which $0.15B has no state: $0.14B in NY ZIPs R68 holds today (Manhattan, 100xx to 102xx,
+not ZCTAs) and $0.01B in MA ZIPs R72 holds. A person's $ today is the WH $ in the ZIPs of their `territory_today.csv`
+rows with `TERR_CHANNEL` WH, by state as that file has it. Shapes: 2025 TIGER, as `dashboard.py --dev`.
+Regenerate: `"$TD_PY" tools/maps/wh_maps.py`.
+
+Figure: [WH today, the 7 shortlisted](figures/2026-11-24_wh_1_today.png). $B today, by state held, and the assigned state:
+R68 1.25 (PA 0.54, NY 0.38, NJ 0.33; NJ), R13 0.37 (TX 0.32, OK 0.05; TX), R131 0.25 (NY; NY), R37 0.75 (OH 0.43, KY 0.18,
+IN 0.13; OH), R16 0.74 (NC 0.41, SC 0.13, VA 0.10, TN 0.10; NC), R18 0.88 (MD 0.38, DC 0.26, VA 0.16, DE 0.07; MD), R72
+0.69 (MA 0.28, CT 0.28, NH 0.05, RI 0.04, ME 0.03, VT 0.02; MA). No ZIP is in two of the 7's WH territories. In NY,
+assigned to R131, R68 holds 165 ZIPs, $0.38B, and R131 220 ZIPs, $0.25B.
+
+Figure: [room to grow, WH $ by state](figures/2026-11-24_wh_2_room_to_grow.png). The largest: CA 1.18, FL 0.96, PA 0.75,
+NJ 0.73, TX 0.72, NY 0.69, IL 0.45, OH 0.43, NC 0.41, MD 0.38. Assigned state, then the states sharing at least 25 km of
+state line with it: R68 NJ 0.73 (PA 0.75, NY 0.69, DE 0.07); R13 TX 0.72 (LA 0.19, OK 0.05, AR 0.04, NM 0.03); R131 NY
+0.69 (PA 0.75, NJ 0.73, CT 0.28, MA 0.27, VT 0.02); R37 OH 0.43 (PA 0.75, MI 0.33, KY 0.18, IN 0.14, WV 0.04); R16 NC 0.41
+(VA 0.26, GA 0.26, TN 0.17, SC 0.13); R18 MD 0.38 (PA 0.75, DC 0.26, VA 0.26, DE 0.07, WV 0.04); R72 MA 0.27 (NY 0.69,
+CT 0.28, NH 0.05, RI 0.04, VT 0.02).
+
+Figure: [whole-state sketch, 11 territories](figures/2026-11-24_wh_3_sketch.png), the owner's groups: R18 (MD DC DE VA)
+0.98; R16 (NC SC GA TN) 0.96; R37 (OH IN KY MI WV) 1.12, 1.08 without WV; R13 (TX OK LA AR) 0.99; the Northeast shared by
+R68, R131 and R72 (NJ NY PA MA CT RI NH ME VT) 2.85, about 0.95 each; new A (FL AL MS) 1.09; new B (IL MN WI MO IA KS NE
+ND SD) 1.28; new C (CA) 1.18; new D (AZ CO WA NV UT OR ID NM MT WY) 0.73; no state 0.15; in all 11.33. Whole-state
+arithmetic on the $ by state, not a solve: nothing is drawn at ZIP level and nothing was audited.
+
+Figure: [the Northeast at ZIP level](figures/2026-11-24_wh_4_northeast.png): R68 holds the east of PA (53% of the state's
+ZCTA area), the south of NJ (58%) and Manhattan; R131 holds Long Island (NY ZIPs 110xx, 115xx, 117xx to 119xx); R72 holds New England. R68 PA 1,260 ZIPs $0.54B,
+NY 165 $0.38B, NJ 347 $0.33B; R131 NY 220 $0.25B; R72 MA 703 $0.28B, CT 438 $0.28B, NH 284 $0.05B, RI 91 $0.04B, ME 488
+$0.03B, VT 309 $0.02B. ZIPs that are not ZCTAs are counted, not drawn: R68 $0.14B, R72 $0.01B.
